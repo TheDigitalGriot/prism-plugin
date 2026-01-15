@@ -6,10 +6,14 @@ Prism transforms complex coding tasks into focused, quality work through special
 
 ## Installation
 
-### From GitHub
+### From GitHub Marketplace
 
 ```bash
-/plugin install github:yourusername/prism-plugin
+# Add the marketplace
+/plugin marketplace add your-username/prism-plugin
+
+# Install the plugin
+/plugin install prism@prism-marketplace
 ```
 
 ### Local Development

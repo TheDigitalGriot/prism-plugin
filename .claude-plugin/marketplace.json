@@ -1,0 +1,17 @@
+{
+  "name": "prism-marketplace",
+  "owner": {
+    "name": "Prism Team"
+  },
+  "metadata": {
+    "description": "Structured development workflow plugins for Claude Code"
+  },
+  "plugins": [
+    {
+      "name": "prism",
+      "source": ".",
+      "description": "Structured 4-phase development workflow (Research -> Plan -> Implement -> Validate)",
+      "version": "1.0.0"
+    }
+  ]
+}
