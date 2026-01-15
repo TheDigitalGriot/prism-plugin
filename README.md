@@ -10,7 +10,7 @@ Prism transforms complex coding tasks into focused, quality work through special
 
 ```bash
 # Add the marketplace
-/plugin marketplace add your-username/prism-plugin
+/plugin marketplace add TheDigitalGriot/prism-plugin
 
 # Install the plugin
 /plugin install prism@prism-marketplace
