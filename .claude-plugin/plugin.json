@@ -1,0 +1,8 @@
+{
+  "name": "prism",
+  "description": "Structured 4-phase development workflow (Research -> Plan -> Implement -> Validate)",
+  "version": "1.0.0",
+  "author": {
+    "name": "Prism Team"
+  }
+}
