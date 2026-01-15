@@ -9,7 +9,10 @@
   "plugins": [
     {
       "name": "prism",
-      "source": ".",
+      "source": {
+        "source": "github",
+        "repo": "TheDigitalGriot/prism-plugin"
+      },
       "description": "Structured 4-phase development workflow (Research -> Plan -> Implement -> Validate)",
       "version": "1.0.0"
     }
