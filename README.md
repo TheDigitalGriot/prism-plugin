@@ -28,17 +28,38 @@ claude --plugin-dir /path/to/prism-plugin
 
 Say "help me build [feature]" or "implement [task]" to trigger the full Prism workflow.
 
-### Direct Skill Invocation
+### Core Workflow Skills
 
 | Command | Purpose |
 |---------|---------|
-| `/prism:prism-research` | Start research phase - document codebase |
+| `/prism:prism` | Main orchestrator - routes to appropriate phase |
+| `/prism:prism-research` | Research phase - document codebase |
 | `/prism:prism-plan` | Create implementation plan |
 | `/prism:prism-implement` | Execute approved plan |
 | `/prism:prism-validate` | Verify implementation against plan |
 | `/prism:prism-iterate` | Update plan based on feedback |
 
-### Standalone Commands
+### Document Generation Skills
+
+These skills orchestrate document generation commands with workflow integration:
+
+| Command | Purpose | Invokes |
+|---------|---------|---------|
+| `/prism:prism-prd` | Generate PRD with workflow context | `/generate_prd` |
+| `/prism:prism-visual-docs` | Generate UX documentation | `/generate_user_flows`, `/generate_tech_spec` |
+
+### Document Generation Commands
+
+Standalone commands for generating project documentation:
+
+| Command | Purpose |
+|---------|---------|
+| `/prism:generate_prd` | Generate Product Requirements Document |
+| `/prism:generate_tech_spec` | Generate Technical Specification |
+| `/prism:generate_user_flows` | Generate User Flows & wireframes |
+| `/prism:generate_pricing` | Generate MVP pricing proposal |
+
+### Git & Session Commands
 
 | Command | Purpose |
 |---------|---------|
@@ -61,7 +82,7 @@ User Request
      ▼
 ┌──────────────────┐
 │     SKILLS       │  Auto-discovered based on context
-│  (Orchestrators) │  Complex multi-file workflows
+│  (Orchestrators) │  Invoke commands & agents
 └────────┬─────────┘
          ▼
 ┌──────────────────┐
@@ -73,6 +94,42 @@ User Request
 │     AGENTS       │  Specialized workers via Task()
 │  (Specialists)   │  Research, analysis, pattern finding
 └──────────────────┘
+```
+
+### Workflow Diagram
+
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│  prism-prd  │────▶│  research   │────▶│    plan     │────▶│  implement  │
+│  (Optional) │     │             │     │             │     │             │
+└─────────────┘     └─────────────┘     └─────────────┘     └──────┬──────┘
+       │                                                           │
+       ▼                                                           ▼
+┌─────────────┐                                            ┌─────────────┐
+│ visual-docs │                                            │  validate   │
+│  (Optional) │                                            │             │
+└─────────────┘                                            └──────┬──────┘
+                                                                  │
+                                                                  ▼
+                                                           ┌─────────────┐
+                                                           │   iterate   │
+                                                           │ (if needed) │
+                                                           └─────────────┘
+```
+
+### Document Generation Flow
+
+Skills orchestrate commands for document generation:
+
+```
+Skills (Orchestrators)              Commands (Generators)
+─────────────────────              ────────────────────
+prism-prd          ──────────────▶ /generate_prd
+
+prism-visual-docs  ──────────────▶ /generate_user_flows
+                   ──────────────▶ /generate_tech_spec
+
+(standalone)       ──────────────▶ /generate_pricing
 ```
 
 ### Agents
@@ -118,7 +175,7 @@ project/
 └── thoughts/
     ├── shared/            # Committed to repo
     │   ├── research/      # YYYY-MM-DD-topic.md
-    │   ├── plans/         # YYYY-MM-DD-feature.md
+    │   ├── plans/         # YYYY-MM-DD-feature.md (PRDs, specs, flows)
     │   ├── validation/    # YYYY-MM-DD-report.md
     │   ├── handoffs/      # Session handoff docs
     │   └── prs/           # PR descriptions
