@@ -219,9 +219,9 @@ main() {
         local output
         output=$(run_iteration) || true
 
-        # Check signals
-        check_signals "$output"
-        local signal=$?
+        # Check signals (capture return code without triggering set -e)
+        local signal=0
+        check_signals "$output" || signal=$?
 
         case $signal in
             0)  # Complete
