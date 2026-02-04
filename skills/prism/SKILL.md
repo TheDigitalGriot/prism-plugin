@@ -22,6 +22,7 @@ Focus complexity through specialized agents to produce clear, quality code.
 | Validate | `/prism-validate` | `thoughts/shared/validation/YYYY-MM-DD-report.md` |
 | Iterate | `/prism-iterate` | Updated plan + continued implementation |
 | Ralph | `/prism-ralph` | Autonomous story execution via `ralph.sh` |
+| Debug | `/prism-debug` | Debug investigation report |
 
 ### Document Generation
 
@@ -146,6 +147,29 @@ For autonomous multi-story execution without human intervention.
 - `thoughts/shared/ralph/stories.json` - Task definitions
 - `thoughts/shared/ralph/progress.md` - Accumulated learnings
 
+### Debug (`/prism-debug`)
+
+Investigate issues during implementation or when quality gates fail.
+
+**When to use**:
+- Quality gate failures (typecheck, lint, test)
+- Unexpected runtime errors
+- "It was working before" scenarios
+
+**Key behaviors**:
+- Spawns parallel investigation agents
+- Checks logs, app state, and git history
+- Produces structured debug report
+- Integrates with Ralph auto-retry flow
+
+**Agents available**:
+- `log-investigator` - Analyze log files for errors
+- `state-investigator` - Check app state and config
+- `git-investigator` - Analyze recent changes
+
+**Ralph Integration**:
+When Ralph encounters quality gate failures, `/prism-debug` runs automatically to capture diagnostic context for the next retry iteration.
+
 ## Document Generation
 
 Generate formal documentation before or alongside development.
@@ -211,7 +235,9 @@ Each phase uses TodoWrite for in-session tracking:
 
 ## Available Agents
 
-All agents in `~/.claude/agents/`:
+All agents in `agents/`:
+
+### Research Agents
 
 | Agent | Purpose |
 |-------|---------|
@@ -221,5 +247,13 @@ All agents in `~/.claude/agents/`:
 | `thoughts-locator` | Find existing docs |
 | `thoughts-analyzer` | Extract insights from docs |
 | `web-search-researcher` | External research |
+
+### Debug Agents
+
+| Agent | Purpose |
+|-------|---------|
+| `log-investigator` | Analyze logs for errors |
+| `state-investigator` | Check app state and config |
+| `git-investigator` | Analyze git history |
 
 Invoke via: `Task(subagent_type="agent-name")`

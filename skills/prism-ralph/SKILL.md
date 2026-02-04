@@ -114,9 +114,11 @@ make test
 
 **If any gate fails**:
 1. DO NOT commit
-2. Record failure details in progress.md
-3. Output: `<ralph-retry reason="QUALITY_GATE_FAILED">[details]</ralph-retry>`
-4. Exit (ralph.sh will retry in fresh session)
+2. Capture the full error output
+3. **Run auto-debug investigation** (see Debug Integration section)
+4. Record failure details AND debug findings in progress.md
+5. Output: `<ralph-retry reason="QUALITY_GATE_FAILED">[debug summary]</ralph-retry>`
+6. Exit (ralph.sh will retry in fresh session with debug context)
 
 ### 7. Commit Changes
 
@@ -211,6 +213,102 @@ Check remaining stories:
 6. **Clean output** - Use signal tags for orchestrator parsing
 7. **Don't skip blocked stories** - Only work on unblocked stories
 8. **Follow existing patterns** - Check progress.md before implementing
+
+## Debug Integration
+
+When quality gates fail, automatically invoke debug investigation before retrying.
+
+### Auto-Debug Flow
+
+```
+Quality Gate Failure
+        │
+        ▼
+┌─────────────────────────────────────────────────────────────┐
+│  1. Capture Error Output                                     │
+│     - Full error messages                                    │
+│     - File:line references                                   │
+│     - Stack traces                                           │
+└─────────────────────────────────────────────────────────────┘
+        │
+        ▼
+┌─────────────────────────────────────────────────────────────┐
+│  2. Spawn Debug Investigation Agents (parallel)              │
+│                                                              │
+│  Task(subagent_type="log-investigator")                     │
+│  "Check logs for errors related to: [failure summary]"      │
+│                                                              │
+│  Task(subagent_type="state-investigator")                   │
+│  "Check app state for anomalies: [failure context]"         │
+│                                                              │
+│  Task(subagent_type="git-investigator")                     │
+│  "Check recent changes that might cause: [failure]"         │
+└─────────────────────────────────────────────────────────────┘
+        │
+        ▼
+┌─────────────────────────────────────────────────────────────┐
+│  3. Synthesize Findings                                      │
+│     - Combine agent results                                  │
+│     - Identify root cause hypothesis                         │
+│     - Formulate fix approach                                 │
+└─────────────────────────────────────────────────────────────┘
+        │
+        ▼
+┌─────────────────────────────────────────────────────────────┐
+│  4. Record in progress.md                                    │
+│     - Error output                                           │
+│     - Investigation findings                                 │
+│     - Root cause hypothesis                                  │
+│     - Suggested fix for next iteration                       │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Debug Progress Entry Format
+
+When debug runs, append to progress.md:
+
+```markdown
+---
+
+## [Timestamp] - Debug Investigation for [STORY-XXX]
+
+**Quality Gate Failed**: [typecheck/lint/test]
+
+**Error Output**:
+```
+[captured error output]
+```
+
+**Investigation Findings**:
+- **Logs**: [summary from log-investigator]
+- **State**: [summary from state-investigator]
+- **Git**: [summary from git-investigator]
+
+**Root Cause Hypothesis**: [what we think is wrong]
+
+**Suggested Fix**: [specific approach for next iteration to try]
+
+**Files to Examine**:
+- [file:line] - [why]
+```
+
+### Debug Signal Enhancement
+
+The `<ralph-retry>` signal now includes debug context:
+
+```xml
+<ralph-retry reason="QUALITY_GATE_FAILED">
+  <error>npm test failed: 2 tests failing</error>
+  <root_cause>Missing mock for AuthService in test setup</root_cause>
+  <suggested_fix>Add AuthService mock to test/setup.ts beforeEach</suggested_fix>
+  <files>
+    - src/auth/auth.service.ts:45
+    - test/auth.test.ts:12
+  </files>
+</ralph-retry>
+```
+
+This context helps the next fresh iteration understand what went wrong and how to fix it.
 
 ## Example Session Flow
 

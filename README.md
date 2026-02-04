@@ -2,7 +2,7 @@
 
 A structured 4-phase development workflow for Claude Code: **Research → Plan → Implement → Validate**
 
-Prism transforms complex coding tasks into focused, quality work through specialized agents and systematic documentation.
+Prism transforms complex coding tasks into focused, quality work through specialized agents and systematic documentation. Now with **Ralph-style autonomous execution** for multi-story feature development.
 
 ## Installation
 
@@ -38,6 +38,40 @@ Say "help me build [feature]" or "implement [task]" to trigger the full Prism wo
 | `/prism:prism-implement` | Execute approved plan |
 | `/prism:prism-validate` | Verify implementation against plan |
 | `/prism:prism-iterate` | Update plan based on feedback |
+| `/prism:prism-ralph` | Autonomous story execution (used with ralph.sh) |
+| `/prism:prism-debug` | Debug investigation with parallel agents |
+
+### Ralph Autonomous Execution
+
+For large features with 10+ changes, use Ralph-style iterative execution:
+
+```bash
+# 1. Create and approve a plan
+/prism:prism-plan
+
+# 2. Decompose plan into atomic stories
+/prism:decompose_plan
+
+# 3. Run autonomous execution
+./scripts/ralph.sh
+```
+
+Ralph spawns fresh Claude sessions in a loop, executing one story per iteration with quality gates. Memory persists through files, not AI context.
+
+| Command | Purpose |
+|---------|---------|
+| `/prism:prism-ralph` | Single-story execution (called by ralph.sh) |
+| `/prism:decompose_plan` | Convert plan into stories.json |
+
+### Debug Skill
+
+Investigate issues during implementation or when quality gates fail:
+
+| Command | Purpose |
+|---------|---------|
+| `/prism:prism-debug` | Spawn parallel debug investigation agents |
+
+Debug automatically integrates with Ralph - when quality gates fail, investigation runs before retry.
 
 ### Document Generation Skills
 
@@ -67,7 +101,6 @@ Standalone commands for generating project documentation:
 | `/prism:describe_pr` | Generate PR description |
 | `/prism:create_handoff` | Create session handoff document |
 | `/prism:resume_handoff` | Resume from handoff |
-| `/prism:prism-debug` | Debug with parallel agents |
 | `/prism:worktree` | Set up git worktree |
 | `/prism:review-setup` | Set up PR review environment |
 | `/prism:retroactive` | Create ticket/PR after work done |
@@ -104,17 +137,51 @@ User Request
 │  (Optional) │     │             │     │             │     │             │
 └─────────────┘     └─────────────┘     └─────────────┘     └──────┬──────┘
        │                                                           │
-       ▼                                                           ▼
-┌─────────────┐                                            ┌─────────────┐
-│ visual-docs │                                            │  validate   │
-│  (Optional) │                                            │             │
-└─────────────┘                                            └──────┬──────┘
+       ▼                                                    ┌──────┴──────┐
+┌─────────────┐                                             │             │
+│ visual-docs │                                             ▼             ▼
+│  (Optional) │                                      ┌───────────┐ ┌───────────┐
+└─────────────┘                                      │  Manual   │ │   Ralph   │
+                                                     │  Path     │ │   Path    │
+                                                     └─────┬─────┘ └─────┬─────┘
+                                                           │             │
+                                                           └──────┬──────┘
+                                                                  ▼
+                                                           ┌─────────────┐
+                                                           │  validate   │
+                                                           └──────┬──────┘
                                                                   │
                                                                   ▼
                                                            ┌─────────────┐
                                                            │   iterate   │
                                                            │ (if needed) │
                                                            └─────────────┘
+```
+
+### Ralph Autonomous Execution Flow
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     ralph.sh (Bash Loop)                     │
+│                                                              │
+│  for iteration in 1..MAX_ITERATIONS; do                      │
+│      claude --skill prism-ralph                              │
+│      if output contains "<promise>COMPLETE</promise>"        │
+│          break                                               │
+│  done                                                        │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│              Fresh Claude Session (per iteration)            │
+│                                                              │
+│  1. Load state from files (stories.json, progress.md)       │
+│  2. Pick highest priority incomplete story                   │
+│  3. Implement story                                          │
+│  4. Run quality gates (typecheck, lint, test)                │
+│  5. If fail → auto-debug → retry signal                      │
+│  6. If pass → commit → update state → continue signal        │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ### Document Generation Flow
@@ -134,6 +201,8 @@ prism-visual-docs  ──────────────▶ /generate_user_
 
 ### Agents
 
+#### Research Agents
+
 | Agent | Purpose | Model |
 |-------|---------|-------|
 | `codebase-locator` | Find WHERE code lives | haiku |
@@ -142,6 +211,14 @@ prism-visual-docs  ──────────────▶ /generate_user_
 | `thoughts-locator` | Find existing docs in thoughts/ | haiku |
 | `thoughts-analyzer` | Extract insights from docs | opus |
 | `web-search-researcher` | Research external docs/APIs | sonnet |
+
+#### Debug Agents
+
+| Agent | Purpose | Model |
+|-------|---------|-------|
+| `log-investigator` | Analyze logs for errors | haiku |
+| `state-investigator` | Check app state and config | haiku |
+| `git-investigator` | Analyze git history | haiku |
 
 ## Key Principles
 
@@ -178,7 +255,10 @@ project/
     │   ├── plans/         # YYYY-MM-DD-feature.md (PRDs, specs, flows)
     │   ├── validation/    # YYYY-MM-DD-report.md
     │   ├── handoffs/      # Session handoff docs
-    │   └── prs/           # PR descriptions
+    │   ├── prs/           # PR descriptions
+    │   └── ralph/         # Ralph execution state
+    │       ├── stories.json   # Task definitions and status
+    │       └── progress.md    # Accumulated learnings
     └── local/             # Gitignored, per-developer
 ```
 
@@ -186,6 +266,45 @@ Initialize with:
 ```bash
 python skills/prism/scripts/init_thoughts.py
 ```
+
+## Ralph Execution
+
+For autonomous multi-story execution:
+
+### Quick Start
+
+```bash
+# 1. Create a plan
+/prism:prism-plan "Add user authentication"
+
+# 2. Decompose into stories
+/prism:decompose_plan thoughts/shared/plans/2026-02-04-auth.md
+
+# 3. Run autonomous execution
+./scripts/ralph.sh
+```
+
+### Configuration
+
+```bash
+# Custom iteration limit (default: 50)
+RALPH_MAX_ITERATIONS=20 ./scripts/ralph.sh
+
+# Verbose output
+RALPH_VERBOSE=true ./scripts/ralph.sh
+
+# Custom stories file
+./scripts/ralph.sh path/to/stories.json
+```
+
+### How It Works
+
+1. **Fresh Context**: Each iteration spawns a new Claude session (no context degradation)
+2. **File-Based Memory**: State persists in `stories.json` and `progress.md`
+3. **Quality Gates**: Must pass typecheck/lint/test before commit
+4. **Auto-Debug**: On failure, spawns debug agents to diagnose issues
+5. **Atomic Commits**: One story = one commit
+6. **Learning Accumulation**: Insights persist for future iterations
 
 ## License
 
