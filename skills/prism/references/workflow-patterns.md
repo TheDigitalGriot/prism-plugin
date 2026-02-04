@@ -168,3 +168,97 @@ Avoid:
 - Automated verification runs on PR
 - Manual verification documented in plan
 - Status updates based on CI results
+
+## Ralph Iterative Execution Pattern
+
+For autonomous execution of multiple stories with fresh context per iteration.
+
+### Core Concept
+
+Ralph spawns fresh AI instances in a loop, with memory persisting through files:
+- `stories.json` - Task definitions and completion status
+- `progress.md` - Accumulated learnings
+- Git commits - Permanent record of work
+
+**Key Insight**: Fresh context per iteration prevents context degradation. Files become the AI's long-term memory.
+
+### Architecture
+
+```
+ralph.sh (Bash Loop)
+    │
+    ├── Iteration 1: claude --skill prism-ralph
+    │   └── Execute Story 1 → Commit → Update State
+    │
+    ├── Iteration 2: claude --skill prism-ralph
+    │   └── Execute Story 2 → Commit → Update State
+    │
+    └── ... until <promise>COMPLETE</promise>
+```
+
+### Workflow
+
+1. **Create plan** using `/prism-plan`
+2. **Decompose plan** using `/decompose_plan` → generates `stories.json`
+3. **Run orchestrator**: `./scripts/ralph.sh`
+4. Each iteration:
+   - Loads state from files (fresh context)
+   - Picks highest priority incomplete story
+   - Implements story
+   - Runs quality gates (typecheck, lint, test)
+   - Commits if passing
+   - Updates state files
+5. Loop terminates when all stories complete
+
+### File Structure
+
+```
+thoughts/shared/ralph/
+├── stories.json        # Task definitions and status
+└── progress.md         # Accumulated learnings
+```
+
+### Signal Protocol
+
+| Signal | Meaning |
+|--------|---------|
+| `<promise>COMPLETE</promise>` | All stories done - terminate loop |
+| `<ralph-continue>...</ralph-continue>` | Story complete - continue loop |
+| `<ralph-retry>...</ralph-retry>` | Recoverable error - retry |
+| `<ralph-error>...</ralph-error>` | Fatal error - stop loop |
+
+### When to Use
+
+| Scenario | Use Ralph? |
+|----------|------------|
+| Large feature (10+ changes) | Yes |
+| Repetitive transformations | Yes |
+| Well-defined, decomposable work | Yes |
+| Single focused change | No - use /prism-implement |
+| Interactive iteration needed | No - use /prism-iterate |
+| Unclear requirements | No - need /prism-research first |
+
+### Benefits
+
+- **Fresh Context**: Each story starts with clean AI context
+- **Quality Guaranteed**: No commits without passing gates
+- **Atomic Progress**: Each story = one commit
+- **Learning Accumulation**: Insights persist through files
+- **Fault Tolerance**: Failures retry in fresh sessions
+- **Autonomous**: Runs without human intervention
+
+### Running Ralph
+
+```bash
+# Basic execution
+./scripts/ralph.sh
+
+# With custom iteration limit
+RALPH_MAX_ITERATIONS=20 ./scripts/ralph.sh
+
+# With verbose output
+RALPH_VERBOSE=true ./scripts/ralph.sh
+
+# Specify custom stories file
+./scripts/ralph.sh path/to/stories.json
+```

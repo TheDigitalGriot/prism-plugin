@@ -12,6 +12,8 @@ Focus complexity through specialized agents to produce clear, quality code.
 
 ## Quick Reference
 
+### Core Workflow
+
 | Phase | Skill | Output |
 |-------|-------|--------|
 | Research | `/prism-research` | `thoughts/shared/research/YYYY-MM-DD-topic.md` |
@@ -19,6 +21,16 @@ Focus complexity through specialized agents to produce clear, quality code.
 | Implement | `/prism-implement` | Working code + updated checkboxes |
 | Validate | `/prism-validate` | `thoughts/shared/validation/YYYY-MM-DD-report.md` |
 | Iterate | `/prism-iterate` | Updated plan + continued implementation |
+| Ralph | `/prism-ralph` | Autonomous story execution via `ralph.sh` |
+
+### Document Generation
+
+| Type | Skill/Command | Output |
+|------|---------------|--------|
+| PRD | `/prism-prd` | `thoughts/shared/plans/YYYY-MM-DD-[name]-PRD.md` |
+| User Flows | `/prism-visual-docs` | `thoughts/shared/plans/YYYY-MM-DD-[name]-USER-FLOWS.md` |
+| Tech Spec | `/generate_tech_spec` | `thoughts/shared/plans/YYYY-MM-DD-[name]-TECHNICAL-SPEC.md` |
+| Pricing | `/generate_pricing` | `thoughts/shared/plans/YYYY-MM-DD-[name]-PRICING.md` |
 
 ## Workflow Selection
 
@@ -109,6 +121,77 @@ Verify implementation matches plan.
 ### Iterate (`/prism-iterate`)
 
 Update plan and continue when changes needed.
+
+### Ralph Autonomous Execution (`/prism-ralph`)
+
+For autonomous multi-story execution without human intervention.
+
+**When to use**:
+- Large feature with 10+ changes
+- Repetitive transformations
+- Well-defined, decomposable work
+
+**Workflow**:
+1. Create plan with `/prism-plan`
+2. Decompose with `/decompose_plan`
+3. Run `./scripts/ralph.sh`
+
+**Key behaviors**:
+- Fresh AI context per story (no degradation)
+- Quality gates before each commit
+- Learnings accumulate in `progress.md`
+- Terminates when all stories complete
+
+**Files**:
+- `thoughts/shared/ralph/stories.json` - Task definitions
+- `thoughts/shared/ralph/progress.md` - Accumulated learnings
+
+## Document Generation
+
+Generate formal documentation before or alongside development.
+
+### PRD (`/prism-prd`)
+
+Product Requirements Document - foundation for the project.
+
+**Workflow**:
+1. Checks for existing context in `thoughts/`
+2. Invokes `/generate_prd` with clarifying questions
+3. Saves to `thoughts/shared/plans/`
+4. Offers companion documents
+
+**Outputs**: Problem statement, target users, features, technical requirements, risks
+
+### Visual Docs (`/prism-visual-docs`)
+
+User flows, wireframes, and UX specifications.
+
+**Workflow**:
+1. Locates relevant PRD
+2. Invokes `/generate_user_flows` for UX docs
+3. Optionally invokes `/generate_tech_spec` for architecture
+4. Saves to `thoughts/shared/plans/`
+
+**Outputs**: User personas, flow diagrams, screen inventory, wireframes, component library
+
+### Available Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/generate_prd` | Product requirements document |
+| `/generate_user_flows` | User flows and wireframes |
+| `/generate_tech_spec` | Technical specification |
+| `/generate_pricing` | MVP pricing proposal |
+
+### Document Flow
+
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│  prism-prd  │────▶│ visual-docs │────▶│  prism-plan │
+│  (Product   │     │  (UX Flows  │     │  (Impl      │
+│   Reqs)     │     │   & Specs)  │     │   Steps)    │
+└─────────────┘     └─────────────┘     └─────────────┘
+```
 
 ## Context Management
 
