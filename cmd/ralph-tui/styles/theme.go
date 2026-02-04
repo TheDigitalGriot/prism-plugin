@@ -60,11 +60,12 @@ var (
 			Foreground(Warning).
 			Italic(true)
 
-	InfoStyle    = lipgloss.NewStyle().Foreground(Info)
-	SuccessStyle = lipgloss.NewStyle().Foreground(Success)
-	WarningStyle = lipgloss.NewStyle().Foreground(Warning)
-	ErrorStyle   = lipgloss.NewStyle().Foreground(Error).Bold(true)
-	DimStyle     = lipgloss.NewStyle().Foreground(Dim)
+	InfoStyle      = lipgloss.NewStyle().Foreground(Info)
+	SuccessStyle   = lipgloss.NewStyle().Foreground(Success)
+	WarningStyle   = lipgloss.NewStyle().Foreground(Warning)
+	ErrorStyle     = lipgloss.NewStyle().Foreground(Error).Bold(true)
+	DimStyle       = lipgloss.NewStyle().Foreground(Dim)
+	HighlightStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#06B6D4")) // Cyan for tool activity
 
 	OutputBoxStyle = lipgloss.NewStyle().
 			Border(lipgloss.NormalBorder()).

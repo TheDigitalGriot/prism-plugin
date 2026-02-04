@@ -54,6 +54,13 @@ type ClaudeFinishedMsg struct {
 	Error    error
 }
 
+// ToolActivityMsg indicates a tool is being used
+type ToolActivityMsg struct {
+	ToolName    string
+	Description string
+	IsComplete  bool
+}
+
 // RunClaudeCmd returns a tea.Cmd that runs Claude and returns when complete
 func RunClaudeCmd(projectDir, storiesPath string, iteration int) tea.Cmd {
 	return func() tea.Msg {
@@ -113,6 +120,8 @@ func RunClaudeStreamingCmd(projectDir, storiesPath string, iteration int, output
 			"claude",
 			"--dangerously-skip-permissions",
 			"--print",
+			"--output-format", "stream-json",
+			"--verbose",
 			prompt,
 		)
 		cmd.Dir = projectDir
@@ -162,6 +171,11 @@ func RunClaudeStreamingCmd(projectDir, storiesPath string, iteration int, output
 			exitCode = cmd.ProcessState.ExitCode()
 		}
 
+		// Close channel before returning final message
+		if outputChan != nil {
+			close(outputChan)
+		}
+
 		return ClaudeFinishedMsg{
 			ExitCode: exitCode,
 			Output:   outputBuf.String(),
@@ -171,7 +185,19 @@ func RunClaudeStreamingCmd(projectDir, storiesPath string, iteration int, output
 	}
 }
 
+// ListenToOutput creates a tea.Cmd that listens for messages from the output channel
+func ListenToOutput(outputChan <-chan tea.Msg) tea.Cmd {
+	return func() tea.Msg {
+		msg, ok := <-outputChan
+		if !ok {
+			return nil // Channel closed
+		}
+		return msg
+	}
+}
+
 // streamOutput reads from a pipe and sends output messages
+// Parses stream-json events to extract tool activity
 func streamOutput(pipe io.ReadCloser, buf *strings.Builder, isStderr bool, outputChan chan<- tea.Msg) {
 	scanner := bufio.NewScanner(pipe)
 	// Increase buffer size for long lines
@@ -183,13 +209,49 @@ func streamOutput(pipe io.ReadCloser, buf *strings.Builder, isStderr bool, outpu
 		line := scanner.Text()
 		buf.WriteString(line + "\n")
 
-		if outputChan != nil {
+		if outputChan == nil {
+			continue
+		}
+
+		// Try to parse as stream-json event
+		event, err := ParseStreamEvent(line)
+		if err != nil {
+			// Not valid JSON, send as raw output
 			outputChan <- ClaudeOutputMsg{
 				Text:     line,
 				IsStderr: isStderr,
 			}
+			continue
+		}
+
+		// Extract tool activity from event
+		activity := ExtractToolActivity(event)
+		if activity != "" {
+			outputChan <- ToolActivityMsg{
+				ToolName:    getToolName(event),
+				Description: activity,
+				IsComplete:  event.Type == "result",
+			}
+		}
+
+		// Also send raw output for logging/debugging
+		outputChan <- ClaudeOutputMsg{
+			Text:     line,
+			IsStderr: isStderr,
 		}
 	}
+}
+
+// getToolName extracts the tool name from an event
+func getToolName(event *StreamEvent) string {
+	if event.Message != nil {
+		for _, block := range event.Message.Content {
+			if block.Type == "tool_use" {
+				return block.Name
+			}
+		}
+	}
+	return ""
 }
 
 // TerminateProcess kills the Claude process and its children

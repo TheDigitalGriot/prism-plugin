@@ -68,20 +68,43 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.AddLog(LogInfo, fmt.Sprintf("Starting iteration %d", msg.Iteration))
 		return m, nil
 
-	case claude.ClaudeOutputMsg:
-		// Add to recent output for activity panel
-		lines := splitLines(msg.Text)
-		for _, line := range lines {
-			if line != "" {
-				m.RecentOutput = append(m.RecentOutput, line)
-				if len(m.RecentOutput) > 10 {
-					m.RecentOutput = m.RecentOutput[1:]
-				}
+	case claude.ToolActivityMsg:
+		// Update current tool activity for display
+		m.CurrentTool = msg.ToolName
+		m.CurrentActivity = msg.Description
+
+		// Add to recent activities history (avoid duplicates)
+		if msg.Description != "" && (len(m.RecentActivities) == 0 || m.RecentActivities[len(m.RecentActivities)-1] != msg.Description) {
+			m.RecentActivities = append(m.RecentActivities, msg.Description)
+			if len(m.RecentActivities) > 10 {
+				m.RecentActivities = m.RecentActivities[1:]
 			}
+		}
+
+		if msg.IsComplete {
+			m.CurrentTool = ""
+			m.CurrentActivity = ""
+		}
+		// Continue listening for more output
+		if m.OutputChan != nil {
+			return m, claude.ListenToOutput(m.OutputChan)
+		}
+		return m, nil
+
+	case claude.ClaudeOutputMsg:
+		// Add to recent output for activity panel (raw JSON for debugging)
+		// Don't show raw JSON in recent output - it's not human readable
+		// The ToolActivityMsg handler above captures the meaningful info
+		// Continue listening for more output
+		if m.OutputChan != nil {
+			return m, claude.ListenToOutput(m.OutputChan)
 		}
 		return m, nil
 
 	case claude.ClaudeFinishedMsg:
+		m.OutputChan = nil // Stop listening for more output
+		m.CurrentTool = ""
+		m.CurrentActivity = ""
 		duration := msg.Duration.Round(time.Second)
 		m.AddLog(LogInfo, fmt.Sprintf("Iteration completed in %s", duration))
 
@@ -163,10 +186,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Start next iteration
 		m.Iteration++
 		m.IterationStart = time.Now()
-		m.RecentOutput = []string{} // Clear recent output
+		m.RecentOutput = []string{}     // Clear recent output
+		m.RecentActivities = []string{} // Clear recent activities
 		m.AddLog(LogInfo, fmt.Sprintf("Starting iteration %d/%d", m.Iteration, m.MaxIterations))
 
-		return m, claude.RunClaudeCmd(m.ProjectDir, m.StoriesPath, m.Iteration)
+		// Use streaming execution for real-time activity display
+		m.OutputChan = make(chan tea.Msg, 100)
+		return m, tea.Batch(
+			claude.RunClaudeStreamingCmd(m.ProjectDir, m.StoriesPath, m.Iteration, m.OutputChan),
+			claude.ListenToOutput(m.OutputChan),
+		)
 
 	case RetryIterationMsg:
 		if m.State != StateRunning && m.State != StatePaused {
@@ -178,8 +207,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		m.RecentOutput = []string{}
+		m.RecentActivities = []string{}
 		m.AddLog(LogInfo, fmt.Sprintf("Retrying iteration %d", m.Iteration))
-		return m, claude.RunClaudeCmd(m.ProjectDir, m.StoriesPath, m.Iteration)
+
+		// Use streaming execution for real-time activity display
+		m.OutputChan = make(chan tea.Msg, 100)
+		return m, tea.Batch(
+			claude.RunClaudeStreamingCmd(m.ProjectDir, m.StoriesPath, m.Iteration, m.OutputChan),
+			claude.ListenToOutput(m.OutputChan),
+		)
 
 	case StartExecutionMsg:
 		if m.State == StateIdle {

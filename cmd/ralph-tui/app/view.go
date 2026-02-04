@@ -189,6 +189,29 @@ func (m Model) renderActivityPanel(width int) string {
 		}
 		statusLine := fmt.Sprintf("Status: %s %s", m.Spinner.View(), status)
 		lines = append(lines, statusLine)
+
+		// Current tool activity
+		if m.CurrentActivity != "" {
+			lines = append(lines, "")
+			activityLine := m.CurrentActivity
+			if len(activityLine) > width-6 {
+				activityLine = activityLine[:width-9] + "..."
+			}
+			lines = append(lines, styles.HighlightStyle.Render(activityLine))
+		}
+		lines = append(lines, "")
+	} else if m.State == StateRunning {
+		// Running but no current story yet
+		statusLine := fmt.Sprintf("Status: %s Starting...", m.Spinner.View())
+		lines = append(lines, statusLine)
+		if m.CurrentActivity != "" {
+			lines = append(lines, "")
+			activityLine := m.CurrentActivity
+			if len(activityLine) > width-6 {
+				activityLine = activityLine[:width-9] + "..."
+			}
+			lines = append(lines, styles.HighlightStyle.Render(activityLine))
+		}
 		lines = append(lines, "")
 	} else if m.State == StateIdle {
 		lines = append(lines, styles.DimStyle.Render("Press Enter to start execution"))
@@ -204,16 +227,17 @@ func (m Model) renderActivityPanel(width int) string {
 		lines = append(lines, "")
 	}
 
-	// Recent output box
-	if len(m.RecentOutput) > 0 {
-		lines = append(lines, styles.DimStyle.Render("Recent output:"))
+	// Recent activities history
+	if len(m.RecentActivities) > 0 {
+		lines = append(lines, styles.DimStyle.Render("Recent:"))
 
-		outputLines := m.RecentOutput
-		if len(outputLines) > 5 {
-			outputLines = outputLines[len(outputLines)-5:]
+		// Show last 5 activities
+		activityLines := m.RecentActivities
+		if len(activityLines) > 5 {
+			activityLines = activityLines[len(activityLines)-5:]
 		}
 
-		for _, line := range outputLines {
+		for _, line := range activityLines {
 			// Truncate long lines
 			if len(line) > width-6 {
 				line = line[:width-9] + "..."

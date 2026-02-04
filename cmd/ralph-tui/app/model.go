@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/progress"
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/viewport"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 // AppState represents the running state of the TUI
@@ -83,6 +84,11 @@ type Model struct {
 	CurrentOutput strings.Builder
 	RecentOutput  []string // Last N lines for activity panel
 
+	// Current tool activity
+	CurrentTool       string   // Name of currently executing tool
+	CurrentActivity   string   // Human-readable description of current activity
+	RecentActivities  []string // History of recent tool activities
+
 	// UI components
 	Spinner  spinner.Model
 	Progress progress.Model
@@ -100,6 +106,9 @@ type Model struct {
 
 	// Error info
 	LastError string
+
+	// Streaming output channel
+	OutputChan chan tea.Msg
 }
 
 // StoryView is a simplified story representation for display
