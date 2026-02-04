@@ -1,3 +1,13 @@
 # Reference files
 ref/
 thoughts/
+
+# Build artifacts
+bin/
+cmd/ralph-tui/bin/
+cmd/ralph-tui/ralph-tui
+cmd/ralph-tui/ralph-tui.exe
+*.exe
+
+# Go
+cmd/ralph-tui/go.sum

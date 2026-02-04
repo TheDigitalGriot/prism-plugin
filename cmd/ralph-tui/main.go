@@ -1,0 +1,98 @@
+package main
+
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/prism-plugin/ralph-tui/app"
+	"github.com/spf13/cobra"
+)
+
+var version = "dev"
+
+func main() {
+	var (
+		storiesFile   string
+		maxIterations int
+		pause         int
+	)
+
+	rootCmd := &cobra.Command{
+		Use:     "ralph-tui [stories-file]",
+		Short:   "Ralph TUI - Autonomous iteration executor with visual interface",
+		Long: `Ralph TUI provides a visual terminal interface for running the Ralph
+iterative workflow. It spawns Claude Code sessions to execute stories
+autonomously while providing real-time visibility into progress.
+
+The TUI displays:
+  - Story list with completion status
+  - Overall progress bar
+  - Current activity and Claude output
+  - Scrollable log history
+
+Keyboard controls:
+  q, Ctrl+C  Quit (graceful shutdown)
+  p          Pause/Resume execution
+  s          Skip current story
+  Enter      Start (when idle)
+  j/k        Scroll log up/down
+  ?          Toggle help`,
+		Version: version,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// Determine stories file path
+			if len(args) > 0 {
+				storiesFile = args[0]
+			} else if storiesFile == "" {
+				// Default: look in current directory
+				cwd, err := os.Getwd()
+				if err != nil {
+					return fmt.Errorf("failed to get working directory: %w", err)
+				}
+				storiesFile = filepath.Join(cwd, "thoughts", "shared", "ralph", "stories.json")
+			}
+
+			// Get absolute path
+			absPath, err := filepath.Abs(storiesFile)
+			if err != nil {
+				return fmt.Errorf("failed to resolve path: %w", err)
+			}
+			storiesFile = absPath
+
+			// Verify file exists
+			if _, err := os.Stat(storiesFile); os.IsNotExist(err) {
+				return fmt.Errorf("stories file not found: %s\n\nRun /decompose_plan first to generate stories.json", storiesFile)
+			}
+
+			// Determine project directory (parent of thoughts/)
+			projectDir := filepath.Dir(filepath.Dir(filepath.Dir(filepath.Dir(storiesFile))))
+			if projectDir == "" || projectDir == "." {
+				projectDir, _ = os.Getwd()
+			}
+
+			// Create and run TUI
+			model := app.NewModel(storiesFile, projectDir, maxIterations, pause)
+
+			// Add initial log entry
+			model.AddLog(app.LogInfo, "Ralph TUI v"+version)
+			model.AddLog(app.LogInfo, "Stories: "+storiesFile)
+			model.AddLog(app.LogInfo, "Project: "+projectDir)
+
+			p := tea.NewProgram(model, tea.WithAltScreen())
+			if _, err := p.Run(); err != nil {
+				return fmt.Errorf("failed to run TUI: %w", err)
+			}
+
+			return nil
+		},
+	}
+
+	rootCmd.Flags().StringVarP(&storiesFile, "file", "f", "", "Path to stories.json")
+	rootCmd.Flags().IntVarP(&maxIterations, "max-iterations", "n", 50, "Maximum iterations before stopping")
+	rootCmd.Flags().IntVarP(&pause, "pause", "p", 2, "Seconds to pause between iterations")
+
+	if err := rootCmd.Execute(); err != nil {
+		os.Exit(1)
+	}
+}

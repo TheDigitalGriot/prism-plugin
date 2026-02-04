@@ -1,0 +1,75 @@
+{
+  "plan": {
+    "name": "Test Plan - Ralph TUI Demo",
+    "source": "test",
+    "createdAt": "2026-02-04T12:00:00Z",
+    "qualityGates": [
+      "echo 'typecheck passed'",
+      "echo 'lint passed'",
+      "echo 'tests passed'"
+    ]
+  },
+  "stories": [
+    {
+      "id": "STORY-001",
+      "title": "Create user model",
+      "description": "Define the User type with basic fields",
+      "priority": 1,
+      "status": "complete",
+      "blockedBy": null,
+      "files": [
+        { "path": "src/models/user.ts", "action": "create" }
+      ],
+      "steps": [
+        { "description": "Define User interface", "done": true },
+        { "description": "Add validation", "done": true }
+      ],
+      "completedAt": "2026-02-04T12:30:00Z",
+      "commitHash": "abc123"
+    },
+    {
+      "id": "STORY-002",
+      "title": "Add user repository",
+      "description": "Create repository for user CRUD operations",
+      "priority": 2,
+      "status": "pending",
+      "blockedBy": "STORY-001",
+      "files": [
+        { "path": "src/repos/user-repo.ts", "action": "create" }
+      ],
+      "steps": [
+        { "description": "Create UserRepository class", "done": false },
+        { "description": "Implement CRUD methods", "done": false }
+      ]
+    },
+    {
+      "id": "STORY-003",
+      "title": "Add authentication service",
+      "description": "Implement login/logout functionality",
+      "priority": 3,
+      "status": "pending",
+      "blockedBy": "STORY-002",
+      "files": [
+        { "path": "src/services/auth.ts", "action": "create" }
+      ],
+      "steps": [
+        { "description": "Create AuthService", "done": false },
+        { "description": "Add JWT handling", "done": false }
+      ]
+    },
+    {
+      "id": "STORY-004",
+      "title": "Add documentation",
+      "description": "Write API documentation",
+      "priority": 10,
+      "status": "pending",
+      "blockedBy": null,
+      "files": [
+        { "path": "docs/api.md", "action": "create" }
+      ],
+      "steps": [
+        { "description": "Document endpoints", "done": false }
+      ]
+    }
+  ]
+}
