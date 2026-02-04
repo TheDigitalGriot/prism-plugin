@@ -2,7 +2,10 @@
 # Ralph Iterative Executor for Prism
 # Spawns fresh Claude Code sessions in a loop to execute stories autonomously
 #
-# Usage: ./ralph.sh [stories-file]
+# Usage: ralph [stories-file]
+#
+# Run from your PROJECT DIRECTORY (where thoughts/ exists).
+# The script uses the current working directory by default.
 #
 # Environment Variables:
 #   RALPH_MAX_ITERATIONS: Maximum iterations (default: 50)
@@ -10,10 +13,13 @@
 #   RALPH_PAUSE: Seconds between iterations (default: 2)
 #
 # Examples:
-#   ./ralph.sh                                          # Use default stories.json
-#   ./ralph.sh thoughts/shared/ralph/stories.json      # Specify stories file
-#   RALPH_MAX_ITERATIONS=20 ./ralph.sh                 # Custom iteration limit
-#   RALPH_VERBOSE=true ./ralph.sh                      # Verbose output
+#   ralph                                              # Run from project dir
+#   ralph thoughts/shared/ralph/stories.json          # Specify stories file
+#   RALPH_MAX_ITERATIONS=20 ralph                     # Custom iteration limit
+#   RALPH_VERBOSE=true ralph                          # Verbose output
+#
+# Setup (add to ~/.bashrc or ~/.zshrc):
+#   alias ralph='/path/to/prism-plugin/scripts/ralph.sh'
 
 set -euo pipefail
 
@@ -25,8 +31,8 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+# Use CURRENT WORKING DIRECTORY (where you run the command from)
+PROJECT_DIR="$(pwd)"
 STORIES_FILE="${1:-$PROJECT_DIR/thoughts/shared/ralph/stories.json}"
 PROGRESS_FILE="${STORIES_FILE%/*}/progress.md"
 MAX_ITERATIONS="${RALPH_MAX_ITERATIONS:-50}"
@@ -124,12 +130,12 @@ run_iteration() {
     # Build the prompt for Claude
     local prompt="Execute the next story from $STORIES_FILE using the /prism-ralph workflow."
 
-    # Run Claude with prism-ralph skill
+    # Run Claude with prism-ralph skill from the project directory
     # Using --print to capture output, --dangerously-skip-permissions for autonomous operation
     if [[ "$VERBOSE" == "true" ]]; then
-        output=$(claude --dangerously-skip-permissions --print "$prompt" 2>&1 | tee /dev/stderr) || exit_code=$?
+        output=$(cd "$PROJECT_DIR" && claude --dangerously-skip-permissions --print "$prompt" 2>&1 | tee /dev/stderr) || exit_code=$?
     else
-        output=$(claude --dangerously-skip-permissions --print "$prompt" 2>&1) || exit_code=$?
+        output=$(cd "$PROJECT_DIR" && claude --dangerously-skip-permissions --print "$prompt" 2>&1) || exit_code=$?
     fi
 
     # Return the output for signal checking
@@ -185,6 +191,7 @@ main() {
     total=$(count_total)
 
     log "Starting Ralph iterative execution"
+    log "Project: $PROJECT_DIR"
     log "Plan: $plan_name"
     log "Stories file: $STORIES_FILE"
     log "Total stories: $total"
