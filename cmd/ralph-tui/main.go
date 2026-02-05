@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var version = "v1.5.0"
+var version = "v1.8.0"
 
 func main() {
 	var (
@@ -38,9 +38,10 @@ The TUI displays:
 Keyboard controls:
   q, Ctrl+C  Quit (graceful shutdown)
   p          Pause/Resume execution
-  s          Skip current story
+  /          Skip current story
+  a/s        Story pagination (prev/next page)
+  z/x        Log pagination (prev/next page)
   Enter      Start (when idle)
-  j/k        Scroll log up/down
   ?          Toggle help`,
 		Version: version,
 		RunE: func(cmd *cobra.Command, args []string) error {
