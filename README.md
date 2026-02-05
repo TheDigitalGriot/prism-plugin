@@ -1,8 +1,16 @@
 # Prism
 
-A structured 4-phase development workflow for Claude Code: **Research → Plan → Implement → Validate**
+**A structured 4-phase development workflow for Claude Code**
 
-Prism transforms complex coding tasks into focused, quality work through specialized agents and systematic documentation. Now with **Ralph-style autonomous execution** for multi-story feature development.
+> Research → Plan → Implement → Validate
+
+Prism transforms complex coding tasks into focused, quality work through specialized agents and systematic documentation. Rather than jumping straight into code, Prism guides AI through deliberate phases—researching the codebase, creating approved plans, implementing with verification, and validating against success criteria.
+
+**Key Features:**
+- 🔬 **Parallel Research Agents** — Multiple specialized agents explore code simultaneously
+- 📋 **Interactive Planning** — Plans are contracts, reviewed and approved before implementation
+- ✅ **Quality Gates** — Automated verification at every stage
+- 🔄 **Ralph Autonomous Execution** — Multi-story feature development with fresh context per iteration
 
 ## Installation
 

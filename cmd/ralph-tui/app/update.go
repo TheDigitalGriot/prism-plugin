@@ -2,6 +2,8 @@ package app
 
 import (
 	"fmt"
+	"math"
+	"math/rand"
 	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
@@ -10,13 +12,42 @@ import (
 	"github.com/prism-plugin/ralph-tui/domain"
 )
 
+// demoActivities is a list of fake tool activities for demo mode
+var demoActivities = []struct {
+	Tool        string
+	Description string
+}{
+	{"Read", "Reading: src/components/Button.tsx"},
+	{"Glob", "Finding: **/*.test.ts"},
+	{"Grep", "Searching: handleSubmit"},
+	{"Read", "Reading: src/api/auth.go"},
+	{"Edit", "Editing: src/services/user.ts"},
+	{"Bash", "Running: npm run typecheck"},
+	{"Task", "Agent: Exploring test patterns"},
+	{"Read", "Reading: package.json"},
+	{"Edit", "Editing: src/utils/validation.ts"},
+	{"Bash", "Running: go test ./..."},
+	{"Grep", "Searching: interface User"},
+	{"Task", "Agent: Analyzing dependencies"},
+	{"Edit", "Editing: src/components/Form.tsx"},
+	{"Bash", "Running: npm run lint"},
+	{"Read", "Reading: tsconfig.json"},
+	{"TodoWrite", "Updating tasks..."},
+}
+
 // Init initializes the model
 func (m Model) Init() tea.Cmd {
-	return tea.Batch(
+	cmds := []tea.Cmd{
 		m.Spinner.Tick,
 		tickCmd(),
-		LoadStoriesCmd(m.StoriesPath),
-	)
+	}
+
+	// Only load stories if not in demo mode (path is set)
+	if m.StoriesPath != "" {
+		cmds = append(cmds, LoadStoriesCmd(m.StoriesPath))
+	}
+
+	return tea.Batch(cmds...)
 }
 
 // Update handles all messages
@@ -39,6 +70,74 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.Spinner, cmd = m.Spinner.Update(spinner.TickMsg{})
 		cmds = append(cmds, cmd, tickCmd())
 
+		// Advance progress bar animation
+		m.Anim.ProgressPos, m.Anim.ProgressVel = m.Anim.ProgressSpring.Update(
+			m.Anim.ProgressPos,
+			m.Anim.ProgressVel,
+			m.Anim.ProgressTarget,
+		)
+
+		// Advance story pop animations
+		for idx := range m.Anim.StoryPopScales {
+			scale, vel := m.Anim.StoryPopSpring.Update(
+				m.Anim.StoryPopScales[idx],
+				m.Anim.StoryPopVels[idx],
+				1.0, // target scale
+			)
+			m.Anim.StoryPopScales[idx] = scale
+			m.Anim.StoryPopVels[idx] = vel
+
+			// Clean up finished animations
+			if math.Abs(scale-1.0) < 0.01 && math.Abs(vel) < 0.01 {
+				delete(m.Anim.StoryPopScales, idx)
+				delete(m.Anim.StoryPopVels, idx)
+			}
+		}
+
+		// Advance pulse (continuous sine wave)
+		m.Anim.PulsePhase += 0.15 // ~2.4 rad/sec at 100ms ticks
+		if m.Anim.PulsePhase > 2*math.Pi {
+			m.Anim.PulsePhase -= 2 * math.Pi
+		}
+
+		// Advance log entry slide-ins
+		for i := range m.Anim.LogEntryOffsets {
+			offset, vel := m.Anim.LogSlideSpring.Update(
+				m.Anim.LogEntryOffsets[i],
+				m.Anim.LogEntryVels[i],
+				0.0, // target offset
+			)
+			m.Anim.LogEntryOffsets[i] = offset
+			m.Anim.LogEntryVels[i] = vel
+		}
+
+		// Advance prism animation (slower, every 3 ticks = 300ms per frame for 4 colors)
+		m.Anim.PrismTick++
+		if m.Anim.PrismTick >= 3 {
+			m.Anim.PrismTick = 0
+			m.Anim.PrismFrame = (m.Anim.PrismFrame + 1) % 4
+		}
+
+		// Advance ray spring animations (for gradient prism)
+		for i := range m.Anim.RayLengths {
+			m.Anim.RayLengths[i], m.Anim.RayVels[i] = m.Anim.RaySpring.Update(
+				m.Anim.RayLengths[i],
+				m.Anim.RayVels[i],
+				m.Anim.RayTargets[i],
+			)
+
+			// Set new random target when settled
+			if math.Abs(m.Anim.RayLengths[i]-m.Anim.RayTargets[i]) < 0.1 && math.Abs(m.Anim.RayVels[i]) < 0.1 {
+				m.Anim.RayTargets[i] = 4 + rand.Float64()*4 // Random 4-8
+			}
+		}
+
+		// Advance shimmer phase (for gradient brightness effects)
+		m.Anim.ShimmerPhase += 0.08 // Slower than pulse for subtle effect
+		if m.Anim.ShimmerPhase > 2*math.Pi {
+			m.Anim.ShimmerPhase -= 2 * math.Pi
+		}
+
 	case InitCompleteMsg:
 		if msg.Error != nil {
 			m.State = StateError
@@ -48,6 +147,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.PlanName = msg.PlanName
 			m.Stories = msg.Stories
 			m.TotalStories = len(msg.Stories)
+			// Initialize progress animation to current progress
+			m.Anim.ProgressPos = m.ProgressPercent()
+			m.Anim.ProgressTarget = m.ProgressPercent()
 			m.AddLog(LogInfo, fmt.Sprintf("Loaded %d stories from plan: %s", len(msg.Stories), msg.PlanName))
 		}
 		return m, nil
@@ -58,6 +160,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.Stories = msg.Stories
 			m.TotalStories = len(msg.Stories)
+			// Update progress target for smooth animation
+			m.Anim.ProgressTarget = m.ProgressPercent()
 		}
 		return m, nil
 
@@ -155,13 +259,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case StoryCompletedMsg:
 		m.AddLog(LogSuccess, "Story complete: "+msg.StoryID)
-		// Update story status in local list
+		// Update story status in local list and trigger pop animation
 		for i := range m.Stories {
 			if m.Stories[i].ID == msg.StoryID {
 				m.Stories[i].Status = "complete"
+				// Trigger pop animation: start compressed, spring to 1.0
+				m.Anim.StoryPopScales[i] = 0.3
+				m.Anim.StoryPopVels[i] = 0
 				break
 			}
 		}
+		// Update progress target for smooth progress bar animation
+		m.Anim.ProgressTarget = m.ProgressPercent()
 		m.CurrentStoryID = ""
 		m.CurrentStoryTitle = ""
 		return m, nil
@@ -222,12 +331,125 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.State = StateRunning
 			m.StartTime = time.Now()
 			m.Iteration = 0
-			m.AddLog(LogInfo, "Starting Ralph execution...")
 
+			if m.DemoMode {
+				m.AddLog(LogInfo, "Starting DEMO simulation...")
+				m.AddLog(LogInfo, "Watch the animations!")
+				// Find first pending story for demo
+				for i, s := range m.Stories {
+					if s.Status == "pending" {
+						m.DemoStoryIndex = i
+						m.CurrentStoryID = s.ID
+						m.CurrentStoryTitle = s.Title
+						break
+					}
+				}
+				// Start demo tick (2.5 seconds between completions)
+				// Also start activity cycling
+				return m, tea.Batch(
+					tea.Tick(2500*time.Millisecond, func(t time.Time) tea.Msg {
+						return DemoTickMsg{}
+					}),
+					tea.Tick(500*time.Millisecond, func(t time.Time) tea.Msg {
+						return DemoActivityMsg{ActivityIndex: 0}
+					}),
+				)
+			}
+
+			m.AddLog(LogInfo, "Starting Ralph execution...")
 			// Trigger first iteration
 			return m, func() tea.Msg { return StartNextIterationMsg{} }
 		}
 		return m, nil
+
+	case DemoTickMsg:
+		if !m.DemoMode || m.State != StateRunning {
+			return m, nil
+		}
+
+		// Complete current story
+		if m.DemoStoryIndex < len(m.Stories) {
+			m.Iteration++
+
+			// Trigger story completion
+			return m, func() tea.Msg {
+				return DemoCompleteStoryMsg{StoryIndex: m.DemoStoryIndex}
+			}
+		}
+		return m, nil
+
+	case DemoCompleteStoryMsg:
+		if !m.DemoMode {
+			return m, nil
+		}
+
+		idx := msg.StoryIndex
+		if idx >= len(m.Stories) {
+			return m, nil
+		}
+
+		// Mark story complete with animation
+		m.Stories[idx].Status = "complete"
+		m.Anim.StoryPopScales[idx] = 0.3
+		m.Anim.StoryPopVels[idx] = 0
+		m.Anim.ProgressTarget = m.ProgressPercent()
+
+		m.AddLog(LogSuccess, fmt.Sprintf("Story complete: %s", m.Stories[idx].ID))
+
+		// Find next pending story
+		m.DemoStoryIndex = -1
+		for i, s := range m.Stories {
+			if s.Status == "pending" {
+				m.DemoStoryIndex = i
+				m.CurrentStoryID = s.ID
+				m.CurrentStoryTitle = s.Title
+				m.AddLog(LogInfo, fmt.Sprintf("Starting: %s - %s", s.ID, s.Title))
+				break
+			}
+		}
+
+		// Check if all done
+		if m.DemoStoryIndex == -1 {
+			m.State = StateComplete
+			m.CurrentStoryID = ""
+			m.CurrentStoryTitle = ""
+			m.CurrentTool = ""
+			m.CurrentActivity = ""
+			m.AddLog(LogSuccess, "All demo stories complete!")
+			return m, nil
+		}
+
+		// Schedule next completion (randomish timing 2-3.5 seconds)
+		delay := 2000 + (m.DemoStoryIndex%3)*500
+		return m, tea.Tick(time.Duration(delay)*time.Millisecond, func(t time.Time) tea.Msg {
+			return DemoTickMsg{}
+		})
+
+	case DemoActivityMsg:
+		if !m.DemoMode || m.State != StateRunning {
+			return m, nil
+		}
+
+		// Cycle through activities
+		idx := msg.ActivityIndex % len(demoActivities)
+		activity := demoActivities[idx]
+
+		m.CurrentTool = activity.Tool
+		m.CurrentActivity = activity.Description
+
+		// Add to recent activities (avoid duplicates)
+		if len(m.RecentActivities) == 0 || m.RecentActivities[len(m.RecentActivities)-1] != activity.Description {
+			m.RecentActivities = append(m.RecentActivities, activity.Description)
+			if len(m.RecentActivities) > 10 {
+				m.RecentActivities = m.RecentActivities[1:]
+			}
+		}
+
+		// Schedule next activity (300-600ms)
+		delay := 300 + rand.Intn(300)
+		return m, tea.Tick(time.Duration(delay)*time.Millisecond, func(t time.Time) tea.Msg {
+			return DemoActivityMsg{ActivityIndex: idx + 1}
+		})
 
 	case PauseToggleMsg:
 		if m.State == StateRunning {

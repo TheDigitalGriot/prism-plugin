@@ -4,19 +4,22 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/prism-plugin/ralph-tui/app"
 	"github.com/spf13/cobra"
 )
 
-var version = "dev"
+var version = "v1.5.0"
 
 func main() {
 	var (
 		storiesFile   string
 		maxIterations int
 		pause         int
+		demoMode      bool
+		prismStyle    string
 	)
 
 	rootCmd := &cobra.Command{
@@ -41,6 +44,11 @@ Keyboard controls:
   ?          Toggle help`,
 		Version: version,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			// Demo mode - run with simulated data
+			if demoMode {
+				return runDemoMode(version, prismStyle)
+			}
+
 			// Determine stories file path
 			if len(args) > 0 {
 				storiesFile = args[0]
@@ -72,7 +80,7 @@ Keyboard controls:
 			}
 
 			// Create and run TUI
-			model := app.NewModel(storiesFile, projectDir, maxIterations, pause)
+			model := app.NewModel(storiesFile, projectDir, maxIterations, pause, prismStyle)
 
 			// Add initial log entry
 			model.AddLog(app.LogInfo, "Ralph TUI v"+version)
@@ -91,8 +99,31 @@ Keyboard controls:
 	rootCmd.Flags().StringVarP(&storiesFile, "file", "f", "", "Path to stories.json")
 	rootCmd.Flags().IntVarP(&maxIterations, "max-iterations", "n", 50, "Maximum iterations before stopping")
 	rootCmd.Flags().IntVarP(&pause, "pause", "p", 2, "Seconds to pause between iterations")
+	rootCmd.Flags().BoolVar(&demoMode, "demo", false, "Run in demo mode with simulated stories to preview animations")
+	rootCmd.Flags().StringVar(&prismStyle, "prism-style", "gradient", "Prism animation style: gradient|simple|braille|ascii")
 
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}
 }
+
+// runDemoMode creates a demo TUI with simulated stories
+func runDemoMode(version string, prismStyle string) error {
+	// Create demo model with fake data
+	model := app.NewDemoModel(prismStyle)
+
+	// Add initial log entries
+	model.AddLog(app.LogInfo, "Ralph TUI "+version+" - DEMO MODE")
+	model.AddLog(app.LogInfo, "Press Enter to start demo simulation")
+	model.AddLog(app.LogWarning, "Stories will auto-complete every 2-3 seconds")
+
+	p := tea.NewProgram(model, tea.WithAltScreen())
+	if _, err := p.Run(); err != nil {
+		return fmt.Errorf("failed to run demo TUI: %w", err)
+	}
+
+	return nil
+}
+
+// DemoTickMsg for demo auto-progression
+type DemoTickMsg time.Time

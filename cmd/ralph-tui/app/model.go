@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/harmonica"
 )
 
 // AppState represents the running state of the TUI
@@ -57,12 +58,48 @@ type LogEntry struct {
 	StoryID string
 }
 
+// AnimState holds all animation state for smooth UI transitions
+type AnimState struct {
+	// Progress bar spring (overshoots then settles)
+	ProgressSpring harmonica.Spring
+	ProgressPos    float64
+	ProgressVel    float64
+	ProgressTarget float64
+
+	// Story completion pop animations (per-story index)
+	StoryPopSpring harmonica.Spring
+	StoryPopScales map[int]float64
+	StoryPopVels   map[int]float64
+
+	// Active story pulse (breathing 0.6 → 1.0 → 0.6)
+	PulsePhase float64 // 0 to 2π
+
+	// Log entry slide-in (per-entry x-offset)
+	LogSlideSpring  harmonica.Spring
+	LogEntryOffsets []float64
+	LogEntryVels    []float64
+
+	// Prism animation (rotating shimmer)
+	PrismFrame int // Current animation frame (0-7)
+	PrismTick  int // Sub-tick counter for slower animation
+
+	// Spring-based ray animation for gradient prism
+	RaySpring  harmonica.Spring
+	RayLengths [4]float64 // Current animated length per ray
+	RayVels    [4]float64 // Velocity per ray
+	RayTargets [4]float64 // Target lengths (oscillates between 4-8)
+
+	// Shimmer phase for gradient brightness
+	ShimmerPhase float64
+}
+
 // Model is the main application state
 type Model struct {
 	// Configuration
 	StoriesPath  string
 	ProgressPath string
 	ProjectDir   string
+	PrismStyle   string // "gradient", "braille", or "ascii"
 
 	// Stories data (will be populated by domain package)
 	PlanName     string
@@ -109,6 +146,13 @@ type Model struct {
 
 	// Streaming output channel
 	OutputChan chan tea.Msg
+
+	// Animation state
+	Anim AnimState
+
+	// Demo mode
+	DemoMode       bool
+	DemoStoryIndex int // Next story to auto-complete in demo
 }
 
 // StoryView is a simplified story representation for display
@@ -121,7 +165,7 @@ type StoryView struct {
 }
 
 // NewModel creates initial model state
-func NewModel(storiesPath, projectDir string, maxIter, pause int) Model {
+func NewModel(storiesPath, projectDir string, maxIter, pause int, prismStyle string) Model {
 	s := spinner.New()
 	s.Spinner = spinner.Dot
 
@@ -130,6 +174,11 @@ func NewModel(storiesPath, projectDir string, maxIter, pause int) Model {
 		progress.WithoutPercentage(),
 	)
 
+	// Default prism style
+	if prismStyle == "" {
+		prismStyle = "gradient"
+	}
+
 	return Model{
 		StoriesPath:        storiesPath,
 		ProjectDir:         projectDir,
@@ -137,12 +186,51 @@ func NewModel(storiesPath, projectDir string, maxIter, pause int) Model {
 		MaxConsecutiveErrs: 3,
 		Pause:              pause,
 		State:              StateIdle,
+		PrismStyle:         prismStyle,
 		Spinner:            s,
 		Progress:           p,
 		LogLines:           make([]LogEntry, 0, 1000),
 		RecentOutput:       make([]string, 0, 10),
 		Stories:            []StoryView{},
+		Anim: AnimState{
+			// Progress: snappy with slight overshoot
+			ProgressSpring: harmonica.NewSpring(harmonica.FPS(60), 6.0, 0.7),
+			// Story pop: bouncy
+			StoryPopSpring: harmonica.NewSpring(harmonica.FPS(60), 8.0, 0.5),
+			StoryPopScales: make(map[int]float64),
+			StoryPopVels:   make(map[int]float64),
+			// Log slide: smooth
+			LogSlideSpring:  harmonica.NewSpring(harmonica.FPS(60), 5.0, 0.8),
+			LogEntryOffsets: make([]float64, 0),
+			LogEntryVels:    make([]float64, 0),
+			// Ray spring: bouncy for organic light rays
+			RaySpring:  harmonica.NewSpring(harmonica.FPS(60), 4.0, 0.3),
+			RayLengths: [4]float64{6, 5, 4, 3}, // Start with staggered lengths
+			RayTargets: [4]float64{6, 7, 5, 8}, // Initial targets
+		},
 	}
+}
+
+// NewDemoModel creates a model with fake stories for demo/testing
+func NewDemoModel(prismStyle string) Model {
+	m := NewModel("", "", 50, 2, prismStyle)
+	m.PlanName = "Prism Animation Demo"
+	m.Stories = []StoryView{
+		{ID: "DEMO-001", Title: "Initialize spring physics engine", Status: "complete"},
+		{ID: "DEMO-002", Title: "Implement progress bar animations", Status: "complete"},
+		{ID: "DEMO-003", Title: "Add story completion pop effect", Status: "pending"},
+		{ID: "DEMO-004", Title: "Create active story pulse animation", Status: "pending"},
+		{ID: "DEMO-005", Title: "Implement log entry slide-in", Status: "pending"},
+		{ID: "DEMO-006", Title: "Add prism logo with rainbow shimmer", Status: "pending"},
+		{ID: "DEMO-007", Title: "Optimize animation frame rate", Status: "pending"},
+		{ID: "DEMO-008", Title: "Test all animations together", Status: "pending"},
+	}
+	m.TotalStories = len(m.Stories)
+	m.DemoMode = true
+	// Initialize progress to show completed stories
+	m.Anim.ProgressPos = m.ProgressPercent()
+	m.Anim.ProgressTarget = m.ProgressPercent()
+	return m
 }
 
 // CompletedCount returns the number of completed stories
@@ -178,6 +266,16 @@ func (m *Model) AddLog(level LogLevel, message string) {
 		StoryID: m.CurrentStoryID,
 	}
 	m.LogLines = append(m.LogLines, entry)
+
+	// Trigger slide-in animation for new entry
+	m.Anim.LogEntryOffsets = append(m.Anim.LogEntryOffsets, 20.0) // start offset
+	m.Anim.LogEntryVels = append(m.Anim.LogEntryVels, 0)
+
+	// Keep offsets array sized to match visible logs (max 6)
+	if len(m.Anim.LogEntryOffsets) > 6 {
+		m.Anim.LogEntryOffsets = m.Anim.LogEntryOffsets[1:]
+		m.Anim.LogEntryVels = m.Anim.LogEntryVels[1:]
+	}
 }
 
 // ElapsedTime returns the duration since start

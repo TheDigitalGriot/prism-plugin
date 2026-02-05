@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -69,18 +70,75 @@ func (m Model) renderProgressBar() string {
 	}
 
 	// Progress bar
-	barWidth := m.Width - 40
+	barWidth := m.Width - 50 // Adjusted for prism
 	if barWidth < 20 {
 		barWidth = 20
 	}
 	m.Progress.Width = barWidth
 
-	progressStr := m.Progress.ViewAs(m.ProgressPercent())
+	// Use animated position for smooth spring fill
+	progressStr := m.Progress.ViewAs(m.Anim.ProgressPos)
 	stats := fmt.Sprintf("%d/%d (%d%%)", completed, m.TotalStories, int(m.ProgressPercent()*100))
 
-	line := fmt.Sprintf("Plan: %s  %s  %s", planName, progressStr, stats)
+	// Select prism renderer based on style
+	switch m.PrismStyle {
+	case "gradient":
+		prism := styles.RenderPrismGradientSpring(m.Anim.PrismFrame, m.Anim.RayLengths, m.Anim.ShimmerPhase)
+		line := fmt.Sprintf("%s  Plan: %s  %s  %s", prism, planName, progressStr, stats)
+		return styles.PanelStyle.Width(m.Width - 2).Render(line)
 
-	return styles.PanelStyle.Width(m.Width - 2).Render(line)
+	case "simple":
+		// ASCII-only fallback for terminals without Unicode support
+		prism := styles.RenderPrismSimple(m.Anim.PrismFrame)
+		line := fmt.Sprintf("%s  Plan: %s  %s  %s", prism, planName, progressStr, stats)
+		return styles.PanelStyle.Width(m.Width - 2).Render(line)
+
+	case "braille":
+		// Multi-line braille prism (3 lines)
+		prism := styles.RenderPrismBraille(m.Anim.PrismFrame)
+		prismLines := strings.Split(prism, "\n")
+
+		// Build 3-line layout with progress info on middle line
+		var lines []string
+		if len(prismLines) >= 1 {
+			lines = append(lines, prismLines[0])
+		}
+		if len(prismLines) >= 2 {
+			infoLine := fmt.Sprintf("%s  Plan: %s  %s  %s", prismLines[1], planName, progressStr, stats)
+			lines = append(lines, infoLine)
+		}
+		if len(prismLines) >= 3 {
+			lines = append(lines, prismLines[2])
+		}
+
+		content := lipgloss.JoinVertical(lipgloss.Left, lines...)
+		return styles.PanelStyle.Width(m.Width - 2).Render(content)
+
+	case "ascii":
+		// Multi-line ASCII prism (5 lines)
+		prism := styles.RenderPrismASCII(m.Anim.PrismFrame)
+		prismLines := strings.Split(prism, "\n")
+
+		// Build 5-line layout with progress info on line 3
+		var lines []string
+		for i, pl := range prismLines {
+			if i == 2 { // Line 3 (middle-ish) gets the progress info
+				infoLine := fmt.Sprintf("%s  Plan: %s  %s  %s", pl, planName, progressStr, stats)
+				lines = append(lines, infoLine)
+			} else {
+				lines = append(lines, pl)
+			}
+		}
+
+		content := lipgloss.JoinVertical(lipgloss.Left, lines...)
+		return styles.PanelStyle.Width(m.Width - 2).Render(content)
+
+	default:
+		// Fallback to fancy prism
+		prism := styles.RenderPrismFancy(m.Anim.PrismFrame)
+		line := fmt.Sprintf("%s  Plan: %s  %s  %s", prism, planName, progressStr, stats)
+		return styles.PanelStyle.Width(m.Width - 2).Render(line)
+	}
 }
 
 func (m Model) renderMainPanels() string {
@@ -120,7 +178,7 @@ func (m Model) renderStoryList(width int) string {
 			break
 		}
 
-		icon := m.getStoryIcon(story)
+		icon := m.getStoryIcon(story, i)
 		style := m.getStoryStyle(story)
 
 		// Truncate title if needed
@@ -143,12 +201,25 @@ func (m Model) renderStoryList(width int) string {
 	return styles.PanelStyle.Width(width).Render(content)
 }
 
-func (m Model) getStoryIcon(s StoryView) string {
+func (m Model) getStoryIcon(s StoryView, index int) string {
 	if s.Status == "complete" {
+		// Check for active pop animation
+		if scale, ok := m.Anim.StoryPopScales[index]; ok {
+			if scale < 0.7 {
+				return "●" // compressed
+			} else if scale > 1.1 {
+				return "✔" // overshoot (bold effect)
+			}
+		}
 		return styles.CheckIcon
 	}
 	if s.ID == m.CurrentStoryID {
-		return styles.PlayIcon
+		// Apply pulse brightness effect
+		brightness := 0.6 + 0.4*math.Sin(m.Anim.PulsePhase)
+		if brightness > 0.8 {
+			return "▶" // bright
+		}
+		return "▸" // dim
 	}
 	if s.IsBlocked {
 		return styles.BlockedIcon
@@ -269,6 +340,15 @@ func (m Model) renderLogPanel() string {
 	for i := startIdx; i < len(m.LogLines); i++ {
 		entry := m.LogLines[i]
 		line := m.formatLogEntry(entry)
+
+		// Apply slide-in offset animation
+		offsetIdx := i - startIdx
+		if offsetIdx < len(m.Anim.LogEntryOffsets) {
+			offset := int(m.Anim.LogEntryOffsets[offsetIdx])
+			if offset > 0 {
+				line = strings.Repeat(" ", offset) + line
+			}
+		}
 		lines = append(lines, line)
 	}
 

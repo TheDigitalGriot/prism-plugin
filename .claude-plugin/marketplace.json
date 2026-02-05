@@ -14,7 +14,7 @@
         "repo": "TheDigitalGriot/prism-plugin"
       },
       "description": "Structured 4-phase development workflow (Research -> Plan -> Implement -> Validate)",
-      "version": "1.4.0"
+      "version": "1.5.0"
     }
   ]
 }

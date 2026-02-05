@@ -95,3 +95,18 @@ type StartNextIterationMsg struct{}
 
 // RetryIterationMsg signals to retry with backoff
 type RetryIterationMsg struct{}
+
+// === Demo Mode Messages ===
+
+// DemoTickMsg triggers auto-progression in demo mode
+type DemoTickMsg struct{}
+
+// DemoCompleteStoryMsg simulates a story completion
+type DemoCompleteStoryMsg struct {
+	StoryIndex int
+}
+
+// DemoActivityMsg cycles through fake tool activities
+type DemoActivityMsg struct {
+	ActivityIndex int
+}
