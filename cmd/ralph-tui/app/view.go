@@ -288,6 +288,12 @@ func (m Model) renderActivityPanel(width int) string {
 	} else if m.State == StateComplete {
 		lines = append(lines, styles.SuccessStyle.Render("All stories complete!"))
 		lines = append(lines, "")
+	} else if m.State == StateMaxIterations {
+		lines = append(lines, styles.WarningStyle.Render("Iteration limit reached"))
+		if m.LastError != "" {
+			lines = append(lines, styles.DimStyle.Render(m.LastError))
+		}
+		lines = append(lines, "")
 	} else if m.State == StateError {
 		lines = append(lines, styles.ErrorStyle.Render("Error occurred"))
 		if m.LastError != "" {
@@ -402,6 +408,8 @@ func (m Model) renderStatusBar() string {
 		stateStyle = styles.WarningStyle
 	case StateComplete:
 		stateStyle = styles.SuccessStyle
+	case StateMaxIterations:
+		stateStyle = styles.WarningStyle
 	case StateError:
 		stateStyle = styles.ErrorStyle
 	default:
@@ -409,7 +417,7 @@ func (m Model) renderStatusBar() string {
 	}
 
 	stateStr := fmt.Sprintf("%s %s", styles.PlayIcon, m.State.String())
-	if m.State == StatePaused {
+	if m.State == StatePaused || m.State == StateMaxIterations {
 		stateStr = fmt.Sprintf("⏸ %s", m.State.String())
 	}
 

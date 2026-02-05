@@ -291,9 +291,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// Check if we've hit max iterations
 		if m.Iteration >= m.MaxIterations {
-			m.State = StateError
-			m.LastError = fmt.Sprintf("Reached max iterations (%d)", m.MaxIterations)
-			m.AddLog(LogWarning, m.LastError)
+			m.State = StateMaxIterations
+			m.LastError = fmt.Sprintf("Iteration limit reached (%d) - increase with -n flag to continue", m.MaxIterations)
+			m.AddLog(LogWarning, fmt.Sprintf("Reached max iterations (%d)", m.MaxIterations))
 			return m, nil
 		}
 
@@ -534,7 +534,7 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return m, func() tea.Msg { return PauseToggleMsg{} }
 		}
 
-	case StateComplete, StateError:
+	case StateComplete, StateMaxIterations, StateError:
 		switch msg.String() {
 		case "enter", " ":
 			return m, tea.Quit

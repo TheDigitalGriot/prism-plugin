@@ -20,6 +20,7 @@ const (
 	StateRunning
 	StatePaused
 	StateComplete
+	StateMaxIterations // Reached iteration limit (not an error)
 	StateError
 )
 
@@ -33,6 +34,8 @@ func (s AppState) String() string {
 		return "PAUSED"
 	case StateComplete:
 		return "COMPLETE"
+	case StateMaxIterations:
+		return "PAUSED"
 	case StateError:
 		return "ERROR"
 	default:
