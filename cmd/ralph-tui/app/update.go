@@ -147,8 +147,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.PlanName = msg.PlanName
 			m.Stories = msg.Stories
 			m.TotalStories = len(msg.Stories)
-			// Update story paginator total pages
-			m.StoryPaginator.SetTotalPages((len(msg.Stories) + m.StoriesPerPage - 1) / m.StoriesPerPage)
+			// Update story paginator total pages - direct assignment
+			m.StoryPaginator.TotalPages = (len(msg.Stories) + m.StoriesPerPage - 1) / m.StoriesPerPage
+			m.StoryPaginator.Page = 0
 			// Initialize progress animation to current progress
 			m.Anim.ProgressPos = m.ProgressPercent()
 			m.Anim.ProgressTarget = m.ProgressPercent()
@@ -162,8 +163,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.Stories = msg.Stories
 			m.TotalStories = len(msg.Stories)
-			// Update story paginator total pages
-			m.StoryPaginator.SetTotalPages((len(msg.Stories) + m.StoriesPerPage - 1) / m.StoriesPerPage)
+			// Update story paginator total pages - direct assignment
+			m.StoryPaginator.TotalPages = (len(msg.Stories) + m.StoriesPerPage - 1) / m.StoriesPerPage
 			// Update progress target for smooth animation
 			m.Anim.ProgressTarget = m.ProgressPercent()
 		}
@@ -485,19 +486,27 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	// Pagination keys (always active)
+	// Pagination keys (always active) - directly manipulate Page field
 	switch msg.String() {
 	case "a": // Story pagination - previous page
-		m.StoryPaginator.PrevPage()
+		if m.StoryPaginator.Page > 0 {
+			m.StoryPaginator.Page--
+		}
 		return m, nil
 	case "s": // Story pagination - next page
-		m.StoryPaginator.NextPage()
+		if m.StoryPaginator.Page < m.StoryPaginator.TotalPages-1 {
+			m.StoryPaginator.Page++
+		}
 		return m, nil
 	case "z": // Log pagination - previous page
-		m.LogPaginator.PrevPage()
+		if m.LogPaginator.Page > 0 {
+			m.LogPaginator.Page--
+		}
 		return m, nil
 	case "x": // Log pagination - next page
-		m.LogPaginator.NextPage()
+		if m.LogPaginator.Page < m.LogPaginator.TotalPages-1 {
+			m.LogPaginator.Page++
+		}
 		return m, nil
 	}
 

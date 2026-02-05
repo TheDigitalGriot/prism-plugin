@@ -241,19 +241,51 @@ func NewDemoModel(prismStyle string) Model {
 	m := NewModel("", "", 50, 2, prismStyle)
 	m.PlanName = "Prism Animation Demo"
 	m.Stories = []StoryView{
+		// Page 1 (completed stories)
 		{ID: "DEMO-001", Title: "Initialize spring physics engine", Status: "complete"},
 		{ID: "DEMO-002", Title: "Implement progress bar animations", Status: "complete"},
-		{ID: "DEMO-003", Title: "Add story completion pop effect", Status: "pending"},
-		{ID: "DEMO-004", Title: "Create active story pulse animation", Status: "pending"},
-		{ID: "DEMO-005", Title: "Implement log entry slide-in", Status: "pending"},
-		{ID: "DEMO-006", Title: "Add prism logo with rainbow shimmer", Status: "pending"},
-		{ID: "DEMO-007", Title: "Optimize animation frame rate", Status: "pending"},
-		{ID: "DEMO-008", Title: "Test all animations together", Status: "pending"},
+		{ID: "DEMO-003", Title: "Add story completion pop effect", Status: "complete"},
+		{ID: "DEMO-004", Title: "Create active story pulse animation", Status: "complete"},
+		{ID: "DEMO-005", Title: "Implement log entry slide-in", Status: "complete"},
+		{ID: "DEMO-006", Title: "Add prism logo with rainbow shimmer", Status: "complete"},
+		{ID: "DEMO-007", Title: "Optimize animation frame rate", Status: "complete"},
+		{ID: "DEMO-008", Title: "Test all animations together", Status: "complete"},
+		{ID: "DEMO-009", Title: "Create TipTap RichTextEditor component", Status: "complete"},
+		{ID: "DEMO-010", Title: "Build FormatToolbar with bubble menu", Status: "complete"},
+		{ID: "DEMO-011", Title: "Implement markdown shortcuts", Status: "complete"},
+		{ID: "DEMO-012", Title: "Create NoteCard component shell", Status: "complete"},
+		// Page 2 (in progress / pending)
+		{ID: "DEMO-013", Title: "Implement auto-expanding height for notes", Status: "pending"},
+		{ID: "DEMO-014", Title: "Add note persistence layer", Status: "pending"},
+		{ID: "DEMO-015", Title: "Create ImageCard component", Status: "pending"},
+		{ID: "DEMO-016", Title: "Implement image upload functionality", Status: "pending"},
+		{ID: "DEMO-017", Title: "Create image thumbnail generator", Status: "pending"},
+		{ID: "DEMO-018", Title: "Build LinkCard component", Status: "pending"},
+		{ID: "DEMO-019", Title: "Implement link metadata fetching", Status: "pending"},
+		{ID: "DEMO-020", Title: "Create TaskListCard component", Status: "pending"},
+		{ID: "DEMO-021", Title: "Implement task functionality", Status: "pending"},
+		{ID: "DEMO-022", Title: "Integrate new card types with canvas", Status: "pending"},
+		{ID: "DEMO-023", Title: "Add drag-and-drop card reordering", Status: "pending"},
+		{ID: "DEMO-024", Title: "Implement card selection system", Status: "pending"},
+		// Page 3 (more pending)
+		{ID: "DEMO-025", Title: "Create multi-select for cards", Status: "pending"},
+		{ID: "DEMO-026", Title: "Add keyboard navigation", Status: "pending"},
+		{ID: "DEMO-027", Title: "Implement undo/redo system", Status: "pending"},
+		{ID: "DEMO-028", Title: "Create canvas zoom controls", Status: "pending"},
+		{ID: "DEMO-029", Title: "Add minimap navigation", Status: "pending"},
+		{ID: "DEMO-030", Title: "Implement canvas panning", Status: "pending"},
+		{ID: "DEMO-031", Title: "Create board sharing system", Status: "pending"},
+		{ID: "DEMO-032", Title: "Add collaborative editing", Status: "pending"},
+		{ID: "DEMO-033", Title: "Implement real-time sync", Status: "pending"},
+		{ID: "DEMO-034", Title: "Create export functionality", Status: "pending"},
+		{ID: "DEMO-035", Title: "Add import from other tools", Status: "pending"},
+		{ID: "DEMO-036", Title: "Final integration testing", Status: "pending"},
 	}
 	m.TotalStories = len(m.Stories)
 	m.DemoMode = true
-	// Initialize paginator for demo stories
-	m.StoryPaginator.SetTotalPages(len(m.Stories))
+	// Initialize paginator for demo stories - set TotalPages directly
+	m.StoryPaginator.TotalPages = (len(m.Stories) + m.StoriesPerPage - 1) / m.StoriesPerPage
+	m.StoryPaginator.Page = 0
 	// Initialize progress to show completed stories
 	m.Anim.ProgressPos = m.ProgressPercent()
 	m.Anim.ProgressTarget = m.ProgressPercent()
@@ -294,16 +326,14 @@ func (m *Model) AddLog(level LogLevel, message string) {
 	}
 	m.LogLines = append(m.LogLines, entry)
 
-	// Update log paginator total pages and auto-scroll to last page
+	// Update log paginator total pages and auto-scroll to last page - direct assignment
 	totalPages := (len(m.LogLines) + m.LogsPerPage - 1) / m.LogsPerPage
 	if totalPages < 1 {
 		totalPages = 1
 	}
-	m.LogPaginator.SetTotalPages(totalPages)
+	m.LogPaginator.TotalPages = totalPages
 	// Auto-scroll to last page to show newest logs
-	for m.LogPaginator.Page < totalPages-1 {
-		m.LogPaginator.NextPage()
-	}
+	m.LogPaginator.Page = totalPages - 1
 
 	// Trigger slide-in animation for new entry
 	m.Anim.LogEntryOffsets = append(m.Anim.LogEntryOffsets, 20.0) // start offset
