@@ -530,6 +530,17 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m Model) handleSignal(msg SignalDetectedMsg) (tea.Model, tea.Cmd) {
 	switch msg.Type {
 	case SignalComplete:
+		// Safety check: verify that remaining stories count is actually 0
+		remaining := m.RemainingCount()
+		if remaining > 0 {
+			// COMPLETE signal received but stories remain - this is a bug in the skill output
+			m.AddLog(LogWarning, fmt.Sprintf("⚠️ COMPLETE signal received but %d stories remain - ignoring and continuing", remaining))
+			m.AddLog(LogInfo, "This is likely a skill bug - prism-ralph should output <ralph-continue> when stories remain")
+			// Continue instead of stopping
+			return m, tea.Tick(time.Duration(m.Pause)*time.Second, func(t time.Time) tea.Msg {
+				return StartNextIterationMsg{}
+			})
+		}
 		m.State = StateComplete
 		m.AddLog(LogSuccess, "All stories complete!")
 		return m, nil

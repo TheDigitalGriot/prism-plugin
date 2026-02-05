@@ -171,17 +171,32 @@ If new general patterns were discovered, add them to the "Codebase Patterns" sec
 
 ### 9. Signal Continuation
 
-Check remaining stories:
+**CRITICAL**: Re-read stories.json and explicitly count remaining stories before signaling.
 
-**If more incomplete stories exist**:
-```
-<ralph-continue>STORY_COMPLETE: [STORY-XXX]</ralph-continue>
+```javascript
+// Re-parse stories.json to get accurate count
+const stories = JSON.parse(readFile('thoughts/shared/ralph/stories.json')).stories;
+const remaining = stories.filter(s => s.status !== 'complete').length;
+const total = stories.length;
+const completed = total - remaining;
+
+// Log the count for verification
+console.log(`Progress: ${completed}/${total} stories complete, ${remaining} remaining`);
 ```
 
-**If all stories now complete**:
+**MUST verify count before outputting signal:**
+
+**If remaining > 0** (more incomplete stories exist):
+```
+<ralph-continue>STORY_COMPLETE: [STORY-XXX] - Progress: [completed]/[total], [remaining] remaining</ralph-continue>
+```
+
+**If remaining === 0** (ALL stories now complete):
 ```
 <promise>COMPLETE</promise>
 ```
+
+**WARNING**: NEVER output `<promise>COMPLETE</promise>` unless you have verified that ZERO stories remain incomplete. Premature completion signals will stop the entire execution loop.
 
 ## Error Handling
 
@@ -213,6 +228,7 @@ Check remaining stories:
 6. **Clean output** - Use signal tags for orchestrator parsing
 7. **Don't skip blocked stories** - Only work on unblocked stories
 8. **Follow existing patterns** - Check progress.md before implementing
+9. **VERIFY before COMPLETE** - Re-read stories.json and count remaining before outputting `<promise>COMPLETE</promise>`. If remaining > 0, use `<ralph-continue>` instead
 
 ## Debug Integration
 
@@ -315,7 +331,7 @@ This context helps the next fresh iteration understand what went wrong and how t
 ```
 1. Load stories.json → 5 stories, 2 complete
 2. Load progress.md → Previous learnings about auth patterns
-3. Check: 3 incomplete stories remain
+3. Check: 3 incomplete stories remain (not 0, so continue)
 4. Pick: STORY-003 (priority 3, not blocked)
 5. Output: <ralph-story>ID: STORY-003...</ralph-story>
 6. Read files: src/auth/login.ts, src/types/auth.ts
@@ -323,6 +339,9 @@ This context helps the next fresh iteration understand what went wrong and how t
 8. Run: npm run typecheck ✓, npm run lint ✓, npm test ✓
 9. Commit: "[STORY-003] Add password validation"
 10. Update: stories.json (status: complete), progress.md (learnings)
-11. Check: 2 incomplete stories remain
-12. Output: <ralph-continue>STORY_COMPLETE: STORY-003</ralph-continue>
+11. RE-READ stories.json → count remaining: filter status !== 'complete'
+12. Verify: 3/5 complete, 2 remaining (remaining > 0, so use ralph-continue)
+13. Output: <ralph-continue>STORY_COMPLETE: STORY-003 - Progress: 3/5, 2 remaining</ralph-continue>
 ```
+
+**IMPORTANT**: Step 11-12 must RE-READ the file and COUNT before choosing the signal. Never assume the count.
