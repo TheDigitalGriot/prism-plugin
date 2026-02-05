@@ -147,6 +147,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.PlanName = msg.PlanName
 			m.Stories = msg.Stories
 			m.TotalStories = len(msg.Stories)
+			// Update story paginator total pages
+			m.StoryPaginator.SetTotalPages((len(msg.Stories) + m.StoriesPerPage - 1) / m.StoriesPerPage)
 			// Initialize progress animation to current progress
 			m.Anim.ProgressPos = m.ProgressPercent()
 			m.Anim.ProgressTarget = m.ProgressPercent()
@@ -160,6 +162,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.Stories = msg.Stories
 			m.TotalStories = len(msg.Stories)
+			// Update story paginator total pages
+			m.StoryPaginator.SetTotalPages((len(msg.Stories) + m.StoriesPerPage - 1) / m.StoriesPerPage)
 			// Update progress target for smooth animation
 			m.Anim.ProgressTarget = m.ProgressPercent()
 		}
@@ -481,6 +485,22 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
+	// Pagination keys (always active)
+	switch msg.String() {
+	case "a": // Story pagination - previous page
+		m.StoryPaginator.PrevPage()
+		return m, nil
+	case "s": // Story pagination - next page
+		m.StoryPaginator.NextPage()
+		return m, nil
+	case "z": // Log pagination - previous page
+		m.LogPaginator.PrevPage()
+		return m, nil
+	case "x": // Log pagination - next page
+		m.LogPaginator.NextPage()
+		return m, nil
+	}
+
 	// State-dependent keys
 	switch m.State {
 	case StateIdle:
@@ -493,7 +513,7 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "p":
 			return m, func() tea.Msg { return PauseToggleMsg{} }
-		case "s":
+		case "/":
 			m.AddLog(LogWarning, "Skip requested - will skip after current story")
 			// Skip implementation in Phase 5
 			return m, nil
@@ -510,18 +530,6 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		case "enter", " ":
 			return m, tea.Quit
 		}
-	}
-
-	// Viewport scrolling (would be used with viewport in Phase 3)
-	switch msg.String() {
-	case "up", "k":
-		// m.Viewport.LineUp(1)
-	case "down", "j":
-		// m.Viewport.LineDown(1)
-	case "pgup":
-		// m.Viewport.HalfViewUp()
-	case "pgdown":
-		// m.Viewport.HalfViewDown()
 	}
 
 	return m, nil

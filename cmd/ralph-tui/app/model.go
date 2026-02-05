@@ -4,6 +4,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/bubbles/paginator"
 	"github.com/charmbracelet/bubbles/progress"
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -127,9 +128,15 @@ type Model struct {
 	RecentActivities  []string // History of recent tool activities
 
 	// UI components
-	Spinner  spinner.Model
-	Progress progress.Model
-	Viewport viewport.Model
+	Spinner        spinner.Model
+	Progress       progress.Model
+	Viewport       viewport.Model
+	StoryPaginator paginator.Model
+	LogPaginator   paginator.Model
+
+	// Pagination config
+	StoriesPerPage int
+	LogsPerPage    int
 
 	// UI state
 	Width    int
@@ -179,6 +186,20 @@ func NewModel(storiesPath, projectDir string, maxIter, pause int, prismStyle str
 		prismStyle = "gradient"
 	}
 
+	// Create story paginator (dots style)
+	storyPag := paginator.New()
+	storyPag.Type = paginator.Dots
+	storyPag.PerPage = 12
+	storyPag.ActiveDot = "●"
+	storyPag.InactiveDot = "○"
+
+	// Create log paginator (dots style)
+	logPag := paginator.New()
+	logPag.Type = paginator.Dots
+	logPag.PerPage = 6
+	logPag.ActiveDot = "●"
+	logPag.InactiveDot = "○"
+
 	return Model{
 		StoriesPath:        storiesPath,
 		ProjectDir:         projectDir,
@@ -189,6 +210,10 @@ func NewModel(storiesPath, projectDir string, maxIter, pause int, prismStyle str
 		PrismStyle:         prismStyle,
 		Spinner:            s,
 		Progress:           p,
+		StoryPaginator:     storyPag,
+		LogPaginator:       logPag,
+		StoriesPerPage:     12,
+		LogsPerPage:        6,
 		LogLines:           make([]LogEntry, 0, 1000),
 		RecentOutput:       make([]string, 0, 10),
 		Stories:            []StoryView{},
@@ -227,6 +252,8 @@ func NewDemoModel(prismStyle string) Model {
 	}
 	m.TotalStories = len(m.Stories)
 	m.DemoMode = true
+	// Initialize paginator for demo stories
+	m.StoryPaginator.SetTotalPages(len(m.Stories))
 	// Initialize progress to show completed stories
 	m.Anim.ProgressPos = m.ProgressPercent()
 	m.Anim.ProgressTarget = m.ProgressPercent()
@@ -267,12 +294,23 @@ func (m *Model) AddLog(level LogLevel, message string) {
 	}
 	m.LogLines = append(m.LogLines, entry)
 
+	// Update log paginator total pages and auto-scroll to last page
+	totalPages := (len(m.LogLines) + m.LogsPerPage - 1) / m.LogsPerPage
+	if totalPages < 1 {
+		totalPages = 1
+	}
+	m.LogPaginator.SetTotalPages(totalPages)
+	// Auto-scroll to last page to show newest logs
+	for m.LogPaginator.Page < totalPages-1 {
+		m.LogPaginator.NextPage()
+	}
+
 	// Trigger slide-in animation for new entry
 	m.Anim.LogEntryOffsets = append(m.Anim.LogEntryOffsets, 20.0) // start offset
 	m.Anim.LogEntryVels = append(m.Anim.LogEntryVels, 0)
 
-	// Keep offsets array sized to match visible logs (max 6)
-	if len(m.Anim.LogEntryOffsets) > 6 {
+	// Keep offsets array sized to match visible logs (max LogsPerPage)
+	if len(m.Anim.LogEntryOffsets) > m.LogsPerPage {
 		m.Anim.LogEntryOffsets = m.Anim.LogEntryOffsets[1:]
 		m.Anim.LogEntryVels = m.Anim.LogEntryVels[1:]
 	}

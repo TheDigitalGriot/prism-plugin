@@ -163,38 +163,36 @@ func (m Model) renderStoryList(width int) string {
 	lines = append(lines, title)
 	lines = append(lines, styles.HorizontalLine(width-4))
 
-	// Calculate available height for stories
-	maxStories := (m.Height - 20) / 1 // Rough estimate
-	if maxStories < 5 {
-		maxStories = 5
-	}
+	// Calculate pagination bounds
+	start, end := m.StoryPaginator.GetSliceBounds(len(m.Stories))
 
-	for i, story := range m.Stories {
-		if i >= maxStories {
-			remaining := len(m.Stories) - maxStories
-			if remaining > 0 {
-				lines = append(lines, styles.DimStyle.Render(fmt.Sprintf("  ... and %d more", remaining)))
-			}
-			break
-		}
-
+	// Render stories for current page
+	for i := start; i < end && i < len(m.Stories); i++ {
+		story := m.Stories[i]
 		icon := m.getStoryIcon(story, i)
 		style := m.getStoryStyle(story)
 
 		// Truncate title if needed
 		maxTitleLen := width - 20
-		title := story.Title
-		if len(title) > maxTitleLen && maxTitleLen > 3 {
-			title = title[:maxTitleLen-3] + "..."
+		storyTitle := story.Title
+		if len(storyTitle) > maxTitleLen && maxTitleLen > 3 {
+			storyTitle = storyTitle[:maxTitleLen-3] + "..."
 		}
 
-		line := fmt.Sprintf("%s %s %s", icon, story.ID, title)
+		line := fmt.Sprintf("%s %s %s", icon, story.ID, storyTitle)
 		lines = append(lines, style.Render(line))
 	}
 
 	// Pad with empty lines if needed
-	for len(lines) < maxStories+2 {
+	for len(lines) < m.StoriesPerPage+2 {
 		lines = append(lines, "")
+	}
+
+	// Add pagination indicator if there are multiple pages
+	totalPages := (len(m.Stories) + m.StoriesPerPage - 1) / m.StoriesPerPage
+	if totalPages > 1 {
+		pagInfo := fmt.Sprintf("  %s  [a/s]", m.StoryPaginator.View())
+		lines = append(lines, styles.DimStyle.Render(pagInfo))
 	}
 
 	content := lipgloss.JoinVertical(lipgloss.Left, lines...)
@@ -325,24 +323,20 @@ func (m Model) renderLogPanel() string {
 	var lines []string
 
 	title := styles.PanelTitleStyle.Render("LOG OUTPUT")
-	scrollHint := styles.DimStyle.Render("[j/k scroll]")
+	scrollHint := styles.DimStyle.Render("[z/x scroll]")
 	header := lipgloss.JoinHorizontal(lipgloss.Center, title, strings.Repeat(" ", m.Width-40), scrollHint)
 	lines = append(lines, header)
 	lines = append(lines, styles.HorizontalLine(m.Width-4))
 
-	// Show last N log entries
-	maxLogs := 6
-	startIdx := 0
-	if len(m.LogLines) > maxLogs {
-		startIdx = len(m.LogLines) - maxLogs
-	}
+	// Calculate pagination bounds for logs
+	start, end := m.LogPaginator.GetSliceBounds(len(m.LogLines))
 
-	for i := startIdx; i < len(m.LogLines); i++ {
+	for i := start; i < end && i < len(m.LogLines); i++ {
 		entry := m.LogLines[i]
 		line := m.formatLogEntry(entry)
 
 		// Apply slide-in offset animation
-		offsetIdx := i - startIdx
+		offsetIdx := i - start
 		if offsetIdx < len(m.Anim.LogEntryOffsets) {
 			offset := int(m.Anim.LogEntryOffsets[offsetIdx])
 			if offset > 0 {
@@ -353,8 +347,15 @@ func (m Model) renderLogPanel() string {
 	}
 
 	// Pad with empty lines
-	for len(lines) < maxLogs+2 {
+	for len(lines) < m.LogsPerPage+2 {
 		lines = append(lines, "")
+	}
+
+	// Add pagination indicator if there are multiple pages
+	totalPages := (len(m.LogLines) + m.LogsPerPage - 1) / m.LogsPerPage
+	if totalPages > 1 {
+		pagInfo := fmt.Sprintf("  %s", m.LogPaginator.View())
+		lines = append(lines, styles.DimStyle.Render(pagInfo))
 	}
 
 	content := lipgloss.JoinVertical(lipgloss.Left, lines...)
@@ -420,7 +421,7 @@ func (m Model) renderStatusBar() string {
 	}
 
 	// Controls
-	controls := styles.DimStyle.Render("[q]uit [p]ause [s]kip")
+	controls := styles.DimStyle.Render("[q]uit [p]ause [/]skip")
 
 	// Combine
 	left := stateStyle.Render(stateStr)
