@@ -1,4 +1,4 @@
-module github.com/prism-plugin/ralph-tui
+module github.com/prism-plugin/prism-tui
 
 go 1.22
 

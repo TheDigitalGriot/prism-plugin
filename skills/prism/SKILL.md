@@ -16,22 +16,22 @@ Focus complexity through specialized agents to produce clear, quality code.
 
 | Phase | Skill | Output |
 |-------|-------|--------|
-| Research | `/prism-research` | `thoughts/shared/research/YYYY-MM-DD-topic.md` |
-| Plan | `/prism-plan` | `thoughts/shared/plans/YYYY-MM-DD-feature.md` |
+| Research | `/prism-research` | `.prism/shared/research/YYYY-MM-DD-topic.md` |
+| Plan | `/prism-plan` | `.prism/shared/plans/YYYY-MM-DD-feature.md` |
 | Implement | `/prism-implement` | Working code + updated checkboxes |
-| Validate | `/prism-validate` | `thoughts/shared/validation/YYYY-MM-DD-report.md` |
+| Validate | `/prism-validate` | `.prism/shared/validation/YYYY-MM-DD-report.md` |
 | Iterate | `/prism-iterate` | Updated plan + continued implementation |
-| Ralph | `/prism-ralph` | Autonomous story execution via `ralph.sh` |
+| Spectrum | `/prism-spectrum` | Autonomous story execution via `spectrum.sh` |
 | Debug | `/prism-debug` | Debug investigation report |
 
 ### Document Generation
 
 | Type | Skill/Command | Output |
 |------|---------------|--------|
-| PRD | `/prism-prd` | `thoughts/shared/plans/YYYY-MM-DD-[name]-PRD.md` |
-| User Flows | `/prism-visual-docs` | `thoughts/shared/plans/YYYY-MM-DD-[name]-USER-FLOWS.md` |
-| Tech Spec | `/generate_tech_spec` | `thoughts/shared/plans/YYYY-MM-DD-[name]-TECHNICAL-SPEC.md` |
-| Pricing | `/generate_pricing` | `thoughts/shared/plans/YYYY-MM-DD-[name]-PRICING.md` |
+| PRD | `/prism-prd` | `.prism/shared/plans/YYYY-MM-DD-[name]-PRD.md` |
+| User Flows | `/prism-visual-docs` | `.prism/shared/plans/YYYY-MM-DD-[name]-USER-FLOWS.md` |
+| Tech Spec | `/generate_tech_spec` | `.prism/shared/plans/YYYY-MM-DD-[name]-TECHNICAL-SPEC.md` |
+| Pricing | `/generate_pricing` | `.prism/shared/plans/YYYY-MM-DD-[name]-PRICING.md` |
 
 ## Workflow Selection
 
@@ -46,7 +46,7 @@ Focus complexity through specialized agents to produce clear, quality code.
 
 ### Check for Existing Work
 
-First, check `thoughts/` for existing artifacts:
+First, check `.prism/` for existing artifacts:
 
 ```
 Task(subagent_type="thoughts-locator")
@@ -59,20 +59,24 @@ Based on findings:
 - **Plan exists (incomplete)** -> Resume Implementation
 - **Implementation done** -> Run Validation
 
-### Initialize thoughts/ Directory
+### Initialize .prism/ Directory
 
-If `thoughts/` doesn't exist:
+If `.prism/` doesn't exist:
 ```bash
-python scripts/init_thoughts.py [project-path]
+python scripts/init_prism.py [project-path]
 ```
 
 Creates:
 ```
-thoughts/
+.prism/
+├── stories/          # Task definitions
 ├── shared/           # Committed
 │   ├── research/
 │   ├── plans/
-│   └── validation/
+│   ├── validation/
+│   ├── spectrum/     # Execution state
+│   ├── ref/
+│   └── docs/
 └── local/            # Gitignored
 ```
 
@@ -123,7 +127,7 @@ Verify implementation matches plan.
 
 Update plan and continue when changes needed.
 
-### Ralph Autonomous Execution (`/prism-ralph`)
+### Spectrum Autonomous Execution (`/prism-spectrum`)
 
 For autonomous multi-story execution without human intervention.
 
@@ -135,7 +139,7 @@ For autonomous multi-story execution without human intervention.
 **Workflow**:
 1. Create plan with `/prism-plan`
 2. Decompose with `/decompose_plan`
-3. Run `./scripts/ralph.sh`
+3. Run `./scripts/spectrum.sh`
 
 **Key behaviors**:
 - Fresh AI context per story (no degradation)
@@ -144,8 +148,8 @@ For autonomous multi-story execution without human intervention.
 - Terminates when all stories complete
 
 **Files**:
-- `thoughts/shared/ralph/stories.json` - Task definitions
-- `thoughts/shared/ralph/progress.md` - Accumulated learnings
+- `.prism/stories/stories.json` - Task definitions
+- `.prism/shared/spectrum/progress.md` - Accumulated learnings
 
 ### Debug (`/prism-debug`)
 
@@ -160,15 +164,15 @@ Investigate issues during implementation or when quality gates fail.
 - Spawns parallel investigation agents
 - Checks logs, app state, and git history
 - Produces structured debug report
-- Integrates with Ralph auto-retry flow
+- Integrates with Spectrum auto-retry flow
 
 **Agents available**:
 - `log-investigator` - Analyze log files for errors
 - `state-investigator` - Check app state and config
 - `git-investigator` - Analyze recent changes
 
-**Ralph Integration**:
-When Ralph encounters quality gate failures, `/prism-debug` runs automatically to capture diagnostic context for the next retry iteration.
+**Spectrum Integration**:
+When Spectrum encounters quality gate failures, `/prism-debug` runs automatically to capture diagnostic context for the next retry iteration.
 
 ## Document Generation
 
@@ -179,9 +183,9 @@ Generate formal documentation before or alongside development.
 Product Requirements Document - foundation for the project.
 
 **Workflow**:
-1. Checks for existing context in `thoughts/`
+1. Checks for existing context in `.prism/`
 2. Invokes `/generate_prd` with clarifying questions
-3. Saves to `thoughts/shared/plans/`
+3. Saves to `.prism/shared/plans/`
 4. Offers companion documents
 
 **Outputs**: Problem statement, target users, features, technical requirements, risks
@@ -194,7 +198,7 @@ User flows, wireframes, and UX specifications.
 1. Locates relevant PRD
 2. Invokes `/generate_user_flows` for UX docs
 3. Optionally invokes `/generate_tech_spec` for architecture
-4. Saves to `thoughts/shared/plans/`
+4. Saves to `.prism/shared/plans/`
 
 **Outputs**: User personas, flow diagrams, screen inventory, wireframes, component library
 

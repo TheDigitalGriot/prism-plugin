@@ -1,6 +1,6 @@
 {
   "plan": {
-    "name": "Test Plan - Ralph TUI Demo",
+    "name": "Test Plan - Prism TUI Demo",
     "source": "test",
     "createdAt": "2026-02-04T12:00:00Z",
     "qualityGates": [

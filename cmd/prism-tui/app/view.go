@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/prism-plugin/ralph-tui/styles"
+	"github.com/prism-plugin/prism-tui/styles"
 )
 
 // View renders the entire UI
@@ -37,7 +37,7 @@ func (m Model) View() string {
 }
 
 func (m Model) renderHeader() string {
-	title := styles.TitleStyle.Render("RALPH TUI")
+	title := styles.TitleStyle.Render("PRISM TUI")
 
 	iterInfo := fmt.Sprintf("Iteration: %d/%d", m.Iteration, m.MaxIterations)
 	helpHint := styles.DimStyle.Render("[?] help")

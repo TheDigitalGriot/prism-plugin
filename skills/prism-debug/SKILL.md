@@ -1,19 +1,19 @@
 ---
 name: prism-debug
-description: Debug issues by investigating logs, application state, and git history using parallel agents. Use when encountering failures during implementation, quality gate failures in Ralph, or any unexpected behavior. Triggers on "debug this", "why is this failing", "investigate the error", "prism debug", or when Ralph encounters quality gate failures.
+description: Debug issues by investigating logs, application state, and git history using parallel agents. Use when encountering failures during implementation, quality gate failures in Spectrum, or any unexpected behavior. Triggers on "debug this", "why is this failing", "investigate the error", "prism debug", or when Spectrum encounters quality gate failures.
 model: sonnet
 ---
 
 # Prism Debug
 
-Orchestrate parallel debug investigation to diagnose issues during development or Ralph execution.
+Orchestrate parallel debug investigation to diagnose issues during development or Spectrum execution.
 
 ## Philosophy
 
 1. **Investigate, Don't Fix**: This skill diagnoses problems, it doesn't implement fixes
 2. **Parallel Investigation**: Spawn multiple agents to check different areas simultaneously
 3. **Structured Output**: Produce actionable debug reports
-4. **Context Preservation**: Capture findings for future iterations (especially Ralph)
+4. **Context Preservation**: Capture findings for future iterations (especially Spectrum)
 
 ## Integration Points
 
@@ -22,8 +22,8 @@ Orchestrate parallel debug investigation to diagnose issues during development o
 /prism-debug [optional: context file or error description]
 ```
 
-### Ralph Integration
-Automatically invoked when quality gates fail during `/prism-ralph` execution.
+### Spectrum Integration
+Automatically invoked when quality gates fail during `/prism-spectrum` execution.
 
 ### Workflow Position
 ```
@@ -51,7 +51,7 @@ When invoked, first understand the situation:
 - What went wrong?
 - Any error messages?
 
-**If invoked from Ralph**:
+**If invoked from Spectrum**:
 - Read stories.json for current story
 - Read progress.md for recent history
 - Capture quality gate failure output
@@ -145,9 +145,9 @@ Combine agent results into a structured report:
 - [file2.ts:line] - [why]
 ```
 
-### 5. Output for Ralph
+### 5. Output for Spectrum
 
-When invoked from Ralph, format findings for progress.md:
+When invoked from Spectrum, format findings for progress.md:
 
 ```markdown
 ## [Timestamp] - Debug Investigation for [STORY-ID]

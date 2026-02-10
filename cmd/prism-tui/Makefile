@@ -1,8 +1,8 @@
-# Ralph TUI Makefile
+# Prism TUI Makefile
 
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 LDFLAGS := -X main.version=$(VERSION)
-BINARY := ralph-tui
+BINARY := prism-tui
 
 # Platforms for cross-compilation
 PLATFORMS := windows/amd64 darwin/amd64 darwin/arm64 linux/amd64 linux/arm64
@@ -51,7 +51,7 @@ run:
 
 # Show help
 help:
-	@echo "Ralph TUI - Build Commands"
+	@echo "Prism TUI - Build Commands"
 	@echo ""
 	@echo "Usage:"
 	@echo "  make build       Build for current platform"

@@ -8,8 +8,8 @@ import (
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/prism-plugin/ralph-tui/claude"
-	"github.com/prism-plugin/ralph-tui/domain"
+	"github.com/prism-plugin/prism-tui/claude"
+	"github.com/prism-plugin/prism-tui/domain"
 )
 
 // demoActivities is a list of fake tool activities for demo mode
@@ -377,7 +377,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				)
 			}
 
-			m.AddLog(LogInfo, "Starting Ralph execution...")
+			m.AddLog(LogInfo, "Starting Spectrum execution...")
 			// Trigger first iteration
 			return m, func() tea.Msg { return StartNextIterationMsg{} }
 		}
@@ -568,7 +568,7 @@ func (m Model) handleSignal(msg SignalDetectedMsg) (tea.Model, tea.Cmd) {
 		if remaining > 0 {
 			// COMPLETE signal received but stories remain - this is a bug in the skill output
 			m.AddLog(LogWarning, fmt.Sprintf("⚠️ COMPLETE signal received but %d stories remain - ignoring and continuing", remaining))
-			m.AddLog(LogInfo, "This is likely a skill bug - prism-ralph should output <ralph-continue> when stories remain")
+			m.AddLog(LogInfo, "This is likely a skill bug - prism-spectrum should output <spectrum-continue> when stories remain")
 			// Continue instead of stopping
 			return m, tea.Tick(time.Duration(m.Pause)*time.Second, func(t time.Time) tea.Msg {
 				return StartNextIterationMsg{}

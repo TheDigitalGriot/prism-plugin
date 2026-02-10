@@ -11,10 +11,10 @@ type SignalType int
 const (
 	SignalNone SignalType = iota
 	SignalComplete  // <promise>COMPLETE</promise>
-	SignalContinue  // <ralph-continue>...</ralph-continue>
-	SignalRetry     // <ralph-retry>...</ralph-retry>
-	SignalBlocked   // <ralph-blocked>...</ralph-blocked>
-	SignalError     // <ralph-error>...</ralph-error>
+	SignalContinue  // <spectrum-continue>...</spectrum-continue>
+	SignalRetry     // <spectrum-retry>...</spectrum-retry>
+	SignalBlocked   // <spectrum-blocked>...</spectrum-blocked>
+	SignalError     // <spectrum-error>...</spectrum-error>
 )
 
 func (s SignalType) String() string {
@@ -44,11 +44,11 @@ type Signal struct {
 // Signal pattern regexes
 var (
 	completeRe = regexp.MustCompile(`<promise>COMPLETE</promise>`)
-	continueRe = regexp.MustCompile(`(?s)<ralph-continue>(.*?)</ralph-continue>`)
-	retryRe    = regexp.MustCompile(`(?s)<ralph-retry[^>]*>(.*?)</ralph-retry>`)
-	blockedRe  = regexp.MustCompile(`(?s)<ralph-blocked[^>]*>(.*?)</ralph-blocked>`)
-	errorRe    = regexp.MustCompile(`(?s)<ralph-error[^>]*>(.*?)</ralph-error>`)
-	storyRe    = regexp.MustCompile(`(?s)<ralph-story>(.*?)</ralph-story>`)
+	continueRe = regexp.MustCompile(`(?s)<spectrum-continue>(.*?)</spectrum-continue>`)
+	retryRe    = regexp.MustCompile(`(?s)<spectrum-retry[^>]*>(.*?)</spectrum-retry>`)
+	blockedRe  = regexp.MustCompile(`(?s)<spectrum-blocked[^>]*>(.*?)</spectrum-blocked>`)
+	errorRe    = regexp.MustCompile(`(?s)<spectrum-error[^>]*>(.*?)</spectrum-error>`)
+	storyRe    = regexp.MustCompile(`(?s)<spectrum-story>(.*?)</spectrum-story>`)
 	reasonRe   = regexp.MustCompile(`reason="([^"]*)"`)
 )
 
@@ -116,7 +116,7 @@ func extractReason(output string, tagRe *regexp.Regexp) string {
 	return ""
 }
 
-// StoryAnnouncement represents a parsed <ralph-story> tag
+// StoryAnnouncement represents a parsed <spectrum-story> tag
 type StoryAnnouncement struct {
 	ID       string
 	Title    string
@@ -124,7 +124,7 @@ type StoryAnnouncement struct {
 	Files    []string
 }
 
-// ParseStoryAnnouncement extracts story info from <ralph-story> tag
+// ParseStoryAnnouncement extracts story info from <spectrum-story> tag
 func ParseStoryAnnouncement(output string) *StoryAnnouncement {
 	match := storyRe.FindStringSubmatch(output)
 	if match == nil {

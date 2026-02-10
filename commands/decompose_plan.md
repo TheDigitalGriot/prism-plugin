@@ -1,15 +1,15 @@
 ---
-description: Convert a Prism implementation plan into Ralph-style executable stories for autonomous iteration
+description: Convert a Prism implementation plan into Spectrum-style executable stories for autonomous iteration
 model: opus
 ---
 
 # Decompose Plan to Stories
 
-Convert an existing Prism implementation plan into Ralph-compatible `stories.json` format for autonomous execution via `ralph.sh`.
+Convert an existing Prism implementation plan into Spectrum-compatible `stories.json` format for autonomous execution via `spectrum.sh`.
 
 ## Prerequisites
 
-- Approved plan in `thoughts/shared/plans/`
+- Approved plan in `.prism/shared/plans/`
 - Plan must have defined phases and steps
 - Quality gates / verification commands defined
 
@@ -172,7 +172,7 @@ Generate stories.json? (yes/no)
 
 Upon approval:
 
-**Create `thoughts/shared/ralph/stories.json`**:
+**Create `.prism/stories/stories.json`**:
 ```json
 {
   "plan": {
@@ -185,7 +185,7 @@ Upon approval:
 }
 ```
 
-**Create `thoughts/shared/ralph/progress.md`**:
+**Create `.prism/shared/spectrum/progress.md`**:
 ```markdown
 ---
 plan: [Plan title]
@@ -193,7 +193,7 @@ startedAt: [ISO timestamp]
 lastUpdated: [ISO timestamp]
 ---
 
-# Ralph Progress Log
+# Spectrum Progress Log
 
 ## Codebase Patterns (Consolidated)
 
@@ -201,32 +201,32 @@ lastUpdated: [ISO timestamp]
 
 ---
 
-*Run `./scripts/ralph.sh` to begin autonomous execution*
+*Run `./scripts/spectrum.sh` to begin autonomous execution*
 ```
 
 ### 10. Provide Next Steps
 
 ```markdown
-## Ready for Ralph Execution
+## Ready for Spectrum Execution
 
 **Files created**:
-- `thoughts/shared/ralph/stories.json` - [N] stories
-- `thoughts/shared/ralph/progress.md` - Progress log
+- `.prism/stories/stories.json` - [N] stories
+- `.prism/shared/spectrum/progress.md` - Progress log
 
 **To start autonomous execution**:
 ```bash
-./scripts/ralph.sh
+./scripts/spectrum.sh
 ```
 
 **To run with options**:
 ```bash
-RALPH_MAX_ITERATIONS=20 ./scripts/ralph.sh      # Custom iteration limit
-RALPH_VERBOSE=true ./scripts/ralph.sh           # Verbose output
+SPECTRUM_MAX_ITERATIONS=20 ./scripts/spectrum.sh      # Custom iteration limit
+SPECTRUM_VERBOSE=true ./scripts/spectrum.sh           # Verbose output
 ```
 
 **To monitor progress**:
-- Watch `thoughts/shared/ralph/progress.md` for learnings
-- Check `thoughts/shared/ralph/stories.json` for status
+- Watch `.prism/shared/spectrum/progress.md` for learnings
+- Check `.prism/stories/stories.json` for status
 - Use `git log --oneline` to see commits
 ```
 

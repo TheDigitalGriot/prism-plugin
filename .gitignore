@@ -4,10 +4,10 @@ thoughts/
 
 # Build artifacts
 bin/
-cmd/ralph-tui/bin/
-cmd/ralph-tui/ralph-tui
-cmd/ralph-tui/ralph-tui.exe
+cmd/prism-tui/bin/
+cmd/prism-tui/prism-tui
+cmd/prism-tui/prism-tui.exe
 *.exe
 
 # Go
-cmd/ralph-tui/go.sum
+cmd/prism-tui/go.sum

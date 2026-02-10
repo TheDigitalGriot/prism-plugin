@@ -16,25 +16,25 @@ func TestParseSignal(t *testing.T) {
 		},
 		{
 			name:     "continue signal",
-			input:    "<ralph-continue>STORY_COMPLETE: STORY-001</ralph-continue>",
+			input:    "<spectrum-continue>STORY_COMPLETE: STORY-001</spectrum-continue>",
 			expected: SignalContinue,
 			content:  "STORY_COMPLETE: STORY-001",
 		},
 		{
 			name:     "retry signal",
-			input:    `<ralph-retry reason="QUALITY_GATE_FAILED">npm test failed</ralph-retry>`,
+			input:    `<spectrum-retry reason="QUALITY_GATE_FAILED">npm test failed</spectrum-retry>`,
 			expected: SignalRetry,
 			content:  "npm test failed",
 		},
 		{
 			name:     "blocked signal",
-			input:    `<ralph-blocked reason="UNCLEAR">Need clarification</ralph-blocked>`,
+			input:    `<spectrum-blocked reason="UNCLEAR">Need clarification</spectrum-blocked>`,
 			expected: SignalBlocked,
 			content:  "Need clarification",
 		},
 		{
 			name:     "error signal",
-			input:    `<ralph-error reason="MERGE_CONFLICT">Cannot merge</ralph-error>`,
+			input:    `<spectrum-error reason="MERGE_CONFLICT">Cannot merge</spectrum-error>`,
 			expected: SignalError,
 			content:  "Cannot merge",
 		},
@@ -64,14 +64,14 @@ func TestParseSignal(t *testing.T) {
 }
 
 func TestParseStoryAnnouncement(t *testing.T) {
-	input := `<ralph-story>
+	input := `<spectrum-story>
 ID: STORY-003
 Title: Add user authentication
 Priority: 5
 Files:
 - src/auth/login.ts
 - src/types/auth.ts
-</ralph-story>`
+</spectrum-story>`
 
 	announcement := ParseStoryAnnouncement(input)
 	if announcement == nil {

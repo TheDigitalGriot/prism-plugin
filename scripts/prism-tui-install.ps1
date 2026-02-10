@@ -1,5 +1,5 @@
-# Ralph TUI Installer for Windows
-# Downloads or builds ralph-tui binary
+# Prism TUI Installer for Windows
+# Downloads or builds prism-tui binary
 
 param(
     [string]$Method = "auto"
@@ -8,12 +8,12 @@ param(
 $ErrorActionPreference = "Stop"
 
 $Repo = "TheDigitalGriot/prism-plugin"
-$BinaryName = "ralph-tui"
+$BinaryName = "prism-tui"
 $InstallDir = if ($env:PRISM_BIN_DIR) { $env:PRISM_BIN_DIR } else { "$env:USERPROFILE\.prism\bin" }
 
-function Write-Log { param($Message) Write-Host "[ralph-tui] $Message" -ForegroundColor Green }
-function Write-Warn { param($Message) Write-Host "[ralph-tui] $Message" -ForegroundColor Yellow }
-function Write-Err { param($Message) Write-Host "[ralph-tui] ERROR: $Message" -ForegroundColor Red }
+function Write-Log { param($Message) Write-Host "[prism-tui] $Message" -ForegroundColor Green }
+function Write-Warn { param($Message) Write-Host "[prism-tui] $Message" -ForegroundColor Yellow }
+function Write-Err { param($Message) Write-Host "[prism-tui] ERROR: $Message" -ForegroundColor Red }
 
 function Test-GoInstalled {
     try {
@@ -26,7 +26,7 @@ function Test-GoInstalled {
 
 function Build-FromSource {
     $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-    $SourceDir = Join-Path (Split-Path -Parent $ScriptDir) "cmd\ralph-tui"
+    $SourceDir = Join-Path (Split-Path -Parent $ScriptDir) "cmd\prism-tui"
 
     if (-not (Test-Path $SourceDir)) {
         Write-Err "Source directory not found: $SourceDir"
@@ -95,7 +95,7 @@ switch ($Method) {
         }
     }
     default {
-        Write-Host "Usage: .\ralph-tui-install.ps1 [-Method auto|source|download]"
+        Write-Host "Usage: .\prism-tui-install.ps1 [-Method auto|source|download]"
         exit 1
     }
 }
@@ -109,7 +109,7 @@ if (Test-Path "$InstallDir\$BinaryName.exe") {
     Write-Log ""
     Write-Log "Or add permanently via System Properties > Environment Variables"
     Write-Log ""
-    Write-Log "Run: ralph-tui --help"
+    Write-Log "Run: prism-tui --help"
 } else {
     Write-Err "Installation failed"
     exit 1

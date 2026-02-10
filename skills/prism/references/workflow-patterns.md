@@ -52,7 +52,7 @@ Automation for processing tickets from a backlog:
 2. Select highest priority SMALL/XS issue
 3. Move to "research in progress"
 4. Conduct research
-5. Save findings to thoughts/shared/research/
+5. Save findings to .prism/shared/research/
 6. Move to "ready for plan"
 
 ## Auto-Plan
@@ -61,7 +61,7 @@ Automation for processing tickets from a backlog:
 2. Select highest priority SMALL/XS issue
 3. Move to "plan in progress"
 4. Create implementation plan
-5. Save plan to thoughts/shared/plans/
+5. Save plan to .prism/shared/plans/
 6. Move to "plan in review"
 
 ## Auto-Implement
@@ -84,15 +84,20 @@ Automation for processing tickets from a backlog:
 
 ## Document-Driven Development
 
-All artifacts are persisted to `thoughts/` directory:
+All artifacts are persisted to `.prism/` directory:
 
 ```
-thoughts/
+.prism/
+├── stories/              # Task definitions
+│   └── stories.json
 ├── shared/               # Committed to repo
 │   ├── research/        # YYYY-MM-DD-topic.md
 │   ├── plans/           # YYYY-MM-DD-feature.md
 │   ├── validation/      # YYYY-MM-DD-report.md
-│   └── handoffs/        # Session handoff docs
+│   ├── handoffs/        # Session handoff docs
+│   ├── spectrum/        # Execution state (progress.md)
+│   ├── ref/
+│   └── docs/
 └── local/               # Gitignored, per-developer
 ```
 
@@ -169,13 +174,13 @@ Avoid:
 - Manual verification documented in plan
 - Status updates based on CI results
 
-## Ralph Iterative Execution Pattern
+## Spectrum Iterative Execution Pattern
 
 For autonomous execution of multiple stories with fresh context per iteration.
 
 ### Core Concept
 
-Ralph spawns fresh AI instances in a loop, with memory persisting through files:
+Spectrum spawns fresh AI instances in a loop, with memory persisting through files:
 - `stories.json` - Task definitions and completion status
 - `progress.md` - Accumulated learnings
 - Git commits - Permanent record of work
@@ -185,12 +190,12 @@ Ralph spawns fresh AI instances in a loop, with memory persisting through files:
 ### Architecture
 
 ```
-ralph.sh (Bash Loop)
+spectrum.sh (Bash Loop)
     │
-    ├── Iteration 1: claude --skill prism-ralph
+    ├── Iteration 1: claude --skill prism-spectrum
     │   └── Execute Story 1 → Commit → Update State
     │
-    ├── Iteration 2: claude --skill prism-ralph
+    ├── Iteration 2: claude --skill prism-spectrum
     │   └── Execute Story 2 → Commit → Update State
     │
     └── ... until <promise>COMPLETE</promise>
@@ -200,7 +205,7 @@ ralph.sh (Bash Loop)
 
 1. **Create plan** using `/prism-plan`
 2. **Decompose plan** using `/decompose_plan` → generates `stories.json`
-3. **Run orchestrator**: `./scripts/ralph.sh`
+3. **Run orchestrator**: `./scripts/spectrum.sh`
 4. Each iteration:
    - Loads state from files (fresh context)
    - Picks highest priority incomplete story
@@ -213,9 +218,11 @@ ralph.sh (Bash Loop)
 ### File Structure
 
 ```
-thoughts/shared/ralph/
-├── stories.json        # Task definitions and status
-└── progress.md         # Accumulated learnings
+.prism/
+├── stories/
+│   └── stories.json        # Task definitions and status
+└── shared/spectrum/
+    └── progress.md         # Accumulated learnings
 ```
 
 ### Signal Protocol
@@ -223,13 +230,13 @@ thoughts/shared/ralph/
 | Signal | Meaning |
 |--------|---------|
 | `<promise>COMPLETE</promise>` | All stories done - terminate loop |
-| `<ralph-continue>...</ralph-continue>` | Story complete - continue loop |
-| `<ralph-retry>...</ralph-retry>` | Recoverable error - retry |
-| `<ralph-error>...</ralph-error>` | Fatal error - stop loop |
+| `<spectrum-continue>...</spectrum-continue>` | Story complete - continue loop |
+| `<spectrum-retry>...</spectrum-retry>` | Recoverable error - retry |
+| `<spectrum-error>...</spectrum-error>` | Fatal error - stop loop |
 
 ### When to Use
 
-| Scenario | Use Ralph? |
+| Scenario | Use Spectrum? |
 |----------|------------|
 | Large feature (10+ changes) | Yes |
 | Repetitive transformations | Yes |
@@ -247,18 +254,18 @@ thoughts/shared/ralph/
 - **Fault Tolerance**: Failures retry in fresh sessions
 - **Autonomous**: Runs without human intervention
 
-### Running Ralph
+### Running Spectrum
 
 ```bash
 # Basic execution
-./scripts/ralph.sh
+./scripts/spectrum.sh
 
 # With custom iteration limit
-RALPH_MAX_ITERATIONS=20 ./scripts/ralph.sh
+SPECTRUM_MAX_ITERATIONS=20 ./scripts/spectrum.sh
 
 # With verbose output
-RALPH_VERBOSE=true ./scripts/ralph.sh
+SPECTRUM_VERBOSE=true ./scripts/spectrum.sh
 
 # Specify custom stories file
-./scripts/ralph.sh path/to/stories.json
+./scripts/spectrum.sh path/to/stories.json
 ```

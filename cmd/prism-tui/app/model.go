@@ -10,7 +10,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/harmonica"
-	"github.com/prism-plugin/ralph-tui/prism"
+	"github.com/prism-plugin/prism-tui/prism"
 )
 
 // AppState represents the running state of the TUI

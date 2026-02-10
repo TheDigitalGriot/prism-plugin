@@ -68,7 +68,7 @@ func RunClaudeCmd(projectDir, storiesPath string, iteration int) tea.Cmd {
 
 		// Build the prompt
 		prompt := fmt.Sprintf(
-			"Execute the next story from %s using the /prism-ralph workflow.",
+			"Execute the next story from %s using the /prism-spectrum workflow.",
 			storiesPath,
 		)
 
@@ -109,7 +109,7 @@ func RunClaudeStreamingCmd(projectDir, storiesPath string, iteration int, output
 		startTime := time.Now()
 
 		prompt := fmt.Sprintf(
-			"Execute the next story from %s using the /prism-ralph workflow.",
+			"Execute the next story from %s using the /prism-spectrum workflow.",
 			storiesPath,
 		)
 

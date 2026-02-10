@@ -36,7 +36,7 @@ startedAt: %s
 lastUpdated: %s
 ---
 
-# Ralph Progress Log
+# Spectrum Progress Log
 
 ## Codebase Patterns (Consolidated)
 

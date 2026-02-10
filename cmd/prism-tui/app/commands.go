@@ -2,7 +2,7 @@ package app
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/prism-plugin/ralph-tui/domain"
+	"github.com/prism-plugin/prism-tui/domain"
 )
 
 // LoadStoriesCmd creates a command to load stories.json
@@ -117,7 +117,7 @@ func convertSignalType(dt domain.SignalType) SignalType {
 	}
 }
 
-// CheckForStoryAnnouncement looks for <ralph-story> tag in output
+// CheckForStoryAnnouncement looks for <spectrum-story> tag in output
 func CheckForStoryAnnouncement(output string) *StoryStartedMsg {
 	announcement := domain.ParseStoryAnnouncement(output)
 	if announcement == nil {

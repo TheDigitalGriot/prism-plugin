@@ -7,7 +7,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/prism-plugin/ralph-tui/app"
+	"github.com/prism-plugin/prism-tui/app"
 	"github.com/spf13/cobra"
 )
 
@@ -23,9 +23,9 @@ func main() {
 	)
 
 	rootCmd := &cobra.Command{
-		Use:     "ralph-tui [stories-file]",
-		Short:   "Ralph TUI - Autonomous iteration executor with visual interface",
-		Long: `Ralph TUI provides a visual terminal interface for running the Ralph
+		Use:     "prism-tui [stories-file]",
+		Short:   "Prism TUI - Autonomous iteration executor with visual interface",
+		Long: `Prism TUI provides a visual terminal interface for running the Spectrum
 iterative workflow. It spawns Claude Code sessions to execute stories
 autonomously while providing real-time visibility into progress.
 
@@ -59,7 +59,7 @@ Keyboard controls:
 				if err != nil {
 					return fmt.Errorf("failed to get working directory: %w", err)
 				}
-				storiesFile = filepath.Join(cwd, "thoughts", "shared", "ralph", "stories.json")
+				storiesFile = filepath.Join(cwd, ".prism", "stories", "stories.json")
 			}
 
 			// Get absolute path
@@ -74,8 +74,8 @@ Keyboard controls:
 				return fmt.Errorf("stories file not found: %s\n\nRun /decompose_plan first to generate stories.json", storiesFile)
 			}
 
-			// Determine project directory (parent of thoughts/)
-			projectDir := filepath.Dir(filepath.Dir(filepath.Dir(filepath.Dir(storiesFile))))
+			// Determine project directory (parent of .prism/)
+			projectDir := filepath.Dir(filepath.Dir(filepath.Dir(storiesFile)))
 			if projectDir == "" || projectDir == "." {
 				projectDir, _ = os.Getwd()
 			}
@@ -84,7 +84,7 @@ Keyboard controls:
 			model := app.NewModel(storiesFile, projectDir, maxIterations, pause, prismStyle)
 
 			// Add initial log entry
-			model.AddLog(app.LogInfo, "Ralph TUI v"+version)
+			model.AddLog(app.LogInfo, "Prism TUI v"+version)
 			model.AddLog(app.LogInfo, "Stories: "+storiesFile)
 			model.AddLog(app.LogInfo, "Project: "+projectDir)
 
@@ -114,7 +114,7 @@ func runDemoMode(version string, prismStyle string) error {
 	model := app.NewDemoModel(prismStyle)
 
 	// Add initial log entries
-	model.AddLog(app.LogInfo, "Ralph TUI "+version+" - DEMO MODE")
+	model.AddLog(app.LogInfo, "Prism TUI "+version+" - DEMO MODE")
 	model.AddLog(app.LogInfo, "Press Enter to start demo simulation")
 	model.AddLog(app.LogWarning, "Stories will auto-complete every 2-3 seconds")
 

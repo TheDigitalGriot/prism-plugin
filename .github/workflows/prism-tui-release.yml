@@ -1,4 +1,4 @@
-name: Ralph TUI Release
+name: Prism TUI Release
 
 on:
   push:
@@ -44,19 +44,19 @@ jobs:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
         run: |
-          cd cmd/ralph-tui
+          cd cmd/prism-tui
           VERSION="${{ github.ref_name }}"
           if [ -z "$VERSION" ] || [ "$VERSION" = "refs/heads/main" ]; then
             VERSION="${{ github.event.inputs.version }}"
           fi
           go build -ldflags "-X main.version=$VERSION" \
-            -o ralph-tui-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }} .
+            -o prism-tui-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }} .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ralph-tui-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: cmd/ralph-tui/ralph-tui-*
+          name: prism-tui-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: cmd/prism-tui/prism-tui-*
 
   release:
     needs: build

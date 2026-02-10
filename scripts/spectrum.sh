@@ -1,25 +1,25 @@
 #!/usr/bin/env bash
-# Ralph Iterative Executor for Prism
+# Spectrum Iterative Executor for Prism
 # Spawns fresh Claude Code sessions in a loop to execute stories autonomously
 #
-# Usage: ralph [stories-file]
+# Usage: spectrum [stories-file]
 #
-# Run from your PROJECT DIRECTORY (where thoughts/ exists).
+# Run from your PROJECT DIRECTORY (where .prism/ exists).
 # The script uses the current working directory by default.
 #
 # Environment Variables:
-#   RALPH_MAX_ITERATIONS: Maximum iterations (default: 50)
-#   RALPH_VERBOSE: Enable verbose output (default: false)
-#   RALPH_PAUSE: Seconds between iterations (default: 2)
+#   SPECTRUM_MAX_ITERATIONS: Maximum iterations (default: 50)
+#   SPECTRUM_VERBOSE: Enable verbose output (default: false)
+#   SPECTRUM_PAUSE: Seconds between iterations (default: 2)
 #
 # Examples:
-#   ralph                                              # Run from project dir
-#   ralph thoughts/shared/ralph/stories.json          # Specify stories file
-#   RALPH_MAX_ITERATIONS=20 ralph                     # Custom iteration limit
-#   RALPH_VERBOSE=true ralph                          # Verbose output
+#   spectrum                                              # Run from project dir
+#   spectrum .prism/stories/stories.json                 # Specify stories file
+#   SPECTRUM_MAX_ITERATIONS=20 spectrum                  # Custom iteration limit
+#   SPECTRUM_VERBOSE=true spectrum                       # Verbose output
 #
 # Setup (add to ~/.bashrc or ~/.zshrc):
-#   alias ralph='/path/to/prism-plugin/scripts/ralph.sh'
+#   alias spectrum='/path/to/prism-plugin/scripts/spectrum.sh'
 
 set -euo pipefail
 
@@ -33,17 +33,17 @@ NC='\033[0m' # No Color
 # Configuration
 # Use CURRENT WORKING DIRECTORY (where you run the command from)
 PROJECT_DIR="$(pwd)"
-STORIES_FILE="${1:-$PROJECT_DIR/thoughts/shared/ralph/stories.json}"
-PROGRESS_FILE="${STORIES_FILE%/*}/progress.md"
-MAX_ITERATIONS="${RALPH_MAX_ITERATIONS:-50}"
-VERBOSE="${RALPH_VERBOSE:-false}"
-PAUSE="${RALPH_PAUSE:-2}"
+STORIES_FILE="${1:-$PROJECT_DIR/.prism/stories/stories.json}"
+PROGRESS_FILE="$PROJECT_DIR/.prism/shared/spectrum/progress.md"
+MAX_ITERATIONS="${SPECTRUM_MAX_ITERATIONS:-50}"
+VERBOSE="${SPECTRUM_VERBOSE:-false}"
+PAUSE="${SPECTRUM_PAUSE:-2}"
 
 # Logging functions
-log() { echo -e "${BLUE}[ralph]${NC} $(date +%H:%M:%S) $*"; }
-success() { echo -e "${GREEN}[ralph]${NC} $(date +%H:%M:%S) $*"; }
-warn() { echo -e "${YELLOW}[ralph]${NC} $(date +%H:%M:%S) $*"; }
-error() { echo -e "${RED}[ralph]${NC} $(date +%H:%M:%S) ERROR: $*" >&2; }
+log() { echo -e "${BLUE}[spectrum]${NC} $(date +%H:%M:%S) $*"; }
+success() { echo -e "${GREEN}[spectrum]${NC} $(date +%H:%M:%S) $*"; }
+warn() { echo -e "${YELLOW}[spectrum]${NC} $(date +%H:%M:%S) $*"; }
+error() { echo -e "${RED}[spectrum]${NC} $(date +%H:%M:%S) ERROR: $*" >&2; }
 
 # Check prerequisites
 check_prerequisites() {
@@ -87,6 +87,9 @@ init_progress() {
     if [[ ! -f "$PROGRESS_FILE" ]]; then
         local plan_name
         plan_name=$(get_plan_name)
+        local progress_dir
+        progress_dir=$(dirname "$PROGRESS_FILE")
+        mkdir -p "$progress_dir"
         cat > "$PROGRESS_FILE" << EOF
 ---
 plan: $plan_name
@@ -94,7 +97,7 @@ startedAt: $(date -Iseconds)
 lastUpdated: $(date -Iseconds)
 ---
 
-# Ralph Progress Log
+# Spectrum Progress Log
 
 ## Codebase Patterns (Consolidated)
 
@@ -116,7 +119,7 @@ print_banner() {
 
     echo ""
     echo "================================================================"
-    echo "  RALPH ITERATION $iteration of $MAX_ITERATIONS"
+    echo "  SPECTRUM ITERATION $iteration of $MAX_ITERATIONS"
     echo "  Stories: $complete/$total complete ($remaining remaining)"
     echo "================================================================"
     echo ""
@@ -128,9 +131,9 @@ run_iteration() {
     local exit_code=0
 
     # Build the prompt for Claude
-    local prompt="Execute the next story from $STORIES_FILE using the /prism-ralph workflow."
+    local prompt="Execute the next story from $STORIES_FILE using the /prism-spectrum workflow."
 
-    # Run Claude with prism-ralph skill from the project directory
+    # Run Claude with prism-spectrum skill from the project directory
     # Using --print to capture output, --dangerously-skip-permissions for autonomous operation
     if [[ "$VERBOSE" == "true" ]]; then
         output=$(cd "$PROJECT_DIR" && claude --dangerously-skip-permissions --print "$prompt" 2>&1 | tee /dev/stderr) || exit_code=$?
@@ -153,24 +156,24 @@ check_signals() {
     fi
 
     # Check for continue
-    if echo "$output" | grep -q '<ralph-continue>'; then
+    if echo "$output" | grep -q '<spectrum-continue>'; then
         return 1  # Continue
     fi
 
     # Check for retry
-    if echo "$output" | grep -q '<ralph-retry>'; then
+    if echo "$output" | grep -q '<spectrum-retry>'; then
         warn "Iteration requested retry"
         return 2  # Retry
     fi
 
     # Check for blocked
-    if echo "$output" | grep -q '<ralph-blocked>'; then
+    if echo "$output" | grep -q '<spectrum-blocked>'; then
         warn "Story blocked, will try next available"
         return 1  # Continue with next story
     fi
 
     # Check for error
-    if echo "$output" | grep -q '<ralph-error>'; then
+    if echo "$output" | grep -q '<spectrum-error>'; then
         error "Fatal error detected in output"
         return 3  # Error
     fi
@@ -190,7 +193,7 @@ main() {
     local total
     total=$(count_total)
 
-    log "Starting Ralph iterative execution"
+    log "Starting Spectrum iterative execution"
     log "Project: $PROJECT_DIR"
     log "Plan: $plan_name"
     log "Stories file: $STORIES_FILE"

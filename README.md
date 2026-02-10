@@ -10,7 +10,7 @@ Prism transforms complex coding tasks into focused, quality work through special
 - 🔬 **Parallel Research Agents** — Multiple specialized agents explore code simultaneously
 - 📋 **Interactive Planning** — Plans are contracts, reviewed and approved before implementation
 - ✅ **Quality Gates** — Automated verification at every stage
-- 🔄 **Ralph Autonomous Execution** — Multi-story feature development with fresh context per iteration
+- 🔄 **Spectrum Autonomous Execution** — Multi-story feature development with fresh context per iteration
 
 ## Installation
 
@@ -46,12 +46,12 @@ Say "help me build [feature]" or "implement [task]" to trigger the full Prism wo
 | `/prism:prism-implement` | Execute approved plan |
 | `/prism:prism-validate` | Verify implementation against plan |
 | `/prism:prism-iterate` | Update plan based on feedback |
-| `/prism:prism-ralph` | Autonomous story execution (used with ralph.sh) |
+| `/prism:prism-spectrum` | Autonomous story execution (used with spectrum.sh) |
 | `/prism:prism-debug` | Debug investigation with parallel agents |
 
-### Ralph Autonomous Execution
+### Spectrum Autonomous Execution
 
-For large features with 10+ changes, use Ralph-style iterative execution:
+For large features with 10+ changes, use Spectrum-style iterative execution:
 
 ```bash
 # 1. Create and approve a plan
@@ -61,14 +61,14 @@ For large features with 10+ changes, use Ralph-style iterative execution:
 /prism:decompose_plan
 
 # 3. Run autonomous execution
-./scripts/ralph.sh
+./scripts/spectrum.sh
 ```
 
-Ralph spawns fresh Claude sessions in a loop, executing one story per iteration with quality gates. Memory persists through files, not AI context.
+Spectrum spawns fresh Claude sessions in a loop, executing one story per iteration with quality gates. Memory persists through files, not AI context.
 
 | Command | Purpose |
 |---------|---------|
-| `/prism:prism-ralph` | Single-story execution (called by ralph.sh) |
+| `/prism:prism-spectrum` | Single-story execution (called by spectrum.sh) |
 | `/prism:decompose_plan` | Convert plan into stories.json |
 
 ### Debug Skill
@@ -79,7 +79,7 @@ Investigate issues during implementation or when quality gates fail:
 |---------|---------|
 | `/prism:prism-debug` | Spawn parallel debug investigation agents |
 
-Debug automatically integrates with Ralph - when quality gates fail, investigation runs before retry.
+Debug automatically integrates with Spectrum - when quality gates fail, investigation runs before retry.
 
 ### Document Generation Skills
 
@@ -149,7 +149,7 @@ User Request
 ┌─────────────┐                                             │             │
 │ visual-docs │                                             ▼             ▼
 │  (Optional) │                                      ┌───────────┐ ┌───────────┐
-└─────────────┘                                      │  Manual   │ │   Ralph   │
+└─────────────┘                                      │  Manual   │ │ Spectrum  │
                                                      │  Path     │ │   Path    │
                                                      └─────┬─────┘ └─────┬─────┘
                                                            │             │
@@ -166,14 +166,14 @@ User Request
                                                            └─────────────┘
 ```
 
-### Ralph Autonomous Execution Flow
+### Spectrum Autonomous Execution Flow
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     ralph.sh (Bash Loop)                     │
+│                    spectrum.sh (Bash Loop)                    │
 │                                                              │
 │  for iteration in 1..MAX_ITERATIONS; do                      │
-│      claude --skill prism-ralph                              │
+│      claude --skill prism-spectrum                           │
 │      if output contains "<promise>COMPLETE</promise>"        │
 │          break                                               │
 │  done                                                        │
@@ -216,7 +216,7 @@ prism-visual-docs  ──────────────▶ /generate_user_
 | `codebase-locator` | Find WHERE code lives | haiku |
 | `codebase-analyzer` | Understand HOW code works | opus |
 | `codebase-pattern-finder` | Find patterns to model after | sonnet |
-| `thoughts-locator` | Find existing docs in thoughts/ | haiku |
+| `thoughts-locator` | Find existing docs in .prism/ | haiku |
 | `thoughts-analyzer` | Extract insights from docs | opus |
 | `web-search-researcher` | Research external docs/APIs | sonnet |
 
@@ -251,31 +251,34 @@ Plans are contracts:
 - Never write full plan in one shot
 - Resolve ALL unknowns before finalizing
 
-## Thoughts Directory
+## Prism Directory
 
-Prism uses a `thoughts/` directory for persistent documentation:
+Prism uses a `.prism/` directory for persistent documentation:
 
 ```
 project/
-└── thoughts/
+└── .prism/
+    ├── stories/           # Task definitions
+    │   └── stories.json   # Story definitions and status
     ├── shared/            # Committed to repo
     │   ├── research/      # YYYY-MM-DD-topic.md
     │   ├── plans/         # YYYY-MM-DD-feature.md (PRDs, specs, flows)
     │   ├── validation/    # YYYY-MM-DD-report.md
     │   ├── handoffs/      # Session handoff docs
     │   ├── prs/           # PR descriptions
-    │   └── ralph/         # Ralph execution state
-    │       ├── stories.json   # Task definitions and status
-    │       └── progress.md    # Accumulated learnings
+    │   ├── spectrum/      # Execution state
+    │   │   └── progress.md    # Accumulated learnings
+    │   ├── ref/           # Reference materials
+    │   └── docs/          # Project documentation
     └── local/             # Gitignored, per-developer
 ```
 
 Initialize with:
 ```bash
-python skills/prism/scripts/init_thoughts.py
+python skills/prism/scripts/init_prism.py
 ```
 
-## Ralph Execution
+## Spectrum Execution
 
 For autonomous multi-story execution:
 
@@ -286,23 +289,23 @@ For autonomous multi-story execution:
 /prism:prism-plan "Add user authentication"
 
 # 2. Decompose into stories
-/prism:decompose_plan thoughts/shared/plans/2026-02-04-auth.md
+/prism:decompose_plan .prism/shared/plans/2026-02-04-auth.md
 
 # 3. Run autonomous execution
-./scripts/ralph.sh
+./scripts/spectrum.sh
 ```
 
 ### Configuration
 
 ```bash
 # Custom iteration limit (default: 50)
-RALPH_MAX_ITERATIONS=20 ./scripts/ralph.sh
+SPECTRUM_MAX_ITERATIONS=20 ./scripts/spectrum.sh
 
 # Verbose output
-RALPH_VERBOSE=true ./scripts/ralph.sh
+SPECTRUM_VERBOSE=true ./scripts/spectrum.sh
 
 # Custom stories file
-./scripts/ralph.sh path/to/stories.json
+./scripts/spectrum.sh path/to/stories.json
 ```
 
 ### How It Works

@@ -1,10 +1,10 @@
 ---
-name: prism-ralph
-description: Ralph-style single-story execution for iterative development. Executes one story per session with quality gates. Used by ralph.sh orchestrator for autonomous feature implementation. Triggers on "ralph", "execute story", "run ralph", or when invoked by ralph.sh loop.
+name: prism-spectrum
+description: Spectrum-style single-story execution for iterative development. Executes one story per session with quality gates. Used by spectrum.sh orchestrator for autonomous feature implementation. Triggers on "spectrum", "execute story", "run spectrum", or when invoked by spectrum.sh loop.
 model: sonnet
 ---
 
-# Prism Ralph
+# Prism Spectrum
 
 Execute a single story from the backlog with quality verification and atomic commits.
 
@@ -20,8 +20,8 @@ Execute a single story from the backlog with quality verification and atomic com
 
 | File | Purpose |
 |------|---------|
-| `thoughts/shared/ralph/stories.json` | Story definitions and status |
-| `thoughts/shared/ralph/progress.md` | Accumulated learnings |
+| `.prism/stories/stories.json` | Story definitions and status |
+| `.prism/shared/spectrum/progress.md` | Accumulated learnings |
 | `CLAUDE.md` | Project patterns and context (if exists) |
 
 ## Workflow
@@ -31,8 +31,8 @@ Execute a single story from the backlog with quality verification and atomic com
 Read ALL state files completely before doing anything:
 
 ```
-1. Read thoughts/shared/ralph/stories.json
-2. Read thoughts/shared/ralph/progress.md
+1. Read .prism/stories/stories.json
+2. Read .prism/shared/spectrum/progress.md
 3. Read CLAUDE.md (if exists in project root)
 ```
 
@@ -72,12 +72,12 @@ If a story is blocked by an incomplete story, skip it.
 Before implementing, output:
 
 ```
-<ralph-story>
+<spectrum-story>
 ID: [STORY-XXX]
 Title: [Story title]
 Priority: [N]
 Files: [list of files to modify]
-</ralph-story>
+</spectrum-story>
 ```
 
 ### 5. Implement Story
@@ -117,8 +117,8 @@ make test
 2. Capture the full error output
 3. **Run auto-debug investigation** (see Debug Integration section)
 4. Record failure details AND debug findings in progress.md
-5. Output: `<ralph-retry reason="QUALITY_GATE_FAILED">[debug summary]</ralph-retry>`
-6. Exit (ralph.sh will retry in fresh session with debug context)
+5. Output: `<spectrum-retry reason="QUALITY_GATE_FAILED">[debug summary]</spectrum-retry>`
+6. Exit (spectrum.sh will retry in fresh session with debug context)
 
 ### 7. Commit Changes
 
@@ -130,7 +130,7 @@ git commit -m "[STORY-XXX] [Story title]
 
 [Story description]
 
-Implemented by Ralph iteration"
+Implemented by Spectrum iteration"
 ```
 
 Capture the commit hash for the story record.
@@ -175,7 +175,7 @@ If new general patterns were discovered, add them to the "Codebase Patterns" sec
 
 ```javascript
 // Re-parse stories.json to get accurate count
-const stories = JSON.parse(readFile('thoughts/shared/ralph/stories.json')).stories;
+const stories = JSON.parse(readFile('.prism/stories/stories.json')).stories;
 const remaining = stories.filter(s => s.status !== 'complete').length;
 const total = stories.length;
 const completed = total - remaining;
@@ -188,7 +188,7 @@ console.log(`Progress: ${completed}/${total} stories complete, ${remaining} rema
 
 **If remaining > 0** (more incomplete stories exist):
 ```
-<ralph-continue>STORY_COMPLETE: [STORY-XXX] - Progress: [completed]/[total], [remaining] remaining</ralph-continue>
+<spectrum-continue>STORY_COMPLETE: [STORY-XXX] - Progress: [completed]/[total], [remaining] remaining</spectrum-continue>
 ```
 
 **If remaining === 0** (ALL stories now complete):
@@ -202,21 +202,21 @@ console.log(`Progress: ${completed}/${total} stories complete, ${remaining} rema
 
 | Scenario | Action |
 |----------|--------|
-| Story requirements unclear | Record question in progress.md, output `<ralph-blocked reason="UNCLEAR">[question]</ralph-blocked>` |
-| Quality gate fails | Record failure details, output `<ralph-retry reason="QUALITY_GATE_FAILED">[details]</ralph-retry>` |
-| Merge conflict | Record conflict, output `<ralph-error reason="MERGE_CONFLICT">[details]</ralph-error>` |
+| Story requirements unclear | Record question in progress.md, output `<spectrum-blocked reason="UNCLEAR">[question]</spectrum-blocked>` |
+| Quality gate fails | Record failure details, output `<spectrum-retry reason="QUALITY_GATE_FAILED">[details]</spectrum-retry>` |
+| Merge conflict | Record conflict, output `<spectrum-error reason="MERGE_CONFLICT">[details]</spectrum-error>` |
 | File not found | Check if it should be created, adapt or record in learnings |
 | Dependency not complete | Skip story, pick next available |
 
 ## Output Signals
 
-| Signal | Meaning | Ralph.sh Action |
+| Signal | Meaning | Spectrum.sh Action |
 |--------|---------|-----------------|
 | `<promise>COMPLETE</promise>` | All stories done | Terminate loop |
-| `<ralph-continue>...</ralph-continue>` | Story complete, more remain | Continue loop |
-| `<ralph-retry>...</ralph-retry>` | Recoverable error | Retry (fresh session) |
-| `<ralph-blocked>...</ralph-blocked>` | Story blocked | Skip, continue loop |
-| `<ralph-error>...</ralph-error>` | Fatal error | Stop loop |
+| `<spectrum-continue>...</spectrum-continue>` | Story complete, more remain | Continue loop |
+| `<spectrum-retry>...</spectrum-retry>` | Recoverable error | Retry (fresh session) |
+| `<spectrum-blocked>...</spectrum-blocked>` | Story blocked | Skip, continue loop |
+| `<spectrum-error>...</spectrum-error>` | Fatal error | Stop loop |
 
 ## Rules
 
@@ -228,7 +228,7 @@ console.log(`Progress: ${completed}/${total} stories complete, ${remaining} rema
 6. **Clean output** - Use signal tags for orchestrator parsing
 7. **Don't skip blocked stories** - Only work on unblocked stories
 8. **Follow existing patterns** - Check progress.md before implementing
-9. **VERIFY before COMPLETE** - Re-read stories.json and count remaining before outputting `<promise>COMPLETE</promise>`. If remaining > 0, use `<ralph-continue>` instead
+9. **VERIFY before COMPLETE** - Re-read stories.json and count remaining before outputting `<promise>COMPLETE</promise>`. If remaining > 0, use `<spectrum-continue>` instead
 
 ## Debug Integration
 
@@ -310,10 +310,10 @@ When debug runs, append to progress.md:
 
 ### Debug Signal Enhancement
 
-The `<ralph-retry>` signal now includes debug context:
+The `<spectrum-retry>` signal now includes debug context:
 
 ```xml
-<ralph-retry reason="QUALITY_GATE_FAILED">
+<spectrum-retry reason="QUALITY_GATE_FAILED">
   <error>npm test failed: 2 tests failing</error>
   <root_cause>Missing mock for AuthService in test setup</root_cause>
   <suggested_fix>Add AuthService mock to test/setup.ts beforeEach</suggested_fix>
@@ -321,7 +321,7 @@ The `<ralph-retry>` signal now includes debug context:
     - src/auth/auth.service.ts:45
     - test/auth.test.ts:12
   </files>
-</ralph-retry>
+</spectrum-retry>
 ```
 
 This context helps the next fresh iteration understand what went wrong and how to fix it.
@@ -333,15 +333,15 @@ This context helps the next fresh iteration understand what went wrong and how t
 2. Load progress.md → Previous learnings about auth patterns
 3. Check: 3 incomplete stories remain (not 0, so continue)
 4. Pick: STORY-003 (priority 3, not blocked)
-5. Output: <ralph-story>ID: STORY-003...</ralph-story>
+5. Output: <spectrum-story>ID: STORY-003...</spectrum-story>
 6. Read files: src/auth/login.ts, src/types/auth.ts
 7. Implement: Add password validation
 8. Run: npm run typecheck ✓, npm run lint ✓, npm test ✓
 9. Commit: "[STORY-003] Add password validation"
 10. Update: stories.json (status: complete), progress.md (learnings)
 11. RE-READ stories.json → count remaining: filter status !== 'complete'
-12. Verify: 3/5 complete, 2 remaining (remaining > 0, so use ralph-continue)
-13. Output: <ralph-continue>STORY_COMPLETE: STORY-003 - Progress: 3/5, 2 remaining</ralph-continue>
+12. Verify: 3/5 complete, 2 remaining (remaining > 0, so use spectrum-continue)
+13. Output: <spectrum-continue>STORY_COMPLETE: STORY-003 - Progress: 3/5, 2 remaining</spectrum-continue>
 ```
 
 **IMPORTANT**: Step 11-12 must RE-READ the file and COUNT before choosing the signal. Never assume the count.

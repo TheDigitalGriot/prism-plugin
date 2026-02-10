@@ -1,6 +1,6 @@
 {
   "name": "prism",
-  "description": "Structured 4-phase development workflow (Research -> Plan -> Implement -> Validate) with Ralph-style iterative execution with TUI",
+  "description": "Structured 4-phase development workflow (Research -> Plan -> Implement -> Validate) with Spectrum-style iterative execution with TUI",
   "version": "1.9.8",
   "author": {
     "name": "Prism Team"

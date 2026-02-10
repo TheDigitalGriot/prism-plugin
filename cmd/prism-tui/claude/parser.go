@@ -3,7 +3,7 @@ package claude
 import (
 	"strings"
 
-	"github.com/prism-plugin/ralph-tui/domain"
+	"github.com/prism-plugin/prism-tui/domain"
 )
 
 // OutputParser watches Claude output for signals and status changes

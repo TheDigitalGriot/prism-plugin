@@ -20,7 +20,7 @@ import (
 	"strings"
 
 	"github.com/fogleman/fauxgl"
-	"github.com/prism-plugin/ralph-tui/prism/framebuffer"
+	"github.com/prism-plugin/prism-tui/prism/framebuffer"
 )
 
 //go:embed prism-test.obj

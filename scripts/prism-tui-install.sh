@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Ralph TUI Installer
-# Downloads or builds ralph-tui binary for the current platform
+# Prism TUI Installer
+# Downloads or builds prism-tui binary for the current platform
 
 set -euo pipefail
 
 REPO="TheDigitalGriot/prism-plugin"
-BINARY_NAME="ralph-tui"
+BINARY_NAME="prism-tui"
 INSTALL_DIR="${PRISM_BIN_DIR:-$HOME/.prism/bin}"
 
 # Colors
@@ -14,9 +14,9 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
-log() { echo -e "${GREEN}[ralph-tui]${NC} $*"; }
-warn() { echo -e "${YELLOW}[ralph-tui]${NC} $*"; }
-error() { echo -e "${RED}[ralph-tui]${NC} ERROR: $*" >&2; }
+log() { echo -e "${GREEN}[prism-tui]${NC} $*"; }
+warn() { echo -e "${YELLOW}[prism-tui]${NC} $*"; }
+error() { echo -e "${RED}[prism-tui]${NC} ERROR: $*" >&2; }
 
 # Detect platform
 detect_platform() {
@@ -49,7 +49,7 @@ has_go() {
 build_from_source() {
     local script_dir
     script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    local source_dir="$script_dir/../cmd/ralph-tui"
+    local source_dir="$script_dir/../cmd/prism-tui"
 
     if [[ ! -d "$source_dir" ]]; then
         error "Source directory not found: $source_dir"
@@ -151,9 +151,9 @@ main() {
         log "  export PATH=\"\$PATH:$INSTALL_DIR\""
         log ""
         log "Or create an alias:"
-        log "  alias ralph-tui=\"${INSTALL_DIR}/${BINARY_NAME}${ext}\""
+        log "  alias prism-tui=\"${INSTALL_DIR}/${BINARY_NAME}${ext}\""
         log ""
-        log "Run: ralph-tui --help"
+        log "Run: prism-tui --help"
     else
         error "Installation failed"
         exit 1
