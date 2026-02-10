@@ -43,7 +43,7 @@ Then wait for the user's research query.
 
 4. **Wait for all sub-agents to complete and synthesize findings:**
    - IMPORTANT: Wait for ALL sub-agent tasks to complete before proceeding
-   - Compile all sub-agent results (both codebase and thoughts findings)
+   - Compile all sub-agent results (both codebase and .prism/ findings)
    - Prioritize live codebase findings as primary source of truth
    - Use .prism/ findings as supplementary historical context
    - Connect findings across different components

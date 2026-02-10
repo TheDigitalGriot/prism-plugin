@@ -3,6 +3,7 @@ package domain
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -13,12 +14,14 @@ type ProgressFile struct {
 }
 
 // NewProgressFile creates a ProgressFile from a stories.json path
-// It derives the progress.md path from the stories.json location
+// It derives the progress.md path using the .prism/ directory structure:
+//   stories.json  -> .prism/stories/stories.json
+//   progress.md   -> .prism/shared/spectrum/progress.md
 func NewProgressFile(storiesPath string) *ProgressFile {
-	// progress.md is in the same directory as stories.json
-	dir := storiesPath[:strings.LastIndex(storiesPath, string(os.PathSeparator))]
+	// Go up from .prism/stories/stories.json to .prism/, then into shared/spectrum/
+	prismDir := filepath.Dir(filepath.Dir(storiesPath))
 	return &ProgressFile{
-		Path: dir + string(os.PathSeparator) + "progress.md",
+		Path: filepath.Join(prismDir, "shared", "spectrum", "progress.md"),
 	}
 }
 
