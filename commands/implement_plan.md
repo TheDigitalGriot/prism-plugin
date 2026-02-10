@@ -1,11 +1,11 @@
 ---
-description: Implement technical plans from thoughts/shared/plans with verification
+description: Implement technical plans from .prism/shared/plans with verification
 model: sonnet
 ---
 
 # Implement Plan
 
-You are tasked with implementing an approved technical plan from `thoughts/shared/plans/`. These plans contain phases with specific changes and success criteria.
+You are tasked with implementing an approved technical plan from `.prism/shared/plans/`. These plans contain phases with specific changes and success criteria.
 
 ## Getting Started
 

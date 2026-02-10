@@ -1,6 +1,6 @@
 # Research Template
 
-Save to: `thoughts/shared/research/YYYY-MM-DD-topic.md`
+Save to: `.prism/shared/research/YYYY-MM-DD-topic.md`
 
 ---
 
@@ -80,10 +80,10 @@ const pattern = {
 
 ## Historical Context
 
-From `thoughts/` directory:
+From `.prism/` directory:
 
-- `thoughts/shared/research/2024-01-10-auth.md` - Previous auth research
-- `thoughts/shared/plans/2024-01-15-refactor.md` - Related refactoring
+- `.prism/shared/research/2024-01-10-auth.md` - Previous auth research
+- `.prism/shared/plans/2024-01-15-refactor.md` - Related refactoring
 
 ## Architecture Notes
 
@@ -91,7 +91,7 @@ From `thoughts/` directory:
 
 - **Pattern**: Repository pattern used for data access
 - **Convention**: All API routes in `src/api/routes/`
-- **Decision**: JWT over sessions (per `thoughts/shared/decisions/auth.md`)
+- **Decision**: JWT over sessions (per `.prism/shared/decisions/auth.md`)
 
 ## Open Questions
 
@@ -119,6 +119,6 @@ Quick navigation:
 
 1. **Always include file:line references** - Concrete navigation points
 2. **Document connections** - How components interact
-3. **Cite thoughts/ sources** - Link to historical context
+3. **Cite .prism/ sources** - Link to historical context
 4. **Track open questions** - Use TodoWrite for follow-ups
 5. **No recommendations** - Document what IS, not what SHOULD BE

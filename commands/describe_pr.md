@@ -10,7 +10,7 @@ You are tasked with generating a comprehensive pull request description followin
 ## Steps to follow:
 
 1. **Read the PR description template:**
-   - First, check if `thoughts/shared/pr_description.md` exists in the project
+   - First, check if `.prism/shared/pr_description.md` exists in the project
    - If it doesn't exist, use this default template:
      ```md
      ## Summary
@@ -35,7 +35,7 @@ You are tasked with generating a comprehensive pull request description followin
    - Ask the user which PR they want to describe
 
 3. **Check for existing description:**
-   - Check if `thoughts/shared/prs/{number}_description.md` already exists (create directory if needed)
+   - Check if `.prism/shared/prs/{number}_description.md` already exists (create directory if needed)
    - If it exists, read it and inform the user you'll be updating it
    - Consider what has changed since the last description was written
 
@@ -72,12 +72,12 @@ You are tasked with generating a comprehensive pull request description followin
    - Ensure all checklist items are addressed (checked or explained)
 
 8. **Save the description:**
-   - Write the completed description to `thoughts/shared/prs/{number}_description.md`
+   - Write the completed description to `.prism/shared/prs/{number}_description.md`
    - Show the user the generated description
    - Remind user to commit the description file if they want to preserve it
 
 9. **Update the PR:**
-   - Update the PR description directly: `gh pr edit {number} --body-file thoughts/shared/prs/{number}_description.md`
+   - Update the PR description directly: `gh pr edit {number} --body-file .prism/shared/prs/{number}_description.md`
    - Confirm the update was successful
    - If any verification steps remain unchecked, remind the user to complete them before merging
 

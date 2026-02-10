@@ -26,8 +26,8 @@ Invoke via Task tool with subagent_type:
 | `codebase-locator` | Find WHERE files/components live |
 | `codebase-analyzer` | Understand HOW code works |
 | `codebase-pattern-finder` | Find patterns to model after |
-| `thoughts-locator` | Find existing research in `thoughts/` |
-| `thoughts-analyzer` | Extract HIGH-VALUE insights from docs |
+| `prism-locator` | Find existing research in `.prism/` |
+| `prism-analyzer` | Extract HIGH-VALUE insights from docs |
 | `web-search-researcher` | Research external docs/APIs |
 
 ## Workflow
@@ -41,7 +41,7 @@ If the user mentions specific files, read them FULLY before spawning agents:
 ### 1. Check Existing Knowledge
 
 ```
-Task(subagent_type="thoughts-locator")
+Task(subagent_type="prism-locator")
 "Find existing research about [topic]"
 ```
 
@@ -75,7 +75,7 @@ Task(subagent_type="web-search-researcher")
 
 ### 6. Save Findings
 
-Save to `thoughts/shared/research/YYYY-MM-DD-topic.md`
+Save to `.prism/shared/research/YYYY-MM-DD-topic.md`
 
 Use TodoWrite to track open questions.
 
@@ -96,7 +96,7 @@ Key sections:
 1. **Document, don't critique** - No "this could be improved"
 2. **Specific references** - Always include `file:line`
 3. **Run agents in parallel** when searching different areas
-4. **Save to thoughts/** - Persists across sessions
+4. **Save to .prism/** - Persists across sessions
 5. **Read files first** - Always read mentioned files before spawning agents
 6. **Wait for completion** - Wait for ALL agents before synthesizing
 

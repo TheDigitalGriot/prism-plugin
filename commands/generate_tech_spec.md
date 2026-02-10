@@ -24,7 +24,7 @@ Please provide:
 2. Technology stack preferences (or I'll recommend based on requirements)
 3. Any existing systems to integrate with
 
-Tip: You can invoke with a PRD: `/generate_tech_spec thoughts/shared/plans/MY-PRODUCT-PRD.md`
+Tip: You can invoke with a PRD: `/generate_tech_spec .prism/shared/plans/MY-PRODUCT-PRD.md`
 ```
 
 Then wait for user input.

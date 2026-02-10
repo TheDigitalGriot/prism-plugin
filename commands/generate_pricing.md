@@ -25,7 +25,7 @@ Please provide:
 3. Desired timeline
 4. Currency preference (CAD/USD/etc.)
 
-Tip: You can invoke with a PRD: `/generate_pricing thoughts/shared/plans/MY-PRODUCT-PRD.md`
+Tip: You can invoke with a PRD: `/generate_pricing .prism/shared/plans/MY-PRODUCT-PRD.md`
 ```
 
 Then wait for user input.

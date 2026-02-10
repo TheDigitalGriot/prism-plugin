@@ -26,7 +26,7 @@ Please provide:
 
 Or provide an existing document/description I can work from.
 
-Tip: You can invoke with context: `/generate_prd thoughts/shared/research/my-product.md`
+Tip: You can invoke with context: `/generate_prd .prism/shared/research/my-product.md`
 ```
 
 Then wait for user input.

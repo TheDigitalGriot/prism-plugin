@@ -11,7 +11,7 @@ Write a handoff document to transfer work to another session. Be thorough but co
 
 ### 1. Filepath & Metadata
 
-Create file at `thoughts/shared/handoffs/YYYY-MM-DD_HH-MM-SS_description.md`:
+Create file at `.prism/shared/handoffs/YYYY-MM-DD_HH-MM-SS_description.md`:
 - YYYY-MM-DD: Today's date
 - HH-MM-SS: Current time (24-hour format)
 - description: Brief kebab-case description
@@ -68,7 +68,7 @@ After writing the handoff, respond:
 ```
 Handoff created! Resume in a new session with:
 
-/resume_handoff thoughts/shared/handoffs/YYYY-MM-DD_HH-MM-SS_description.md
+/resume_handoff .prism/shared/handoffs/YYYY-MM-DD_HH-MM-SS_description.md
 ```
 
 ## Guidelines

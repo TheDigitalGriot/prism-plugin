@@ -1,6 +1,6 @@
 # Validation Template
 
-Save to: `thoughts/shared/validation/YYYY-MM-DD-report.md`
+Save to: `.prism/shared/validation/YYYY-MM-DD-report.md`
 
 ---
 
@@ -10,7 +10,7 @@ date: YYYY-MM-DD
 validator: Claude
 repository: [repo-name]
 branch: [branch-name]
-plan: thoughts/shared/plans/YYYY-MM-DD-feature.md
+plan: .prism/shared/plans/YYYY-MM-DD-feature.md
 git_range: [start-commit]..[end-commit]
 status: [pass | fail | partial]
 ---

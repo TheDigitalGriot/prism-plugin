@@ -12,7 +12,7 @@ You are tasked with updating existing implementation plans based on user feedbac
 When this command is invoked:
 
 1. **Parse the input to identify**:
-   - Plan file path (e.g., `thoughts/shared/plans/2025-10-16-feature.md`)
+   - Plan file path (e.g., `.prism/shared/plans/2025-10-16-feature.md`)
    - Requested changes/feedback
 
 2. **Handle different input scenarios**:
@@ -21,9 +21,9 @@ When this command is invoked:
    ```
    I'll help you iterate on an existing implementation plan.
 
-   Which plan would you like to update? Please provide the path to the plan file (e.g., `thoughts/shared/plans/2025-10-16-feature.md`).
+   Which plan would you like to update? Please provide the path to the plan file (e.g., `.prism/shared/plans/2025-10-16-feature.md`).
 
-   Tip: You can list recent plans with `ls -lt thoughts/shared/plans/ | head`
+   Tip: You can list recent plans with `ls -lt .prism/shared/plans/ | head`
    ```
    Wait for user input, then re-check for feedback.
 
@@ -74,8 +74,8 @@ If the user's feedback requires understanding new code patterns or validating as
    - **codebase-pattern-finder** - To find similar patterns
 
    **For historical context:**
-   - **thoughts-locator** - To find related research or decisions
-   - **thoughts-analyzer** - To extract insights from documents
+   - **prism-locator** - To find related research or decisions
+   - **prism-analyzer** - To extract insights from documents
 
    **Be EXTREMELY specific about directories**:
    - If the change involves "WUI", specify `humanlayer-wui/` directory
@@ -133,12 +133,12 @@ Get user confirmation before proceeding.
 ### Step 5: Sync and Review
 
 1. **Sync the updated plan**:
-   - Run `humanlayer thoughts sync`
+   - Ensure changes are properly saved
    - This ensures changes are properly indexed
 
 2. **Present the changes made**:
    ```
-   I've updated the plan at `thoughts/shared/plans/[filename].md`
+   I've updated the plan at `.prism/shared/plans/[filename].md`
 
    Changes made:
    - [Specific change 1]
@@ -226,13 +226,13 @@ When spawning research sub-tasks:
 
 **Scenario 1: User provides everything upfront**
 ```
-User: /iterate_plan thoughts/shared/plans/2025-10-16-feature.md - add phase for error handling
+User: /iterate_plan .prism/shared/plans/2025-10-16-feature.md - add phase for error handling
 Assistant: [Reads plan, researches error handling patterns, updates plan]
 ```
 
 **Scenario 2: User provides just plan file**
 ```
-User: /iterate_plan thoughts/shared/plans/2025-10-16-feature.md
+User: /iterate_plan .prism/shared/plans/2025-10-16-feature.md
 Assistant: I've found the plan. What changes would you like to make?
 User: Split Phase 2 into two phases - one for backend, one for frontend
 Assistant: [Proceeds with update]
@@ -242,7 +242,7 @@ Assistant: [Proceeds with update]
 ```
 User: /iterate_plan
 Assistant: Which plan would you like to update? Please provide the path...
-User: thoughts/shared/plans/2025-10-16-feature.md
+User: .prism/shared/plans/2025-10-16-feature.md
 Assistant: I've found the plan. What changes would you like to make?
 User: Add more specific success criteria
 Assistant: [Proceeds with update]

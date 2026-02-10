@@ -28,7 +28,7 @@ Update the plan based on feedback and continue implementation.
 ### 1. Assess Current State
 
 Check what exists:
-- Plan status in `thoughts/shared/plans/`
+- Plan status in `.prism/shared/plans/`
 - Completed phases (checkboxes)
 - Validation report (if exists)
 - User feedback
@@ -55,7 +55,7 @@ Check what exists:
 
 ### 3. Update Plan Document
 
-Modify the plan in `thoughts/shared/plans/`:
+Modify the plan in `.prism/shared/plans/`:
 - Add iteration note with timestamp
 - Update affected phases
 - Adjust success criteria if needed

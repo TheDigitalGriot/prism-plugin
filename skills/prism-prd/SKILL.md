@@ -30,7 +30,7 @@ The PRD becomes the foundation for:
 Before starting, check if there's existing research or documentation:
 
 ```
-Task(subagent_type="thoughts-locator")
+Task(subagent_type="prism-locator")
 "Find existing research or documentation about [topic]"
 ```
 
@@ -50,22 +50,22 @@ The command handles:
 - Document generation with full template
 - Quality checklist verification
 
-### Step 3: Save to Thoughts Directory
+### Step 3: Save to Prism Directory
 
 After generation, save the PRD to the proper location:
 
 ```
-thoughts/shared/plans/[DATE]-[PRODUCT-NAME]-PRD.md
+.prism/shared/plans/[DATE]-[PRODUCT-NAME]-PRD.md
 ```
 
-Example: `thoughts/shared/plans/2025-02-04-acme-app-PRD.md`
+Example: `.prism/shared/plans/2025-02-04-acme-app-PRD.md`
 
 ### Step 4: Offer Companion Documents
 
 After the PRD is complete, offer to generate companion documents:
 
 ```
-PRD saved to thoughts/shared/plans/[filename]
+PRD saved to .prism/shared/plans/[filename]
 
 Would you like me to generate companion documents?
 

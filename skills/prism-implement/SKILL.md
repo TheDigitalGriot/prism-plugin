@@ -10,7 +10,7 @@ Execute the approved plan phase by phase with verification at each checkpoint.
 
 ## Prerequisites
 
-- Approved plan in `thoughts/shared/plans/`
+- Approved plan in `.prism/shared/plans/`
 - All plan questions resolved
 - Success criteria defined
 

@@ -24,7 +24,7 @@ Please provide:
 2. Main user types/roles
 3. The 3-5 primary tasks users need to accomplish
 
-Tip: You can invoke with a PRD: `/generate_user_flows thoughts/shared/plans/MY-PRODUCT-PRD.md`
+Tip: You can invoke with a PRD: `/generate_user_flows .prism/shared/plans/MY-PRODUCT-PRD.md`
 ```
 
 Then wait for user input.

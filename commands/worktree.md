@@ -46,8 +46,8 @@ npm install  # or equivalent for your project
 
 ### 4. Sync Shared Directories
 
-If you use a `thoughts/` directory for documentation:
-- The `thoughts/` directory should be symlinked or shared between worktrees
+If you use a `.prism/` directory for documentation:
+- The `.prism/` directory should be symlinked or shared between worktrees
 - Consider using `git worktree add` from the repo root so paths are consistent
 
 ## Example

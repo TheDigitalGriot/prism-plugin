@@ -1,0 +1,52 @@
+{
+  "plan": {
+    "name": "Example Feature",
+    "source": "thoughts/shared/plans/2026-02-04-example.md",
+    "createdAt": "2026-02-04T10:00:00Z",
+    "qualityGates": [
+      "npm run typecheck",
+      "npm run lint",
+      "npm test"
+    ]
+  },
+  "stories": [
+    {
+      "id": "STORY-001",
+      "title": "Add user type definitions",
+      "description": "Create TypeScript interfaces for user-related types",
+      "priority": 1,
+      "status": "pending",
+      "blockedBy": null,
+      "files": [
+        { "path": "src/types/user.ts", "action": "create" },
+        { "path": "src/types/index.ts", "action": "modify" }
+      ],
+      "steps": [
+        { "description": "Create User interface with id, email, name fields", "done": false },
+        { "description": "Create UserRole enum", "done": false },
+        { "description": "Export types from index.ts", "done": false }
+      ],
+      "completedAt": null,
+      "commitHash": null
+    },
+    {
+      "id": "STORY-002",
+      "title": "Implement user service",
+      "description": "Add service functions for user CRUD operations",
+      "priority": 2,
+      "status": "pending",
+      "blockedBy": "STORY-001",
+      "files": [
+        { "path": "src/services/user.ts", "action": "create" }
+      ],
+      "steps": [
+        { "description": "Import User type from types", "done": false },
+        { "description": "Implement getUser function", "done": false },
+        { "description": "Implement createUser function", "done": false },
+        { "description": "Add unit tests", "done": false }
+      ],
+      "completedAt": null,
+      "commitHash": null
+    }
+  ]
+}

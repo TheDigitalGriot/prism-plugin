@@ -49,7 +49,7 @@ Focus complexity through specialized agents to produce clear, quality code.
 First, check `.prism/` for existing artifacts:
 
 ```
-Task(subagent_type="thoughts-locator")
+Task(subagent_type="prism-locator")
 "Find existing research, plans, or work related to [topic]"
 ```
 
@@ -90,7 +90,7 @@ Document the codebase without recommendations.
 - `codebase-locator` - Find files
 - `codebase-analyzer` - Understand code
 - `codebase-pattern-finder` - Find patterns
-- `thoughts-locator` - Find existing docs
+- `prism-locator` - Find existing docs
 - `web-search-researcher` - External research
 
 ### Plan (`/prism-plan`)
@@ -248,8 +248,8 @@ All agents in `agents/`:
 | `codebase-locator` | Find WHERE code lives |
 | `codebase-analyzer` | Understand HOW code works |
 | `codebase-pattern-finder` | Find patterns to follow |
-| `thoughts-locator` | Find existing docs |
-| `thoughts-analyzer` | Extract insights from docs |
+| `prism-locator` | Find existing docs |
+| `prism-analyzer` | Extract insights from docs |
 | `web-search-researcher` | External research |
 
 ### Debug Agents

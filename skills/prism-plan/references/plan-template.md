@@ -1,6 +1,6 @@
 # Plan Template
 
-Save to: `thoughts/shared/plans/YYYY-MM-DD-feature.md`
+Save to: `.prism/shared/plans/YYYY-MM-DD-feature.md`
 
 ---
 
@@ -12,7 +12,7 @@ repository: [repo-name]
 branch: [feature-branch-name]
 ticket: [TICKET-123 or N/A]
 status: [draft | approved | in-progress | complete]
-research: thoughts/shared/research/YYYY-MM-DD-topic.md
+research: .prism/shared/research/YYYY-MM-DD-topic.md
 ---
 
 # Plan: [Feature/Fix Name]

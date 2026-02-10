@@ -10,7 +10,7 @@ Verify implementation matches the plan before shipping.
 
 ## Prerequisites
 
-- Plan exists in `thoughts/shared/plans/`
+- Plan exists in `.prism/shared/plans/`
 - Implementation complete (or partially complete)
 
 ## Workflow
@@ -61,7 +61,7 @@ For each phase in plan:
 
 ### 5. Generate Report
 
-Save to `thoughts/shared/validation/YYYY-MM-DD-report.md`
+Save to `.prism/shared/validation/YYYY-MM-DD-report.md`
 
 See [references/validation-template.md](references/validation-template.md) for full template.
 

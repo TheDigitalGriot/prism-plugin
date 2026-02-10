@@ -18,7 +18,7 @@ Create actionable implementation plans through iteration with the user.
 
 ## Prerequisites
 
-- Research exists in `thoughts/shared/research/` OR
+- Research exists in `.prism/shared/research/` OR
 - Sufficient codebase understanding from current session
 
 ## Available Agents
@@ -27,7 +27,7 @@ Create actionable implementation plans through iteration with the user.
 |-------|---------|
 | `codebase-analyzer` | Deep-dive on specific files |
 | `codebase-pattern-finder` | Find patterns to model after |
-| `thoughts-analyzer` | Extract insights from research |
+| `prism-analyzer` | Extract insights from research |
 
 ## Workflow
 
@@ -35,7 +35,7 @@ Create actionable implementation plans through iteration with the user.
 
 If research document exists:
 ```
-Task(subagent_type="thoughts-analyzer")
+Task(subagent_type="prism-analyzer")
 "Analyze [research doc]. Extract decisions, constraints, patterns."
 ```
 
@@ -86,7 +86,7 @@ Does this make sense?
 
 ### 5. Write Full Plan
 
-Save to `thoughts/shared/plans/YYYY-MM-DD-feature.md`
+Save to `.prism/shared/plans/YYYY-MM-DD-feature.md`
 
 Use TodoWrite to track phases.
 

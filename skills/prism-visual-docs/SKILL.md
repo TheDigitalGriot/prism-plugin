@@ -30,7 +30,7 @@ Visual docs inform:
 First, find the relevant PRD to base visual docs on:
 
 ```
-Task(subagent_type="thoughts-locator")
+Task(subagent_type="prism-locator")
 "Find the PRD or product requirements for [product name]"
 ```
 
@@ -41,7 +41,7 @@ Read the PRD FULLY before proceeding.
 Use the `/generate_user_flows` command to create the document:
 
 ```
-/generate_user_flows thoughts/shared/plans/[PRD-file].md
+/generate_user_flows .prism/shared/plans/[PRD-file].md
 ```
 
 The command handles:
@@ -57,7 +57,7 @@ The command handles:
 If technical documentation is also needed, invoke:
 
 ```
-/generate_tech_spec thoughts/shared/plans/[PRD-file].md
+/generate_tech_spec .prism/shared/plans/[PRD-file].md
 ```
 
 This creates companion technical documentation covering:
@@ -66,13 +66,13 @@ This creates companion technical documentation covering:
 - Data models
 - Business logic
 
-### Step 4: Save to Thoughts Directory
+### Step 4: Save to Prism Directory
 
 Save visual documentation to the proper location:
 
 ```
-thoughts/shared/plans/[DATE]-[PRODUCT-NAME]-USER-FLOWS.md
-thoughts/shared/plans/[DATE]-[PRODUCT-NAME]-TECHNICAL-SPEC.md
+.prism/shared/plans/[DATE]-[PRODUCT-NAME]-USER-FLOWS.md
+.prism/shared/plans/[DATE]-[PRODUCT-NAME]-TECHNICAL-SPEC.md
 ```
 
 ### Step 5: Offer Next Steps
@@ -80,10 +80,10 @@ thoughts/shared/plans/[DATE]-[PRODUCT-NAME]-TECHNICAL-SPEC.md
 After visual docs are complete:
 
 ```
-Visual documentation saved to thoughts/shared/plans/[filename]
+Visual documentation saved to .prism/shared/plans/[filename]
 
 Related documents:
-- PRD: thoughts/shared/plans/[prd-file].md
+- PRD: .prism/shared/plans/[prd-file].md
 - Tech Spec: [if generated]
 
 Next steps in the prism workflow:

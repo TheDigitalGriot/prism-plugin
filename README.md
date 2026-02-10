@@ -216,8 +216,8 @@ prism-visual-docs  ──────────────▶ /generate_user_
 | `codebase-locator` | Find WHERE code lives | haiku |
 | `codebase-analyzer` | Understand HOW code works | opus |
 | `codebase-pattern-finder` | Find patterns to model after | sonnet |
-| `thoughts-locator` | Find existing docs in .prism/ | haiku |
-| `thoughts-analyzer` | Extract insights from docs | opus |
+| `prism-locator` | Find existing docs in .prism/ | haiku |
+| `prism-analyzer` | Extract insights from docs | opus |
 | `web-search-researcher` | Research external docs/APIs | sonnet |
 
 #### Debug Agents
