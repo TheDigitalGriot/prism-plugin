@@ -100,6 +100,16 @@ type AnimState struct {
 
 // Model is the main application state
 type Model struct {
+	// View system
+	ActiveView ActiveView
+	PrismDir   string // absolute path to .prism/ directory
+
+	// Per-view state
+	Home     HomeState
+	Research ResearchState
+	Plans    PlansState
+	Epic     EpicState
+
 	// Configuration
 	StoriesPath  string
 	ProgressPath string
@@ -179,7 +189,7 @@ type StoryView struct {
 }
 
 // NewModel creates initial model state
-func NewModel(storiesPath, projectDir string, maxIter, pause int, prismStyle string) Model {
+func NewModel(prismDir, storiesPath, projectDir string, maxIter, pause int, prismStyle string) Model {
 	s := spinner.New()
 	s.Spinner = spinner.Dot
 
@@ -207,7 +217,16 @@ func NewModel(storiesPath, projectDir string, maxIter, pause int, prismStyle str
 	logPag.ActiveDot = "●"
 	logPag.InactiveDot = "○"
 
+	// Determine initial view
+	initialView := ViewSpectrum
+	if storiesPath == "" && prismDir != "" {
+		initialView = ViewHome
+	}
+
 	return Model{
+		ActiveView:         initialView,
+		PrismDir:           prismDir,
+		Home:               HomeState{MenuItems: []string{"Research", "Plans", "Spectrum"}},
 		StoriesPath:        storiesPath,
 		ProjectDir:         projectDir,
 		MaxIterations:      maxIter,
@@ -246,7 +265,7 @@ func NewModel(storiesPath, projectDir string, maxIter, pause int, prismStyle str
 
 // NewDemoModel creates a model with fake stories for demo/testing
 func NewDemoModel(prismStyle string) Model {
-	m := NewModel("", "", 50, 2, prismStyle)
+	m := NewModel("demo", "", "", 50, 2, prismStyle)
 	m.PlanName = "Prism Animation Demo"
 	m.Stories = []StoryView{
 		// Page 1 (completed stories)
@@ -297,6 +316,29 @@ func NewDemoModel(prismStyle string) Model {
 	// Initialize progress to show completed stories
 	m.Anim.ProgressPos = m.ProgressPercent()
 	m.Anim.ProgressTarget = m.ProgressPercent()
+
+	// Seed demo data for Research and Plans views
+	// Note: Name field has no .md extension (matches listMarkdownFiles production behavior)
+	now := time.Now()
+	m.Research.Files = []FileEntry{
+		{Name: "tech-stack-evaluation", Path: "demo/research/tech-stack-evaluation.md", Preview: "Evaluated React vs Svelte vs Solid for frontend framework.\nRecommendation: React with Next.js for SSR support.", ModTime: now.AddDate(0, 0, -2)},
+		{Name: "auth-patterns", Path: "demo/research/auth-patterns.md", Preview: "JWT vs session-based authentication analysis.\nOAuth2 flow diagrams and token refresh strategy.", ModTime: now.AddDate(0, 0, -5)},
+		{Name: "database-schema-design", Path: "demo/research/database-schema-design.md", Preview: "PostgreSQL schema for multi-tenant SaaS.\nPartitioning strategy and index recommendations.", ModTime: now.AddDate(0, 0, -8)},
+		{Name: "api-rate-limiting", Path: "demo/research/api-rate-limiting.md", Preview: "Token bucket vs sliding window algorithms.\nRedis-based distributed rate limiter design.", ModTime: now.AddDate(0, 0, -12)},
+	}
+	m.Plans.Files = []FileEntry{
+		{Name: "user-authentication", Path: "demo/plans/user-authentication.md", Preview: "Implement OAuth2 + JWT auth with refresh tokens.\n12 stories across 3 phases.", ModTime: now.AddDate(0, 0, -1)},
+		{Name: "dashboard-redesign", Path: "demo/plans/dashboard-redesign.md", Preview: "Multi-view dashboard with real-time data.\nIncludes drag-and-drop widget layout.", ModTime: now.AddDate(0, 0, -3)},
+		{Name: "notification-system", Path: "demo/plans/notification-system.md", Preview: "Push notifications via WebSocket + FCM.\nIn-app notification center with read tracking.", ModTime: now.AddDate(0, 0, -7)},
+	}
+
+	// Seed demo epic data
+	m.Epic.Epics = []EpicInfo{
+		{Name: "user-auth", StoriesPath: "demo/stories/user-auth/stories.json", StoryCount: 12, CompletedCount: 8},
+		{Name: "dashboard", StoriesPath: "demo/stories/dashboard/stories.json", StoryCount: 36, CompletedCount: 12},
+		{Name: "notifications", StoriesPath: "demo/stories/notifications/stories.json", StoryCount: 9, CompletedCount: 0},
+	}
+
 	return m
 }
 

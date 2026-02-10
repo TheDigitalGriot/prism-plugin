@@ -42,8 +42,8 @@ func (m Model) Init() tea.Cmd {
 		tickCmd(),
 	}
 
-	// Only load stories if not in demo mode (path is set)
-	if m.StoriesPath != "" {
+	// Load stories if in Spectrum view with a path set
+	if m.ActiveView == ViewSpectrum && m.StoriesPath != "" {
 		cmds = append(cmds, LoadStoriesCmd(m.StoriesPath))
 	}
 
@@ -73,6 +73,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.Prism.Resize(prismCols, 5)
 		}
+		// Size viewports for file viewing
+		viewportHeight := msg.Height - 6 // Leave room for header + footer
+		if viewportHeight < 10 {
+			viewportHeight = 10
+		}
+		m.Research.Viewport.Width = msg.Width - 4
+		m.Research.Viewport.Height = viewportHeight
+		m.Plans.Viewport.Width = msg.Width - 4
+		m.Plans.Viewport.Height = viewportHeight
 		return m, nil
 
 	case TickMsg:
@@ -472,6 +481,83 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return DemoActivityMsg{ActivityIndex: idx + 1}
 		})
 
+	case EpicsDiscoveredMsg:
+		if msg.Error != nil {
+			m.AddLog(LogError, "Failed to discover epics: "+msg.Error.Error())
+			return m, nil
+		}
+		m.Epic.Epics = msg.Epics
+		m.Epic.IsLegacy = len(msg.Epics) == 0
+		if len(msg.Epics) > 0 {
+			// Auto-select first epic and load its stories
+			m.Epic.SelectedIndex = 0
+			m.StoriesPath = msg.Epics[0].StoriesPath
+			return m, LoadStoriesCmd(msg.Epics[0].StoriesPath)
+		}
+		// Legacy mode - load flat stories file if path is set
+		if m.StoriesPath != "" {
+			return m, LoadStoriesCmd(m.StoriesPath)
+		}
+		return m, nil
+
+	case EpicSelectedMsg:
+		if msg.EpicIndex >= 0 && msg.EpicIndex < len(m.Epic.Epics) {
+			m.Epic.SelectedIndex = msg.EpicIndex
+			epic := m.Epic.Epics[msg.EpicIndex]
+			m.StoriesPath = epic.StoriesPath
+			m.State = StateIdle
+			m.Stories = []StoryView{}
+			m.TotalStories = 0
+			m.CurrentStoryID = ""
+			m.CurrentStoryTitle = ""
+			m.Iteration = 0
+			return m, LoadStoriesCmd(epic.StoriesPath)
+		}
+		return m, nil
+
+	case ResearchFilesLoadedMsg:
+		if msg.Error == nil {
+			m.Research.Files = msg.Files
+			m.Research.SelectedIdx = 0
+		}
+		return m, nil
+
+	case PlansFilesLoadedMsg:
+		if msg.Error == nil {
+			m.Plans.Files = msg.Files
+			m.Plans.SelectedIdx = 0
+		}
+		return m, nil
+
+	case FileContentLoadedMsg:
+		if msg.Error != nil {
+			m.AddLog(LogWarning, "Failed to load file: "+msg.Error.Error())
+			return m, nil
+		}
+		switch msg.ForView {
+		case ViewResearch:
+			m.Research.Viewing = true
+			m.Research.Viewport.SetContent(msg.Content)
+		case ViewPlans:
+			m.Plans.Viewing = true
+			m.Plans.Viewport.SetContent(msg.Content)
+		}
+		return m, nil
+
+	case DecomposePlanMsg:
+		if msg.Error != nil {
+			m.AddLog(LogError, "Decomposition failed: "+msg.Error.Error())
+		} else {
+			m.AddLog(LogSuccess, "Created epic: "+msg.EpicName)
+			// Refresh plans list
+			return m, LoadPlansFilesCmd(m.PrismDir)
+		}
+		return m, nil
+
+	case NavigateToViewMsg:
+		m.ActiveView = msg.View
+		return m, nil
+
 	case PauseToggleMsg:
 		if m.State == StateRunning {
 			m.State = StatePaused
@@ -487,13 +573,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	// Global keys (always active)
+	// Global keys (always active regardless of view)
 	switch msg.String() {
 	case "q", "ctrl+c":
 		// Graceful shutdown
 		if m.State == StateRunning {
 			m.AddLog(LogWarning, "Shutting down...")
-			// Would cancel Claude process here - Phase 4
 		}
 		return m, tea.Quit
 
@@ -502,59 +587,33 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	// Pagination keys (always active) - directly manipulate Page field
-	switch msg.String() {
-	case "a": // Story pagination - previous page
-		if m.StoryPaginator.Page > 0 {
-			m.StoryPaginator.Page--
+	// Escape/backspace returns to Home (from any non-Home view)
+	// Blocked during Spectrum execution
+	if (msg.String() == "esc" || msg.String() == "backspace") && m.ActiveView != ViewHome {
+		if m.ActiveView == ViewSpectrum && m.State == StateRunning {
+			return m, nil // Can't leave during execution
 		}
-		return m, nil
-	case "s": // Story pagination - next page
-		if m.StoryPaginator.Page < m.StoryPaginator.TotalPages-1 {
-			m.StoryPaginator.Page++
+		// Check if sub-view handles esc (e.g., closing file viewer)
+		if m.ActiveView == ViewResearch && m.Research.Viewing {
+			return m.handleResearchKeyPress(msg)
 		}
-		return m, nil
-	case "z": // Log pagination - previous page
-		if m.LogPaginator.Page > 0 {
-			m.LogPaginator.Page--
+		if m.ActiveView == ViewPlans && m.Plans.Viewing {
+			return m.handlePlansKeyPress(msg)
 		}
-		return m, nil
-	case "x": // Log pagination - next page
-		if m.LogPaginator.Page < m.LogPaginator.TotalPages-1 {
-			m.LogPaginator.Page++
-		}
+		m.ActiveView = ViewHome
 		return m, nil
 	}
 
-	// State-dependent keys
-	switch m.State {
-	case StateIdle:
-		switch msg.String() {
-		case "enter", " ":
-			return m, func() tea.Msg { return StartExecutionMsg{} }
-		}
-
-	case StateRunning:
-		switch msg.String() {
-		case "p":
-			return m, func() tea.Msg { return PauseToggleMsg{} }
-		case "/":
-			m.AddLog(LogWarning, "Skip requested - will skip after current story")
-			// Skip implementation in Phase 5
-			return m, nil
-		}
-
-	case StatePaused:
-		switch msg.String() {
-		case "p", "enter", " ":
-			return m, func() tea.Msg { return PauseToggleMsg{} }
-		}
-
-	case StateComplete, StateMaxIterations, StateError:
-		switch msg.String() {
-		case "enter", " ":
-			return m, tea.Quit
-		}
+	// Delegate to view-specific handler
+	switch m.ActiveView {
+	case ViewHome:
+		return m.handleHomeKeyPress(msg)
+	case ViewResearch:
+		return m.handleResearchKeyPress(msg)
+	case ViewPlans:
+		return m.handlePlansKeyPress(msg)
+	case ViewSpectrum:
+		return m.handleSpectrumKeyPress(msg)
 	}
 
 	return m, nil

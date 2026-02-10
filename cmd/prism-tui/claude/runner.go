@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -68,8 +69,9 @@ func RunClaudeCmd(projectDir, storiesPath string, iteration int) tea.Cmd {
 
 		// Build the prompt
 		prompt := fmt.Sprintf(
-			"Execute the next story from %s using the /prism-spectrum workflow.",
+			"Execute the next story from %s using the /prism-spectrum workflow. Progress file: %s",
 			storiesPath,
+			deriveProgressPath(storiesPath),
 		)
 
 		// Create command with context for cancellation
@@ -109,8 +111,9 @@ func RunClaudeStreamingCmd(projectDir, storiesPath string, iteration int, output
 		startTime := time.Now()
 
 		prompt := fmt.Sprintf(
-			"Execute the next story from %s using the /prism-spectrum workflow.",
+			"Execute the next story from %s using the /prism-spectrum workflow. Progress file: %s",
 			storiesPath,
+			deriveProgressPath(storiesPath),
 		)
 
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
@@ -252,6 +255,22 @@ func getToolName(event *StreamEvent) string {
 		}
 	}
 	return ""
+}
+
+// deriveProgressPath derives the progress.md path from a stories.json path.
+// Legacy:     .prism/stories/stories.json       -> .prism/shared/spectrum/progress.md
+// Epic-based: .prism/stories/<epic>/stories.json -> .prism/shared/spectrum/<epic>/progress.md
+func deriveProgressPath(storiesPath string) string {
+	dir := filepath.Dir(storiesPath)
+	dirName := filepath.Base(dir)
+	parentDir := filepath.Dir(dir)
+	parentName := filepath.Base(parentDir)
+
+	if parentName == "stories" {
+		prismDir := filepath.Dir(parentDir)
+		return filepath.Join(prismDir, "shared", "spectrum", dirName, "progress.md")
+	}
+	return filepath.Join(parentDir, "shared", "spectrum", "progress.md")
 }
 
 // TerminateProcess kills the Claude process and its children

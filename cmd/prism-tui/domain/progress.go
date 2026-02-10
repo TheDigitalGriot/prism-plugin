@@ -15,11 +15,26 @@ type ProgressFile struct {
 
 // NewProgressFile creates a ProgressFile from a stories.json path
 // It derives the progress.md path using the .prism/ directory structure:
-//   stories.json  -> .prism/stories/stories.json
-//   progress.md   -> .prism/shared/spectrum/progress.md
+//
+// Legacy:     .prism/stories/stories.json       -> .prism/shared/spectrum/progress.md
+// Epic-based: .prism/stories/<epic>/stories.json -> .prism/shared/spectrum/<epic>/progress.md
 func NewProgressFile(storiesPath string) *ProgressFile {
-	// Go up from .prism/stories/stories.json to .prism/, then into shared/spectrum/
-	prismDir := filepath.Dir(filepath.Dir(storiesPath))
+	dir := filepath.Dir(storiesPath)        // .prism/stories/ or .prism/stories/<epic>/
+	dirName := filepath.Base(dir)           // "stories" or "<epic-name>"
+	parentDir := filepath.Dir(dir)          // .prism/ or .prism/stories/
+	parentName := filepath.Base(parentDir)  // ".prism" or "stories"
+
+	if parentName == "stories" {
+		// Epic-scoped: .prism/stories/<epic>/stories.json
+		prismDir := filepath.Dir(parentDir)
+		epicName := dirName
+		return &ProgressFile{
+			Path: filepath.Join(prismDir, "shared", "spectrum", epicName, "progress.md"),
+		}
+	}
+
+	// Legacy: .prism/stories/stories.json
+	prismDir := parentDir
 	return &ProgressFile{
 		Path: filepath.Join(prismDir, "shared", "spectrum", "progress.md"),
 	}
@@ -48,6 +63,11 @@ lastUpdated: %s
 ---
 
 `, planName, time.Now().Format(time.RFC3339), time.Now().Format(time.RFC3339))
+
+	// Ensure parent directory exists (for epic-scoped paths)
+	if err := os.MkdirAll(filepath.Dir(pf.Path), 0755); err != nil {
+		return fmt.Errorf("failed to create progress directory: %w", err)
+	}
 
 	return os.WriteFile(pf.Path, []byte(content), 0644)
 }

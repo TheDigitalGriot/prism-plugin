@@ -96,6 +96,53 @@ type StartNextIterationMsg struct{}
 // RetryIterationMsg signals to retry with backoff
 type RetryIterationMsg struct{}
 
+// === View Navigation Messages ===
+
+// NavigateToViewMsg requests switching to a different view
+type NavigateToViewMsg struct {
+	View ActiveView
+}
+
+// === Epic Messages ===
+
+// EpicsDiscoveredMsg carries the list of discovered epic directories
+type EpicsDiscoveredMsg struct {
+	Epics []EpicInfo
+	Error error
+}
+
+// EpicSelectedMsg indicates user selected an epic
+type EpicSelectedMsg struct {
+	EpicIndex int
+}
+
+// === File Listing Messages ===
+
+// ResearchFilesLoadedMsg carries research file entries
+type ResearchFilesLoadedMsg struct {
+	Files []FileEntry
+	Error error
+}
+
+// PlansFilesLoadedMsg carries plan file entries
+type PlansFilesLoadedMsg struct {
+	Files []FileEntry
+	Error error
+}
+
+// FileContentLoadedMsg carries full content of a file for viewing
+type FileContentLoadedMsg struct {
+	Content  string
+	ForView  ActiveView // which view requested this
+	Error    error
+}
+
+// DecomposePlanMsg result of plan decomposition
+type DecomposePlanMsg struct {
+	EpicName string
+	Error    error
+}
+
 // === Demo Mode Messages ===
 
 // DemoTickMsg triggers auto-progression in demo mode

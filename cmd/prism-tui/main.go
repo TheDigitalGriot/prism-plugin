@@ -50,42 +50,64 @@ Keyboard controls:
 				return runDemoMode(version, prismStyle)
 			}
 
+			cwd, err := os.Getwd()
+			if err != nil {
+				return fmt.Errorf("failed to get working directory: %w", err)
+			}
+
 			// Determine stories file path
 			if len(args) > 0 {
 				storiesFile = args[0]
-			} else if storiesFile == "" {
-				// Default: look in current directory
-				cwd, err := os.Getwd()
+			}
+
+			var prismDir, projectDir string
+
+			if storiesFile != "" {
+				// Explicit file mode: resolve paths from stories file
+				absPath, err := filepath.Abs(storiesFile)
 				if err != nil {
-					return fmt.Errorf("failed to get working directory: %w", err)
+					return fmt.Errorf("failed to resolve path: %w", err)
 				}
-				storiesFile = filepath.Join(cwd, ".prism", "stories", "stories.json")
-			}
+				storiesFile = absPath
 
-			// Get absolute path
-			absPath, err := filepath.Abs(storiesFile)
-			if err != nil {
-				return fmt.Errorf("failed to resolve path: %w", err)
-			}
-			storiesFile = absPath
+				// Verify file exists
+				if _, err := os.Stat(storiesFile); os.IsNotExist(err) {
+					return fmt.Errorf("stories file not found: %s\n\nRun /decompose_plan first to generate stories.json", storiesFile)
+				}
 
-			// Verify file exists
-			if _, err := os.Stat(storiesFile); os.IsNotExist(err) {
-				return fmt.Errorf("stories file not found: %s\n\nRun /decompose_plan first to generate stories.json", storiesFile)
-			}
+				// Derive directories from stories file
+				prismDir = filepath.Dir(filepath.Dir(storiesFile))
+				projectDir = filepath.Dir(prismDir)
+				if projectDir == "" || projectDir == "." {
+					projectDir = cwd
+				}
+			} else {
+				// Home mode: look for .prism/ in current directory
+				prismDir = filepath.Join(cwd, ".prism")
+				projectDir = cwd
 
-			// Determine project directory (parent of .prism/)
-			projectDir := filepath.Dir(filepath.Dir(filepath.Dir(storiesFile)))
-			if projectDir == "" || projectDir == "." {
-				projectDir, _ = os.Getwd()
+				// Check if .prism/ exists
+				if _, err := os.Stat(prismDir); os.IsNotExist(err) {
+					return fmt.Errorf(".prism/ directory not found in %s\n\nRun init_prism.py first to initialize the project", cwd)
+				}
+
+				// Check for legacy flat structure
+				flatPath := filepath.Join(prismDir, "stories", "stories.json")
+				if _, err := os.Stat(flatPath); err == nil {
+					// Legacy flat structure exists - can use it if no epics found
+					storiesFile = flatPath
+				}
+				// Otherwise storiesFile stays empty -> launches at ViewHome
 			}
 
 			// Create and run TUI
-			model := app.NewModel(storiesFile, projectDir, maxIterations, pause, prismStyle)
+			model := app.NewModel(prismDir, storiesFile, projectDir, maxIterations, pause, prismStyle)
 
 			// Add initial log entry
 			model.AddLog(app.LogInfo, "Prism TUI v"+version)
-			model.AddLog(app.LogInfo, "Stories: "+storiesFile)
+			if storiesFile != "" {
+				model.AddLog(app.LogInfo, "Stories: "+storiesFile)
+			}
 			model.AddLog(app.LogInfo, "Project: "+projectDir)
 
 			p := tea.NewProgram(model, tea.WithAltScreen())
