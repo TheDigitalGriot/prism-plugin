@@ -16,6 +16,11 @@ type Registry struct {
 
 // NewRegistry creates a new plugin registry with the given context.
 func NewRegistry(ctx *Context) *Registry {
+	// Initialize event bus if not already set
+	if ctx.EventBus == nil {
+		ctx.EventBus = NewEventBus()
+	}
+
 	return &Registry{
 		plugins:     make([]Plugin, 0),
 		pluginsByID: make(map[string]Plugin),
@@ -70,6 +75,11 @@ func (r *Registry) safeInit(p Plugin) (err error) {
 // Plugins returns an ordered list of all registered plugins.
 func (r *Registry) Plugins() []Plugin {
 	return r.plugins
+}
+
+// PluginByID returns a plugin by its ID, or nil if not found.
+func (r *Registry) PluginByID(id string) Plugin {
+	return r.pluginsByID[id]
 }
 
 // ActivePlugin returns the currently active plugin.

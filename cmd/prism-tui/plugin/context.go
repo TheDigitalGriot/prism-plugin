@@ -30,4 +30,7 @@ type Context struct {
 
 	// Pause is the delay in seconds between Spectrum iterations
 	Pause int
+
+	// EventBus provides inter-plugin communication via pub/sub events
+	EventBus *EventBus
 }

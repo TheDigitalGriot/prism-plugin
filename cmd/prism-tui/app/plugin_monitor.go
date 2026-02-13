@@ -93,6 +93,28 @@ func (p *MonitorPlugin) Icon() string {
 func (p *MonitorPlugin) Init(ctx *plugin.Context) error {
 	p.ctx = ctx
 	p.updateHealthStats()
+
+	// Subscribe to StoryCompletedEvent to update execution history
+	if ctx.EventBus != nil {
+		ctx.EventBus.Subscribe("story.completed", func(event plugin.Event) {
+			if e, ok := event.(plugin.StoryCompletedEvent); ok {
+				// Add to execution history
+				record := ExecutionRecord{
+					StoryID:   e.StoryID,
+					StoryName: e.StoryName,
+					Duration:  time.Duration(e.Duration) * time.Millisecond,
+					Result:    e.Result,
+					Timestamp: time.Now(),
+				}
+				p.state.History = append([]ExecutionRecord{record}, p.state.History...)
+				// Keep only last 50 entries
+				if len(p.state.History) > 50 {
+					p.state.History = p.state.History[:50]
+				}
+			}
+		})
+	}
+
 	return nil
 }
 

@@ -70,6 +70,15 @@ func (p *GitPlugin) Init(ctx *plugin.Context) error {
 	p.ctx = ctx
 	// Initialize diff viewport
 	p.state.DiffViewport = viewport.New(ctx.Width-4, ctx.Height-6)
+
+	// Subscribe to FileChangedEvent to refresh git status when files change
+	if ctx.EventBus != nil {
+		ctx.EventBus.Subscribe("file.changed", func(event plugin.Event) {
+			// Trigger git status reload when files change
+			// This will be handled via a refresh message in the future
+		})
+	}
+
 	return nil
 }
 
@@ -107,6 +116,9 @@ func (p *GitPlugin) Update(msg tea.Msg) (plugin.Plugin, tea.Cmd) {
 
 	case GitStatusLoadedMsg:
 		if msg.Error == nil {
+			// Check if branch changed
+			branchChanged := p.state.BranchName != msg.BranchName
+
 			p.state.BranchName = msg.BranchName
 			p.state.Ahead = msg.Ahead
 			p.state.Behind = msg.Behind
@@ -114,6 +126,15 @@ func (p *GitPlugin) Update(msg tea.Msg) (plugin.Plugin, tea.Cmd) {
 			p.state.ModifiedFiles = msg.ModifiedFiles
 			p.state.UntrackedFiles = msg.UntrackedFiles
 			p.state.Error = ""
+
+			// Publish BranchChangedEvent if branch changed
+			if branchChanged && p.ctx != nil && p.ctx.EventBus != nil {
+				p.ctx.EventBus.Publish(plugin.BranchChangedEvent{
+					BranchName: msg.BranchName,
+					Ahead:      msg.Ahead,
+					Behind:     msg.Behind,
+				})
+			}
 		} else {
 			p.state.Error = msg.Error.Error()
 		}

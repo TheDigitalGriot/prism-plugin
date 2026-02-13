@@ -227,16 +227,39 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		case "cancel":
 			// Close modal
 			m.ActiveModal = nil
+			m.CommandPalette = nil
 			return m, cmd
 
 		case "":
 			// No action, modal is still processing input (e.g., typing in input field)
+			// If command palette is active, handle special navigation
+			if m.CommandPalette != nil {
+				switch msg.String() {
+				case "down", "ctrl+j":
+					m.CommandPalette.SelectNext()
+					m.ActiveModal = m.CommandPalette.BuildModal()
+					return m, nil
+				case "up", "ctrl+k":
+					m.CommandPalette.SelectPrev()
+					m.ActiveModal = m.CommandPalette.BuildModal()
+					return m, nil
+				}
+			}
 			return m, cmd
 
 		default:
 			// Modal returned an action (e.g., button click, list selection)
-			// For now, we'll just close the modal. Plugin-specific modals can handle actions differently.
-			// TODO: In future, plugins can register modal action handlers
+			// Check if this is a command palette action
+			if m.CommandPalette != nil {
+				selectedCmd := m.CommandPalette.SelectedCommand()
+				if selectedCmd != nil {
+					// Execute the command
+					m.ActiveModal = nil
+					m.CommandPalette = nil
+					return m.executeCommand(*selectedCmd)
+				}
+			}
+			// For other modals, just close them
 			m.ActiveModal = nil
 			return m, cmd
 		}
@@ -251,6 +274,12 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "?":
 		// Open help modal
 		m.ActiveModal = createHelpModal()
+		return m, nil
+
+	case "ctrl+p", ":":
+		// Open command palette
+		m.CommandPalette = NewCommandPalette(m.Registry)
+		m.ActiveModal = m.CommandPalette.BuildModal()
 		return m, nil
 
 	// Number keys to switch tabs directly
@@ -464,12 +493,81 @@ func splitLines(text string) []string {
 	return lines
 }
 
+// executeCommand handles command palette command execution
+func (m Model) executeCommand(cmd Command) (tea.Model, tea.Cmd) {
+	// Parse command ID and execute appropriate action
+	parts := splitCommandID(cmd.ID)
+	if len(parts) < 2 {
+		return m, nil
+	}
+
+	pluginID := parts[0]
+	action := parts[1]
+
+	switch action {
+	case "focus":
+		// Navigate to the plugin
+		if err := m.Registry.SetActive(pluginID); err == nil {
+			m.ActiveView = pluginIDToView(pluginID)
+			return m, m.pluginFocusCmd(pluginID)
+		}
+		return m, nil
+
+	case "start":
+		// Start action (e.g., spectrum execution)
+		if pluginID == "spectrum" {
+			// Broadcast a message to start execution
+			// The spectrum plugin will handle this
+			return m, nil
+		}
+		return m, nil
+
+	case "stop":
+		// Stop action
+		if pluginID == "spectrum" {
+			// Broadcast stop message
+			return m, nil
+		}
+		return m, nil
+
+	default:
+		// Other actions are plugin-specific
+		// For now, just focus the plugin
+		if err := m.Registry.SetActive(pluginID); err == nil {
+			m.ActiveView = pluginIDToView(pluginID)
+			return m, m.pluginFocusCmd(pluginID)
+		}
+		return m, nil
+	}
+}
+
+// splitCommandID splits a command ID like "spectrum.start" into ["spectrum", "start"]
+func splitCommandID(id string) []string {
+	result := make([]string, 0)
+	current := ""
+	for _, r := range id {
+		if r == '.' {
+			if current != "" {
+				result = append(result, current)
+				current = ""
+			}
+		} else {
+			current += string(r)
+		}
+	}
+	if current != "" {
+		result = append(result, current)
+	}
+	return result
+}
+
 // createHelpModal creates a modal displaying keyboard shortcuts and help
 func createHelpModal() *modal.Modal {
 	helpText := `PRISM TUI - Keyboard Shortcuts
 
 GLOBAL KEYS:
   ?         Toggle this help
+  Ctrl+P, : Open command palette
   q, Ctrl+C Quit application
   1-9       Switch to tab by number
   Tab       Next tab
@@ -488,6 +586,9 @@ VIEW-SPECIFIC:
   Spectrum  - Execute stories autonomously
   Files     - Browse project files
   Git       - View git status, stage/commit
+  Agent     - Chat interface
+  Monitor   - System health & execution history
+  Workspaces- Switch projects & epics
 
 MODAL CONTROLS:
   Tab       Cycle focus

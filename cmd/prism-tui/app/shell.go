@@ -81,15 +81,19 @@ func (m Model) renderAppHeader() string {
 	return styles.AppHeaderStyle.Width(m.Width).Render(header)
 }
 
-// renderTabBar renders the tab navigation bar with labels from registered plugins
+// renderTabBar renders the tab navigation bar with labels from TabOrder (excludes onboarding)
 func (m Model) renderTabBar() string {
 	var tabs []string
 
-	plugins := m.Registry.Plugins()
-	for i, p := range plugins {
+	for i, view := range m.TabOrder {
+		pluginID := viewToPluginID(view)
+		p := m.Registry.PluginByID(pluginID)
+		if p == nil {
+			continue
+		}
 		tabLabel := fmt.Sprintf("[%d] %s %s", i+1, p.Icon(), p.Name())
 
-		if p.ID() == viewToPluginID(m.ActiveView) {
+		if pluginID == viewToPluginID(m.ActiveView) {
 			tabs = append(tabs, styles.TabActiveStyle.Render(tabLabel))
 		} else {
 			tabs = append(tabs, styles.TabInactiveStyle.Render(tabLabel))
@@ -105,7 +109,7 @@ func (m Model) renderAppFooter() string {
 	var hints []string
 
 	// Global hints
-	hints = append(hints, "[1-4] switch tabs")
+	hints = append(hints, fmt.Sprintf("[1-%d] switch tabs", len(m.TabOrder)))
 	hints = append(hints, "[tab/shift+tab] cycle")
 
 	// Get view-specific hints from active plugin

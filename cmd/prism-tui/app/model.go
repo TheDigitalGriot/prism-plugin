@@ -98,15 +98,16 @@ type Model struct {
 	Pause         int // seconds between iterations
 
 	// UI state
-	Width           int
-	Height          int
-	ShowHelp        bool
-	ActiveModal     *modal.Modal   // Currently active modal dialog (nil if none)
-	Dialogs         *dialog.Overlay // Stack of permission/confirmation dialogs
-	Ready           bool            // True once initial setup is complete
-	SplashDone      bool            // True once splash screen has completed
-	NeedsOnboarding bool            // True if onboarding flow should run after splash
-	OnboardingDone  bool            // True once onboarding has completed
+	Width              int
+	Height             int
+	ShowHelp           bool
+	ActiveModal        *modal.Modal    // Currently active modal dialog (nil if none)
+	CommandPalette     *CommandPalette // Command palette state (nil if closed)
+	Dialogs            *dialog.Overlay // Stack of permission/confirmation dialogs
+	Ready              bool            // True once initial setup is complete
+	SplashDone         bool            // True once splash screen has completed
+	NeedsOnboarding    bool            // True if onboarding flow should run after splash
+	OnboardingDone     bool            // True once onboarding has completed
 
 	// Prism framebuffer animation (shared across all views)
 	Prism *prism.Renderer
