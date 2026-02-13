@@ -217,7 +217,7 @@ cd cmd/prism-tui && go run . --demo
 | `cmd/prism-tui/styles/theme.go` | Add `ModalStyle`, `ModalBackdropStyle`, `ModalTitleStyle` |
 
 **Steps**:
-1. [ ] Create `modal/section.go` with `Section` interface:
+1. [x] Create `modal/section.go` with `Section` interface:
    ```go
    type Section interface {
        Render(width int, focused bool) string
@@ -227,21 +227,21 @@ cd cmd/prism-tui && go run . --demo
    }
    ```
    Implementations: `TextSection`, `SpacerSection`, `ButtonsSection`, `CheckboxSection`
-2. [ ] Create `modal/input.go`: `InputSection` (wraps bubbles/textinput), `TextareaSection` (wraps bubbles/textarea)
-3. [ ] Create `modal/list.go`: `ListSection` with scrollable items, selected index, truncation
-4. [ ] Create `modal/layout.go`: two-pass render (measure → scrollbar decision → final render), viewport slicing for tall content, scrollbar rendering
-5. [ ] Create `modal/modal.go`: builder API:
+2. [x] Create `modal/input.go`: `InputSection` (wraps bubbles/textinput), `TextareaSection` (wraps bubbles/textarea)
+3. [x] Create `modal/list.go`: `ListSection` with scrollable items, selected index, truncation
+4. [x] Create `modal/layout.go`: two-pass render (measure → scrollbar decision → final render), viewport slicing for tall content, scrollbar rendering
+5. [x] Create `modal/modal.go`: builder API:
    ```go
    modal.New("Title", modal.WithWidth(60)).
        AddSection(modal.Text("content")).
        AddSection(modal.Buttons(modal.Btn("OK", "ok"), modal.Btn("Cancel", "cancel")))
    ```
    Key handling: tab/shift+tab cycle focus, enter activates buttons, esc closes
-6. [ ] Add modal styles to `styles/theme.go`
-7. [ ] Add `ActiveModal *modal.Modal` to Model struct
-8. [ ] In `update.go`, check `m.ActiveModal != nil` first — if yes, forward all messages to modal. On modal close/action, set `ActiveModal = nil` and process action.
-9. [ ] In `view.go`, if modal active, render it centered on top of app shell content
-10. [ ] Convert existing help (`?` key) to use modal system instead of `ShowHelp` bool
+6. [x] Add modal styles to `styles/theme.go`
+7. [x] Add `ActiveModal *modal.Modal` to Model struct
+8. [x] In `update.go`, check `m.ActiveModal != nil` first — if yes, forward all messages to modal. On modal close/action, set `ActiveModal = nil` and process action.
+9. [x] In `view.go`, if modal active, render it centered on top of app shell content
+10. [x] Convert existing help (`?` key) to use modal system instead of `ShowHelp` bool
 
 **Verification**:
 ```bash
@@ -251,7 +251,7 @@ cd cmd/prism-tui && go run . --demo  # Press ? to open help modal
 # Verify: modal appears centered, tab cycles focus, esc closes, backdrop dims content
 ```
 
-**Checkpoint**: ⬜ Phase 4 complete — Modal system works with help dialog
+**Checkpoint**: ✅ Phase 4 complete — Modal system works with help dialog
 
 ---
 
@@ -595,7 +595,7 @@ Phase 1 (Shell) ──┬──▶ Phase 2 (Splash)
 | Phase 1: App Shell & Navigation | ✅ Complete | 2026-02-12 | 2026-02-12 | App shell with tab bar implemented, all 4 screens work |
 | Phase 2: Splash Screen | ✅ Complete | 2026-02-12 | 2026-02-12 | Splash screen with animated prism, auto-transition after 2s or keypress |
 | Phase 3: Plugin Architecture | ✅ Complete | 2026-02-12 | 2026-02-12 | Plugin interface, Registry, 4 plugins (Home, Research, Plans, Spectrum), Model slimmed from ~60 to ~15 fields |
-| Phase 4: Modal System | ⬜ Not started | | | |
+| Phase 4: Modal System | ✅ Complete | 2026-02-12 | 2026-02-12 | Modal system with Section interface, Input/Textarea/List sections, layout engine, builder API, help modal converted |
 | Phase 5: Dialog & Permissions | ⬜ Not started | | | |
 | Phase 6: Files & Git | ⬜ Not started | | | |
 | Phase 7: Agent & Chat | ⬜ Not started | | | |

@@ -3,6 +3,7 @@ package app
 import (
 	"time"
 
+	"github.com/prism-plugin/prism-tui/modal"
 	"github.com/prism-plugin/prism-tui/plugin"
 	"github.com/prism-plugin/prism-tui/prism"
 )
@@ -93,11 +94,12 @@ type Model struct {
 	Pause         int // seconds between iterations
 
 	// UI state
-	Width      int
-	Height     int
-	ShowHelp   bool
-	Ready      bool // True once initial setup is complete
-	SplashDone bool // True once splash screen has completed
+	Width       int
+	Height      int
+	ShowHelp    bool
+	ActiveModal *modal.Modal // Currently active modal dialog (nil if none)
+	Ready       bool         // True once initial setup is complete
+	SplashDone  bool         // True once splash screen has completed
 
 	// Prism framebuffer animation (shared across all views)
 	Prism *prism.Renderer

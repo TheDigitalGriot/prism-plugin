@@ -6,6 +6,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/prism-plugin/prism-tui/modal"
 	"github.com/prism-plugin/prism-tui/plugin"
 )
 
@@ -149,13 +150,44 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
+	// Allow q/ctrl+c even when modal is active
+	if msg.String() == "q" || msg.String() == "ctrl+c" {
+		return m, tea.Quit
+	}
+
+	// If modal is active, route all input to modal first
+	if m.ActiveModal != nil {
+		action, cmd := m.ActiveModal.HandleKey(msg)
+
+		// Handle modal actions
+		switch action {
+		case "cancel":
+			// Close modal
+			m.ActiveModal = nil
+			return m, cmd
+
+		case "":
+			// No action, modal is still processing input (e.g., typing in input field)
+			return m, cmd
+
+		default:
+			// Modal returned an action (e.g., button click, list selection)
+			// For now, we'll just close the modal. Plugin-specific modals can handle actions differently.
+			// TODO: In future, plugins can register modal action handlers
+			m.ActiveModal = nil
+			return m, cmd
+		}
+	}
+
 	// Global keys (always active regardless of view)
 	switch msg.String() {
 	case "q", "ctrl+c":
+		// Already handled above, but keep for clarity
 		return m, tea.Quit
 
 	case "?":
-		m.ShowHelp = !m.ShowHelp
+		// Open help modal
+		m.ActiveModal = createHelpModal()
 		return m, nil
 
 	// Number keys to switch tabs directly
@@ -323,4 +355,38 @@ func splitLines(text string) []string {
 		lines = append(lines, current)
 	}
 	return lines
+}
+
+// createHelpModal creates a modal displaying keyboard shortcuts and help
+func createHelpModal() *modal.Modal {
+	helpText := `PRISM TUI - Keyboard Shortcuts
+
+GLOBAL KEYS:
+  ?         Toggle this help
+  q, Ctrl+C Quit application
+  1-4       Switch to tab by number
+  Tab       Next tab
+  Shift+Tab Previous tab
+
+NAVIGATION:
+  ↑/k       Move up
+  ↓/j       Move down
+  Enter     Select / Confirm
+  Esc       Back / Cancel
+
+VIEW-SPECIFIC:
+  Home      - Navigate to plugins
+  Research  - Browse research files
+  Plans     - Browse implementation plans
+  Spectrum  - Execute stories autonomously
+
+MODAL CONTROLS:
+  Tab       Cycle focus
+  Enter     Activate focused element
+  Esc       Close modal`
+
+	return modal.New("Help", modal.WithWidth(60)).
+		AddSection(modal.Text(helpText)).
+		AddSection(modal.Spacer()).
+		AddSection(modal.Buttons(modal.Btn("Close", "cancel")))
 }
