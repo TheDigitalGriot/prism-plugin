@@ -67,6 +67,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.Prism.Resize(prismCols, 5)
 		}
+		// Resize splash screen to full terminal
+		if m.Splash != nil {
+			m.Splash.Resize(msg.Width, msg.Height)
+		}
 		// Update plugin context with new dimensions
 		ctx := m.Registry.GetContext()
 		ctx.Width = msg.Width
@@ -80,6 +84,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case TickMsg:
 		cmds = append(cmds, tickCmd())
+
+		// Advance splash screen animation
+		if m.Splash != nil && !m.SplashDone {
+			m.Splash.Tick()
+		}
 
 		// Advance prism framebuffer animation (shared across all views)
 		if m.Prism != nil {
@@ -468,9 +477,9 @@ func tickCmd() tea.Cmd {
 	})
 }
 
-// splashTimerCmd returns a command that sends SplashDoneMsg after 2 seconds
+// splashTimerCmd returns a command that sends SplashDoneMsg after 15 seconds
 func splashTimerCmd() tea.Cmd {
-	return tea.Tick(2*time.Second, func(t time.Time) tea.Msg {
+	return tea.Tick(15*time.Second, func(t time.Time) tea.Msg {
 		return SplashDoneMsg{}
 	})
 }

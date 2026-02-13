@@ -10,6 +10,7 @@ import (
 	"github.com/prism-plugin/prism-tui/modal"
 	"github.com/prism-plugin/prism-tui/plugin"
 	"github.com/prism-plugin/prism-tui/prism"
+	"github.com/prism-plugin/prism-tui/splash"
 )
 
 // AppState represents the running state of the TUI
@@ -112,6 +113,9 @@ type Model struct {
 	// Prism framebuffer animation (shared across all views)
 	Prism *prism.Renderer
 
+	// Full-screen splash animation
+	Splash *splash.Model
+
 	// Global animation state (for prism in header)
 	Anim AnimState
 
@@ -202,6 +206,9 @@ func NewModel(prismDir, storiesPath, projectDir string, maxIter, pause int, pris
 		}
 	}
 
+	// Create splash screen animation
+	splashModel := splash.New()
+
 	// Always start with splash. Onboarding is a full-screen interstitial
 	// between splash and Home — never a tab in the tab bar.
 	return Model{
@@ -216,6 +223,7 @@ func NewModel(prismDir, storiesPath, projectDir string, maxIter, pause int, pris
 		MaxIterations:   maxIter,
 		Pause:           pause,
 		Prism:           prismRenderer,
+		Splash:          splashModel,
 		Dialogs:         dialog.NewOverlay(),
 		Anim: AnimState{
 			RayLengths: [4]float64{6, 5, 4, 3},
