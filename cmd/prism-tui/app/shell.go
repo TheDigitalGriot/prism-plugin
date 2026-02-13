@@ -50,11 +50,13 @@ func (m Model) renderAppHeader() string {
 	}
 	middleSection := styles.TitleStyle.Render(projectName)
 
-	// Right: Branch info (future enhancement) + time
+	// Right: elapsed time from Spectrum plugin if running
 	rightSection := ""
-	if !m.StartTime.IsZero() && m.State == StateRunning {
-		elapsed := formatDuration(m.ElapsedTime())
-		rightSection = styles.DimStyle.Render(elapsed)
+	if sp, ok := m.Registry.ActivePlugin().(*SpectrumPlugin); ok {
+		if sp.state == StateRunning && !sp.startTime.IsZero() {
+			elapsed := formatDuration(sp.elapsedTime())
+			rightSection = styles.DimStyle.Render(elapsed)
+		}
 	}
 
 	// Calculate spacing
@@ -79,31 +81,15 @@ func (m Model) renderAppHeader() string {
 	return styles.AppHeaderStyle.Width(m.Width).Render(header)
 }
 
-// renderTabBar renders the tab navigation bar
+// renderTabBar renders the tab navigation bar with labels from registered plugins
 func (m Model) renderTabBar() string {
 	var tabs []string
 
-	// Icon/label mapping for tabs
-	tabInfo := map[ActiveView]struct {
-		number int
-		label  string
-		icon   string
-	}{
-		ViewHome:     {1, "Home", "⌂"},
-		ViewResearch: {2, "Research", "📝"},
-		ViewPlans:    {3, "Plans", "📋"},
-		ViewSpectrum: {4, "Spectrum", "▶"},
-	}
+	plugins := m.Registry.Plugins()
+	for i, p := range plugins {
+		tabLabel := fmt.Sprintf("[%d] %s %s", i+1, p.Icon(), p.Name())
 
-	for _, view := range m.TabOrder {
-		info, exists := tabInfo[view]
-		if !exists {
-			continue
-		}
-
-		tabLabel := fmt.Sprintf("[%d] %s %s", info.number, info.icon, info.label)
-
-		if view == m.ActiveView {
+		if p.ID() == viewToPluginID(m.ActiveView) {
 			tabs = append(tabs, styles.TabActiveStyle.Render(tabLabel))
 		} else {
 			tabs = append(tabs, styles.TabInactiveStyle.Render(tabLabel))
@@ -114,7 +100,7 @@ func (m Model) renderTabBar() string {
 	return styles.PanelStyle.Width(m.Width - 2).Render(tabBar)
 }
 
-// renderAppFooter renders context-sensitive key hints
+// renderAppFooter renders context-sensitive key hints from the active plugin
 func (m Model) renderAppFooter() string {
 	var hints []string
 
@@ -122,34 +108,12 @@ func (m Model) renderAppFooter() string {
 	hints = append(hints, "[1-4] switch tabs")
 	hints = append(hints, "[tab/shift+tab] cycle")
 
-	// View-specific hints
-	switch m.ActiveView {
-	case ViewHome:
-		hints = append(hints, "[j/k] navigate")
-		hints = append(hints, "[enter] select")
-	case ViewResearch, ViewPlans:
-		if m.ActiveView == ViewResearch && m.Research.Viewing {
-			hints = append(hints, "[esc] back to list")
-		} else if m.ActiveView == ViewPlans && m.Plans.Viewing {
-			hints = append(hints, "[esc] back to list")
-		} else {
-			hints = append(hints, "[j/k] navigate")
-			hints = append(hints, "[enter] view")
+	// Get view-specific hints from active plugin
+	active := m.Registry.ActivePlugin()
+	if active != nil {
+		for _, kh := range active.KeyHints() {
+			hints = append(hints, fmt.Sprintf("[%s] %s", kh.Key, kh.Description))
 		}
-	case ViewSpectrum:
-		switch m.State {
-		case StateIdle:
-			hints = append(hints, "[enter] start")
-		case StateRunning:
-			hints = append(hints, "[p] pause")
-			hints = append(hints, "[/] skip")
-		case StatePaused:
-			hints = append(hints, "[p] resume")
-		case StateComplete, StateMaxIterations, StateError:
-			hints = append(hints, "[enter] quit")
-		}
-		hints = append(hints, "[a/s] page stories")
-		hints = append(hints, "[z/x] page logs")
 	}
 
 	// Always show help and quit

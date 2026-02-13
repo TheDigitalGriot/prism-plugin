@@ -1,15 +1,12 @@
 package app
 
 import (
-	"fmt"
 	"math"
 	"math/rand"
 	"time"
 
-	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/prism-plugin/prism-tui/claude"
-	"github.com/prism-plugin/prism-tui/domain"
+	"github.com/prism-plugin/prism-tui/plugin"
 )
 
 // demoActivities is a list of fake tool activities for demo mode
@@ -38,14 +35,8 @@ var demoActivities = []struct {
 // Init initializes the model
 func (m Model) Init() tea.Cmd {
 	cmds := []tea.Cmd{
-		m.Spinner.Tick,
 		tickCmd(),
 		splashTimerCmd(), // Start 2-second splash auto-transition timer
-	}
-
-	// Load stories if in Spectrum view with a path set
-	if m.ActiveView == ViewSpectrum && m.StoriesPath != "" {
-		cmds = append(cmds, LoadStoriesCmd(m.StoriesPath))
 	}
 
 	return tea.Batch(cmds...)
@@ -74,484 +65,65 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.Prism.Resize(prismCols, 5)
 		}
-		// Size viewports for file viewing
-		viewportHeight := msg.Height - 6 // Leave room for header + footer
-		if viewportHeight < 10 {
-			viewportHeight = 10
-		}
-		m.Research.Viewport.Width = msg.Width - 4
-		m.Research.Viewport.Height = viewportHeight
-		m.Plans.Viewport.Width = msg.Width - 4
-		m.Plans.Viewport.Height = viewportHeight
-		return m, nil
+		// Update plugin context with new dimensions
+		ctx := m.Registry.GetContext()
+		ctx.Width = msg.Width
+		ctx.Height = msg.Height
+		m.Registry.UpdateContext(ctx)
+		// Broadcast resize to all plugins
+		resizeMsg := plugin.PluginResizeMsg{Width: msg.Width, Height: msg.Height}
+		broadcastCmds := m.Registry.Broadcast(resizeMsg)
+		cmds = append(cmds, broadcastCmds...)
+		return m, tea.Batch(cmds...)
 
 	case TickMsg:
-		// Update spinner
-		var cmd tea.Cmd
-		m.Spinner, cmd = m.Spinner.Update(spinner.TickMsg{})
-		cmds = append(cmds, cmd, tickCmd())
+		cmds = append(cmds, tickCmd())
 
-		// Advance prism framebuffer animation
+		// Advance prism framebuffer animation (shared across all views)
 		if m.Prism != nil {
 			m.Prism.Tick()
 		}
 
-		// Advance progress bar animation
-		m.Anim.ProgressPos, m.Anim.ProgressVel = m.Anim.ProgressSpring.Update(
-			m.Anim.ProgressPos,
-			m.Anim.ProgressVel,
-			m.Anim.ProgressTarget,
-		)
-
-		// Advance story pop animations
-		for idx := range m.Anim.StoryPopScales {
-			scale, vel := m.Anim.StoryPopSpring.Update(
-				m.Anim.StoryPopScales[idx],
-				m.Anim.StoryPopVels[idx],
-				1.0, // target scale
-			)
-			m.Anim.StoryPopScales[idx] = scale
-			m.Anim.StoryPopVels[idx] = vel
-
-			// Clean up finished animations
-			if math.Abs(scale-1.0) < 0.01 && math.Abs(vel) < 0.01 {
-				delete(m.Anim.StoryPopScales, idx)
-				delete(m.Anim.StoryPopVels, idx)
-			}
-		}
-
-		// Advance pulse (continuous sine wave)
-		m.Anim.PulsePhase += 0.15 // ~2.4 rad/sec at 100ms ticks
-		if m.Anim.PulsePhase > 2*math.Pi {
-			m.Anim.PulsePhase -= 2 * math.Pi
-		}
-
-		// Advance log entry slide-ins
-		for i := range m.Anim.LogEntryOffsets {
-			offset, vel := m.Anim.LogSlideSpring.Update(
-				m.Anim.LogEntryOffsets[i],
-				m.Anim.LogEntryVels[i],
-				0.0, // target offset
-			)
-			m.Anim.LogEntryOffsets[i] = offset
-			m.Anim.LogEntryVels[i] = vel
-		}
-
-		// Advance prism animation (slower, every 3 ticks = 300ms per frame for 4 colors)
+		// Advance global prism ASCII animation (for fallback rendering)
 		m.Anim.PrismTick++
 		if m.Anim.PrismTick >= 3 {
 			m.Anim.PrismTick = 0
 			m.Anim.PrismFrame = (m.Anim.PrismFrame + 1) % 4
 		}
 
-		// Advance ray spring animations (for gradient prism)
-		for i := range m.Anim.RayLengths {
-			m.Anim.RayLengths[i], m.Anim.RayVels[i] = m.Anim.RaySpring.Update(
-				m.Anim.RayLengths[i],
-				m.Anim.RayVels[i],
-				m.Anim.RayTargets[i],
-			)
-
-			// Set new random target when settled
-			if math.Abs(m.Anim.RayLengths[i]-m.Anim.RayTargets[i]) < 0.1 && math.Abs(m.Anim.RayVels[i]) < 0.1 {
-				m.Anim.RayTargets[i] = 4 + rand.Float64()*4 // Random 4-8
-			}
-		}
-
-		// Advance shimmer phase (for gradient brightness effects)
-		m.Anim.ShimmerPhase += 0.08 // Slower than pulse for subtle effect
+		// Advance shimmer phase
+		m.Anim.ShimmerPhase += 0.08
 		if m.Anim.ShimmerPhase > 2*math.Pi {
 			m.Anim.ShimmerPhase -= 2 * math.Pi
 		}
 
-	case InitCompleteMsg:
-		if msg.Error != nil {
-			m.State = StateError
-			m.LastError = msg.Error.Error()
-			m.AddLog(LogError, "Failed to load stories: "+msg.Error.Error())
-		} else {
-			m.PlanName = msg.PlanName
-			m.Stories = msg.Stories
-			m.TotalStories = len(msg.Stories)
-			// Update story paginator total pages - direct assignment
-			m.StoryPaginator.TotalPages = (len(msg.Stories) + m.StoriesPerPage - 1) / m.StoriesPerPage
-			m.StoryPaginator.Page = 0
-			// Initialize progress animation to current progress
-			m.Anim.ProgressPos = m.ProgressPercent()
-			m.Anim.ProgressTarget = m.ProgressPercent()
-			m.AddLog(LogInfo, fmt.Sprintf("Loaded %d stories from plan: %s", len(msg.Stories), msg.PlanName))
-		}
-		return m, nil
-
-	case StoriesReloadedMsg:
-		if msg.Error != nil {
-			m.AddLog(LogWarning, "Failed to reload stories: "+msg.Error.Error())
-		} else {
-			m.Stories = msg.Stories
-			m.TotalStories = len(msg.Stories)
-			// Update story paginator total pages - direct assignment
-			m.StoryPaginator.TotalPages = (len(msg.Stories) + m.StoriesPerPage - 1) / m.StoriesPerPage
-			// Update progress target for smooth animation
-			m.Anim.ProgressTarget = m.ProgressPercent()
-		}
-		return m, nil
-
-	case ClaudeStartedMsg:
-		m.CurrentStoryID = msg.StoryID
-		m.Iteration = msg.Iteration
-		m.IterationStart = time.Now()
-		m.AddLog(LogInfo, fmt.Sprintf("Starting iteration %d", msg.Iteration))
-		return m, nil
-
-	case claude.ToolActivityMsg:
-		// Update current tool activity for display
-		m.CurrentTool = msg.ToolName
-		m.CurrentActivity = msg.Description
-
-		// Add to recent activities history (avoid duplicates)
-		if msg.Description != "" && (len(m.RecentActivities) == 0 || m.RecentActivities[len(m.RecentActivities)-1] != msg.Description) {
-			m.RecentActivities = append(m.RecentActivities, msg.Description)
-			if len(m.RecentActivities) > 10 {
-				m.RecentActivities = m.RecentActivities[1:]
+		// Advance ray spring animations (no spring on global AnimState now, just simple oscillation)
+		for i := range m.Anim.RayLengths {
+			diff := m.Anim.RayTargets[i] - m.Anim.RayLengths[i]
+			m.Anim.RayLengths[i] += diff * 0.1
+			if math.Abs(diff) < 0.1 {
+				m.Anim.RayTargets[i] = 4 + rand.Float64()*4
 			}
 		}
 
-		if msg.IsComplete {
-			m.CurrentTool = ""
-			m.CurrentActivity = ""
-		}
-		// Continue listening for more output
-		if m.OutputChan != nil {
-			return m, claude.ListenToOutput(m.OutputChan)
-		}
+		// Broadcast tick to all plugins (for plugin-specific animations)
+		broadcastCmds := m.Registry.Broadcast(msg)
+		cmds = append(cmds, broadcastCmds...)
+
+	case SplashDoneMsg:
+		// Splash auto-timer completed - transition to Home
+		m.ActiveView = ViewHome
+		m.SplashDone = true
+		m.Registry.SetActive("home")
 		return m, nil
 
-	case claude.ClaudeOutputMsg:
-		// Add to recent output for activity panel (raw JSON for debugging)
-		// Don't show raw JSON in recent output - it's not human readable
-		// The ToolActivityMsg handler above captures the meaningful info
-		// Continue listening for more output
-		if m.OutputChan != nil {
-			return m, claude.ListenToOutput(m.OutputChan)
-		}
-		return m, nil
-
-	case claude.ClaudeFinishedMsg:
-		m.OutputChan = nil // Stop listening for more output
-		m.CurrentTool = ""
-		m.CurrentActivity = ""
-		duration := msg.Duration.Round(time.Second)
-		m.AddLog(LogInfo, fmt.Sprintf("Iteration completed in %s", duration))
-
-		if msg.Error != nil {
-			m.ConsecutiveErrs++
-			m.AddLog(LogError, "Claude error: "+msg.Error.Error())
-
-			if m.ConsecutiveErrs >= m.MaxConsecutiveErrs {
-				m.State = StateError
-				m.LastError = "Too many consecutive errors"
-				m.AddLog(LogError, "Too many consecutive errors, stopping")
-				return m, nil
-			}
-
-			// Retry with backoff
-			delay := time.Duration(m.ConsecutiveErrs) * 2 * time.Second
-			m.AddLog(LogWarning, fmt.Sprintf("Retrying in %s...", delay))
-			return m, tea.Tick(delay, func(t time.Time) tea.Msg {
-				return RetryIterationMsg{}
-			})
-		}
-
-		// Success - reset error count
-		m.ConsecutiveErrs = 0
-
-		// Parse signal from output
-		signal := domain.ParseSignal(msg.Output)
-		signalMsg := SignalDetectedMsg{
-			Type:    convertSignalType(signal.Type),
-			Content: signal.Content,
-			StoryID: m.CurrentStoryID,
-		}
-
-		// Also reload stories to get updated status
-		return m, tea.Batch(
-			ReloadStoriesCmd(m.StoriesPath),
-			func() tea.Msg { return signalMsg },
-		)
-
-	case SignalDetectedMsg:
-		return m.handleSignal(msg)
-
-	case StoryStartedMsg:
-		m.CurrentStoryID = msg.StoryID
-		m.CurrentStoryTitle = msg.Title
-		m.AddLog(LogInfo, "Starting story: "+msg.StoryID+" - "+msg.Title)
-		return m, nil
-
-	case StoryCompletedMsg:
-		m.AddLog(LogSuccess, "Story complete: "+msg.StoryID)
-		// Update story status in local list and trigger pop animation
-		for i := range m.Stories {
-			if m.Stories[i].ID == msg.StoryID {
-				m.Stories[i].Status = "complete"
-				// Trigger pop animation: start compressed, spring to 1.0
-				m.Anim.StoryPopScales[i] = 0.3
-				m.Anim.StoryPopVels[i] = 0
-				break
-			}
-		}
-		// Update progress target for smooth progress bar animation
-		m.Anim.ProgressTarget = m.ProgressPercent()
-		m.CurrentStoryID = ""
-		m.CurrentStoryTitle = ""
-		return m, nil
-
-	case StartNextIterationMsg:
-		if m.State == StatePaused {
-			m.AddLog(LogInfo, "Execution paused, press 'p' to resume...")
-			return m, nil
-		}
-		if m.State != StateRunning {
-			return m, nil
-		}
-
-		// Check if we've hit max iterations
-		if m.Iteration >= m.MaxIterations {
-			m.State = StateMaxIterations
-			m.LastError = fmt.Sprintf("Iteration limit reached (%d) - increase with -n flag to continue", m.MaxIterations)
-			m.AddLog(LogWarning, fmt.Sprintf("Reached max iterations (%d)", m.MaxIterations))
-			return m, nil
-		}
-
-		// Start next iteration
-		m.Iteration++
-		m.IterationStart = time.Now()
-		m.RecentOutput = []string{}     // Clear recent output
-		m.RecentActivities = []string{} // Clear recent activities
-		m.AddLog(LogInfo, fmt.Sprintf("Starting iteration %d/%d", m.Iteration, m.MaxIterations))
-
-		// Use streaming execution for real-time activity display
-		m.OutputChan = make(chan tea.Msg, 100)
-		return m, tea.Batch(
-			claude.RunClaudeStreamingCmd(m.ProjectDir, m.StoriesPath, m.Iteration, m.OutputChan),
-			claude.ListenToOutput(m.OutputChan),
-		)
-
-	case RetryIterationMsg:
-		if m.State != StateRunning && m.State != StatePaused {
-			return m, nil
-		}
-		if m.State == StatePaused {
-			m.AddLog(LogInfo, "Retry deferred, execution paused...")
-			return m, nil
-		}
-
-		m.RecentOutput = []string{}
-		m.RecentActivities = []string{}
-		m.AddLog(LogInfo, fmt.Sprintf("Retrying iteration %d", m.Iteration))
-
-		// Use streaming execution for real-time activity display
-		m.OutputChan = make(chan tea.Msg, 100)
-		return m, tea.Batch(
-			claude.RunClaudeStreamingCmd(m.ProjectDir, m.StoriesPath, m.Iteration, m.OutputChan),
-			claude.ListenToOutput(m.OutputChan),
-		)
-
-	case StartExecutionMsg:
-		if m.State == StateIdle {
-			m.State = StateRunning
-			m.StartTime = time.Now()
-			m.Iteration = 0
-
-			if m.DemoMode {
-				m.AddLog(LogInfo, "Starting DEMO simulation...")
-				m.AddLog(LogInfo, "Watch the animations!")
-				// Find first pending story for demo
-				for i, s := range m.Stories {
-					if s.Status == "pending" {
-						m.DemoStoryIndex = i
-						m.CurrentStoryID = s.ID
-						m.CurrentStoryTitle = s.Title
-						break
-					}
-				}
-				// Start demo tick (2.5 seconds between completions)
-				// Also start activity cycling
-				return m, tea.Batch(
-					tea.Tick(2500*time.Millisecond, func(t time.Time) tea.Msg {
-						return DemoTickMsg{}
-					}),
-					tea.Tick(500*time.Millisecond, func(t time.Time) tea.Msg {
-						return DemoActivityMsg{ActivityIndex: 0}
-					}),
-				)
-			}
-
-			m.AddLog(LogInfo, "Starting Spectrum execution...")
-			// Trigger first iteration
-			return m, func() tea.Msg { return StartNextIterationMsg{} }
-		}
-		return m, nil
-
-	case DemoTickMsg:
-		if !m.DemoMode || m.State != StateRunning {
-			return m, nil
-		}
-
-		// Complete current story
-		if m.DemoStoryIndex < len(m.Stories) {
-			m.Iteration++
-
-			// Trigger story completion
-			return m, func() tea.Msg {
-				return DemoCompleteStoryMsg{StoryIndex: m.DemoStoryIndex}
-			}
-		}
-		return m, nil
-
-	case DemoCompleteStoryMsg:
-		if !m.DemoMode {
-			return m, nil
-		}
-
-		idx := msg.StoryIndex
-		if idx >= len(m.Stories) {
-			return m, nil
-		}
-
-		// Mark story complete with animation
-		m.Stories[idx].Status = "complete"
-		m.Anim.StoryPopScales[idx] = 0.3
-		m.Anim.StoryPopVels[idx] = 0
-		m.Anim.ProgressTarget = m.ProgressPercent()
-
-		m.AddLog(LogSuccess, fmt.Sprintf("Story complete: %s", m.Stories[idx].ID))
-
-		// Find next pending story
-		m.DemoStoryIndex = -1
-		for i, s := range m.Stories {
-			if s.Status == "pending" {
-				m.DemoStoryIndex = i
-				m.CurrentStoryID = s.ID
-				m.CurrentStoryTitle = s.Title
-				m.AddLog(LogInfo, fmt.Sprintf("Starting: %s - %s", s.ID, s.Title))
-				break
-			}
-		}
-
-		// Check if all done
-		if m.DemoStoryIndex == -1 {
-			m.State = StateComplete
-			m.CurrentStoryID = ""
-			m.CurrentStoryTitle = ""
-			m.CurrentTool = ""
-			m.CurrentActivity = ""
-			m.AddLog(LogSuccess, "All demo stories complete!")
-			return m, nil
-		}
-
-		// Schedule next completion (randomish timing 2-3.5 seconds)
-		delay := 2000 + (m.DemoStoryIndex%3)*500
-		return m, tea.Tick(time.Duration(delay)*time.Millisecond, func(t time.Time) tea.Msg {
-			return DemoTickMsg{}
-		})
-
-	case DemoActivityMsg:
-		if !m.DemoMode || m.State != StateRunning {
-			return m, nil
-		}
-
-		// Cycle through activities
-		idx := msg.ActivityIndex % len(demoActivities)
-		activity := demoActivities[idx]
-
-		m.CurrentTool = activity.Tool
-		m.CurrentActivity = activity.Description
-
-		// Add to recent activities (avoid duplicates)
-		if len(m.RecentActivities) == 0 || m.RecentActivities[len(m.RecentActivities)-1] != activity.Description {
-			m.RecentActivities = append(m.RecentActivities, activity.Description)
-			if len(m.RecentActivities) > 10 {
-				m.RecentActivities = m.RecentActivities[1:]
-			}
-		}
-
-		// Schedule next activity (300-600ms)
-		delay := 300 + rand.Intn(300)
-		return m, tea.Tick(time.Duration(delay)*time.Millisecond, func(t time.Time) tea.Msg {
-			return DemoActivityMsg{ActivityIndex: idx + 1}
-		})
-
-	case EpicsDiscoveredMsg:
-		if msg.Error != nil {
-			m.AddLog(LogError, "Failed to discover epics: "+msg.Error.Error())
-			return m, nil
-		}
-		m.Epic.Epics = msg.Epics
-		m.Epic.IsLegacy = len(msg.Epics) == 0
-		if len(msg.Epics) > 0 {
-			// Auto-select first epic and load its stories
-			m.Epic.SelectedIndex = 0
-			m.StoriesPath = msg.Epics[0].StoriesPath
-			return m, LoadStoriesCmd(msg.Epics[0].StoriesPath)
-		}
-		// Legacy mode - load flat stories file if path is set
-		if m.StoriesPath != "" {
-			return m, LoadStoriesCmd(m.StoriesPath)
-		}
-		return m, nil
-
-	case EpicSelectedMsg:
-		if msg.EpicIndex >= 0 && msg.EpicIndex < len(m.Epic.Epics) {
-			m.Epic.SelectedIndex = msg.EpicIndex
-			epic := m.Epic.Epics[msg.EpicIndex]
-			m.StoriesPath = epic.StoriesPath
-			m.State = StateIdle
-			m.Stories = []StoryView{}
-			m.TotalStories = 0
-			m.CurrentStoryID = ""
-			m.CurrentStoryTitle = ""
-			m.Iteration = 0
-			return m, LoadStoriesCmd(epic.StoriesPath)
-		}
-		return m, nil
-
-	case ResearchFilesLoadedMsg:
-		if msg.Error == nil {
-			m.Research.Files = msg.Files
-			m.Research.SelectedIdx = 0
-		}
-		return m, nil
-
-	case PlansFilesLoadedMsg:
-		if msg.Error == nil {
-			m.Plans.Files = msg.Files
-			m.Plans.SelectedIdx = 0
-		}
-		return m, nil
-
-	case FileContentLoadedMsg:
-		if msg.Error != nil {
-			m.AddLog(LogWarning, "Failed to load file: "+msg.Error.Error())
-			return m, nil
-		}
-		switch msg.ForView {
-		case ViewResearch:
-			m.Research.Viewing = true
-			m.Research.Viewport.SetContent(msg.Content)
-		case ViewPlans:
-			m.Plans.Viewing = true
-			m.Plans.Viewport.SetContent(msg.Content)
-		}
-		return m, nil
-
-	case DecomposePlanMsg:
-		if msg.Error != nil {
-			m.AddLog(LogError, "Decomposition failed: "+msg.Error.Error())
-		} else {
-			m.AddLog(LogSuccess, "Created epic: "+msg.EpicName)
-			// Refresh plans list
-			return m, LoadPlansFilesCmd(m.PrismDir)
+	case plugin.FocusPluginMsg:
+		// Switch active plugin by ID
+		if err := m.Registry.SetActive(msg.ID); err == nil {
+			// Map plugin ID to ActiveView for tab bar highlighting
+			m.ActiveView = pluginIDToView(msg.ID)
+			// Trigger data loading for the focused plugin
+			return m, m.pluginFocusCmd(msg.ID)
 		}
 		return m, nil
 
@@ -559,21 +131,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.ActiveView = msg.View
 		return m, nil
 
-	case SplashDoneMsg:
-		// Splash auto-timer completed - transition to Home
-		m.ActiveView = ViewHome
-		m.SplashDone = true
-		return m, nil
-
-	case PauseToggleMsg:
-		if m.State == StateRunning {
-			m.State = StatePaused
-			m.AddLog(LogWarning, "Pausing after current story...")
-		} else if m.State == StatePaused {
-			m.State = StateRunning
-			m.AddLog(LogInfo, "Resuming execution...")
-		}
-		return m, nil
+	default:
+		// Broadcast all other messages to plugins (they handle their own state)
+		broadcastCmds := m.Registry.Broadcast(msg)
+		cmds = append(cmds, broadcastCmds...)
 	}
 
 	return m, tea.Batch(cmds...)
@@ -584,139 +145,152 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if !m.SplashDone {
 		m.ActiveView = ViewHome
 		m.SplashDone = true
+		m.Registry.SetActive("home")
 		return m, nil
 	}
 
 	// Global keys (always active regardless of view)
 	switch msg.String() {
 	case "q", "ctrl+c":
-		// Graceful shutdown
-		if m.State == StateRunning {
-			m.AddLog(LogWarning, "Shutting down...")
-		}
 		return m, tea.Quit
 
 	case "?":
 		m.ShowHelp = !m.ShowHelp
 		return m, nil
 
-	// Tab/Shift+Tab to cycle through tabs (doesn't conflict with view-specific keys)
+	// Number keys to switch tabs directly
+	case "1":
+		if len(m.TabOrder) >= 1 {
+			return m.switchToTab(0)
+		}
+	case "2":
+		if len(m.TabOrder) >= 2 {
+			return m.switchToTab(1)
+		}
+	case "3":
+		if len(m.TabOrder) >= 3 {
+			return m.switchToTab(2)
+		}
+	case "4":
+		if len(m.TabOrder) >= 4 {
+			return m.switchToTab(3)
+		}
+
+	// Tab/Shift+Tab to cycle through tabs
 	case "tab":
-		// Special handling for Spectrum view with multiple epics
-		if m.ActiveView == ViewSpectrum && len(m.Epic.Epics) > 1 {
-			// Let Spectrum view handle this for epic switching
+		// Check if active plugin wants to consume tab (e.g., Spectrum epic switching)
+		if sp, ok := m.Registry.ActivePlugin().(*SpectrumPlugin); ok && len(sp.epic.Epics) > 1 {
+			// Let Spectrum handle tab for epic switching
 			break
 		}
-		// Find current tab index and move to next
 		for i, view := range m.TabOrder {
 			if view == m.ActiveView {
 				nextIdx := (i + 1) % len(m.TabOrder)
-				m.ActiveView = m.TabOrder[nextIdx]
-				return m, nil
+				return m.switchToTab(nextIdx)
 			}
 		}
 	case "shift+tab":
-		// Special handling for Spectrum view with multiple epics
-		if m.ActiveView == ViewSpectrum && len(m.Epic.Epics) > 1 {
-			// Let Spectrum view handle this for epic switching
+		if sp, ok := m.Registry.ActivePlugin().(*SpectrumPlugin); ok && len(sp.epic.Epics) > 1 {
 			break
 		}
-		// Find current tab index and move to previous
 		for i, view := range m.TabOrder {
 			if view == m.ActiveView {
 				prevIdx := (i - 1 + len(m.TabOrder)) % len(m.TabOrder)
-				m.ActiveView = m.TabOrder[prevIdx]
-				return m, nil
+				return m.switchToTab(prevIdx)
 			}
 		}
 	}
 
-	// Escape/backspace returns to Home (from any non-Home view)
-	// Blocked during Spectrum execution
-	if (msg.String() == "esc" || msg.String() == "backspace") && m.ActiveView != ViewHome {
-		if m.ActiveView == ViewSpectrum && m.State == StateRunning {
-			return m, nil // Can't leave during execution
-		}
-		// Check if sub-view handles esc (e.g., closing file viewer)
-		if m.ActiveView == ViewResearch && m.Research.Viewing {
-			return m.handleResearchKeyPress(msg)
-		}
-		if m.ActiveView == ViewPlans && m.Plans.Viewing {
-			return m.handlePlansKeyPress(msg)
-		}
-		m.ActiveView = ViewHome
+	// Delegate to active plugin for view-specific key handling
+	return m.delegateToActivePlugin(msg)
+}
+
+// delegateToActivePlugin sends a message to the active plugin and processes the result
+func (m Model) delegateToActivePlugin(msg tea.Msg) (tea.Model, tea.Cmd) {
+	active := m.Registry.ActivePlugin()
+	if active == nil {
 		return m, nil
 	}
 
-	// Delegate to view-specific handler
-	switch m.ActiveView {
-	case ViewHome:
-		return m.handleHomeKeyPress(msg)
-	case ViewResearch:
-		return m.handleResearchKeyPress(msg)
-	case ViewPlans:
-		return m.handlePlansKeyPress(msg)
-	case ViewSpectrum:
-		return m.handleSpectrumKeyPress(msg)
+	updatedPlugin, cmd := active.Update(msg)
+
+	// Update plugin in registry's internal state
+	for i, p := range m.Registry.Plugins() {
+		if p.ID() == active.ID() {
+			m.Registry.Plugins()[i] = updatedPlugin
+			break
+		}
+	}
+
+	// Check if the plugin returned a FocusPluginMsg (from navigation)
+	if cmd != nil {
+		return m, cmd
 	}
 
 	return m, nil
 }
 
-func (m Model) handleSignal(msg SignalDetectedMsg) (tea.Model, tea.Cmd) {
-	switch msg.Type {
-	case SignalComplete:
-		// Safety check: verify that remaining stories count is actually 0
-		remaining := m.RemainingCount()
-		if remaining > 0 {
-			// COMPLETE signal received but stories remain - this is a bug in the skill output
-			m.AddLog(LogWarning, fmt.Sprintf("⚠️ COMPLETE signal received but %d stories remain - ignoring and continuing", remaining))
-			m.AddLog(LogInfo, "This is likely a skill bug - prism-spectrum should output <spectrum-continue> when stories remain")
-			// Continue instead of stopping
-			return m, tea.Tick(time.Duration(m.Pause)*time.Second, func(t time.Time) tea.Msg {
-				return StartNextIterationMsg{}
-			})
-		}
-		m.State = StateComplete
-		m.AddLog(LogSuccess, "All stories complete!")
-		return m, nil
-
-	case SignalContinue:
-		m.AddLog(LogInfo, "Story complete, continuing...")
-		// Pause before next iteration
-		return m, tea.Tick(time.Duration(m.Pause)*time.Second, func(t time.Time) tea.Msg {
-			return StartNextIterationMsg{}
-		})
-
-	case SignalRetry:
-		m.ConsecutiveErrs++
-		m.AddLog(LogWarning, "Retry requested: "+msg.Content)
-		if m.ConsecutiveErrs >= m.MaxConsecutiveErrs {
-			m.State = StateError
-			m.LastError = "Too many retries"
-			return m, nil
-		}
-		return m, tea.Tick(time.Duration(m.Pause)*time.Second, func(t time.Time) tea.Msg {
-			return StartNextIterationMsg{}
-		})
-
-	case SignalBlocked:
-		m.AddLog(LogWarning, "Story blocked: "+msg.Content)
-		return m, tea.Tick(time.Duration(m.Pause)*time.Second, func(t time.Time) tea.Msg {
-			return StartNextIterationMsg{}
-		})
-
-	case SignalError:
-		m.State = StateError
-		m.LastError = msg.Content
-		m.AddLog(LogError, "Fatal error: "+msg.Content)
+// switchToTab switches to a tab by index
+func (m Model) switchToTab(idx int) (tea.Model, tea.Cmd) {
+	if idx < 0 || idx >= len(m.TabOrder) {
 		return m, nil
 	}
+	view := m.TabOrder[idx]
+	m.ActiveView = view
+	pluginID := viewToPluginID(view)
+	m.Registry.SetActive(pluginID)
+	return m, m.pluginFocusCmd(pluginID)
+}
 
-	// No explicit signal - assume continue
-	return m, tea.Tick(time.Duration(m.Pause)*time.Second, func(t time.Time) tea.Msg {
-		return StartNextIterationMsg{}
-	})
+// pluginFocusCmd returns a command to load data when a plugin is focused
+func (m Model) pluginFocusCmd(pluginID string) tea.Cmd {
+	if m.DemoMode {
+		return nil
+	}
+	switch pluginID {
+	case "research":
+		return LoadResearchFilesCmd(m.PrismDir)
+	case "plans":
+		return LoadPlansFilesCmd(m.PrismDir)
+	case "spectrum":
+		if m.StoriesPath != "" {
+			return LoadStoriesCmd(m.StoriesPath)
+		}
+		return DiscoverEpicsCmd(m.PrismDir)
+	}
+	return nil
+}
+
+// pluginIDToView maps a plugin ID to its ActiveView enum value
+func pluginIDToView(id string) ActiveView {
+	switch id {
+	case "home":
+		return ViewHome
+	case "research":
+		return ViewResearch
+	case "plans":
+		return ViewPlans
+	case "spectrum":
+		return ViewSpectrum
+	default:
+		return ViewHome
+	}
+}
+
+// viewToPluginID maps an ActiveView to a plugin ID
+func viewToPluginID(view ActiveView) string {
+	switch view {
+	case ViewHome:
+		return "home"
+	case ViewResearch:
+		return "research"
+	case ViewPlans:
+		return "plans"
+	case ViewSpectrum:
+		return "spectrum"
+	default:
+		return "home"
+	}
 }
 
 // tickCmd returns a command that sends a tick message

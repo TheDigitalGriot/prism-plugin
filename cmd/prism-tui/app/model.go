@@ -1,15 +1,9 @@
 package app
 
 import (
-	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/paginator"
-	"github.com/charmbracelet/bubbles/progress"
-	"github.com/charmbracelet/bubbles/spinner"
-	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/harmonica"
+	"github.com/prism-plugin/prism-tui/plugin"
 	"github.com/prism-plugin/prism-tui/prism"
 )
 
@@ -63,33 +57,15 @@ type LogEntry struct {
 	StoryID string
 }
 
-// AnimState holds all animation state for smooth UI transitions
+// AnimState holds global animation state for the app shell (prism in header).
+// Plugin-specific animations (like Spectrum's progress bar, story pops, log slides)
+// are now owned by the respective plugins.
 type AnimState struct {
-	// Progress bar spring (overshoots then settles)
-	ProgressSpring harmonica.Spring
-	ProgressPos    float64
-	ProgressVel    float64
-	ProgressTarget float64
-
-	// Story completion pop animations (per-story index)
-	StoryPopSpring harmonica.Spring
-	StoryPopScales map[int]float64
-	StoryPopVels   map[int]float64
-
-	// Active story pulse (breathing 0.6 → 1.0 → 0.6)
-	PulsePhase float64 // 0 to 2π
-
-	// Log entry slide-in (per-entry x-offset)
-	LogSlideSpring  harmonica.Spring
-	LogEntryOffsets []float64
-	LogEntryVels    []float64
-
-	// Prism animation (rotating shimmer)
-	PrismFrame int // Current animation frame (0-7)
+	// Prism animation (rotating shimmer for ASCII prism in tab screens)
+	PrismFrame int // Current animation frame (0-3)
 	PrismTick  int // Sub-tick counter for slower animation
 
-	// Spring-based ray animation for gradient prism
-	RaySpring  harmonica.Spring
+	// Spring-based ray animation for gradient prism (used in fallback rendering)
 	RayLengths [4]float64 // Current animated length per ray
 	RayVels    [4]float64 // Velocity per ray
 	RayTargets [4]float64 // Target lengths (oscillates between 4-8)
@@ -98,60 +74,23 @@ type AnimState struct {
 	ShimmerPhase float64
 }
 
-// Model is the main application state
+// Model is the main application state (slimmed down with plugin architecture)
 type Model struct {
+	// Plugin system
+	Registry *plugin.Registry
+
 	// View system
 	ActiveView ActiveView
 	TabOrder   []ActiveView // Ordered list of tabs to display
-	PrismDir   string       // absolute path to .prism/ directory
-
-	// Per-view state
-	Home     HomeState
-	Research ResearchState
-	Plans    PlansState
-	Epic     EpicState
 
 	// Configuration
+	PrismDir     string
 	StoriesPath  string
 	ProgressPath string
 	ProjectDir   string
 	PrismStyle   string // "gradient", "braille", or "ascii"
-
-	// Stories data (will be populated by domain package)
-	PlanName     string
-	Stories      []StoryView // Simplified view of stories for display
-	TotalStories int
-
-	// Execution state
-	State              AppState
-	CurrentStoryID     string
-	CurrentStoryTitle  string
-	Iteration          int
-	MaxIterations      int
-	ConsecutiveErrs    int
-	MaxConsecutiveErrs int
-	Pause              int // seconds between iterations
-
-	// Output capture
-	LogLines      []LogEntry
-	CurrentOutput strings.Builder
-	RecentOutput  []string // Last N lines for activity panel
-
-	// Current tool activity
-	CurrentTool       string   // Name of currently executing tool
-	CurrentActivity   string   // Human-readable description of current activity
-	RecentActivities  []string // History of recent tool activities
-
-	// UI components
-	Spinner        spinner.Model
-	Progress       progress.Model
-	Viewport       viewport.Model
-	StoryPaginator paginator.Model
-	LogPaginator   paginator.Model
-
-	// Pagination config
-	StoriesPerPage int
-	LogsPerPage    int
+	MaxIterations int
+	Pause         int // seconds between iterations
 
 	// UI state
 	Width      int
@@ -160,25 +99,14 @@ type Model struct {
 	Ready      bool // True once initial setup is complete
 	SplashDone bool // True once splash screen has completed
 
-	// Timing
-	StartTime      time.Time
-	IterationStart time.Time
-
-	// Error info
-	LastError string
-
-	// Streaming output channel
-	OutputChan chan tea.Msg
-
-	// Animation state
-	Anim AnimState
-
-	// Prism framebuffer animation
+	// Prism framebuffer animation (shared across all views)
 	Prism *prism.Renderer
 
+	// Global animation state (for prism in header)
+	Anim AnimState
+
 	// Demo mode
-	DemoMode       bool
-	DemoStoryIndex int // Next story to auto-complete in demo
+	DemoMode bool
 }
 
 // StoryView is a simplified story representation for display
@@ -192,73 +120,58 @@ type StoryView struct {
 
 // NewModel creates initial model state
 func NewModel(prismDir, storiesPath, projectDir string, maxIter, pause int, prismStyle string) Model {
-	s := spinner.New()
-	s.Spinner = spinner.Dot
-
-	p := progress.New(
-		progress.WithGradient("#3B82F6", "#F59E0B"),
-		progress.WithoutPercentage(),
-	)
-
 	// Default prism style
 	if prismStyle == "" {
 		prismStyle = "gradient"
 	}
 
-	// Create story paginator (dots style)
-	storyPag := paginator.New()
-	storyPag.Type = paginator.Dots
-	storyPag.PerPage = 12
-	storyPag.ActiveDot = "●"
-	storyPag.InactiveDot = "○"
+	// Create 3D prism renderer (shared across all views)
+	prismRenderer := prism.New(24, 5)
 
-	// Create log paginator (dots style)
-	logPag := paginator.New()
-	logPag.Type = paginator.Dots
-	logPag.PerPage = 6
-	logPag.ActiveDot = "●"
-	logPag.InactiveDot = "○"
+	// Create plugin context
+	ctx := &plugin.Context{
+		PrismDir:      prismDir,
+		ProjectDir:    projectDir,
+		StoriesPath:   storiesPath,
+		Width:         80, // Will be updated on first WindowSizeMsg
+		Height:        24,
+		DemoMode:      false,
+		PrismStyle:    prismStyle,
+		MaxIterations: maxIter,
+		Pause:         pause,
+	}
+
+	// Create plugin registry
+	registry := plugin.NewRegistry(ctx)
+
+	// Register plugins in tab order
+	homePlugin := NewHomePlugin()
+	researchPlugin := NewResearchPlugin()
+	plansPlugin := NewPlansPlugin()
+	spectrumPlugin := NewSpectrumPlugin(prismRenderer)
+
+	registry.Register(homePlugin)
+	registry.Register(researchPlugin)
+	registry.Register(plansPlugin)
+	registry.Register(spectrumPlugin)
 
 	// Start with splash screen on first launch
 	initialView := ViewSplash
 
 	return Model{
-		ActiveView:         initialView,
-		TabOrder:           []ActiveView{ViewHome, ViewResearch, ViewPlans, ViewSpectrum},
-		PrismDir:           prismDir,
-		Home:               HomeState{MenuItems: []string{"Research", "Plans", "Spectrum"}},
-		StoriesPath:        storiesPath,
-		ProjectDir:         projectDir,
-		MaxIterations:      maxIter,
-		MaxConsecutiveErrs: 3,
-		Pause:              pause,
-		State:              StateIdle,
-		PrismStyle:         prismStyle,
-		Spinner:            s,
-		Progress:           p,
-		StoryPaginator:     storyPag,
-		LogPaginator:       logPag,
-		StoriesPerPage:     12,
-		LogsPerPage:        6,
-		LogLines:           make([]LogEntry, 0, 1000),
-		RecentOutput:       make([]string, 0, 10),
-		Stories:            []StoryView{},
-		Prism:              prism.New(24, 5),
+		Registry:      registry,
+		ActiveView:    initialView,
+		TabOrder:      []ActiveView{ViewHome, ViewResearch, ViewPlans, ViewSpectrum},
+		PrismDir:      prismDir,
+		StoriesPath:   storiesPath,
+		ProjectDir:    projectDir,
+		PrismStyle:    prismStyle,
+		MaxIterations: maxIter,
+		Pause:         pause,
+		Prism:         prismRenderer,
 		Anim: AnimState{
-			// Progress: snappy with slight overshoot
-			ProgressSpring: harmonica.NewSpring(harmonica.FPS(60), 6.0, 0.7),
-			// Story pop: bouncy
-			StoryPopSpring: harmonica.NewSpring(harmonica.FPS(60), 8.0, 0.5),
-			StoryPopScales: make(map[int]float64),
-			StoryPopVels:   make(map[int]float64),
-			// Log slide: smooth
-			LogSlideSpring:  harmonica.NewSpring(harmonica.FPS(60), 5.0, 0.8),
-			LogEntryOffsets: make([]float64, 0),
-			LogEntryVels:    make([]float64, 0),
-			// Ray spring: bouncy for organic light rays
-			RaySpring:  harmonica.NewSpring(harmonica.FPS(60), 4.0, 0.3),
-			RayLengths: [4]float64{6, 5, 4, 3}, // Start with staggered lengths
-			RayTargets: [4]float64{6, 7, 5, 8}, // Initial targets
+			RayLengths: [4]float64{6, 5, 4, 3},
+			RayTargets: [4]float64{6, 7, 5, 8},
 		},
 	}
 }
@@ -266,156 +179,95 @@ func NewModel(prismDir, storiesPath, projectDir string, maxIter, pause int, pris
 // NewDemoModel creates a model with fake stories for demo/testing
 func NewDemoModel(prismStyle string) Model {
 	m := NewModel("demo", "", "", 50, 2, prismStyle)
-	// Demo model already has TabOrder initialized via NewModel
-	m.ActiveView = ViewSplash // Start with splash screen in demo mode
-	m.PlanName = "Prism Animation Demo"
-	m.Stories = []StoryView{
-		// Page 1 (completed stories)
-		{ID: "DEMO-001", Title: "Initialize spring physics engine", Status: "complete"},
-		{ID: "DEMO-002", Title: "Implement progress bar animations", Status: "complete"},
-		{ID: "DEMO-003", Title: "Add story completion pop effect", Status: "complete"},
-		{ID: "DEMO-004", Title: "Create active story pulse animation", Status: "complete"},
-		{ID: "DEMO-005", Title: "Implement log entry slide-in", Status: "complete"},
-		{ID: "DEMO-006", Title: "Add prism logo with rainbow shimmer", Status: "complete"},
-		{ID: "DEMO-007", Title: "Optimize animation frame rate", Status: "complete"},
-		{ID: "DEMO-008", Title: "Test all animations together", Status: "complete"},
-		{ID: "DEMO-009", Title: "Create TipTap RichTextEditor component", Status: "complete"},
-		{ID: "DEMO-010", Title: "Build FormatToolbar with bubble menu", Status: "complete"},
-		{ID: "DEMO-011", Title: "Implement markdown shortcuts", Status: "complete"},
-		{ID: "DEMO-012", Title: "Create NoteCard component shell", Status: "complete"},
-		// Page 2 (in progress / pending)
-		{ID: "DEMO-013", Title: "Implement auto-expanding height for notes", Status: "pending"},
-		{ID: "DEMO-014", Title: "Add note persistence layer", Status: "pending"},
-		{ID: "DEMO-015", Title: "Create ImageCard component", Status: "pending"},
-		{ID: "DEMO-016", Title: "Implement image upload functionality", Status: "pending"},
-		{ID: "DEMO-017", Title: "Create image thumbnail generator", Status: "pending"},
-		{ID: "DEMO-018", Title: "Build LinkCard component", Status: "pending"},
-		{ID: "DEMO-019", Title: "Implement link metadata fetching", Status: "pending"},
-		{ID: "DEMO-020", Title: "Create TaskListCard component", Status: "pending"},
-		{ID: "DEMO-021", Title: "Implement task functionality", Status: "pending"},
-		{ID: "DEMO-022", Title: "Integrate new card types with canvas", Status: "pending"},
-		{ID: "DEMO-023", Title: "Add drag-and-drop card reordering", Status: "pending"},
-		{ID: "DEMO-024", Title: "Implement card selection system", Status: "pending"},
-		// Page 3 (more pending)
-		{ID: "DEMO-025", Title: "Create multi-select for cards", Status: "pending"},
-		{ID: "DEMO-026", Title: "Add keyboard navigation", Status: "pending"},
-		{ID: "DEMO-027", Title: "Implement undo/redo system", Status: "pending"},
-		{ID: "DEMO-028", Title: "Create canvas zoom controls", Status: "pending"},
-		{ID: "DEMO-029", Title: "Add minimap navigation", Status: "pending"},
-		{ID: "DEMO-030", Title: "Implement canvas panning", Status: "pending"},
-		{ID: "DEMO-031", Title: "Create board sharing system", Status: "pending"},
-		{ID: "DEMO-032", Title: "Add collaborative editing", Status: "pending"},
-		{ID: "DEMO-033", Title: "Implement real-time sync", Status: "pending"},
-		{ID: "DEMO-034", Title: "Create export functionality", Status: "pending"},
-		{ID: "DEMO-035", Title: "Add import from other tools", Status: "pending"},
-		{ID: "DEMO-036", Title: "Final integration testing", Status: "pending"},
-	}
-	m.TotalStories = len(m.Stories)
+	m.ActiveView = ViewSplash
 	m.DemoMode = true
-	// Initialize paginator for demo stories - set TotalPages directly
-	m.StoryPaginator.TotalPages = (len(m.Stories) + m.StoriesPerPage - 1) / m.StoriesPerPage
-	m.StoryPaginator.Page = 0
-	// Initialize progress to show completed stories
-	m.Anim.ProgressPos = m.ProgressPercent()
-	m.Anim.ProgressTarget = m.ProgressPercent()
 
-	// Seed demo data for Research and Plans views
-	// Note: Name field has no .md extension (matches listMarkdownFiles production behavior)
-	now := time.Now()
-	m.Research.Files = []FileEntry{
-		{Name: "tech-stack-evaluation", Path: "demo/research/tech-stack-evaluation.md", Preview: "Evaluated React vs Svelte vs Solid for frontend framework.\nRecommendation: React with Next.js for SSR support.", ModTime: now.AddDate(0, 0, -2)},
-		{Name: "auth-patterns", Path: "demo/research/auth-patterns.md", Preview: "JWT vs session-based authentication analysis.\nOAuth2 flow diagrams and token refresh strategy.", ModTime: now.AddDate(0, 0, -5)},
-		{Name: "database-schema-design", Path: "demo/research/database-schema-design.md", Preview: "PostgreSQL schema for multi-tenant SaaS.\nPartitioning strategy and index recommendations.", ModTime: now.AddDate(0, 0, -8)},
-		{Name: "api-rate-limiting", Path: "demo/research/api-rate-limiting.md", Preview: "Token bucket vs sliding window algorithms.\nRedis-based distributed rate limiter design.", ModTime: now.AddDate(0, 0, -12)},
-	}
-	m.Plans.Files = []FileEntry{
-		{Name: "user-authentication", Path: "demo/plans/user-authentication.md", Preview: "Implement OAuth2 + JWT auth with refresh tokens.\n12 stories across 3 phases.", ModTime: now.AddDate(0, 0, -1)},
-		{Name: "dashboard-redesign", Path: "demo/plans/dashboard-redesign.md", Preview: "Multi-view dashboard with real-time data.\nIncludes drag-and-drop widget layout.", ModTime: now.AddDate(0, 0, -3)},
-		{Name: "notification-system", Path: "demo/plans/notification-system.md", Preview: "Push notifications via WebSocket + FCM.\nIn-app notification center with read tracking.", ModTime: now.AddDate(0, 0, -7)},
+	// Update context to reflect demo mode
+	ctx := m.Registry.GetContext()
+	ctx.DemoMode = true
+	m.Registry.UpdateContext(ctx)
+
+	// Seed demo stories data directly into SpectrumPlugin
+	spectrumPlugin := m.Registry.ActivePlugin()
+	if sp, ok := spectrumPlugin.(*SpectrumPlugin); ok {
+		sp.planName = "Prism Animation Demo"
+		sp.stories = []StoryView{
+			// Page 1 (completed stories)
+			{ID: "DEMO-001", Title: "Initialize spring physics engine", Status: "complete"},
+			{ID: "DEMO-002", Title: "Implement progress bar animations", Status: "complete"},
+			{ID: "DEMO-003", Title: "Add story completion pop effect", Status: "complete"},
+			{ID: "DEMO-004", Title: "Create active story pulse animation", Status: "complete"},
+			{ID: "DEMO-005", Title: "Implement log entry slide-in", Status: "complete"},
+			{ID: "DEMO-006", Title: "Add prism logo with rainbow shimmer", Status: "complete"},
+			{ID: "DEMO-007", Title: "Optimize animation frame rate", Status: "complete"},
+			{ID: "DEMO-008", Title: "Test all animations together", Status: "complete"},
+			{ID: "DEMO-009", Title: "Create TipTap RichTextEditor component", Status: "complete"},
+			{ID: "DEMO-010", Title: "Build FormatToolbar with bubble menu", Status: "complete"},
+			{ID: "DEMO-011", Title: "Implement markdown shortcuts", Status: "complete"},
+			{ID: "DEMO-012", Title: "Create NoteCard component shell", Status: "complete"},
+			// Page 2 (in progress / pending)
+			{ID: "DEMO-013", Title: "Implement auto-expanding height for notes", Status: "pending"},
+			{ID: "DEMO-014", Title: "Add note persistence layer", Status: "pending"},
+			{ID: "DEMO-015", Title: "Create ImageCard component", Status: "pending"},
+			{ID: "DEMO-016", Title: "Implement image upload functionality", Status: "pending"},
+			{ID: "DEMO-017", Title: "Create image thumbnail generator", Status: "pending"},
+			{ID: "DEMO-018", Title: "Build LinkCard component", Status: "pending"},
+			{ID: "DEMO-019", Title: "Implement link metadata fetching", Status: "pending"},
+			{ID: "DEMO-020", Title: "Create TaskListCard component", Status: "pending"},
+			{ID: "DEMO-021", Title: "Implement task functionality", Status: "pending"},
+			{ID: "DEMO-022", Title: "Integrate new card types with canvas", Status: "pending"},
+			{ID: "DEMO-023", Title: "Add drag-and-drop card reordering", Status: "pending"},
+			{ID: "DEMO-024", Title: "Implement card selection system", Status: "pending"},
+			// Page 3 (more pending)
+			{ID: "DEMO-025", Title: "Create multi-select for cards", Status: "pending"},
+			{ID: "DEMO-026", Title: "Add keyboard navigation", Status: "pending"},
+			{ID: "DEMO-027", Title: "Implement undo/redo system", Status: "pending"},
+			{ID: "DEMO-028", Title: "Create canvas zoom controls", Status: "pending"},
+			{ID: "DEMO-029", Title: "Add minimap navigation", Status: "pending"},
+			{ID: "DEMO-030", Title: "Implement canvas panning", Status: "pending"},
+			{ID: "DEMO-031", Title: "Create board sharing system", Status: "pending"},
+			{ID: "DEMO-032", Title: "Add collaborative editing", Status: "pending"},
+			{ID: "DEMO-033", Title: "Implement real-time sync", Status: "pending"},
+			{ID: "DEMO-034", Title: "Create export functionality", Status: "pending"},
+			{ID: "DEMO-035", Title: "Add import from other tools", Status: "pending"},
+			{ID: "DEMO-036", Title: "Final integration testing", Status: "pending"},
+		}
+		sp.totalStories = len(sp.stories)
+		sp.storyPaginator.TotalPages = (len(sp.stories) + sp.storiesPerPage - 1) / sp.storiesPerPage
+		sp.storyPaginator.Page = 0
+		sp.anim.ProgressPos = sp.progressPercent()
+		sp.anim.ProgressTarget = sp.progressPercent()
+
+		// Seed epic data
+		sp.epic.Epics = []EpicInfo{
+			{Name: "user-auth", StoriesPath: "demo/stories/user-auth/stories.json", StoryCount: 12, CompletedCount: 8},
+			{Name: "dashboard", StoriesPath: "demo/stories/dashboard/stories.json", StoryCount: 36, CompletedCount: 12},
+			{Name: "notifications", StoriesPath: "demo/stories/notifications/stories.json", StoryCount: 9, CompletedCount: 0},
+		}
 	}
 
-	// Seed demo epic data
-	m.Epic.Epics = []EpicInfo{
-		{Name: "user-auth", StoriesPath: "demo/stories/user-auth/stories.json", StoryCount: 12, CompletedCount: 8},
-		{Name: "dashboard", StoriesPath: "demo/stories/dashboard/stories.json", StoryCount: 36, CompletedCount: 12},
-		{Name: "notifications", StoriesPath: "demo/stories/notifications/stories.json", StoryCount: 9, CompletedCount: 0},
+	// Seed demo data for Research and Plans plugins
+	// Find and cast plugins
+	for _, p := range m.Registry.Plugins() {
+		if rp, ok := p.(*ResearchPlugin); ok {
+			rp.state.Files = []FileEntry{
+				{Name: "tech-stack-evaluation", Path: "demo/research/tech-stack-evaluation.md", Preview: "Evaluated React vs Svelte vs Solid for frontend framework.\nRecommendation: React with Next.js for SSR support."},
+				{Name: "auth-patterns", Path: "demo/research/auth-patterns.md", Preview: "JWT vs session-based authentication analysis.\nOAuth2 flow diagrams and token refresh strategy."},
+				{Name: "database-schema-design", Path: "demo/research/database-schema-design.md", Preview: "PostgreSQL schema for multi-tenant SaaS.\nPartitioning strategy and index recommendations."},
+				{Name: "api-rate-limiting", Path: "demo/research/api-rate-limiting.md", Preview: "Token bucket vs sliding window algorithms.\nRedis-based distributed rate limiter design."},
+			}
+		}
+		if pp, ok := p.(*PlansPlugin); ok {
+			pp.state.Files = []FileEntry{
+				{Name: "user-authentication", Path: "demo/plans/user-authentication.md", Preview: "Implement OAuth2 + JWT auth with refresh tokens.\n12 stories across 3 phases."},
+				{Name: "dashboard-redesign", Path: "demo/plans/dashboard-redesign.md", Preview: "Multi-view dashboard with real-time data.\nIncludes drag-and-drop widget layout."},
+				{Name: "notification-system", Path: "demo/plans/notification-system.md", Preview: "Push notifications via WebSocket + FCM.\nIn-app notification center with read tracking."},
+			}
+		}
 	}
 
 	return m
 }
 
-// CompletedCount returns the number of completed stories
-func (m Model) CompletedCount() int {
-	count := 0
-	for _, s := range m.Stories {
-		if s.Status == "complete" {
-			count++
-		}
-	}
-	return count
-}
-
-// RemainingCount returns the number of non-complete stories
-func (m Model) RemainingCount() int {
-	return m.TotalStories - m.CompletedCount()
-}
-
-// ProgressPercent returns completion as a float between 0 and 1
-func (m Model) ProgressPercent() float64 {
-	if m.TotalStories == 0 {
-		return 0
-	}
-	return float64(m.CompletedCount()) / float64(m.TotalStories)
-}
-
-// AddLog adds a new log entry
-func (m *Model) AddLog(level LogLevel, message string) {
-	entry := LogEntry{
-		Time:    time.Now(),
-		Level:   level,
-		Message: message,
-		StoryID: m.CurrentStoryID,
-	}
-	m.LogLines = append(m.LogLines, entry)
-
-	// Update log paginator total pages and auto-scroll to last page - direct assignment
-	totalPages := (len(m.LogLines) + m.LogsPerPage - 1) / m.LogsPerPage
-	if totalPages < 1 {
-		totalPages = 1
-	}
-	m.LogPaginator.TotalPages = totalPages
-	// Auto-scroll to last page to show newest logs
-	m.LogPaginator.Page = totalPages - 1
-
-	// Trigger slide-in animation for new entry
-	m.Anim.LogEntryOffsets = append(m.Anim.LogEntryOffsets, 20.0) // start offset
-	m.Anim.LogEntryVels = append(m.Anim.LogEntryVels, 0)
-
-	// Keep offsets array sized to match visible logs (max LogsPerPage)
-	if len(m.Anim.LogEntryOffsets) > m.LogsPerPage {
-		m.Anim.LogEntryOffsets = m.Anim.LogEntryOffsets[1:]
-		m.Anim.LogEntryVels = m.Anim.LogEntryVels[1:]
-	}
-}
-
-// ElapsedTime returns the duration since start
-func (m Model) ElapsedTime() time.Duration {
-	if m.StartTime.IsZero() {
-		return 0
-	}
-	return time.Since(m.StartTime)
-}
-
-// FormatElapsed returns elapsed time as a human-readable string
-func (m Model) FormatElapsed() string {
-	d := m.ElapsedTime()
-	minutes := int(d.Minutes())
-	seconds := int(d.Seconds()) % 60
-	if minutes > 0 {
-		return strings.TrimSpace(strings.ReplaceAll(
-			strings.ReplaceAll("%dm %ds", "%d", string(rune('0'+minutes%10))),
-			"%d", string(rune('0'+seconds%10)),
-		))
-	}
-	return strings.TrimSpace(strings.ReplaceAll("%ds", "%d", string(rune('0'+seconds%10))))
-}
+// Note: Helper methods like CompletedCount(), AddLog(), ElapsedTime() are now
+// owned by individual plugins (e.g., SpectrumPlugin) since state is plugin-local.

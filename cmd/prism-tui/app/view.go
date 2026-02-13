@@ -21,19 +21,13 @@ func (m Model) View() string {
 		return m.renderSplashView()
 	}
 
-	// Get content from active view
+	// Get content from active plugin
 	var content string
-	switch m.ActiveView {
-	case ViewHome:
-		content = m.renderHomeView()
-	case ViewResearch:
-		content = m.renderResearchView()
-	case ViewPlans:
-		content = m.renderPlansView()
-	case ViewSpectrum:
-		content = m.renderSpectrumView()
-	default:
-		content = m.renderHomeView()
+	active := m.Registry.ActivePlugin()
+	if active != nil {
+		content = active.View(m.Width, m.Height)
+	} else {
+		content = styles.DimStyle.Render("  No active plugin")
 	}
 
 	// Wrap content in app shell (header + tab bar + content + footer)
@@ -44,19 +38,7 @@ func (m Model) View() string {
 
 // renderPrismLogo renders the ASCII art PRISM logotype with spectrum gradient
 func (m Model) renderPrismLogo() string {
-	spectrumColors := []string{"#3B82F6", "#14B8A6", "#22C55E", "#F59E0B"}
-	logoLines := []string{
-		"'||''|.  '||''|.   '||'  .|'''.|  '||    ||'",
-		" ||   ||  ||   ||   ||   ||..  '   |||  |||",
-		" ||...|'  ||''|'    ||    ''|||.   |'|..'||",
-		" ||       ||   |.   ||  .     '||  | '|' ||",
-		".||.     .||.  '|' .||. |'....|'  .|. | .||.",
-	}
-	var styledLines []string
-	for _, line := range logoLines {
-		styledLines = append(styledLines, styles.GradientString(line, spectrumColors))
-	}
-	return lipgloss.JoinVertical(lipgloss.Left, styledLines...)
+	return renderPrismLogoStatic()
 }
 
 // renderSpectrumProgressBar renders a progress bar using the 4-stop spectrum gradient
@@ -85,37 +67,6 @@ func renderSpectrumProgressBar(percent float64, width int) string {
 	}
 
 	return bar
-}
-
-// formatLogEntry formats a single log entry for display
-func (m Model) formatLogEntry(e LogEntry) string {
-	timestamp := e.Time.Format("15:04:05")
-	var levelStyle lipgloss.Style
-	var levelStr string
-
-	switch e.Level {
-	case LogInfo:
-		levelStyle = styles.InfoStyle
-		levelStr = "INFO "
-	case LogSuccess:
-		levelStyle = styles.SuccessStyle
-		levelStr = "OK   "
-	case LogWarning:
-		levelStyle = styles.WarningStyle
-		levelStr = "WARN "
-	case LogError:
-		levelStyle = styles.ErrorStyle
-		levelStr = "ERROR"
-	case LogClaudeOutput:
-		levelStyle = styles.DimStyle
-		levelStr = "     "
-	}
-
-	return fmt.Sprintf("[%s] %s %s",
-		styles.DimStyle.Render(timestamp),
-		levelStyle.Render(levelStr),
-		e.Message,
-	)
 }
 
 // formatDuration formats a duration as human-readable string

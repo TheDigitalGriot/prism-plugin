@@ -170,38 +170,18 @@ cd cmd/prism-tui && go build ./... && go run . --demo
 | `cmd/prism-tui/app/view_spectrum.go` | Refactor into `SpectrumPlugin` (keeps all execution state) |
 
 **Steps**:
-1. [ ] Create `plugin/plugin.go` with Plugin interface:
-   ```go
-   type Plugin interface {
-       ID() string
-       Name() string
-       Icon() string
-       Init(ctx *Context) error
-       Start() tea.Cmd
-       Stop()
-       Update(msg tea.Msg) (Plugin, tea.Cmd)
-       View(width, height int) string
-       IsFocused() bool
-       SetFocused(bool)
-       KeyHints() []KeyHint  // For footer display
-   }
-   ```
-2. [ ] Create `plugin/context.go` with Context struct: PrismDir, ProjectDir, StoriesPath, Width, Height, DemoMode
-3. [ ] Create `plugin/registry.go` with:
-   - `Register(p Plugin) error` with `safeInit()` and panic recovery
-   - `Plugins() []Plugin` — ordered list
-   - `ActivePlugin() Plugin` / `SetActive(id string)`
-   - `Broadcast(msg tea.Msg) []tea.Cmd` — forward to all plugins
-   - `Reinit()` — stop all, re-init (for future project switching)
-4. [ ] Create `plugin/messages.go` with `FocusPluginMsg{ID string}`, `PluginResizeMsg{W, H int}`
-5. [ ] Convert `view_home.go` → `HomePlugin`: move `HomeState` into plugin struct, implement interface, `renderHomeView` becomes `View()`
-6. [ ] Convert `view_research.go` → `ResearchPlugin`: owns `ResearchState`, files, viewport
-7. [ ] Convert `view_plans.go` → `PlansPlugin`: owns `PlansState`, decompose logic
-8. [ ] Convert `view_spectrum.go` → `SpectrumPlugin`: owns all execution state (AppState, stories, logs, animations, Claude runner). This is the largest refactor — moves ~60 fields from Model into plugin.
-9. [ ] Update `model.go`: replace per-view state with `Registry`, slim down Model to shell state only
-10. [ ] Update `update.go`: broadcast messages to registry, delegate key handling to active plugin
-11. [ ] Update `view.go`/`shell.go`: get content from `m.Registry.ActivePlugin().View()`
-12. [ ] Update `NewModel()` and `NewDemoModel()` to create and register plugins
+1. [x] Create `plugin/plugin.go` with Plugin interface (ID, Name, Icon, Init, Start, Stop, Update, View, IsFocused, SetFocused, KeyHints)
+2. [x] Create `plugin/context.go` with Context struct: PrismDir, ProjectDir, StoriesPath, Width, Height, DemoMode, PrismStyle, MaxIterations, Pause
+3. [x] Create `plugin/registry.go` with Register (panic recovery), Plugins, ActivePlugin, SetActive, Broadcast, Reinit, UpdateContext
+4. [x] Create `plugin/messages.go` with `FocusPluginMsg{ID string}`, `PluginResizeMsg{W, H int}`
+5. [x] Convert `view_home.go` → `plugin_home.go` HomePlugin: owns `HomeState`, renders menu, navigates via FocusPluginMsg
+6. [x] Convert `view_research.go` → `plugin_research.go` ResearchPlugin: owns `ResearchState`, files, viewport
+7. [x] Convert `view_plans.go` → `plugin_plans.go` PlansPlugin: owns `PlansState`, decompose logic
+8. [x] Convert `view_spectrum.go` → `plugin_spectrum.go` SpectrumPlugin: owns all execution state, animations (SpectrumAnimState), stories, logs, Claude runner — moved ~60 fields from Model
+9. [x] Update `model.go`: replaced per-view state with `Registry *plugin.Registry`, slimmed Model to shell + prism + global anim only
+10. [x] Update `update.go`: broadcast messages to registry, delegate key handling to active plugin via delegateToActivePlugin()
+11. [x] Update `view.go`/`shell.go`: get content from `m.Registry.ActivePlugin().View()`, tab labels from registry, key hints from active plugin
+12. [x] Update `NewModel()` and `NewDemoModel()` to create and register plugins, removed old view_*.go files
 
 **Verification**:
 ```bash
@@ -211,7 +191,7 @@ cd cmd/prism-tui && go run . --demo
 # Verify: all 4 screens render identically, tab switching works, no regressions
 ```
 
-**Checkpoint**: ⬜ Phase 3 complete — Plugin architecture works, existing 4 screens are now plugins
+**Checkpoint**: ✅ Phase 3 complete — Plugin architecture works, existing 4 screens are now plugins
 
 ---
 
@@ -614,7 +594,7 @@ Phase 1 (Shell) ──┬──▶ Phase 2 (Splash)
 |-------|--------|---------|-----------|-------|
 | Phase 1: App Shell & Navigation | ✅ Complete | 2026-02-12 | 2026-02-12 | App shell with tab bar implemented, all 4 screens work |
 | Phase 2: Splash Screen | ✅ Complete | 2026-02-12 | 2026-02-12 | Splash screen with animated prism, auto-transition after 2s or keypress |
-| Phase 3: Plugin Architecture | ⬜ Not started | | | |
+| Phase 3: Plugin Architecture | ✅ Complete | 2026-02-12 | 2026-02-12 | Plugin interface, Registry, 4 plugins (Home, Research, Plans, Spectrum), Model slimmed from ~60 to ~15 fields |
 | Phase 4: Modal System | ⬜ Not started | | | |
 | Phase 5: Dialog & Permissions | ⬜ Not started | | | |
 | Phase 6: Files & Git | ⬜ Not started | | | |

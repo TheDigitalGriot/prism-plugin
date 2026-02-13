@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/prism-plugin/prism-tui/app"
@@ -103,13 +102,6 @@ Keyboard controls:
 			// Create and run TUI
 			model := app.NewModel(prismDir, storiesFile, projectDir, maxIterations, pause, prismStyle)
 
-			// Add initial log entry
-			model.AddLog(app.LogInfo, "Prism TUI v"+version)
-			if storiesFile != "" {
-				model.AddLog(app.LogInfo, "Stories: "+storiesFile)
-			}
-			model.AddLog(app.LogInfo, "Project: "+projectDir)
-
 			p := tea.NewProgram(model, tea.WithAltScreen())
 			if _, err := p.Run(); err != nil {
 				return fmt.Errorf("failed to run TUI: %w", err)
@@ -135,11 +127,6 @@ func runDemoMode(version string, prismStyle string) error {
 	// Create demo model with fake data
 	model := app.NewDemoModel(prismStyle)
 
-	// Add initial log entries
-	model.AddLog(app.LogInfo, "Prism TUI "+version+" - DEMO MODE")
-	model.AddLog(app.LogInfo, "Press Enter to start demo simulation")
-	model.AddLog(app.LogWarning, "Stories will auto-complete every 2-3 seconds")
-
 	p := tea.NewProgram(model, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		return fmt.Errorf("failed to run demo TUI: %w", err)
@@ -147,6 +134,3 @@ func runDemoMode(version string, prismStyle string) error {
 
 	return nil
 }
-
-// DemoTickMsg for demo auto-progression
-type DemoTickMsg time.Time
