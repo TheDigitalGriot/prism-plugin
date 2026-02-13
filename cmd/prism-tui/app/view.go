@@ -22,6 +22,14 @@ func (m Model) View() string {
 		return m.renderSplashView()
 	}
 
+	// Onboarding renders fullscreen between splash and dashboard (no tab bar)
+	if m.ActiveView == ViewOnboarding && !m.OnboardingDone {
+		active := m.Registry.ActivePlugin()
+		if active != nil {
+			return active.View(m.Width, m.Height)
+		}
+	}
+
 	// Get content from active plugin
 	var content string
 	active := m.Registry.ActivePlugin()

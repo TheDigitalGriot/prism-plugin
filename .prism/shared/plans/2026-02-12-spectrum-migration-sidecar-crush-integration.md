@@ -451,25 +451,25 @@ cd cmd/prism-tui && go run . --demo  # Tab to Monitor and Workspaces screens
 | `cmd/prism-tui/app/update.go` | After onboarding complete, transition to Home |
 
 **Steps**:
-1. [ ] Create `plugin_onboarding.go` — `OnboardingPlugin`:
+1. [x] Create `plugin_onboarding.go` — `OnboardingPlugin`:
    - Step 1: Detect project directory (auto or manual selection)
    - Step 2: Check for `.prism/` directory, offer to create
    - Step 3: Check for `claude` CLI availability
    - Step 4: Verify stories.json exists or offer to create from plan
    - Each step: description, status icon (✓/▸/○), action button
    - On completion: hide onboarding plugin from tab bar, navigate to Home
-2. [ ] In `NewModel()`, detect if onboarding needed (no `.prism/` dir, no stories, etc.)
-3. [ ] If onboarding needed, set initial view to onboarding and show as first tab
-4. [ ] After onboarding completes, remove from tab order
+2. [x] In `NewModel()`, detect if onboarding needed (no `.prism/` dir, no stories, etc.)
+3. [x] If onboarding needed, set initial view to onboarding and show as first tab
+4. [x] After onboarding completes, remove from tab order. Added demo data in `NewDemoModel()`
 
 **Verification**:
 ```bash
-cd cmd/prism-tui && go build ./...
-cd cmd/prism-tui && go test ./...
+cd cmd/prism-tui && go build ./...  # ✅ Passed
+cd cmd/prism-tui && go test ./...   # ✅ Passed
 # Manual: run in a directory without .prism/ to trigger onboarding
 ```
 
-**Checkpoint**: ⬜ Phase 9 complete — Onboarding guides new users through setup
+**Checkpoint**: ✅ Phase 9 complete — Onboarding guides new users through setup
 
 ---
 
@@ -600,7 +600,7 @@ Phase 1 (Shell) ──┬──▶ Phase 2 (Splash)
 | Phase 6: Files & Git | ✅ Complete | 2026-02-13 | 2026-02-13 | FilesPlugin with tree-view file browser (expand/collapse, preview, filter), GitPlugin with status viewer (staged/modified/untracked, diff viewer, stage/unstage, commit modal) |
 | Phase 7: Agent & Chat | ✅ Complete | 2026-02-13 | 2026-02-13 | AgentPlugin with chat interface (wide/compact modes, textarea input, message renderer, demo messages), registered in NewModel |
 | Phase 8: Monitor & Workspaces | ✅ Complete | 2026-02-13 | 2026-02-13 | MonitorPlugin with health dashboard (Go runtime stats, execution history, quality gates), WorkspacesPlugin with project scanner (epic selector, project switching), both registered in NewModel with demo data |
-| Phase 9: Onboarding | ⬜ Not started | | | |
+| Phase 9: Onboarding | ✅ Complete | 2026-02-13 | 2026-02-13 | OnboardingPlugin with 4-step wizard (project dir, .prism/ structure, claude CLI, stories.json), auto-detection in NewModel, removes from tab bar on completion, demo data with all steps complete |
 | Phase 10: Integration & Polish | ⬜ Not started | | | |
 
 ---

@@ -14,11 +14,12 @@ var version = "1.9.8"
 
 func main() {
 	var (
-		storiesFile   string
-		maxIterations int
-		pause         int
-		demoMode      bool
-		prismStyle    string
+		storiesFile    string
+		maxIterations  int
+		pause          int
+		demoMode       bool
+		onboardingMode bool
+		prismStyle     string
 	)
 
 	rootCmd := &cobra.Command{
@@ -46,7 +47,7 @@ Keyboard controls:
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Demo mode - run with simulated data
 			if demoMode {
-				return runDemoMode(version, prismStyle)
+				return runDemoMode(version, prismStyle, onboardingMode)
 			}
 
 			cwd, err := os.Getwd()
@@ -101,6 +102,9 @@ Keyboard controls:
 
 			// Create and run TUI
 			model := app.NewModel(prismDir, storiesFile, projectDir, maxIterations, pause, prismStyle)
+			if onboardingMode {
+				model.NeedsOnboarding = true
+			}
 
 			p := tea.NewProgram(model, tea.WithAltScreen())
 			if _, err := p.Run(); err != nil {
@@ -115,6 +119,7 @@ Keyboard controls:
 	rootCmd.Flags().IntVarP(&maxIterations, "max-iterations", "n", 50, "Maximum iterations before stopping")
 	rootCmd.Flags().IntVarP(&pause, "pause", "p", 2, "Seconds to pause between iterations")
 	rootCmd.Flags().BoolVar(&demoMode, "demo", false, "Run in demo mode with simulated stories to preview animations")
+	rootCmd.Flags().BoolVar(&onboardingMode, "onboarding", false, "Force onboarding flow (for testing/refining the setup wizard)")
 	rootCmd.Flags().StringVar(&prismStyle, "prism-style", "gradient", "Prism animation style: gradient|simple|braille|ascii")
 
 	if err := rootCmd.Execute(); err != nil {
@@ -123,9 +128,15 @@ Keyboard controls:
 }
 
 // runDemoMode creates a demo TUI with simulated stories
-func runDemoMode(version string, prismStyle string) error {
+func runDemoMode(version string, prismStyle string, onboarding bool) error {
 	// Create demo model with fake data
 	model := app.NewDemoModel(prismStyle)
+	if onboarding {
+		model.NeedsOnboarding = true
+		model.OnboardingDone = false
+		// Reset onboarding plugin to pending state so wizard is interactive
+		model.ResetOnboarding()
+	}
 
 	p := tea.NewProgram(model, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {

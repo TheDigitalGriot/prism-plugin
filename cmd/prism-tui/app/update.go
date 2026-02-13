@@ -113,9 +113,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, broadcastCmds...)
 
 	case SplashDoneMsg:
-		// Splash auto-timer completed - transition to Home
-		m.ActiveView = ViewHome
+		// Splash auto-timer completed
 		m.SplashDone = true
+		if m.NeedsOnboarding && !m.OnboardingDone {
+			// Transition to full-screen onboarding (between splash and dashboard)
+			m.ActiveView = ViewOnboarding
+			m.Registry.SetActive("onboarding")
+		} else {
+			// Transition to Home dashboard
+			m.ActiveView = ViewHome
+			m.Registry.SetActive("home")
+		}
+		return m, nil
+
+	case OnboardingCompleteMsg:
+		// Onboarding completed — transition to Home dashboard
+		m.OnboardingDone = true
+		m.ActiveView = ViewHome
 		m.Registry.SetActive("home")
 		return m, nil
 
@@ -157,12 +171,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	// If splash screen is active, any key skips to Home
+	// If splash screen is active, any key skips past it
 	if !m.SplashDone {
-		m.ActiveView = ViewHome
 		m.SplashDone = true
-		m.Registry.SetActive("home")
+		if m.NeedsOnboarding && !m.OnboardingDone {
+			m.ActiveView = ViewOnboarding
+			m.Registry.SetActive("onboarding")
+		} else {
+			m.ActiveView = ViewHome
+			m.Registry.SetActive("home")
+		}
 		return m, nil
+	}
+
+	// If onboarding is active, delegate keys to the onboarding plugin
+	// (don't intercept with global handlers like tab switching)
+	if m.ActiveView == ViewOnboarding && !m.OnboardingDone {
+		return m.delegateToActivePlugin(msg)
 	}
 
 	// Allow q/ctrl+c even when dialog or modal is active
@@ -372,6 +397,8 @@ func pluginIDToView(id string) ActiveView {
 		return ViewMonitor
 	case "workspaces":
 		return ViewWorkspaces
+	case "onboarding":
+		return ViewOnboarding
 	default:
 		return ViewHome
 	}
@@ -398,6 +425,8 @@ func viewToPluginID(view ActiveView) string {
 		return "monitor"
 	case ViewWorkspaces:
 		return "workspaces"
+	case ViewOnboarding:
+		return "onboarding"
 	default:
 		return "home"
 	}

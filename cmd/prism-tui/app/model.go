@@ -1,6 +1,8 @@
 package app
 
 import (
+	"os"
+	"os/exec"
 	"time"
 
 	"github.com/prism-plugin/prism-tui/app/chat"
@@ -96,13 +98,15 @@ type Model struct {
 	Pause         int // seconds between iterations
 
 	// UI state
-	Width       int
-	Height      int
-	ShowHelp    bool
-	ActiveModal *modal.Modal   // Currently active modal dialog (nil if none)
-	Dialogs     *dialog.Overlay // Stack of permission/confirmation dialogs
-	Ready       bool            // True once initial setup is complete
-	SplashDone  bool            // True once splash screen has completed
+	Width           int
+	Height          int
+	ShowHelp        bool
+	ActiveModal     *modal.Modal   // Currently active modal dialog (nil if none)
+	Dialogs         *dialog.Overlay // Stack of permission/confirmation dialogs
+	Ready           bool            // True once initial setup is complete
+	SplashDone      bool            // True once splash screen has completed
+	NeedsOnboarding bool            // True if onboarding flow should run after splash
+	OnboardingDone  bool            // True once onboarding has completed
 
 	// Prism framebuffer animation (shared across all views)
 	Prism *prism.Renderer
@@ -159,6 +163,7 @@ func NewModel(prismDir, storiesPath, projectDir string, maxIter, pause int, pris
 	agentPlugin := NewAgentPlugin()
 	monitorPlugin := NewMonitorPlugin()
 	workspacesPlugin := NewWorkspacesPlugin()
+	onboardingPlugin := NewOnboardingPlugin()
 
 	registry.Register(homePlugin)
 	registry.Register(researchPlugin)
@@ -169,22 +174,48 @@ func NewModel(prismDir, storiesPath, projectDir string, maxIter, pause int, pris
 	registry.Register(agentPlugin)
 	registry.Register(monitorPlugin)
 	registry.Register(workspacesPlugin)
+	registry.Register(onboardingPlugin)
 
-	// Start with splash screen on first launch
-	initialView := ViewSplash
+	// Detect if onboarding is needed
+	needsOnboarding := false
 
+	// Check if .prism/ directory exists
+	if prismDir != "" && prismDir != "demo" {
+		if _, err := os.Stat(prismDir); os.IsNotExist(err) {
+			needsOnboarding = true
+		}
+	}
+
+	// Check if stories.json exists
+	if storiesPath != "" && !needsOnboarding {
+		if _, err := os.Stat(storiesPath); os.IsNotExist(err) {
+			needsOnboarding = true
+		}
+	}
+
+	// Check if claude CLI is available
+	if !needsOnboarding {
+		if _, err := exec.LookPath("claude"); err != nil {
+			// Note: we don't force onboarding just for missing CLI,
+			// but it will be checked during onboarding if triggered
+		}
+	}
+
+	// Always start with splash. Onboarding is a full-screen interstitial
+	// between splash and Home — never a tab in the tab bar.
 	return Model{
-		Registry:      registry,
-		ActiveView:    initialView,
-		TabOrder:      []ActiveView{ViewHome, ViewResearch, ViewPlans, ViewSpectrum, ViewFiles, ViewGit, ViewAgent, ViewMonitor, ViewWorkspaces},
-		PrismDir:      prismDir,
-		StoriesPath:   storiesPath,
-		ProjectDir:    projectDir,
-		PrismStyle:    prismStyle,
-		MaxIterations: maxIter,
-		Pause:         pause,
-		Prism:         prismRenderer,
-		Dialogs:       dialog.NewOverlay(),
+		Registry:        registry,
+		ActiveView:      ViewSplash,
+		TabOrder:        []ActiveView{ViewHome, ViewResearch, ViewPlans, ViewSpectrum, ViewFiles, ViewGit, ViewAgent, ViewMonitor, ViewWorkspaces},
+		NeedsOnboarding: needsOnboarding,
+		PrismDir:        prismDir,
+		StoriesPath:     storiesPath,
+		ProjectDir:      projectDir,
+		PrismStyle:      prismStyle,
+		MaxIterations:   maxIter,
+		Pause:           pause,
+		Prism:           prismRenderer,
+		Dialogs:         dialog.NewOverlay(),
 		Anim: AnimState{
 			RayLengths: [4]float64{6, 5, 4, 3},
 			RayTargets: [4]float64{6, 7, 5, 8},
@@ -444,9 +475,37 @@ func NewDemoModel(prismStyle string) Model {
 				},
 			}
 		}
+		if op, ok := p.(*OnboardingPlugin); ok {
+			// Demo onboarding with all steps complete
+			op.state.ProjectDir = "/Users/demo/Developer/prism-plugin"
+			op.state.PrismDir = "/Users/demo/Developer/prism-plugin/.prism"
+			op.state.ClaudeAvailable = true
+			op.state.StoriesPath = "/Users/demo/Developer/prism-plugin/.prism/stories/stories.json"
+			op.state.CurrentStep = 4 // All steps complete
+			op.state.Completed = true
+			// Mark all steps as complete
+			for i := range op.state.Steps {
+				op.state.Steps[i].Status = "complete"
+			}
+		}
 	}
 
 	return m
+}
+
+// ResetOnboarding resets the onboarding plugin to pending state so the wizard
+// can be walked through interactively. Used by --onboarding flag.
+func (m *Model) ResetOnboarding() {
+	for _, p := range m.Registry.Plugins() {
+		if op, ok := p.(*OnboardingPlugin); ok {
+			op.state.CurrentStep = 0
+			op.state.Completed = false
+			for i := range op.state.Steps {
+				op.state.Steps[i].Status = "pending"
+				op.state.Steps[i].ErrorMsg = ""
+			}
+		}
+	}
 }
 
 // Note: Helper methods like CompletedCount(), AddLog(), ElapsedTime() are now
