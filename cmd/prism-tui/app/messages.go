@@ -136,6 +136,7 @@ type PlansFilesLoadedMsg struct {
 // FileContentLoadedMsg carries full content of a file for viewing
 type FileContentLoadedMsg struct {
 	Content  string
+	Path     string     // Path to the file
 	ForView  ActiveView // which view requested this
 	Error    error
 }
@@ -180,4 +181,11 @@ type PermissionResponseMsg struct {
 	Action       string // "allow", "allow_session", "deny"
 	ToolName     string
 	AllowSession bool // If true, remember this permission for the session
+}
+
+// === Modal Messages ===
+
+// OpenModalMsg requests opening a modal (sent by plugins)
+type OpenModalMsg struct {
+	Modal interface{} // modal.Modal interface
 }

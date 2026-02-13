@@ -219,9 +219,9 @@ func LoadFileContentCmd(path string, forView ActiveView) tea.Cmd {
 	return func() tea.Msg {
 		data, err := os.ReadFile(path)
 		if err != nil {
-			return FileContentLoadedMsg{Error: err, ForView: forView}
+			return FileContentLoadedMsg{Error: err, Path: path, ForView: forView}
 		}
-		return FileContentLoadedMsg{Content: string(data), ForView: forView}
+		return FileContentLoadedMsg{Content: string(data), Path: path, ForView: forView}
 	}
 }
 

@@ -140,6 +140,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
+	case OpenModalMsg:
+		// Plugin requested opening a modal
+		if modal, ok := msg.Modal.(*modal.Modal); ok {
+			m.ActiveModal = modal
+		}
+		return m, nil
+
 	default:
 		// Broadcast all other messages to plugins (they handle their own state)
 		broadcastCmds := m.Registry.Broadcast(msg)
@@ -238,6 +245,26 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		if len(m.TabOrder) >= 4 {
 			return m.switchToTab(3)
 		}
+	case "5":
+		if len(m.TabOrder) >= 5 {
+			return m.switchToTab(4)
+		}
+	case "6":
+		if len(m.TabOrder) >= 6 {
+			return m.switchToTab(5)
+		}
+	case "7":
+		if len(m.TabOrder) >= 7 {
+			return m.switchToTab(6)
+		}
+	case "8":
+		if len(m.TabOrder) >= 8 {
+			return m.switchToTab(7)
+		}
+	case "9":
+		if len(m.TabOrder) >= 9 {
+			return m.switchToTab(8)
+		}
 
 	// Tab/Shift+Tab to cycle through tabs
 	case "tab":
@@ -335,6 +362,10 @@ func pluginIDToView(id string) ActiveView {
 		return ViewPlans
 	case "spectrum":
 		return ViewSpectrum
+	case "files":
+		return ViewFiles
+	case "git":
+		return ViewGit
 	default:
 		return ViewHome
 	}
@@ -351,6 +382,10 @@ func viewToPluginID(view ActiveView) string {
 		return "plans"
 	case ViewSpectrum:
 		return "spectrum"
+	case ViewFiles:
+		return "files"
+	case ViewGit:
+		return "git"
 	default:
 		return "home"
 	}
@@ -395,7 +430,7 @@ func createHelpModal() *modal.Modal {
 GLOBAL KEYS:
   ?         Toggle this help
   q, Ctrl+C Quit application
-  1-4       Switch to tab by number
+  1-9       Switch to tab by number
   Tab       Next tab
   Shift+Tab Previous tab
 
@@ -410,6 +445,8 @@ VIEW-SPECIFIC:
   Research  - Browse research files
   Plans     - Browse implementation plans
   Spectrum  - Execute stories autonomously
+  Files     - Browse project files
+  Git       - View git status, stage/commit
 
 MODAL CONTROLS:
   Tab       Cycle focus

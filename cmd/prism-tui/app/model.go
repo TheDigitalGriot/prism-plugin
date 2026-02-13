@@ -153,11 +153,15 @@ func NewModel(prismDir, storiesPath, projectDir string, maxIter, pause int, pris
 	researchPlugin := NewResearchPlugin()
 	plansPlugin := NewPlansPlugin()
 	spectrumPlugin := NewSpectrumPlugin(prismRenderer)
+	filesPlugin := NewFilesPlugin()
+	gitPlugin := NewGitPlugin()
 
 	registry.Register(homePlugin)
 	registry.Register(researchPlugin)
 	registry.Register(plansPlugin)
 	registry.Register(spectrumPlugin)
+	registry.Register(filesPlugin)
+	registry.Register(gitPlugin)
 
 	// Start with splash screen on first launch
 	initialView := ViewSplash
@@ -165,7 +169,7 @@ func NewModel(prismDir, storiesPath, projectDir string, maxIter, pause int, pris
 	return Model{
 		Registry:      registry,
 		ActiveView:    initialView,
-		TabOrder:      []ActiveView{ViewHome, ViewResearch, ViewPlans, ViewSpectrum},
+		TabOrder:      []ActiveView{ViewHome, ViewResearch, ViewPlans, ViewSpectrum, ViewFiles, ViewGit},
 		PrismDir:      prismDir,
 		StoriesPath:   storiesPath,
 		ProjectDir:    projectDir,
@@ -191,6 +195,11 @@ func NewDemoModel(prismStyle string) Model {
 	ctx := m.Registry.GetContext()
 	ctx.DemoMode = true
 	m.Registry.UpdateContext(ctx)
+
+	// Re-init all plugins so they receive the updated context.
+	// GetContext returns a copy, so UpdateContext alone doesn't propagate
+	// DemoMode=true to plugins that cached the old context pointer during Init.
+	m.Registry.Reinit()
 
 	// Seed demo stories data directly into SpectrumPlugin
 	spectrumPlugin := m.Registry.ActivePlugin()
@@ -267,6 +276,48 @@ func NewDemoModel(prismStyle string) Model {
 				{Name: "user-authentication", Path: "demo/plans/user-authentication.md", Preview: "Implement OAuth2 + JWT auth with refresh tokens.\n12 stories across 3 phases."},
 				{Name: "dashboard-redesign", Path: "demo/plans/dashboard-redesign.md", Preview: "Multi-view dashboard with real-time data.\nIncludes drag-and-drop widget layout."},
 				{Name: "notification-system", Path: "demo/plans/notification-system.md", Preview: "Push notifications via WebSocket + FCM.\nIn-app notification center with read tracking."},
+			}
+		}
+		if fp, ok := p.(*FilesPlugin); ok {
+			// Demo file tree
+			fp.state.Root = &FileNode{
+				Name:     "prism-plugin",
+				Path:     "/demo/prism-plugin",
+				IsDir:    true,
+				Expanded: true,
+				Depth:    0,
+				Children: []*FileNode{
+					{Name: ".prism", Path: "/demo/.prism", IsDir: true, Expanded: false, Depth: 1, Children: []*FileNode{
+						{Name: "shared", Path: "/demo/.prism/shared", IsDir: true, Depth: 2},
+						{Name: "stories", Path: "/demo/.prism/stories", IsDir: true, Depth: 2},
+					}},
+					{Name: "cmd", Path: "/demo/cmd", IsDir: true, Expanded: true, Depth: 1, Children: []*FileNode{
+						{Name: "prism-tui", Path: "/demo/cmd/prism-tui", IsDir: true, Expanded: false, Depth: 2, Children: []*FileNode{
+							{Name: "app", Path: "/demo/cmd/prism-tui/app", IsDir: true, Depth: 3},
+							{Name: "main.go", Path: "/demo/cmd/prism-tui/main.go", IsDir: false, Depth: 3},
+						}},
+					}},
+					{Name: "README.md", Path: "/demo/README.md", IsDir: false, Depth: 1},
+					{Name: "go.mod", Path: "/demo/go.mod", IsDir: false, Depth: 1},
+				},
+			}
+			fp.rebuildFlatList()
+		}
+		if gp, ok := p.(*GitPlugin); ok {
+			// Demo git status
+			gp.state.BranchName = "feat/spectrum-migration"
+			gp.state.Ahead = 3
+			gp.state.Behind = 1
+			gp.state.StagedFiles = []GitFileStatus{
+				{Path: "cmd/prism-tui/app/plugin_files.go", Status: "staged"},
+				{Path: "cmd/prism-tui/app/plugin_git.go", Status: "staged"},
+			}
+			gp.state.ModifiedFiles = []GitFileStatus{
+				{Path: "cmd/prism-tui/app/model.go", Status: "modified"},
+				{Path: "cmd/prism-tui/app/update.go", Status: "modified"},
+			}
+			gp.state.UntrackedFiles = []GitFileStatus{
+				{Path: "cmd/prism-tui/app/plugin_monitor.go", Status: "untracked"},
 			}
 		}
 	}
