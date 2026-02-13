@@ -323,30 +323,30 @@ cd cmd/prism-tui && go test ./...
 | `cmd/prism-tui/app/views.go` | Ensure ViewFiles, ViewGit exist in enum |
 
 **Steps**:
-1. [ ] Create `plugin_files.go` — `FilesPlugin` implementing Plugin interface:
+1. [x] Create `plugin_files.go` — `FilesPlugin` implementing Plugin interface:
    - Tree-view of project directory (respecting .gitignore)
    - j/k navigation, enter to expand/collapse dirs
    - Right pane: file preview (first 50 lines) using viewport
    - Search/filter with `/` key
    - Key hints: `j/k navigate  enter open  / filter  esc back`
-2. [ ] Create `plugin_git.go` — `GitPlugin` implementing Plugin interface:
+2. [x] Create `plugin_git.go` — `GitPlugin` implementing Plugin interface:
    - Branch name + ahead/behind info in header
    - Staged / Modified / Untracked file lists
    - Enter on file → diff viewer (unified diff with syntax coloring)
    - Stage/unstage with `s` key, commit with `c` (opens modal with message input)
    - Uses `os/exec` to run git commands
-3. [ ] Register both plugins in `NewModel()` — added to TabOrder after Spectrum
-4. [ ] Add demo data for both plugins in `NewDemoModel()`
+3. [x] Register both plugins in `NewModel()` — added to TabOrder after Spectrum, added pluginIDToView/viewToPluginID mappings
+4. [x] Add demo data for both plugins in `NewDemoModel()`
 
 **Verification**:
 ```bash
-cd cmd/prism-tui && go build ./...
-cd cmd/prism-tui && go test ./...
+cd cmd/prism-tui && go build ./...  # ✅ Passed
+cd cmd/prism-tui && go test ./...   # ✅ Passed
 cd cmd/prism-tui && go run . --demo  # Tab to Files and Git screens
 # Verify: file tree renders, git status shows, navigation works
 ```
 
-**Checkpoint**: ⬜ Phase 6 complete — Files and Git plugins functional
+**Checkpoint**: ✅ Phase 6 complete — Files and Git plugins functional
 
 ---
 
@@ -367,12 +367,12 @@ cd cmd/prism-tui && go run . --demo  # Tab to Files and Git screens
 | `cmd/prism-tui/app/views.go` | Ensure ViewAgent, ViewChat exist |
 
 **Steps**:
-1. [ ] Create `chat/renderer.go`: message rendering functions:
+1. [x] Create `chat/renderer.go`: message rendering functions:
    - User messages: right-aligned bubble with blue border
    - Assistant messages: left-aligned with content area
    - Tool calls: collapsible with icon + name + status
    - Markdown-lite rendering (bold, code blocks, lists)
-2. [ ] Create `plugin_agent.go` — `AgentPlugin`:
+2. [x] Create `plugin_agent.go` — `AgentPlugin`:
    - Two-pane layout: message history (scrollable viewport) + input area (textarea)
    - Wide mode: sidebar with conversation list + main chat
    - Compact mode: full-width chat only (toggle with `ctrl+b`)
@@ -380,8 +380,8 @@ cd cmd/prism-tui && go run . --demo  # Tab to Files and Git screens
    - Permission requests open dialog overlay
    - Message history stored in-memory (file persistence in future phase)
    - Key hints: `enter send  ctrl+b toggle sidebar  / command palette`
-3. [ ] Register plugin in `NewModel()`
-4. [ ] Add demo messages in `NewDemoModel()`
+3. [x] Register plugin in `NewModel()`
+4. [x] Add demo messages in `NewDemoModel()`
 
 **Verification**:
 ```bash
@@ -391,7 +391,7 @@ cd cmd/prism-tui && go run . --demo  # Tab to Agent screen
 # Verify: chat interface renders, messages display, input accepts text
 ```
 
-**Checkpoint**: ⬜ Phase 7 complete — Agent chat interface functional
+**Checkpoint**: ✅ Phase 7 complete — Agent chat interface functional
 
 ---
 
@@ -411,27 +411,27 @@ cd cmd/prism-tui && go run . --demo  # Tab to Agent screen
 | `cmd/prism-tui/app/model.go` | Register MonitorPlugin and WorkspacesPlugin |
 
 **Steps**:
-1. [ ] Create `plugin_monitor.go` — `MonitorPlugin`:
+1. [x] Create `plugin_monitor.go` — `MonitorPlugin`:
    - Health dashboard: Go runtime stats (goroutines, memory, GC)
    - Execution history: table of recent Spectrum iterations (story, duration, result)
    - Quality gates status: last lint/test/build results
    - Auto-refreshing (5s tick)
-2. [ ] Create `plugin_workspaces.go` — `WorkspacesPlugin`:
+2. [x] Create `plugin_workspaces.go` — `WorkspacesPlugin`:
    - Scan for `.prism/` directories in parent/sibling dirs
    - List projects with name, branch, story progress
    - Enter to switch project (triggers Registry.Reinit)
    - Epic selector within current project
-3. [ ] Register both in `NewModel()`
-4. [ ] Demo data for both
+3. [x] Register both in `NewModel()`
+4. [x] Demo data for both
 
 **Verification**:
 ```bash
-cd cmd/prism-tui && go build ./...
-cd cmd/prism-tui && go test ./...
-cd cmd/prism-tui && go run . --demo
+cd cmd/prism-tui && go build ./...   # ✅ Passed
+cd cmd/prism-tui && go test ./...    # ✅ Passed
+cd cmd/prism-tui && go run . --demo  # Tab to Monitor and Workspaces screens
 ```
 
-**Checkpoint**: ⬜ Phase 8 complete — Monitor and Workspaces plugins functional
+**Checkpoint**: ✅ Phase 8 complete — Monitor and Workspaces plugins functional
 
 ---
 
@@ -597,9 +597,9 @@ Phase 1 (Shell) ──┬──▶ Phase 2 (Splash)
 | Phase 3: Plugin Architecture | ✅ Complete | 2026-02-12 | 2026-02-12 | Plugin interface, Registry, 4 plugins (Home, Research, Plans, Spectrum), Model slimmed from ~60 to ~15 fields |
 | Phase 4: Modal System | ✅ Complete | 2026-02-12 | 2026-02-12 | Modal system with Section interface, Input/Textarea/List sections, layout engine, builder API, help modal converted |
 | Phase 5: Dialog & Permissions | ✅ Complete | 2026-02-12 | 2026-02-12 | Dialog overlay with stack, ConfirmDialog, PermissionDialog (3-button approval), input routing precedence, demo key binding (P) in Spectrum |
-| Phase 6: Files & Git | ⬜ Not started | | | |
-| Phase 7: Agent & Chat | ⬜ Not started | | | |
-| Phase 8: Monitor & Workspaces | ⬜ Not started | | | |
+| Phase 6: Files & Git | ✅ Complete | 2026-02-13 | 2026-02-13 | FilesPlugin with tree-view file browser (expand/collapse, preview, filter), GitPlugin with status viewer (staged/modified/untracked, diff viewer, stage/unstage, commit modal) |
+| Phase 7: Agent & Chat | ✅ Complete | 2026-02-13 | 2026-02-13 | AgentPlugin with chat interface (wide/compact modes, textarea input, message renderer, demo messages), registered in NewModel |
+| Phase 8: Monitor & Workspaces | ✅ Complete | 2026-02-13 | 2026-02-13 | MonitorPlugin with health dashboard (Go runtime stats, execution history, quality gates), WorkspacesPlugin with project scanner (epic selector, project switching), both registered in NewModel with demo data |
 | Phase 9: Onboarding | ⬜ Not started | | | |
 | Phase 10: Integration & Polish | ⬜ Not started | | | |
 

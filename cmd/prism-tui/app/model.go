@@ -3,6 +3,7 @@ package app
 import (
 	"time"
 
+	"github.com/prism-plugin/prism-tui/app/chat"
 	"github.com/prism-plugin/prism-tui/dialog"
 	"github.com/prism-plugin/prism-tui/modal"
 	"github.com/prism-plugin/prism-tui/plugin"
@@ -155,6 +156,9 @@ func NewModel(prismDir, storiesPath, projectDir string, maxIter, pause int, pris
 	spectrumPlugin := NewSpectrumPlugin(prismRenderer)
 	filesPlugin := NewFilesPlugin()
 	gitPlugin := NewGitPlugin()
+	agentPlugin := NewAgentPlugin()
+	monitorPlugin := NewMonitorPlugin()
+	workspacesPlugin := NewWorkspacesPlugin()
 
 	registry.Register(homePlugin)
 	registry.Register(researchPlugin)
@@ -162,6 +166,9 @@ func NewModel(prismDir, storiesPath, projectDir string, maxIter, pause int, pris
 	registry.Register(spectrumPlugin)
 	registry.Register(filesPlugin)
 	registry.Register(gitPlugin)
+	registry.Register(agentPlugin)
+	registry.Register(monitorPlugin)
+	registry.Register(workspacesPlugin)
 
 	// Start with splash screen on first launch
 	initialView := ViewSplash
@@ -169,7 +176,7 @@ func NewModel(prismDir, storiesPath, projectDir string, maxIter, pause int, pris
 	return Model{
 		Registry:      registry,
 		ActiveView:    initialView,
-		TabOrder:      []ActiveView{ViewHome, ViewResearch, ViewPlans, ViewSpectrum, ViewFiles, ViewGit},
+		TabOrder:      []ActiveView{ViewHome, ViewResearch, ViewPlans, ViewSpectrum, ViewFiles, ViewGit, ViewAgent, ViewMonitor, ViewWorkspaces},
 		PrismDir:      prismDir,
 		StoriesPath:   storiesPath,
 		ProjectDir:    projectDir,
@@ -318,6 +325,123 @@ func NewDemoModel(prismStyle string) Model {
 			}
 			gp.state.UntrackedFiles = []GitFileStatus{
 				{Path: "cmd/prism-tui/app/plugin_monitor.go", Status: "untracked"},
+			}
+		}
+		if ap, ok := p.(*AgentPlugin); ok {
+			// Demo chat messages
+			ap.state.Messages = []chat.Message{
+				{
+					Type:    chat.MessageTypeUser,
+					Content: "Help me implement Phase 7 of the Sidecar + Crush integration into Prism TUI",
+				},
+				{
+					Type:    chat.MessageTypeAssistant,
+					Content: "I'll help you implement Phase 7. Let me start by **researching** the existing architecture and understanding the plugin interface.\n\nFirst, I'll need to:\n- Read the Plugin interface definition\n- Examine existing plugin implementations\n- Understand the message rendering requirements",
+				},
+				{
+					Type:    chat.MessageTypeTool,
+					ToolID:  "Read",
+					Content: "Reading: cmd/prism-tui/plugin/plugin.go",
+					Status:  "complete",
+				},
+				{
+					Type:    chat.MessageTypeTool,
+					ToolID:  "Read",
+					Content: "Reading: cmd/prism-tui/app/plugin_home.go",
+					Status:  "complete",
+				},
+				{
+					Type:    chat.MessageTypeAssistant,
+					Content: "Great! I've reviewed the architecture. Now I'll create:\n\n1. `chat/renderer.go` for message rendering\n2. `plugin_agent.go` implementing the Plugin interface\n3. Register the plugin in NewModel()\n\nLet me start with the message renderer.",
+				},
+				{
+					Type:    chat.MessageTypeTool,
+					ToolID:  "Write",
+					Content: "Creating: cmd/prism-tui/app/chat/renderer.go",
+					Status:  "running",
+				},
+			}
+			// Mark first tool message as collapsed
+			ap.state.ToolsCollapsed[2] = true
+		}
+		if mp, ok := p.(*MonitorPlugin); ok {
+			// Demo execution history
+			now := time.Now()
+			mp.state.History = []ExecutionRecord{
+				{
+					StoryID:   "DEMO-001",
+					StoryName: "Initialize spring physics engine",
+					Duration:  2 * time.Minute + 34 * time.Second,
+					Result:    "success",
+					Timestamp: now.Add(-25 * time.Minute),
+				},
+				{
+					StoryID:   "DEMO-002",
+					StoryName: "Implement progress bar animations",
+					Duration:  3 * time.Minute + 12 * time.Second,
+					Result:    "success",
+					Timestamp: now.Add(-22 * time.Minute),
+				},
+				{
+					StoryID:   "DEMO-003",
+					StoryName: "Add story completion pop effect",
+					Duration:  1 * time.Minute + 45 * time.Second,
+					Result:    "success",
+					Timestamp: now.Add(-18 * time.Minute),
+				},
+				{
+					StoryID:   "DEMO-004",
+					StoryName: "Create active story pulse animation",
+					Duration:  2 * time.Minute + 8 * time.Second,
+					Result:    "error",
+					Timestamp: now.Add(-15 * time.Minute),
+				},
+				{
+					StoryID:   "DEMO-005",
+					StoryName: "Implement log entry slide-in",
+					Duration:  2 * time.Minute + 56 * time.Second,
+					Result:    "success",
+					Timestamp: now.Add(-10 * time.Minute),
+				},
+			}
+			// Demo quality gates status
+			mp.UpdateQualityGate("Lint", "pass", "golangci-lint run --timeout 5m\n✓ All checks passed")
+			mp.UpdateQualityGate("Tests", "pass", "go test ./...\nok  \tprism-tui/app\t2.341s")
+			mp.UpdateQualityGate("Build", "pass", "go build ./...\nBuild complete")
+		}
+		if wp, ok := p.(*WorkspacesPlugin); ok {
+			// Demo discovered projects
+			wp.state.Projects = []ProjectInfo{
+				{
+					Name:            "prism-plugin",
+					Path:            "/Users/demo/Developer/prism-plugin",
+					Branch:          "feat/spectrum-migration",
+					StoriesTotal:    36,
+					StoriesComplete: 12,
+					Epics: []EpicInfo{
+						{Name: "user-auth", StoriesPath: "/Users/demo/Developer/prism-plugin/.prism/stories/user-auth/stories.json", StoryCount: 12, CompletedCount: 8},
+						{Name: "dashboard", StoriesPath: "/Users/demo/Developer/prism-plugin/.prism/stories/dashboard/stories.json", StoryCount: 24, CompletedCount: 4},
+					},
+				},
+				{
+					Name:            "sidecar",
+					Path:            "/Users/demo/Developer/sidecar",
+					Branch:          "main",
+					StoriesTotal:    18,
+					StoriesComplete: 18,
+					Epics:           []EpicInfo{},
+				},
+				{
+					Name:            "crush",
+					Path:            "/Users/demo/Developer/crush",
+					Branch:          "develop",
+					StoriesTotal:    42,
+					StoriesComplete: 28,
+					Epics: []EpicInfo{
+						{Name: "chat-ui", StoriesPath: "/Users/demo/Developer/crush/.prism/stories/chat-ui/stories.json", StoryCount: 20, CompletedCount: 15},
+						{Name: "lsp-integration", StoriesPath: "/Users/demo/Developer/crush/.prism/stories/lsp-integration/stories.json", StoryCount: 22, CompletedCount: 13},
+					},
+				},
 			}
 		}
 	}

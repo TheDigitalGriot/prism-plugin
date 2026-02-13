@@ -366,6 +366,12 @@ func pluginIDToView(id string) ActiveView {
 		return ViewFiles
 	case "git":
 		return ViewGit
+	case "agent":
+		return ViewAgent
+	case "monitor":
+		return ViewMonitor
+	case "workspaces":
+		return ViewWorkspaces
 	default:
 		return ViewHome
 	}
@@ -386,6 +392,12 @@ func viewToPluginID(view ActiveView) string {
 		return "files"
 	case ViewGit:
 		return "git"
+	case ViewAgent:
+		return "agent"
+	case ViewMonitor:
+		return "monitor"
+	case ViewWorkspaces:
+		return "workspaces"
 	default:
 		return "home"
 	}
