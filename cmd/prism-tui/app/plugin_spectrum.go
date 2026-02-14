@@ -184,7 +184,7 @@ func (p *SpectrumPlugin) Name() string {
 
 // Icon returns the tab icon.
 func (p *SpectrumPlugin) Icon() string {
-	return "▶"
+	return ""
 }
 
 // Init initializes the plugin with context.

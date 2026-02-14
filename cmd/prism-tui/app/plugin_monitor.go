@@ -86,7 +86,7 @@ func (p *MonitorPlugin) Name() string {
 
 // Icon returns the tab icon
 func (p *MonitorPlugin) Icon() string {
-	return "📊"
+	return ""
 }
 
 // Init initializes the plugin with context

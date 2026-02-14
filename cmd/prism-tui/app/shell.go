@@ -81,9 +81,38 @@ func (m Model) renderAppHeader() string {
 	return styles.AppHeaderStyle.Width(m.Width).Render(header)
 }
 
-// renderTabBar renders the tab navigation bar with labels from TabOrder (excludes onboarding)
+// tabLabel returns the display label for a plugin tab.
+func tabLabel(i int, p interface{ Icon() string; Name() string }) string {
+	icon := p.Icon()
+	if icon != "" {
+		return fmt.Sprintf("[%d] %s %s", i+1, icon, p.Name())
+	}
+	return fmt.Sprintf("[%d] %s", i+1, p.Name())
+}
+
+// renderTabBar renders the tab navigation bar.
+// Uses bordered tabs when they fit; falls back to a compact inline style for narrow terminals.
 func (m Model) renderTabBar() string {
-	var tabs []string
+	// Estimate bordered tab width: each label + border(2) + padding(2) = +4 per tab
+	totalBorderedWidth := 0
+	for i, view := range m.TabOrder {
+		pluginID := viewToPluginID(view)
+		p := m.Registry.PluginByID(pluginID)
+		if p == nil {
+			continue
+		}
+		totalBorderedWidth += len(tabLabel(i, p)) + 4 // border + padding overhead
+	}
+
+	if totalBorderedWidth > m.Width-2 {
+		return m.renderCompactTabBar()
+	}
+	return m.renderBorderedTabBar()
+}
+
+// renderBorderedTabBar renders the full bordered tab bar.
+func (m Model) renderBorderedTabBar() string {
+	var renderedTabs []string
 
 	for i, view := range m.TabOrder {
 		pluginID := viewToPluginID(view)
@@ -91,17 +120,76 @@ func (m Model) renderTabBar() string {
 		if p == nil {
 			continue
 		}
-		tabLabel := fmt.Sprintf("[%d] %s %s", i+1, p.Icon(), p.Name())
+		label := tabLabel(i, p)
 
-		if pluginID == viewToPluginID(m.ActiveView) {
-			tabs = append(tabs, styles.TabActiveStyle.Render(tabLabel))
+		isActive := pluginID == viewToPluginID(m.ActiveView)
+		isFirst := i == 0
+		isLast := i == len(m.TabOrder)-1
+
+		var style lipgloss.Style
+		if isActive {
+			style = styles.TabActiveStyle
 		} else {
-			tabs = append(tabs, styles.TabInactiveStyle.Render(tabLabel))
+			style = styles.TabInactiveStyle
+		}
+
+		// Adjust border corners for first/last tabs so the bottom rule
+		// connects cleanly to the edges
+		border, _, _, _, _ := style.GetBorder()
+		if isFirst && isActive {
+			border.BottomLeft = "│"
+		} else if isFirst && !isActive {
+			border.BottomLeft = "├"
+		}
+		if isLast && isActive {
+			border.BottomRight = "│"
+		} else if isLast && !isActive {
+			border.BottomRight = "┤"
+		}
+		style = style.Border(border)
+
+		renderedTabs = append(renderedTabs, style.Render(label))
+	}
+
+	row := lipgloss.JoinHorizontal(lipgloss.Top, renderedTabs...)
+
+	// Fill remaining width with a bottom-border gap so the rule spans full width
+	rowWidth := lipgloss.Width(row)
+	gapWidth := m.Width - rowWidth - 2
+	if gapWidth > 0 {
+		gap := styles.TabGapStyle.Render(strings.Repeat(" ", gapWidth))
+		row = lipgloss.JoinHorizontal(lipgloss.Bottom, row, gap)
+	}
+
+	return row
+}
+
+// renderCompactTabBar renders a single-line compact tab bar for narrow terminals.
+func (m Model) renderCompactTabBar() string {
+	var parts []string
+
+	for i, view := range m.TabOrder {
+		pluginID := viewToPluginID(view)
+		p := m.Registry.PluginByID(pluginID)
+		if p == nil {
+			continue
+		}
+		label := fmt.Sprintf(" %d:%s ", i+1, p.Name())
+
+		isActive := pluginID == viewToPluginID(m.ActiveView)
+		if isActive {
+			parts = append(parts, styles.CurrentStyle.Bold(true).Render(label))
+		} else {
+			parts = append(parts, styles.DimStyle.Render(label))
 		}
 	}
 
-	tabBar := lipgloss.JoinHorizontal(lipgloss.Center, tabs...)
-	return styles.PanelStyle.Width(m.Width - 2).Render(tabBar)
+	row := strings.Join(parts, styles.DimStyle.Render("│"))
+
+	// Bottom rule to match bordered style
+	rule := styles.DimStyle.Render(strings.Repeat("─", m.Width-2))
+
+	return row + "\n" + rule
 }
 
 // renderAppFooter renders context-sensitive key hints from the active plugin

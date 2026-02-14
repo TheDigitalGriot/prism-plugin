@@ -93,7 +93,7 @@ func (p *OnboardingPlugin) Name() string {
 
 // Icon returns the tab icon
 func (p *OnboardingPlugin) Icon() string {
-	return "🚀"
+	return ""
 }
 
 // Init initializes the plugin with context

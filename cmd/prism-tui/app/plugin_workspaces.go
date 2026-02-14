@@ -65,7 +65,7 @@ func (p *WorkspacesPlugin) Name() string {
 
 // Icon returns the tab icon
 func (p *WorkspacesPlugin) Icon() string {
-	return "🗂️"
+	return ""
 }
 
 // Init initializes the plugin with context

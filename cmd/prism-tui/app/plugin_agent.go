@@ -67,7 +67,7 @@ func (p *AgentPlugin) Name() string {
 
 // Icon returns the tab icon
 func (p *AgentPlugin) Icon() string {
-	return "🤖"
+	return ""
 }
 
 // Init initializes the plugin with context

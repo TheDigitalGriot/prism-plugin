@@ -124,6 +124,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case SplashDoneMsg:
 		// Splash auto-timer completed
 		m.SplashDone = true
+		m.Splash = nil // Release splash resources
 		if m.NeedsOnboarding && !m.OnboardingDone {
 			// Transition to full-screen onboarding (between splash and dashboard)
 			m.ActiveView = ViewOnboarding
@@ -133,7 +134,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.ActiveView = ViewHome
 			m.Registry.SetActive("home")
 		}
-		return m, nil
+		// Force full screen repaint — splash used raw ANSI codes that
+		// desync Bubble Tea's internal screen buffer.
+		return m, tea.ClearScreen
 
 	case OnboardingCompleteMsg:
 		// Onboarding completed — transition to Home dashboard
@@ -183,6 +186,7 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	// If splash screen is active, any key skips past it
 	if !m.SplashDone {
 		m.SplashDone = true
+		m.Splash = nil // Release splash resources
 		if m.NeedsOnboarding && !m.OnboardingDone {
 			m.ActiveView = ViewOnboarding
 			m.Registry.SetActive("onboarding")
@@ -190,7 +194,9 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.ActiveView = ViewHome
 			m.Registry.SetActive("home")
 		}
-		return m, nil
+		// Force full screen repaint — splash used raw ANSI codes that
+		// desync Bubble Tea's internal screen buffer.
+		return m, tea.ClearScreen
 	}
 
 	// If onboarding is active, delegate keys to the onboarding plugin

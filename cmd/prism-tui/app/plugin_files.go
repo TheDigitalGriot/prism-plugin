@@ -64,7 +64,7 @@ func (p *FilesPlugin) Name() string {
 
 // Icon returns the tab icon
 func (p *FilesPlugin) Icon() string {
-	return "📁"
+	return ""
 }
 
 // Init initializes the plugin with context

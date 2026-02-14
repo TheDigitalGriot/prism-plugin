@@ -89,14 +89,48 @@ const (
 	meshColorB = 246.0
 )
 
-// Background color (dark near-black)
+// Background color (dark near-black) — used when no terminal bg is detected
 const (
 	bgR = 10
 	bgG = 9
 	bgB = 16
 )
 
-// 3D rotation
+// ── Atmospheric tinting ─────────────────────────────────────────────
+//
+// The atmosphere (wave field, ambient glow) is rendered by lerping from
+// the terminal background toward spectral/accent colors rather than
+// adding brightness on top of the background. This keeps atmospheric
+// elements firmly anchored in the background's color space — they read
+// as "ambient glow" instead of a separate layer sitting on top.
+
+// lerpColor blends from color a toward color b by factor t (0.0–1.0).
+func lerpColor(aR, aG, aB, bR, bG, bB, t float64) (float64, float64, float64) {
+	return aR + (bR-aR)*t,
+		aG + (bG-aG)*t,
+		aB + (bB-aB)*t
+}
+
+// atmosphereTint computes a subtle atmospheric color by lerping the terminal
+// background toward a target color. density (0–1) from the wave/ambient field
+// controls how far we shift; maxOpacity caps the total shift so atmosphere
+// can never overpower the background.
+//
+// Typical maxOpacity values:
+//   - 0.10–0.18  wave field (visible but subordinate to beam/mesh)
+//   - 0.03–0.08  ambient glow (barely perceptible warmth)
+func atmosphereTint(
+	bgR, bgG, bgB float64,
+	targetR, targetG, targetB float64,
+	density float64,
+	maxOpacity float64,
+) (float64, float64, float64) {
+	opacity := density * maxOpacity
+	return lerpColor(bgR, bgG, bgB, targetR, targetG, targetB, opacity)
+}
+
+// ── 3D rotation ─────────────────────────────────────────────────────
+
 type vec3 [3]float64
 
 func rotateY(v vec3, a float64) vec3 {
@@ -114,7 +148,8 @@ func rotateZ(v vec3, a float64) vec3 {
 	return vec3{c*v[0] - s*v[1], s*v[0] + c*v[1], v[2]}
 }
 
-// Beam particle
+// ── Beam particle ───────────────────────────────────────────────────
+
 type beamParticle struct {
 	x, y       float64
 	vx, vy     float64
@@ -133,7 +168,8 @@ func (p *beamParticle) alive() bool {
 	return p.life > 0 && p.x < 1.1
 }
 
-// Cell grid
+// ── Cell grid ───────────────────────────────────────────────────────
+
 type cell struct {
 	ch      rune
 	r, g, b uint8
@@ -162,6 +198,11 @@ type Model struct {
 	// When non-zero, the splash blends atmospheric elements against
 	// the actual terminal background instead of the hardcoded dark.
 	BgR, BgG, BgB uint8
+
+	// Theme accent color (from button.background or similar).
+	// Used to tint the ambient atmosphere so it harmonises with the
+	// user's color theme rather than defaulting to neutral grey.
+	AccentR, AccentG, AccentB uint8
 
 	// Reusable buffers
 	projX    []float64
@@ -263,17 +304,25 @@ func (m *Model) View() string {
 	numChars := len(densityChars)
 
 	// Resolve color tuning parameters — IDE terminals get boosted vibrancy
-	cIntensity := colorIntensity
-	cPeakBoost := peakBoost
-	cGreyMax := greyMax
 	cBeamTint := 0.3
 	cMeshBright := 0.85
 	if m.BoostColors {
-		cIntensity = 0.80
-		cPeakBoost = 0.40
-		cGreyMax = 0.18
 		cBeamTint = 0.6
 		cMeshBright = 1.1
+	}
+
+	// ── Atmospheric opacity caps ──
+	// These control how far wave/ambient cells can shift from the terminal bg.
+	// IDE terminals need more push because they render truecolor washed-out.
+	waveMaxOpacity := 0.14    // wave field: visible but subordinate
+	ambientMaxOpacity := 0.05 // ambient glow: barely perceptible
+	beamAtmoOpacity := 0.10   // beam-side atmosphere
+	lumBump := 10.0           // subtle brightness lift so waves show on all themes
+	if m.BoostColors {
+		waveMaxOpacity = 0.26
+		ambientMaxOpacity = 0.10
+		beamAtmoOpacity = 0.18
+		lumBump = 16.0
 	}
 
 	// Use detected terminal background color for atmospheric blending
@@ -281,6 +330,18 @@ func (m *Model) View() string {
 	if m.BgR+m.BgG+m.BgB > 0 {
 		aBgR, aBgG, aBgB = float64(m.BgR), float64(m.BgG), float64(m.BgB)
 	}
+
+	// Accent color for ambient tinting (midpoint between bg and accent gives
+	// a muted tone that's harmonious but not overpowering)
+	acR, acG, acB := float64(m.AccentR), float64(m.AccentG), float64(m.AccentB)
+	if m.AccentR+m.AccentG+m.AccentB == 0 {
+		// No accent detected — use a neutral steel-blue
+		acR, acG, acB = 0x60, 0x70, 0x88
+	}
+	// Desaturated midpoint for ambient areas: halfway between bg and accent
+	ambTargetR := (aBgR + acR) * 0.5
+	ambTargetG := (aBgG + acG) * 0.5
+	ambTargetB := (aBgB + acB) * 0.5
 
 	charAspect := 0.5
 
@@ -453,6 +514,7 @@ func (m *Model) View() string {
 
 			var wR, wG, wB, waveDensity float64
 
+			// ── Wave field atmosphere (right side, after prism exit) ──
 			if waveMix > 0 {
 				wdx := nx - exitX
 				wdy := (ny - exitY) * ySquash
@@ -468,41 +530,63 @@ func (m *Model) View() string {
 				falloff := math.Max(0.10, 1.0-wDist*falloffPower)
 				waveDensity = combined * falloff
 
+				// Sample spectral color from the brand gradient
 				angle := math.Atan2(ny-exitY, nx-exitX)
 				normalizedAngle := (angle / math.Pi) * spectralSpread
 				gradientT := normalizedAngle*0.5 + 0.5
 				sr, sg, sb := sampleGradient(gradientT)
 
-				grey := greyMin + waveDensity*(cGreyMax-greyMin)
-				colorAmt := waveDensity*cIntensity + math.Pow(waveDensity, 3)*cPeakBoost
+				// Tint-toward: lerp from bg toward the spectral color
+				wR, wG, wB = atmosphereTint(
+					aBgR, aBgG, aBgB,
+					sr, sg, sb,
+					waveDensity,
+					waveMaxOpacity,
+				)
 
-				wR = aBgR + grey*255 + (sr-128)*colorAmt
-				wG = aBgG + grey*255 + (sg-128)*colorAmt
-				wB = aBgB + grey*255 + (sb-128)*colorAmt
+				// Subtle luminance bump so waves remain visible even when
+				// the spectral color is close to the background hue
+				bump := waveDensity * lumBump
+				wR += bump
+				wG += bump
+				wB += bump
 			}
 
 			var bR, bG, bB float64
 			var beamDensity float64
 
+			// ── Beam-side atmosphere (left side, before prism entry) ──
 			if beamMix > 0 {
 				bVal := m.beamGrid[row*cols+col]
 				if bVal > 0.01 {
+					// Active beam particle glow — kept as-is (this is beam, not atmosphere)
 					beamDensity = math.Min(1.0, bVal)
-					grey := greyMin + beamDensity*(cGreyMax-greyMin)
+					grey := greyMin + beamDensity*(greyMax-greyMin)
 					bR = aBgR + grey*255 + (175-128)*beamDensity*cBeamTint
 					bG = aBgG + grey*255 + (172-128)*beamDensity*cBeamTint
 					bB = aBgB + grey*255 + (195-128)*beamDensity*cBeamTint
 				} else {
+					// Ambient atmosphere (no beam particles here)
+					// Tint toward the desaturated accent midpoint
 					adx := nx - entryX
 					ady := (ny - icoY) * ySquash
 					aDist := math.Sqrt(adx*adx + ady*ady)
 					ambientWave := math.Sin(aDist*20-phase*0.4)*0.5 + 0.5
 					ambientDensity := ambientWave * 0.25 * math.Max(0.1, 1.0-aDist*0.8)
 					beamDensity = ambientDensity
-					grey := greyMin + ambientDensity*(cGreyMax-greyMin)*0.5
-					bR = aBgR + grey*160
-					bG = aBgG + grey*160
-					bB = aBgB + grey*170
+
+					bR, bG, bB = atmosphereTint(
+						aBgR, aBgG, aBgB,
+						ambTargetR, ambTargetG, ambTargetB,
+						ambientDensity,
+						ambientMaxOpacity,
+					)
+
+					// Tiny luminance lift for ambient visibility
+					ambBump := ambientDensity * lumBump * 0.5
+					bR += ambBump
+					bG += ambBump
+					bB += ambBump
 				}
 			}
 
@@ -540,7 +624,7 @@ func (m *Model) View() string {
 				}
 			}
 
-		charIdx := int(density * float64(numChars))
+			charIdx := int(density * float64(numChars))
 			if charIdx < 0 {
 				charIdx = 0
 			} else if charIdx >= numChars {

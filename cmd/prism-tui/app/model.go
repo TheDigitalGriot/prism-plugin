@@ -11,6 +11,7 @@ import (
 	"github.com/prism-plugin/prism-tui/plugin"
 	"github.com/prism-plugin/prism-tui/prism"
 	"github.com/prism-plugin/prism-tui/splash"
+	"github.com/prism-plugin/prism-tui/terminal"
 )
 
 // AppState represents the running state of the TUI
@@ -207,7 +208,13 @@ func NewModel(prismDir, storiesPath, projectDir string, maxIter, pause int, pris
 	}
 
 	// Create splash screen animation
+	termInfo := terminal.Detect()
 	splashModel := splash.New()
+	splashModel.EnvLines = termInfo.EnvLines()
+	splashModel.BoostColors = termInfo.IsIDETerminal()
+	splashModel.BgR = termInfo.BgR
+	splashModel.BgG = termInfo.BgG
+	splashModel.BgB = termInfo.BgB
 
 	// Always start with splash. Onboarding is a full-screen interstitial
 	// between splash and Home — never a tab in the tab bar.

@@ -39,7 +39,7 @@ func (p *ResearchPlugin) Name() string {
 
 // Icon returns the tab icon.
 func (p *ResearchPlugin) Icon() string {
-	return "📝"
+	return ""
 }
 
 // Init initializes the plugin with context.

@@ -39,7 +39,7 @@ func (p *PlansPlugin) Name() string {
 
 // Icon returns the tab icon.
 func (p *PlansPlugin) Icon() string {
-	return "📋"
+	return ""
 }
 
 // Init initializes the plugin with context.

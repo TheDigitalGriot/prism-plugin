@@ -62,7 +62,7 @@ func (p *GitPlugin) Name() string {
 
 // Icon returns the tab icon
 func (p *GitPlugin) Icon() string {
-	return "⎇"
+	return ""
 }
 
 // Init initializes the plugin with context
