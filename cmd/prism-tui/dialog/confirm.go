@@ -6,6 +6,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
+	zone "github.com/lrstanley/bubblezone"
 )
 
 // ConfirmDialog is a simple yes/no confirmation dialog
@@ -123,8 +124,8 @@ func (d *ConfirmDialog) View(width, height int) string {
 	content.WriteString("\n")
 
 	// Buttons
-	confirmBtn := d.renderButton(d.confirmLabel, d.focusedButton == 0)
-	cancelBtn := d.renderButton(d.cancelLabel, d.focusedButton == 1)
+	confirmBtn := zone.Mark("dialog-confirm", d.renderButton(d.confirmLabel, d.focusedButton == 0))
+	cancelBtn := zone.Mark("dialog-cancel", d.renderButton(d.cancelLabel, d.focusedButton == 1))
 	buttonsRow := lipgloss.JoinHorizontal(lipgloss.Left, confirmBtn, "  ", cancelBtn)
 	content.WriteString(buttonsRow)
 
@@ -137,6 +138,17 @@ func (d *ConfirmDialog) View(width, height int) string {
 	// Wrap in border
 	boxStyle := d.boxStyle()
 	return boxStyle.Width(dialogWidth).Render(content.String())
+}
+
+// HandleMouse processes mouse click events on dialog button zones.
+func (d *ConfirmDialog) HandleMouse(msg tea.MouseMsg) Action {
+	if zone.Get("dialog-confirm").InBounds(msg) {
+		return ActionConfirm
+	}
+	if zone.Get("dialog-cancel").InBounds(msg) {
+		return ActionCancel
+	}
+	return ActionNone
 }
 
 // renderButton renders a single button with optional focus

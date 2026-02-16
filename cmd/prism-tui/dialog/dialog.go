@@ -44,6 +44,9 @@ type Dialog interface {
 	// Returns ActionNone if the dialog should remain open.
 	Update(msg tea.Msg) (Action, tea.Cmd)
 
+	// HandleMouse processes mouse click events and returns an action if a zone was clicked.
+	HandleMouse(msg tea.MouseMsg) Action
+
 	// View renders the dialog content (without backdrop/dimming, which is handled by Overlay)
 	View(width, height int) string
 }
@@ -94,6 +97,14 @@ func (o *Overlay) Update(msg tea.Msg) (Action, tea.Cmd) {
 		return ActionNone, nil
 	}
 	return front.Update(msg)
+}
+
+// HandleMouse routes a mouse event to the front dialog.
+func (o *Overlay) HandleMouse(msg tea.MouseMsg) Action {
+	if !o.HasDialogs() {
+		return ActionNone
+	}
+	return o.dialogs[len(o.dialogs)-1].HandleMouse(msg)
 }
 
 // View renders all dialogs in the stack (bottom to top).

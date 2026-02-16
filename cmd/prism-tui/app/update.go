@@ -1,11 +1,13 @@
 package app
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	zone "github.com/lrstanley/bubblezone"
 	"github.com/prism-plugin/prism-tui/dialog"
 	"github.com/prism-plugin/prism-tui/modal"
 	"github.com/prism-plugin/prism-tui/plugin"
@@ -51,6 +53,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		return m.handleKeyPress(msg)
+
+	case tea.MouseMsg:
+		return m.handleMouseEvent(msg)
 
 	case tea.WindowSizeMsg:
 		m.Width = msg.Width
@@ -295,6 +300,11 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		// Open command palette
 		m.CommandPalette = NewCommandPalette(m.Registry)
 		m.ActiveModal = m.CommandPalette.BuildModal()
+		return m, nil
+
+	case "ctrl+d":
+		// Toggle sidebar visibility (like Crush's session details toggle)
+		m.ForceSidebarOff = !m.ForceSidebarOff
 		return m, nil
 
 	// Number keys to switch tabs directly
@@ -576,6 +586,98 @@ func splitCommandID(id string) []string {
 	return result
 }
 
+// handleMouseEvent handles mouse clicks, scroll wheel, and motion events.
+// Follows the same priority chain as keyboard: splash → dialog → modal → app-level → plugin.
+func (m Model) handleMouseEvent(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
+	// Ignore mouse during splash
+	if !m.SplashDone {
+		return m, nil
+	}
+
+	// Ignore mouse during onboarding
+	if m.ActiveView == ViewOnboarding && !m.OnboardingDone {
+		return m, nil
+	}
+
+	// Handle scroll wheel globally (doesn't need zone detection)
+	if msg.Button == tea.MouseButtonWheelUp || msg.Button == tea.MouseButtonWheelDown {
+		return m.handleScrollWheel(msg)
+	}
+
+	// Only process left-click release (standard click)
+	if msg.Action != tea.MouseActionRelease || msg.Button != tea.MouseButtonLeft {
+		return m, nil
+	}
+
+	// Priority 1: Dialog clicks
+	if m.Dialogs.HasDialogs() {
+		action := m.Dialogs.HandleMouse(msg)
+		switch action {
+		case dialog.ActionCancel, dialog.ActionDeny:
+			m.Dialogs.CloseFront()
+			return m, nil
+		case dialog.ActionConfirm, dialog.ActionAllow, dialog.ActionAllowSession:
+			m.Dialogs.CloseFront()
+			return m, nil
+		}
+		return m, nil
+	}
+
+	// Priority 2: Modal clicks
+	if m.ActiveModal != nil {
+		action, cmd := m.ActiveModal.HandleMouse(msg)
+		if action == "cancel" {
+			m.ActiveModal = nil
+			m.CommandPalette = nil
+			return m, cmd
+		} else if action != "" {
+			if m.CommandPalette != nil {
+				selectedCmd := m.CommandPalette.SelectedCommand()
+				if selectedCmd != nil {
+					m.ActiveModal = nil
+					m.CommandPalette = nil
+					return m.executeCommand(*selectedCmd)
+				}
+			}
+			m.ActiveModal = nil
+			return m, cmd
+		}
+		return m, nil
+	}
+
+	// Priority 3: App-level zones (tabs)
+	for i := range m.TabOrder {
+		zoneID := fmt.Sprintf("tab-%d", i)
+		if zone.Get(zoneID).InBounds(msg) {
+			return m.switchToTab(i)
+		}
+	}
+
+	// Priority 4: Delegate to active plugin
+	return m.delegateToActivePlugin(msg)
+}
+
+// handleScrollWheel routes scroll wheel events to the appropriate component.
+func (m Model) handleScrollWheel(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
+	// Priority 1: Modal scroll
+	if m.ActiveModal != nil {
+		delta := 3
+		if msg.Button == tea.MouseButtonWheelUp {
+			delta = -3
+		}
+		m.ActiveModal.ScrollBy(delta)
+		return m, nil
+	}
+
+	// Priority 2: Dialog scroll
+	if m.Dialogs.HasDialogs() {
+		return m, nil
+	}
+
+	// Priority 3: Delegate to active plugin
+	return m.delegateToActivePlugin(msg)
+}
+
 // createHelpModal creates a modal displaying keyboard shortcuts and help
 func createHelpModal() *modal.Modal {
 	helpText := `PRISM TUI - Keyboard Shortcuts
@@ -583,6 +685,7 @@ func createHelpModal() *modal.Modal {
 GLOBAL KEYS:
   ?         Toggle this help
   Ctrl+P, : Open command palette
+  Ctrl+D    Toggle sidebar details
   q, Ctrl+C Quit application
   1-9       Switch to tab by number
   Tab       Next tab

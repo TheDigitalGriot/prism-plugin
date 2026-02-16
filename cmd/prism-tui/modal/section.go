@@ -5,6 +5,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	zone "github.com/lrstanley/bubblezone"
 )
 
 // Section represents a section within a modal (text, buttons, inputs, etc.)
@@ -160,7 +161,7 @@ func (b *ButtonsSection) Render(contentWidth int, focusID string) RenderedSectio
 	for _, btn := range b.buttons {
 		isFocused := btn.ID == focusID
 		styled := renderButton(btn.Label, btn.Variant, isFocused)
-		parts = append(parts, styled)
+		parts = append(parts, zone.Mark("modal-"+btn.ID, styled))
 	}
 
 	// Join with spacing

@@ -6,6 +6,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
+	zone "github.com/lrstanley/bubblezone"
 )
 
 // PermissionDialog displays a tool execution request with preview content
@@ -157,9 +158,9 @@ func (d *PermissionDialog) View(width, height int) string {
 	}
 
 	// Buttons
-	allowBtn := d.renderButton("Allow", 0)
-	allowSessionBtn := d.renderButton("Allow Session", 1)
-	denyBtn := d.renderButton("Deny", 2)
+	allowBtn := zone.Mark("dialog-allow", d.renderButton("Allow", 0))
+	allowSessionBtn := zone.Mark("dialog-allow-session", d.renderButton("Allow Session", 1))
+	denyBtn := zone.Mark("dialog-deny", d.renderButton("Deny", 2))
 	buttonsRow := lipgloss.JoinHorizontal(lipgloss.Left, allowBtn, "  ", allowSessionBtn, "  ", denyBtn)
 	content.WriteString(buttonsRow)
 
@@ -222,6 +223,20 @@ func (d *PermissionDialog) renderPreview(width, maxLines int) string {
 	}
 
 	return strings.Join(rendered, "\n")
+}
+
+// HandleMouse processes mouse click events on permission dialog button zones.
+func (d *PermissionDialog) HandleMouse(msg tea.MouseMsg) Action {
+	if zone.Get("dialog-allow").InBounds(msg) {
+		return ActionAllow
+	}
+	if zone.Get("dialog-allow-session").InBounds(msg) {
+		return ActionAllowSession
+	}
+	if zone.Get("dialog-deny").InBounds(msg) {
+		return ActionDeny
+	}
+	return ActionNone
 }
 
 // renderButton renders a single button with optional focus

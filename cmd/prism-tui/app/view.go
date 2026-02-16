@@ -8,6 +8,7 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
+	zone "github.com/lrstanley/bubblezone"
 	"github.com/prism-plugin/prism-tui/styles"
 )
 
@@ -31,10 +32,16 @@ func (m Model) View() string {
 	}
 
 	// Get content from active plugin
+	// When sidebar is visible, reduce the content width so plugins render correctly
+	contentWidth := m.Width
+	if m.showSidebar() {
+		contentWidth = m.Width - SidebarWidth
+	}
+
 	var content string
 	active := m.Registry.ActivePlugin()
 	if active != nil {
-		content = active.View(m.Width, m.Height)
+		content = active.View(contentWidth, m.Height)
 	} else {
 		content = styles.DimStyle.Render("  No active plugin")
 	}
@@ -57,7 +64,8 @@ func (m Model) View() string {
 	// Reset G0 charset to ASCII — the splash screen's raw ANSI output
 	// can leave the terminal in DEC Special Graphics mode, which maps
 	// ASCII letters to box-drawing characters (e.g. 't' → '├').
-	return "\x1b(B" + base
+	// CRITICAL: charset reset must be OUTSIDE zone.Scan()
+	return "\x1b(B" + zone.Scan(base)
 }
 
 // === Shared Helpers ===

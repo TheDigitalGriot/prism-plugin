@@ -10,6 +10,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	zone "github.com/lrstanley/bubblezone"
 	"github.com/prism-plugin/prism-tui/plugin"
 	"github.com/prism-plugin/prism-tui/styles"
 )
@@ -96,6 +97,40 @@ func (p *FilesPlugin) Update(msg tea.Msg) (plugin.Plugin, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		return p.handleKeyPress(msg)
+
+	case tea.MouseMsg:
+		// Handle scroll wheel events
+		if msg.Button == tea.MouseButtonWheelUp {
+			if p.state.SelectedIdx > 0 {
+				p.state.SelectedIdx -= 3
+				if p.state.SelectedIdx < 0 {
+					p.state.SelectedIdx = 0
+				}
+				return p, p.loadPreview()
+			}
+			return p, nil
+		}
+		if msg.Button == tea.MouseButtonWheelDown {
+			if len(p.state.FlatList) > 0 && p.state.SelectedIdx < len(p.state.FlatList)-1 {
+				p.state.SelectedIdx += 3
+				if p.state.SelectedIdx >= len(p.state.FlatList) {
+					p.state.SelectedIdx = len(p.state.FlatList) - 1
+				}
+				return p, p.loadPreview()
+			}
+			return p, nil
+		}
+
+		// Handle left-click on file tree items
+		if msg.Action == tea.MouseActionRelease && msg.Button == tea.MouseButtonLeft {
+			for i := range p.state.FlatList {
+				if info := zone.Get(fmt.Sprintf("files:item-%d", i)); info != nil && info.InBounds(msg) {
+					p.state.SelectedIdx = i
+					return p, p.loadPreview()
+				}
+			}
+		}
+		return p, nil
 
 	case plugin.PluginResizeMsg:
 		// Update viewport dimensions
@@ -333,6 +368,9 @@ func (p *FilesPlugin) renderTree(width, height int) []string {
 		if padding > 0 {
 			line = line + strings.Repeat(" ", padding)
 		}
+
+		// Mark with zone for mouse interaction
+		line = zone.Mark(fmt.Sprintf("files:item-%d", i), line)
 
 		lines = append(lines, line)
 	}

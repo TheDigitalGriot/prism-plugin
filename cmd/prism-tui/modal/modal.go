@@ -3,6 +3,7 @@ package modal
 import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	zone "github.com/lrstanley/bubblezone"
 )
 
 // Modal constants
@@ -164,6 +165,30 @@ func (m *Modal) HandleKey(msg tea.KeyMsg) (action string, cmd tea.Cmd) {
 		// Route other keys to the focused section
 		return m.routeToFocusedSection(msg)
 	}
+}
+
+// HandleMouse processes mouse click events on modal zones.
+// Returns the action ID if a zone was clicked, empty string otherwise.
+func (m *Modal) HandleMouse(msg tea.MouseMsg) (action string, cmd tea.Cmd) {
+	// Check list sections first (they have per-item zones)
+	for _, section := range m.sections {
+		if list, ok := section.(*ListSection); ok {
+			if list.HandleMouse(msg) {
+				m.SetFocus(list.id)
+				return list.id, nil
+			}
+		}
+	}
+
+	// Check each focusable element's zone (buttons, checkboxes, etc.)
+	for i, id := range m.focusIDs {
+		zoneID := "modal-" + id
+		if zone.Get(zoneID).InBounds(msg) {
+			m.focusIdx = i
+			return m.routeToFocusedSection(tea.KeyMsg{Type: tea.KeyEnter})
+		}
+	}
+	return "", nil
 }
 
 // currentFocusID returns the ID of the currently focused element

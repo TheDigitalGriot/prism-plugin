@@ -1,10 +1,12 @@
 package modal
 
 import (
+	"fmt"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	zone "github.com/lrstanley/bubblezone"
 )
 
 // =============================================================================
@@ -127,6 +129,7 @@ func (l *ListSection) Render(contentWidth int, focusID string) RenderedSection {
 			line = style.Render("  " + item)
 		}
 
+		line = zone.Mark(fmt.Sprintf("modal-%s-%d", l.id, i), line)
 		lines = append(lines, line)
 	}
 
@@ -237,4 +240,20 @@ func (l *ListSection) SetItems(items []string) {
 	if *l.selectedIdx < 0 && len(items) > 0 {
 		*l.selectedIdx = 0
 	}
+}
+
+// HandleMouse checks if a list item was clicked and updates selection.
+func (l *ListSection) HandleMouse(msg tea.MouseMsg) bool {
+	visibleEnd := l.scrollOffset + l.maxVisible
+	if visibleEnd > len(l.items) {
+		visibleEnd = len(l.items)
+	}
+	for i := l.scrollOffset; i < visibleEnd; i++ {
+		zoneID := fmt.Sprintf("modal-%s-%d", l.id, i)
+		if zone.Get(zoneID).InBounds(msg) {
+			*l.selectedIdx = i
+			return true
+		}
+	}
+	return false
 }

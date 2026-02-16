@@ -6,6 +6,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	zone "github.com/lrstanley/bubblezone"
 	"github.com/prism-plugin/prism-tui/plugin"
 	"github.com/prism-plugin/prism-tui/styles"
 )
@@ -62,6 +63,28 @@ func (p *HomePlugin) Update(msg tea.Msg) (plugin.Plugin, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		return p.handleKeyPress(msg)
+
+	case tea.MouseMsg:
+		// Handle scroll wheel events
+		if msg.Button == tea.MouseButtonWheelUp {
+			p.state.SelectedIndex = (p.state.SelectedIndex - 1 + len(p.state.MenuItems)) % len(p.state.MenuItems)
+			return p, nil
+		}
+		if msg.Button == tea.MouseButtonWheelDown {
+			p.state.SelectedIndex = (p.state.SelectedIndex + 1) % len(p.state.MenuItems)
+			return p, nil
+		}
+
+		// Handle left-click on menu items
+		if msg.Action == tea.MouseActionRelease && msg.Button == tea.MouseButtonLeft {
+			for i := range p.state.MenuItems {
+				if info := zone.Get(fmt.Sprintf("home:menu-%d", i)); info != nil && info.InBounds(msg) {
+					p.state.SelectedIndex = i
+					return p, p.navigateToMenuItem()
+				}
+			}
+		}
+		return p, nil
 	}
 	return p, nil
 }
@@ -96,14 +119,18 @@ func (p *HomePlugin) View(width, height int) string {
 		selected := i == p.state.SelectedIndex
 		line := fmt.Sprintf("  %s  %-12s %s", item.icon, item.label, item.desc)
 
+		var styledLine string
 		if selected {
 			// Highlight selected item
-			styledLine := styles.CurrentStyle.Bold(true).Render(fmt.Sprintf("  >  %s", line))
-			sections = append(sections, styledLine)
+			styledLine = styles.CurrentStyle.Bold(true).Render(fmt.Sprintf("  >  %s", line))
 		} else {
-			styledLine := styles.DimStyle.Render(fmt.Sprintf("     %s", line))
-			sections = append(sections, styledLine)
+			styledLine = styles.DimStyle.Render(fmt.Sprintf("     %s", line))
 		}
+
+		// Mark with zone for mouse interaction
+		styledLine = zone.Mark(fmt.Sprintf("home:menu-%d", i), styledLine)
+
+		sections = append(sections, styledLine)
 		sections = append(sections, "") // spacing
 	}
 

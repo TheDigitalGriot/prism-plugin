@@ -5,25 +5,36 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+	zone "github.com/lrstanley/bubblezone"
 	"github.com/prism-plugin/prism-tui/styles"
 )
 
-// renderAppShell renders the application shell with header, tab bar, content, and footer
+// renderAppShell renders the application shell with tab bar, content, and footer.
+// When the terminal is wide enough (>= 120 cols), a full-height right-side panel
+// (inspired by Crush) is rendered alongside the left column (tabs + content + footer).
 func (m Model) renderAppShell(content string) string {
+	if m.showSidebar() {
+		leftWidth := m.Width - SidebarWidth
+
+		// Build left column: tab bar + content + footer
+		var leftSections []string
+		leftSections = append(leftSections, m.renderTabBar(leftWidth))
+		leftSections = append(leftSections, content)
+		leftSections = append(leftSections, m.renderAppFooter(leftWidth))
+		leftColumn := lipgloss.JoinVertical(lipgloss.Left, leftSections...)
+
+		// Build sidebar at full terminal height
+		sidebar := m.renderSidebar(m.Height)
+
+		// Join left column and sidebar horizontally
+		return lipgloss.JoinHorizontal(lipgloss.Top, leftColumn, sidebar)
+	}
+
+	// No sidebar — standard vertical layout
 	var sections []string
-
-	// App header (3D prism + project name)
-	sections = append(sections, m.renderAppHeader())
-
-	// Tab bar
-	sections = append(sections, m.renderTabBar())
-
-	// Active view content
+	sections = append(sections, m.renderTabBar(m.Width))
 	sections = append(sections, content)
-
-	// Footer (context-sensitive key hints)
-	sections = append(sections, m.renderAppFooter())
-
+	sections = append(sections, m.renderAppFooter(m.Width))
 	return lipgloss.JoinVertical(lipgloss.Left, sections...)
 }
 
@@ -92,7 +103,7 @@ func tabLabel(i int, p interface{ Icon() string; Name() string }) string {
 
 // renderTabBar renders the tab navigation bar.
 // Uses bordered tabs when they fit; falls back to a compact inline style for narrow terminals.
-func (m Model) renderTabBar() string {
+func (m Model) renderTabBar(width int) string {
 	// Estimate bordered tab width: each label + border(2) + padding(2) = +4 per tab
 	totalBorderedWidth := 0
 	for i, view := range m.TabOrder {
@@ -104,14 +115,14 @@ func (m Model) renderTabBar() string {
 		totalBorderedWidth += len(tabLabel(i, p)) + 4 // border + padding overhead
 	}
 
-	if totalBorderedWidth > m.Width-2 {
-		return m.renderCompactTabBar()
+	if totalBorderedWidth > width-2 {
+		return m.renderCompactTabBar(width)
 	}
-	return m.renderBorderedTabBar()
+	return m.renderBorderedTabBar(width)
 }
 
 // renderBorderedTabBar renders the full bordered tab bar.
-func (m Model) renderBorderedTabBar() string {
+func (m Model) renderBorderedTabBar(width int) string {
 	var renderedTabs []string
 
 	for i, view := range m.TabOrder {
@@ -148,14 +159,15 @@ func (m Model) renderBorderedTabBar() string {
 		}
 		style = style.Border(border)
 
-		renderedTabs = append(renderedTabs, style.Render(label))
+		tabZoneID := fmt.Sprintf("tab-%d", i)
+		renderedTabs = append(renderedTabs, zone.Mark(tabZoneID, style.Render(label)))
 	}
 
 	row := lipgloss.JoinHorizontal(lipgloss.Top, renderedTabs...)
 
 	// Fill remaining width with a bottom-border gap so the rule spans full width
 	rowWidth := lipgloss.Width(row)
-	gapWidth := m.Width - rowWidth - 2
+	gapWidth := width - rowWidth - 2
 	if gapWidth > 0 {
 		gap := styles.TabGapStyle.Render(strings.Repeat(" ", gapWidth))
 		row = lipgloss.JoinHorizontal(lipgloss.Bottom, row, gap)
@@ -165,7 +177,7 @@ func (m Model) renderBorderedTabBar() string {
 }
 
 // renderCompactTabBar renders a single-line compact tab bar for narrow terminals.
-func (m Model) renderCompactTabBar() string {
+func (m Model) renderCompactTabBar(width int) string {
 	var parts []string
 
 	for i, view := range m.TabOrder {
@@ -177,23 +189,24 @@ func (m Model) renderCompactTabBar() string {
 		label := fmt.Sprintf(" %d:%s ", i+1, p.Name())
 
 		isActive := pluginID == viewToPluginID(m.ActiveView)
+		tabZoneID := fmt.Sprintf("tab-%d", i)
 		if isActive {
-			parts = append(parts, styles.CurrentStyle.Bold(true).Render(label))
+			parts = append(parts, zone.Mark(tabZoneID, styles.CurrentStyle.Bold(true).Render(label)))
 		} else {
-			parts = append(parts, styles.DimStyle.Render(label))
+			parts = append(parts, zone.Mark(tabZoneID, styles.DimStyle.Render(label)))
 		}
 	}
 
 	row := strings.Join(parts, styles.DimStyle.Render("│"))
 
 	// Bottom rule to match bordered style
-	rule := styles.DimStyle.Render(strings.Repeat("─", m.Width-2))
+	rule := styles.DimStyle.Render(strings.Repeat("─", width-2))
 
 	return row + "\n" + rule
 }
 
 // renderAppFooter renders context-sensitive key hints from the active plugin
-func (m Model) renderAppFooter() string {
+func (m Model) renderAppFooter(width int) string {
 	var hints []string
 
 	// Global hints
@@ -208,10 +221,15 @@ func (m Model) renderAppFooter() string {
 		}
 	}
 
+	// Sidebar toggle hint (like Crush's ctrl+d for details)
+	if m.Width >= CompactBreakpointWidth {
+		hints = append(hints, "[ctrl+d] details")
+	}
+
 	// Always show help and quit
 	hints = append(hints, "[?] help")
 	hints = append(hints, "[q] quit")
 
 	footerText := strings.Join(hints, "  ")
-	return styles.FooterStyle.Width(m.Width - 2).Render(footerText)
+	return styles.FooterStyle.Width(width - 2).Render(footerText)
 }

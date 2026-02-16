@@ -105,6 +105,7 @@ type Model struct {
 	Width              int
 	Height             int
 	ShowHelp           bool
+	ForceSidebarOff    bool // User toggled sidebar off (ctrl+d)
 	ActiveModal        *modal.Modal    // Currently active modal dialog (nil if none)
 	CommandPalette     *CommandPalette // Command palette state (nil if closed)
 	Dialogs            *dialog.Overlay // Stack of permission/confirmation dialogs

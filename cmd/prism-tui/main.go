@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	tea "github.com/charmbracelet/bubbletea"
+	zone "github.com/lrstanley/bubblezone"
 	"github.com/prism-plugin/prism-tui/app"
 	"github.com/spf13/cobra"
 )
@@ -106,7 +107,8 @@ Keyboard controls:
 				model.NeedsOnboarding = true
 			}
 
-			p := tea.NewProgram(model, tea.WithAltScreen())
+			zone.NewGlobal()
+		p := tea.NewProgram(model, tea.WithAltScreen(), tea.WithMouseCellMotion())
 			if _, err := p.Run(); err != nil {
 				return fmt.Errorf("failed to run TUI: %w", err)
 			}
@@ -143,7 +145,8 @@ func runDemoMode(version string, prismStyle string, onboarding bool) error {
 		model.ResetOnboarding()
 	}
 
-	p := tea.NewProgram(model, tea.WithAltScreen())
+	zone.NewGlobal()
+	p := tea.NewProgram(model, tea.WithAltScreen(), tea.WithMouseCellMotion())
 	if _, err := p.Run(); err != nil {
 		return fmt.Errorf("failed to run demo TUI: %w", err)
 	}

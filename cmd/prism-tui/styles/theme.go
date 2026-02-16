@@ -151,6 +151,28 @@ var (
 	FooterStyle = lipgloss.NewStyle().
 			Foreground(Dim).
 			Padding(0, 1)
+
+	// Sidebar styles (inspired by Crush's right-side panel)
+	SidebarStyle = lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(Dim).
+			Padding(0, 1)
+
+	SidebarBrandStyle = lipgloss.NewStyle().
+				Bold(true).
+				Foreground(Primary)
+
+	SidebarTitleStyle = lipgloss.NewStyle().
+				Foreground(White)
+
+	SidebarSectionTitleStyle = lipgloss.NewStyle().
+					Foreground(Dim)
+
+	SidebarAdditionsStyle = lipgloss.NewStyle().
+				Foreground(Success)
+
+	SidebarDeletionsStyle = lipgloss.NewStyle().
+				Foreground(Error)
 )
 
 // Atmosphere target color (raw RGB) for splash ambient rendering.
@@ -205,6 +227,9 @@ func ApplyTheme(accentHex string) {
 
 	// Rebuild icons that reference Primary
 	PlayIcon = lipgloss.NewStyle().Foreground(Primary).Render("▸")
+
+	// Rebuild sidebar styles that cache Primary
+	SidebarBrandStyle = SidebarBrandStyle.Foreground(Primary)
 }
 
 // Separator renders a vertical separator
