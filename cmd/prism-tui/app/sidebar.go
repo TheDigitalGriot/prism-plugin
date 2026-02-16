@@ -9,8 +9,8 @@ import (
 	"github.com/prism-plugin/prism-tui/styles"
 )
 
-// SidebarWidth is the fixed width of the sidebar panel (matching Crush's 30-col design)
-const SidebarWidth = 30
+// SidebarWidth is the fixed width of the sidebar panel (sized to fit PRISM block logo)
+const SidebarWidth = 38
 
 // CompactBreakpointWidth is the minimum terminal width to show the sidebar
 const CompactBreakpointWidth = 120
@@ -48,11 +48,7 @@ func (m Model) renderSidebar(height int) string {
 	blocks = append(blocks, m.renderSidebarLogo(w))
 	blocks = append(blocks, "")
 
-	// 2. Project info
-	blocks = append(blocks, m.renderSidebarProjectInfo(w))
-	blocks = append(blocks, "")
-
-	// 3. Execution info (model equivalent from Crush)
+	// 2. Execution info (model equivalent from Crush)
 	blocks = append(blocks, m.renderSidebarExecutionInfo(w))
 	blocks = append(blocks, "")
 
@@ -94,24 +90,35 @@ func (m Model) renderSidebar(height int) string {
 	return lipgloss.JoinVertical(lipgloss.Left, slashPattern, panel)
 }
 
-// renderSidebarLogo renders a compact branded PRISM logo for the sidebar
+// renderSidebarLogo renders an ASCII block-art PRISM logo with a CRUSH-style gradient
 func (m Model) renderSidebarLogo(width int) string {
-	// Compact prism icon + "PRISM" branding (like Crush's "Charm™ CRUSH")
-	var prismIcon string
-	if m.Prism != nil {
-		// Use the compact inline prism
-		prismIcon = styles.RenderPrismCompact(m.Anim.PrismFrame)
-	} else {
-		prismIcon = styles.RenderPrismCompact(0)
+	line1 := "██▀▀█▄ ██▀▀█▄ ▀██▀ ▄██▀▀ ██▄▀▄██"
+	line2 := "██▄▄█▀ ██▄▄█▀  ██  ▀██▄  ██ ▀ ██"
+	line3 := "██     ██  ██ ▄██▄ ▄▄██▀ ██   ██"
+
+	// CRUSH-style left-to-right gradient: bright primary → primary → deep indigo
+	primaryHex := string(styles.Primary)
+	gradientColors := []string{
+		styles.AdjustBrightness(primaryHex, 1.5),
+		primaryHex,
+		styles.AdjustBrightness(primaryHex, 0.5),
 	}
 
-	// Brand line
-	brand := styles.SidebarBrandStyle.Render("PRISM")
-	version := styles.DimStyle.Render("v1.9.8")
+	l1 := styles.GradientString(line1, gradientColors)
+	l2 := styles.GradientString(line2, gradientColors)
+	l3 := styles.GradientString(line3, gradientColors)
 
-	header := lipgloss.JoinHorizontal(lipgloss.Center, brand, " ", version)
+	// Gradient underline fading out to the right
+	underlineLen := len([]rune(line1))
+	if underlineLen > width {
+		underlineLen = width
+	}
+	underline := styles.GradientString(
+		strings.Repeat("─", underlineLen),
+		[]string{styles.AdjustBrightness(primaryHex, 0.15), primaryHex, styles.AdjustBrightness(primaryHex, 0.15)},
+	)
 
-	return lipgloss.JoinVertical(lipgloss.Left, prismIcon, header)
+	return lipgloss.JoinVertical(lipgloss.Left, l1, l2, l3, underline)
 }
 
 // renderSidebarProjectInfo renders the project name and working directory
@@ -223,15 +230,22 @@ func (m Model) renderSidebarExecutionInfo(width int) string {
 
 // renderSidebarSection renders a named section with a title separator and content
 func (m Model) renderSidebarSection(title, content string, width int) string {
-	// Section title with horizontal line (like Crush's "Modified Files ─────")
-	titleStr := styles.SidebarSectionTitleStyle.Render(title)
-	titleWidth := lipgloss.Width(titleStr)
-	lineWidth := width - titleWidth - 1
+	// Crush-style section header: ├─ TITLE ──────────
+	accent := lipgloss.Color("#C8A837")
+	accentStyle := lipgloss.NewStyle().Foreground(accent)
+	titleStyle := lipgloss.NewStyle().Foreground(accent)
+
+	prefix := accentStyle.Render("├─ ")
+	titleStr := titleStyle.Render(title)
+	titleStr += accentStyle.Render(" ")
+
+	usedWidth := 4 + len([]rune(title)) // "├─ " (3) + title + " " (1)
+	lineWidth := width - usedWidth
 	if lineWidth < 2 {
 		lineWidth = 2
 	}
-	line := styles.DimStyle.Render(" " + strings.Repeat("─", lineWidth))
-	header := titleStr + line
+	line := accentStyle.Render(strings.Repeat("─", lineWidth))
+	header := prefix + titleStr + line
 
 	return lipgloss.JoinVertical(lipgloss.Left, header, content)
 }

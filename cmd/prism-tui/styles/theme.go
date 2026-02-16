@@ -110,7 +110,7 @@ var (
 	// Sidebar styles (inspired by Crush's right-side panel)
 	SidebarStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
-			BorderForeground(Dim).
+			BorderForeground(Primary).
 			Padding(0, 1)
 
 	SidebarBrandStyle = lipgloss.NewStyle().
@@ -191,6 +191,7 @@ func ApplyTheme(accentHex string) {
 
 	// Rebuild sidebar styles that cache Primary
 	SidebarBrandStyle = SidebarBrandStyle.Foreground(Primary)
+	SidebarStyle = SidebarStyle.BorderForeground(Primary)
 }
 
 // Separator renders a vertical separator

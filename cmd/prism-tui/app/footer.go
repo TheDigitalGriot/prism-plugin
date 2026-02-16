@@ -167,7 +167,14 @@ func (m Model) renderPowerlineFooter(width int) string {
 
 	// Right segments (build in display order, left-to-right)
 
-	// 1. Quality gates (conditional, skip if very narrow)
+	// 1. Version
+	rightSegments = append(rightSegments, styles.Segment{
+		Content:    "v1.9.8",
+		Foreground: styles.White,
+		Background: lipgloss.Color("#2c2d3a"),
+	})
+
+	// 2. Quality gates (conditional, skip if very narrow)
 	if width >= 80 {
 		if mp, ok := m.Registry.PluginByID("monitor").(*MonitorPlugin); ok {
 			passCount := 0
