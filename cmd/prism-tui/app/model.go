@@ -216,6 +216,7 @@ func NewModel(prismDir, storiesPath, projectDir string, maxIter, pause int, pris
 	// Create splash screen animation
 	termInfo := terminal.Detect()
 	themeColors := terminal.DetectThemeColors(termInfo)
+	ctx.HasNerdFont = termInfo.HasNerdFont
 
 	// Apply theme accent to global styles (tabs, headers, titles)
 	if themeColors.AccentSource != "default" {

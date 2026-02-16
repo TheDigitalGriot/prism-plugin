@@ -32,6 +32,13 @@ const (
 	IconClock     = "\uF017" // Clock icon
 	IconPlay      = "\uF04B" // Play icon
 	IconCircle    = "\uF111" // Filled circle
+	IconHome      = "\uF015" // Home icon
+	IconSearch    = "\uF002" // Search/magnifier icon
+	IconList      = "\uF03A" // List icon
+	IconBolt      = "\uF0E7" // Lightning bolt icon
+	IconUser      = "\uF007" // User icon
+	IconChart     = "\uF080" // Bar chart icon
+	IconGrid      = "\uF009" // Grid/workspaces icon
 )
 
 // Icon constants — ASCII/Unicode fallback (no Nerd Fonts)
@@ -44,6 +51,13 @@ const (
 	IconClockASCII     = "\u25F7" // ◷
 	IconPlayASCII      = "\u25B6" // ▶
 	IconCircleASCII    = "\u25CF" // ●
+	IconHomeASCII      = "1"
+	IconSearchASCII    = "2"
+	IconListASCII      = "3"
+	IconBoltASCII      = "4"
+	IconUserASCII      = "7"
+	IconChartASCII     = "8"
+	IconGridASCII      = "9"
 )
 
 // Icons holds the active icon set based on font detection
@@ -56,6 +70,13 @@ type Icons struct {
 	Clock     string
 	Play      string
 	Circle    string
+	Home      string
+	Search    string
+	List      string
+	Bolt      string
+	User      string
+	Chart     string
+	Grid      string
 	SepRight  string
 	SepLeft   string
 }
@@ -71,6 +92,13 @@ func NerdIcons() Icons {
 		Clock:     IconClock,
 		Play:      IconPlay,
 		Circle:    IconCircle,
+		Home:      IconHome,
+		Search:    IconSearch,
+		List:      IconList,
+		Bolt:      IconBolt,
+		User:      IconUser,
+		Chart:     IconChart,
+		Grid:      IconGrid,
 		SepRight:  SepRight,
 		SepLeft:   SepLeft,
 	}
@@ -87,6 +115,13 @@ func ASCIIIcons() Icons {
 		Clock:     IconClockASCII,
 		Play:      IconPlayASCII,
 		Circle:    IconCircleASCII,
+		Home:      IconHomeASCII,
+		Search:    IconSearchASCII,
+		List:      IconListASCII,
+		Bolt:      IconBoltASCII,
+		User:      IconUserASCII,
+		Chart:     IconChartASCII,
+		Grid:      IconGridASCII,
 		SepRight:  SepRightASCII,
 		SepLeft:   SepLeftASCII,
 	}
@@ -99,6 +134,12 @@ func GetIcons(hasNerdFont bool) Icons {
 	}
 	return ASCIIIcons()
 }
+
+// Tab bar colors
+var (
+	TabBarBg         = lipgloss.Color("#1a1b26") // Dark background for bar fill (same as FooterBg)
+	TabBarInactiveBg = lipgloss.Color("#2c2d3a") // Inactive tab background
+)
 
 // Footer-specific colors
 var (

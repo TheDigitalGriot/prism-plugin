@@ -152,11 +152,8 @@ func (p *MonitorPlugin) Update(msg tea.Msg) (plugin.Plugin, tea.Cmd) {
 func (p *MonitorPlugin) View(width, height int) string {
 	var sections []string
 
-	// Header
-	title := styles.TitleStyle.Render("PRISM")
-	breadcrumb := styles.DimStyle.Render(" > Monitor")
-	header := lipgloss.JoinHorizontal(lipgloss.Center, title, breadcrumb)
-	sections = append(sections, styles.HeaderStyle.Width(width).Render(header))
+	// Powerline breadcrumb header
+	sections = append(sections, renderBreadcrumb("Monitor", width, p.ctx.HasNerdFont))
 	sections = append(sections, "")
 
 	// Main content: 3 panels side by side

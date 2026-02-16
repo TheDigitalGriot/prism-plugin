@@ -31,6 +31,9 @@ type Context struct {
 	// Pause is the delay in seconds between Spectrum iterations
 	Pause int
 
+	// HasNerdFont indicates whether the terminal font supports Nerd Font glyphs
+	HasNerdFont bool
+
 	// EventBus provides inter-plugin communication via pub/sub events
 	EventBus *EventBus
 }

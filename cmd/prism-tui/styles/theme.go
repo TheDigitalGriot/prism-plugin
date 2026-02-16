@@ -92,53 +92,8 @@ var (
 	ProgressBarStyle = lipgloss.NewStyle().
 				Foreground(Primary)
 
-	// Tab bar styles — bordered tabs with seamless active/inactive connection
+	// Tab bar accent color (used by footer key-hints border)
 	TabBorderColor = Primary
-
-	// Active tab: bottom border is a space so it "opens" into the content below
-	ActiveTabBorder = lipgloss.Border{
-		Top:         "─",
-		Bottom:      " ",
-		Left:        "│",
-		Right:       "│",
-		TopLeft:     "╭",
-		TopRight:    "╮",
-		BottomLeft:  "┘",
-		BottomRight: "└",
-	}
-
-	// Inactive tab: bottom border connects to the horizontal rule below
-	InactiveTabBorder = lipgloss.Border{
-		Top:         "─",
-		Bottom:      "─",
-		Left:        "│",
-		Right:       "│",
-		TopLeft:     "╭",
-		TopRight:    "╮",
-		BottomLeft:  "┴",
-		BottomRight: "┴",
-	}
-
-	TabActiveStyle = lipgloss.NewStyle().
-			Border(ActiveTabBorder, true).
-			BorderForeground(TabBorderColor).
-			Bold(true).
-			Foreground(Primary).
-			Padding(0, 1)
-
-	TabInactiveStyle = lipgloss.NewStyle().
-				Border(InactiveTabBorder, true).
-				BorderForeground(TabBorderColor).
-				Foreground(Dim).
-				Padding(0, 1)
-
-	// Gap filler: only a bottom border to extend the line across remaining width
-	TabGapStyle = lipgloss.NewStyle().
-			Border(InactiveTabBorder, true).
-			BorderTop(false).
-			BorderLeft(false).
-			BorderRight(false).
-			BorderForeground(TabBorderColor)
 
 	// App shell styles
 	AppHeaderStyle = lipgloss.NewStyle().
@@ -231,10 +186,6 @@ func ApplyTheme(accentHex string) {
 	AppHeaderStyle = AppHeaderStyle.Background(Primary)
 	CurrentStyle = CurrentStyle.Foreground(Primary)
 	ProgressBarStyle = ProgressBarStyle.Foreground(Primary)
-	TabActiveStyle = TabActiveStyle.BorderForeground(TabBorderColor).Foreground(Primary)
-	TabInactiveStyle = TabInactiveStyle.BorderForeground(TabBorderColor)
-	TabGapStyle = TabGapStyle.BorderForeground(TabBorderColor)
-
 	// Rebuild icons that reference Primary
 	PlayIcon = lipgloss.NewStyle().Foreground(Primary).Render("▸")
 

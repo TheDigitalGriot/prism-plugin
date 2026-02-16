@@ -72,13 +72,26 @@ func (m Model) renderSidebar(height int) string {
 
 	content := lipgloss.JoinVertical(lipgloss.Left, blocks...)
 
-	// Wrap in panel with max height
+	// Wrap in panel with max height (subtract 1 for the slash row above)
 	panel := styles.SidebarStyle.
 		Width(SidebarWidth).
-		MaxHeight(height).
+		MaxHeight(height - 1).
 		Render(content)
 
-	return panel
+	// Decorative 3-row slash pattern above the panel box.
+	// Top row has a leading powerline slant; rows 2-3 are plain slashes.
+	icons := styles.GetIcons(m.HasNerdFont)
+	slashStyle := lipgloss.NewStyle().Foreground(styles.Primary)
+
+	// Row 1: filled slant + slashes
+	row1 := lipgloss.NewStyle().Foreground(styles.Primary).Render(icons.SepRight) +
+		slashStyle.Render(strings.Repeat("/", SidebarWidth-1))
+	// Rows 2-3: plain slashes
+	plainRow := slashStyle.Render(strings.Repeat("/", SidebarWidth))
+
+	slashPattern := lipgloss.JoinVertical(lipgloss.Left, row1, plainRow, plainRow)
+
+	return lipgloss.JoinVertical(lipgloss.Left, slashPattern, panel)
 }
 
 // renderSidebarLogo renders a compact branded PRISM logo for the sidebar

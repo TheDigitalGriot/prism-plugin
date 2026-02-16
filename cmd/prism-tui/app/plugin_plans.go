@@ -120,11 +120,8 @@ func (p *PlansPlugin) Update(msg tea.Msg) (plugin.Plugin, tea.Cmd) {
 func (p *PlansPlugin) View(width, height int) string {
 	var sections []string
 
-	// Header with breadcrumb
-	title := styles.TitleStyle.Render("PRISM")
-	breadcrumb := styles.DimStyle.Render(" > Plans")
-	header := lipgloss.JoinHorizontal(lipgloss.Center, title, breadcrumb)
-	sections = append(sections, styles.HeaderStyle.Width(width).Render(header))
+	// Powerline breadcrumb header
+	sections = append(sections, renderBreadcrumb("Plans", width, p.ctx.HasNerdFont))
 
 	if p.state.Viewing {
 		// Scrollable viewport of file content

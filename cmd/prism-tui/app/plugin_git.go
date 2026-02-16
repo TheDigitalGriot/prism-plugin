@@ -165,20 +165,15 @@ func (p *GitPlugin) Update(msg tea.Msg) (plugin.Plugin, tea.Cmd) {
 func (p *GitPlugin) View(width, height int) string {
 	var sections []string
 
-	// Header with branch info
-	title := styles.TitleStyle.Render("PRISM")
-	branchInfo := ""
+	// Powerline breadcrumb header with branch info
+	gitView := "Git Status"
 	if p.state.BranchName != "" {
-		branchInfo = fmt.Sprintf(" > Git: %s", p.state.BranchName)
+		gitView = "Git: " + p.state.BranchName
 		if p.state.Ahead > 0 || p.state.Behind > 0 {
-			branchInfo += fmt.Sprintf(" [↑%d ↓%d]", p.state.Ahead, p.state.Behind)
+			gitView += fmt.Sprintf(" [↑%d ↓%d]", p.state.Ahead, p.state.Behind)
 		}
-	} else {
-		branchInfo = " > Git Status"
 	}
-	breadcrumb := styles.DimStyle.Render(branchInfo)
-	header := lipgloss.JoinHorizontal(lipgloss.Center, title, breadcrumb)
-	sections = append(sections, styles.HeaderStyle.Width(width).Render(header))
+	sections = append(sections, renderBreadcrumb(gitView, width, p.ctx.HasNerdFont))
 	sections = append(sections, "")
 
 	if p.state.Error != "" {

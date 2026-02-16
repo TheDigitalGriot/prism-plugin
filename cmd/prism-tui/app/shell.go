@@ -16,19 +16,18 @@ func (m Model) renderAppShell(content string) string {
 	if m.showSidebar() {
 		leftWidth := m.Width - SidebarWidth
 
-		// Tab bar (left column width)
+		// Tab bar + content form the left column
 		tabBar := m.renderTabBar(leftWidth)
+		leftColumn := lipgloss.JoinVertical(lipgloss.Left, tabBar, content)
 
-		// Adjust sidebar height to account for tab bar (1 line) + two-tier footer (2 lines)
-		sidebarHeight := m.Height - 3
-
-		// Content + sidebar horizontal join (NO footer here)
-		contentRow := lipgloss.JoinHorizontal(lipgloss.Top, content, m.renderSidebar(sidebarHeight))
+		// Sidebar spans full height (only subtract footer's 2 lines)
+		sidebarHeight := m.Height - 2
+		mainRow := lipgloss.JoinHorizontal(lipgloss.Top, leftColumn, m.renderSidebar(sidebarHeight))
 
 		// Two-tier footer at full terminal width
 		footer := m.renderTwoTierFooter(m.Width)
 
-		return lipgloss.JoinVertical(lipgloss.Left, tabBar, contentRow, footer)
+		return lipgloss.JoinVertical(lipgloss.Left, mainRow, footer)
 	}
 
 	// No sidebar — standard vertical layout
@@ -91,88 +90,254 @@ func (m Model) renderAppHeader() string {
 	return styles.AppHeaderStyle.Width(m.Width).Render(header)
 }
 
-// tabLabel returns the display label for a plugin tab.
-func tabLabel(i int, p interface{ Icon() string; Name() string }) string {
-	icon := p.Icon()
-	if icon != "" {
-		return fmt.Sprintf("[%d] %s %s", i+1, icon, p.Name())
+// tabIcon returns the icon for a plugin tab from the icon set.
+func tabIcon(pluginID string, icons styles.Icons) string {
+	switch pluginID {
+	case "home":
+		return icons.Home
+	case "research":
+		return icons.Search
+	case "plans":
+		return icons.List
+	case "spectrum":
+		return icons.Bolt
+	case "files":
+		return icons.Folder
+	case "git":
+		return icons.GitBranch
+	case "agent":
+		return icons.User
+	case "monitor":
+		return icons.Chart
+	case "workspaces":
+		return icons.Grid
+	default:
+		return ""
 	}
-	return fmt.Sprintf("[%d] %s", i+1, p.Name())
+}
+
+// tabLabel returns the display label for a plugin tab.
+func tabLabel(pluginID string, name string, icon string) string {
+	if icon != "" {
+		return icon + " " + name
+	}
+	return name
+}
+
+// renderBreadcrumb renders a powerline-style breadcrumb bar: PRISM ▶ viewName
+// Uses filled triangle separators (\uE0B0) instead of the slant separators used elsewhere.
+func renderBreadcrumb(viewName string, width int, hasNerdFont bool) string {
+	barBg := lipgloss.Color(fmt.Sprintf("#%02x%02x%02x", styles.TermBgR, styles.TermBgG, styles.TermBgB))
+
+	// Triangle separator glyph (classic powerline arrow)
+	sep := "\uE0B0"
+	if !hasNerdFont {
+		sep = "\u25B6" // ▶ fallback
+	}
+
+	segments := []styles.Segment{
+		{Content: "PRISM", Foreground: styles.White, Background: lipgloss.Color("#2c2d3a")},
+		{Content: viewName, Foreground: styles.White, Background: lipgloss.Color("#363748")},
+	}
+
+	// Build segments with triangle separators
+	var parts []string
+	for i, seg := range segments {
+		style := lipgloss.NewStyle().
+			Foreground(seg.Foreground).
+			Background(seg.Background).
+			Padding(0, 1)
+		parts = append(parts, style.Render(seg.Content))
+
+		var nextBg lipgloss.Color
+		if i < len(segments)-1 {
+			nextBg = segments[i+1].Background
+		} else {
+			nextBg = barBg
+		}
+		sepStyle := lipgloss.NewStyle().
+			Foreground(seg.Background).
+			Background(nextBg)
+		parts = append(parts, sepStyle.Render(sep))
+	}
+
+	left := strings.Join(parts, "")
+	return styles.RenderPowerlineBar(left, "", width, barBg)
 }
 
 // renderTabBar renders the tab navigation bar.
-// Uses bordered tabs when they fit; falls back to a compact inline style for narrow terminals.
+// Uses 3-line powerline tabs when they fit; falls back to compact inline style for narrow terminals.
 func (m Model) renderTabBar(width int) string {
-	// Estimate bordered tab width: each label + border(2) + padding(2) = +4 per tab
-	totalBorderedWidth := 0
-	for i, view := range m.TabOrder {
+	icons := styles.GetIcons(m.HasNerdFont)
+
+	// Estimate powerline tab width: each label + 2 padding + 1 separator
+	totalPowerlineWidth := 0
+	for _, view := range m.TabOrder {
 		pluginID := viewToPluginID(view)
 		p := m.Registry.PluginByID(pluginID)
 		if p == nil {
 			continue
 		}
-		totalBorderedWidth += len(tabLabel(i, p)) + 4 // border + padding overhead
+		icon := tabIcon(pluginID, icons)
+		label := tabLabel(pluginID, p.Name(), icon)
+		totalPowerlineWidth += lipgloss.Width(label) + 2 + 1 // padding + separator
 	}
 
-	if totalBorderedWidth > width-2 {
+	if totalPowerlineWidth > width {
 		return m.renderCompactTabBar(width)
 	}
-	return m.renderBorderedTabBar(width)
+	return m.renderPowerlineTabBar(width)
 }
 
-// renderBorderedTabBar renders the full bordered tab bar.
-func (m Model) renderBorderedTabBar(width int) string {
-	var renderedTabs []string
+// tabInfo holds rendering data for a single tab in the powerline bar.
+type tabInfo struct {
+	label    string
+	pluginID string
+	active   bool
+	bg       lipgloss.Color
+	fg       lipgloss.Color
+}
 
-	for i, view := range m.TabOrder {
+// renderPowerlineTabBar renders a 3-line tall powerline tab bar with diagonal slant separators.
+// The slant separator is offset ±1 char per row to create true diagonal edges:
+//   - Top row:    first segment width -1 (separator shifted left)
+//   - Middle row: base widths with labels and zone marks
+//   - Bottom row: first segment width +1 (separator shifted right)
+func (m Model) renderPowerlineTabBar(width int) string {
+	icons := styles.GetIcons(m.HasNerdFont)
+	activePluginID := viewToPluginID(m.ActiveView)
+
+	// Collect tab info
+	var tabs []tabInfo
+	for _, view := range m.TabOrder {
 		pluginID := viewToPluginID(view)
 		p := m.Registry.PluginByID(pluginID)
 		if p == nil {
 			continue
 		}
-		label := tabLabel(i, p)
+		icon := tabIcon(pluginID, icons)
+		label := tabLabel(pluginID, p.Name(), icon)
+		isActive := pluginID == activePluginID
 
-		isActive := pluginID == viewToPluginID(m.ActiveView)
-		isFirst := i == 0
-		isLast := i == len(m.TabOrder)-1
-
-		var style lipgloss.Style
+		var bg lipgloss.Color
+		var fg lipgloss.Color
 		if isActive {
-			style = styles.TabActiveStyle
+			bg = styles.Primary
+			fg = styles.White
 		} else {
-			style = styles.TabInactiveStyle
+			bg = styles.TabBarInactiveBg
+			fg = styles.Dim
 		}
 
-		// Adjust border corners for first/last tabs so the bottom rule
-		// connects cleanly to the edges
-		border, _, _, _, _ := style.GetBorder()
-		if isFirst && isActive {
-			border.BottomLeft = "│"
-		} else if isFirst && !isActive {
-			border.BottomLeft = "├"
-		}
-		if isLast && isActive {
-			border.BottomRight = "│"
-		} else if isLast && !isActive {
-			border.BottomRight = "┤"
-		}
-		style = style.Border(border)
-
-		tabZoneID := fmt.Sprintf("tab-%d", i)
-		renderedTabs = append(renderedTabs, zone.Mark(tabZoneID, style.Render(label)))
+		tabs = append(tabs, tabInfo{
+			label:    label,
+			pluginID: pluginID,
+			active:   isActive,
+			bg:       bg,
+			fg:       fg,
+		})
 	}
 
-	row := lipgloss.JoinHorizontal(lipgloss.Top, renderedTabs...)
-
-	// Fill remaining width with a bottom-border gap so the rule spans full width
-	rowWidth := lipgloss.Width(row)
-	gapWidth := width - rowWidth - 2
-	if gapWidth > 0 {
-		gap := styles.TabGapStyle.Render(strings.Repeat(" ", gapWidth))
-		row = lipgloss.JoinHorizontal(lipgloss.Bottom, row, gap)
+	if len(tabs) == 0 {
+		return ""
 	}
 
-	return row
+	// Calculate base widths: label visual width + 2 padding (1 each side)
+	baseWidths := make([]int, len(tabs))
+	for i, t := range tabs {
+		baseWidths[i] = lipgloss.Width(t.label) + 2
+	}
+
+	// buildRow constructs one row of the 3-line tab bar.
+	// firstOffset: -1 for top, 0 for middle, +1 for bottom
+	// contentFn: returns content string for segment i given its width
+	// markZones: whether to wrap segments in zone.Mark for mouse clicks
+	// capReserve: 0 = no trailing cap, N = reserve N chars from right edge for cap
+	//   (cap is 1 char, remaining N-1 chars are trimmed from fill, creating the diagonal)
+	buildRow := func(firstOffset int, contentFn func(i int, segWidth int) string, markZones bool, capReserve int) string {
+		var parts []string
+		for i, t := range tabs {
+			segWidth := baseWidths[i]
+			if i == 0 {
+				segWidth += firstOffset
+			}
+			if segWidth < 1 {
+				segWidth = 1
+			}
+
+			content := contentFn(i, segWidth)
+
+			segStyle := lipgloss.NewStyle().
+				Foreground(t.fg).
+				Background(t.bg)
+			rendered := segStyle.Render(content)
+
+			if markZones {
+				tabZoneID := fmt.Sprintf("tab-%d", i)
+				rendered = zone.Mark(tabZoneID, rendered)
+			}
+			parts = append(parts, rendered)
+
+			// Separator: current bg → next bg (trail into Primary after last tab)
+			var nextBg lipgloss.Color
+			if i < len(tabs)-1 {
+				nextBg = tabs[i+1].bg
+			} else {
+				nextBg = styles.Primary
+			}
+			sepStyle := lipgloss.NewStyle().
+				Foreground(t.bg).
+				Background(nextBg)
+			parts = append(parts, sepStyle.Render(icons.SepRight))
+		}
+
+		// Trailing fill to reach full width
+		row := strings.Join(parts, "")
+		rowWidth := lipgloss.Width(row)
+		fillWidth := width - rowWidth
+		if capReserve > 0 {
+			fillWidth -= capReserve // reserve space for closing cap
+		}
+		if fillWidth > 0 {
+			fillStyle := lipgloss.NewStyle().Background(styles.Primary)
+			parts = append(parts, fillStyle.Render(strings.Repeat(" ", fillWidth)))
+		}
+		if capReserve > 0 {
+			// Closing slant: Primary → terminal default
+			capStyle := lipgloss.NewStyle().Foreground(styles.Primary)
+			parts = append(parts, capStyle.Render(icons.SepRight))
+		}
+
+		return strings.Join(parts, "")
+	}
+
+	// Top row: spaces only, first segment 1 char wider (separator shifts RIGHT), no cap
+	topRow := buildRow(+1, func(i int, segWidth int) string {
+		return strings.Repeat(" ", segWidth)
+	}, false, 0)
+
+	// Middle row: centered labels with zone marks, cap at right edge
+	midRow := buildRow(0, func(i int, segWidth int) string {
+		label := tabs[i].label
+		labelWidth := lipgloss.Width(label)
+		// Center the label in the segment
+		totalPad := segWidth - labelWidth
+		if totalPad < 0 {
+			totalPad = 0
+		}
+		leftPad := totalPad / 2
+		rightPad := totalPad - leftPad
+		return strings.Repeat(" ", leftPad) + label + strings.Repeat(" ", rightPad)
+	}, true, 1)
+
+	// Bottom row: spaces only, first segment 1 char narrower (separator shifts LEFT)
+	// Cap 1 char left of middle row's cap → diagonal end edge, trailing slash
+	botRow := buildRow(-1, func(i int, segWidth int) string {
+		return strings.Repeat(" ", segWidth)
+	}, false, 2)
+	botRow += lipgloss.NewStyle().Foreground(styles.Primary).Render("/")
+
+	return lipgloss.JoinVertical(lipgloss.Left, topRow, midRow, botRow)
 }
 
 // renderCompactTabBar renders a single-line compact tab bar for narrow terminals.

@@ -173,11 +173,8 @@ func (p *FilesPlugin) Update(msg tea.Msg) (plugin.Plugin, tea.Cmd) {
 func (p *FilesPlugin) View(width, height int) string {
 	var sections []string
 
-	// Header
-	title := styles.TitleStyle.Render("PRISM")
-	breadcrumb := styles.DimStyle.Render(" > Files")
-	header := lipgloss.JoinHorizontal(lipgloss.Center, title, breadcrumb)
-	sections = append(sections, styles.HeaderStyle.Width(width).Render(header))
+	// Powerline breadcrumb header
+	sections = append(sections, renderBreadcrumb("Files", width, p.ctx.HasNerdFont))
 	sections = append(sections, "")
 
 	if p.state.FilterMode {

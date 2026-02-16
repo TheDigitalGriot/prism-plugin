@@ -104,11 +104,8 @@ func (p *WorkspacesPlugin) Update(msg tea.Msg) (plugin.Plugin, tea.Cmd) {
 func (p *WorkspacesPlugin) View(width, height int) string {
 	var sections []string
 
-	// Header
-	title := styles.TitleStyle.Render("PRISM")
-	breadcrumb := styles.DimStyle.Render(" > Workspaces")
-	header := lipgloss.JoinHorizontal(lipgloss.Center, title, breadcrumb)
-	sections = append(sections, styles.HeaderStyle.Width(width).Render(header))
+	// Powerline breadcrumb header
+	sections = append(sections, renderBreadcrumb("Workspaces", width, p.ctx.HasNerdFont))
 	sections = append(sections, "")
 
 	// Main content
