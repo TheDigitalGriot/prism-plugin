@@ -530,22 +530,43 @@ func (p *SpectrumPlugin) Update(msg tea.Msg) (plugin.Plugin, tea.Cmd) {
 func (p *SpectrumPlugin) View(width, height int) string {
 	var sections []string
 
-	// Epic selector bar (if multiple epics)
+	// Epic selector (conditional)
+	epicHeight := 0
 	if len(p.epic.Epics) > 1 {
-		sections = append(sections, p.renderEpicSelector(width))
+		epicSelector := p.renderEpicSelector(width)
+		sections = append(sections, epicSelector)
+		epicHeight = lipgloss.Height(epicSelector)
 	}
 
-	// Header
-	sections = append(sections, p.renderHeader(width))
+	// Header (fixed)
+	header := p.renderHeader(width)
+	sections = append(sections, header)
+	headerHeight := lipgloss.Height(header)
 
-	// Progress bar with prism animation
-	sections = append(sections, p.renderProgressBar(width))
+	// Progress bar (fixed)
+	progressBar := p.renderProgressBar(width)
+	sections = append(sections, progressBar)
+	progressHeight := lipgloss.Height(progressBar)
+
+	// Status bar (fixed, 1 line)
+	statusBarHeight := 1
+
+	// Remaining height for dynamic panels (stories+activity and log)
+	fixedHeight := epicHeight + headerHeight + progressHeight + statusBarHeight
+	dynamicHeight := height - fixedHeight
+	if dynamicHeight < 6 {
+		dynamicHeight = 6
+	}
+
+	// Split: ~60% for main panels (stories + activity), ~40% for log
+	mainPanelHeight := dynamicHeight * 60 / 100
+	logPanelHeight := dynamicHeight - mainPanelHeight
 
 	// Main content (stories + activity panels)
-	sections = append(sections, p.renderMainPanels(width))
+	sections = append(sections, p.renderMainPanels(width, mainPanelHeight))
 
 	// Log viewport
-	sections = append(sections, p.renderLogPanel(width))
+	sections = append(sections, p.renderLogPanel(width, logPanelHeight))
 
 	// Status bar
 	sections = append(sections, p.renderStatusBar(width))
@@ -864,64 +885,45 @@ func (p *SpectrumPlugin) renderProgressBar(width int) string {
 		planName = "Loading..."
 	}
 
-	completed := p.completedCount()
-	total := p.totalStories
-	if total == 0 {
-		total = 1
-	}
+	stats := fmt.Sprintf("%d/%d (%d%%)", p.completedCount(), p.totalStories, int(p.progressPercent()*100))
 
-	stats := fmt.Sprintf("%d/%d (%d%%)", completed, p.totalStories, int(p.progressPercent()*100))
-
-	// Render framebuffer prism animation with ASCII logo
-	if p.prismRenderer != nil {
-		prismStr := p.prismRenderer.String()
-		logo := renderPrismLogoStatic()
-
-		topSection := lipgloss.JoinHorizontal(lipgloss.Center, prismStr, "  ", logo)
-
-		barWidth := width - 20
-		if barWidth < 20 {
-			barWidth = 20
-		}
-		progressStr := renderSpectrumProgressBar(p.anim.ProgressPos, barWidth)
-		infoLine := fmt.Sprintf("  Plan: %s  %s  %s", planName, progressStr, stats)
-
-		content := lipgloss.JoinVertical(lipgloss.Left, topSection, infoLine)
-		return styles.PanelStyle.Width(width - 2).Render(content)
-	}
-
-	// Fallback: text-based prism
-	barWidth := width - 50
+	barWidth := width - lipgloss.Width(planName) - lipgloss.Width(stats) - 20
 	if barWidth < 20 {
 		barWidth = 20
 	}
 	progressStr := renderSpectrumProgressBar(p.anim.ProgressPos, barWidth)
-	prism := styles.RenderPrismGradientSpring(p.anim.PrismFrame, p.anim.RayLengths, p.anim.ShimmerPhase)
-	line := fmt.Sprintf("%s  Plan: %s  %s  %s", prism, planName, progressStr, stats)
+	line := fmt.Sprintf("  Plan: %s  %s  %s", planName, progressStr, stats)
 	return styles.PanelStyle.Width(width - 2).Render(line)
 }
 
-func (p *SpectrumPlugin) renderMainPanels(width int) string {
+func (p *SpectrumPlugin) renderMainPanels(width, height int) string {
 	totalWidth := width - 4
 	storyWidth := totalWidth * 40 / 100
 	activityWidth := totalWidth - storyWidth - 3
 
-	storyPanel := p.renderStoryList(storyWidth)
-	activityPanel := p.renderActivityPanel(activityWidth)
+	storyPanel := p.renderStoryList(storyWidth, height)
+	activityPanel := p.renderActivityPanel(activityWidth, height)
 
 	return lipgloss.JoinHorizontal(lipgloss.Top, storyPanel, activityPanel)
 }
 
-func (p *SpectrumPlugin) renderStoryList(width int) string {
+func (p *SpectrumPlugin) renderStoryList(width, height int) string {
 	var lines []string
 
 	title := styles.StoriesTitleStyle.Render("STORIES")
 	lines = append(lines, title)
 	lines = append(lines, styles.HorizontalLine(width-4))
 
+	// Dynamic stories per page based on available height
+	// Height budget: title (1) + separator (1) + paginator (1) + panel border (2) = 5 lines overhead
+	storiesVisible := height - 5
+	if storiesVisible < 3 {
+		storiesVisible = 3
+	}
+
 	start, end := p.storyPaginator.GetSliceBounds(len(p.stories))
 
-	for i := start; i < end && i < len(p.stories); i++ {
+	for i := start; i < end && i < len(p.stories) && (i-start) < storiesVisible; i++ {
 		story := p.stories[i]
 		icon := p.getStoryIcon(story, i)
 		style := p.getStoryStyle(story)
@@ -936,7 +938,7 @@ func (p *SpectrumPlugin) renderStoryList(width int) string {
 		lines = append(lines, style.Render(line))
 	}
 
-	for len(lines) < p.storiesPerPage+2 {
+	for len(lines) < storiesVisible+2 {
 		lines = append(lines, "")
 	}
 
@@ -947,7 +949,8 @@ func (p *SpectrumPlugin) renderStoryList(width int) string {
 	}
 
 	content := lipgloss.JoinVertical(lipgloss.Left, lines...)
-	return styles.PanelStyle.Width(width).Render(content)
+	// Height() is inner in lipgloss v1.x; border adds 2 → use h-2 so outer = h
+	return styles.PanelStyle.Width(width).Height(height - 2).Render(content)
 }
 
 func (p *SpectrumPlugin) getStoryIcon(s StoryView, index int) string {
@@ -987,7 +990,7 @@ func (p *SpectrumPlugin) getStoryStyle(s StoryView) lipgloss.Style {
 	return styles.PendingStyle
 }
 
-func (p *SpectrumPlugin) renderActivityPanel(width int) string {
+func (p *SpectrumPlugin) renderActivityPanel(width, height int) string {
 	var lines []string
 
 	title := styles.ActivityTitleStyle.Render("CURRENT ACTIVITY")
@@ -1062,10 +1065,11 @@ func (p *SpectrumPlugin) renderActivityPanel(width int) string {
 	}
 
 	content := lipgloss.JoinVertical(lipgloss.Left, lines...)
-	return styles.PanelStyle.Width(width).Render(content)
+	// Height() is inner in lipgloss v1.x; border adds 2 → use h-2 so outer = h
+	return styles.PanelStyle.Width(width).Height(height - 2).Render(content)
 }
 
-func (p *SpectrumPlugin) renderLogPanel(width int) string {
+func (p *SpectrumPlugin) renderLogPanel(width, height int) string {
 	var lines []string
 
 	title := styles.LogTitleStyle.Render("LOG OUTPUT")
@@ -1074,9 +1078,16 @@ func (p *SpectrumPlugin) renderLogPanel(width int) string {
 	lines = append(lines, header)
 	lines = append(lines, styles.HorizontalLine(width-4))
 
+	// Dynamic logs per page based on available height
+	// Height budget: header (1) + separator (1) + paginator (1) + panel border (2) = 5 lines overhead
+	logsVisible := height - 5
+	if logsVisible < 2 {
+		logsVisible = 2
+	}
+
 	start, end := p.logPaginator.GetSliceBounds(len(p.logLines))
 
-	for i := start; i < end && i < len(p.logLines); i++ {
+	for i := start; i < end && i < len(p.logLines) && (i-start) < logsVisible; i++ {
 		entry := p.logLines[i]
 		line := formatLogEntry(entry)
 
@@ -1090,7 +1101,7 @@ func (p *SpectrumPlugin) renderLogPanel(width int) string {
 		lines = append(lines, line)
 	}
 
-	for len(lines) < p.logsPerPage+2 {
+	for len(lines) < logsVisible+2 {
 		lines = append(lines, "")
 	}
 
@@ -1101,7 +1112,8 @@ func (p *SpectrumPlugin) renderLogPanel(width int) string {
 	}
 
 	content := lipgloss.JoinVertical(lipgloss.Left, lines...)
-	return styles.PanelStyle.Width(width - 2).Render(content)
+	// Height() is inner in lipgloss v1.x; border adds 2 → use h-2 so outer = h
+	return styles.PanelStyle.Width(width - 2).Height(height - 2).Render(content)
 }
 
 func (p *SpectrumPlugin) renderStatusBar(width int) string {

@@ -124,7 +124,9 @@ func (p *WorkspacesPlugin) Update(msg tea.Msg) (plugin.Plugin, tea.Cmd) {
 func (p *WorkspacesPlugin) View(width, height int) string {
 	p.width = width
 	p.height = height
-	return p.renderTwoPane(width, height)
+	breadcrumb := renderBreadcrumb("Workspaces", width, p.ctx.HasNerdFont)
+	content := p.renderTwoPane(width, height-1)
+	return lipgloss.JoinVertical(lipgloss.Left, breadcrumb, content)
 }
 
 // IsFocused returns whether the plugin is active

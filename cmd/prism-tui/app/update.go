@@ -82,7 +82,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		ctx.Height = msg.Height
 		m.Registry.UpdateContext(ctx)
 		// Broadcast resize to all plugins
-		resizeMsg := plugin.PluginResizeMsg{Width: msg.Width, Height: msg.Height}
+		resizeMsg := plugin.PluginResizeMsg{Width: msg.Width, Height: m.contentHeight()}
 		broadcastCmds := m.Registry.Broadcast(resizeMsg)
 		cmds = append(cmds, broadcastCmds...)
 		return m, tea.Batch(cmds...)

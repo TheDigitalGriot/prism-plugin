@@ -41,7 +41,7 @@ func (m Model) View() string {
 	var content string
 	active := m.Registry.ActivePlugin()
 	if active != nil {
-		content = active.View(contentWidth, m.Height)
+		content = active.View(contentWidth, m.contentHeight())
 	} else {
 		content = styles.DimStyle.Render("  No active plugin")
 	}

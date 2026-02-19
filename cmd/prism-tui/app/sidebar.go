@@ -68,10 +68,10 @@ func (m Model) renderSidebar(height int) string {
 
 	content := lipgloss.JoinVertical(lipgloss.Left, blocks...)
 
-	// Wrap in panel with max height (subtract 1 for the slash row above)
+	// Wrap in panel with max height (subtract 3 for the 3-row slash pattern above)
 	panel := styles.SidebarStyle.
 		Width(SidebarWidth).
-		MaxHeight(height - 1).
+		MaxHeight(height - 3).
 		Render(content)
 
 	// Decorative 3-row slash pattern above the panel box.

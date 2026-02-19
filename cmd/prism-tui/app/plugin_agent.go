@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/textarea"
+	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -13,16 +13,24 @@ import (
 	"github.com/prism-plugin/prism-tui/styles"
 )
 
+// inputChromeHeight is the fixed number of lines the input area consumes:
+// 1 separator rule + 1 model/prompt line = 2 lines total.
+const inputChromeHeight = 2
+
+// sidebarRatio is the percentage of width given to the conversation sidebar.
+const sidebarRatio = 25
+
 // AgentState holds state for the agent chat interface
 type AgentState struct {
 	Messages         []chat.Message
 	MessageViewport  viewport.Model
-	Input            textarea.Model
-	WideMode         bool // true = sidebar + chat, false = chat only
+	SidebarViewport  viewport.Model
+	Input            textinput.Model
+	InputFocused     bool
+	ToolsCollapsed   map[int]bool
 	ConversationList []string
 	SelectedConv     int
-	InputFocused     bool
-	ToolsCollapsed   map[int]bool // Track which tool messages are collapsed
+	WideMode         bool // true = sidebar + chat, false = chat only
 }
 
 // AgentPlugin implements the Agent chat interface
@@ -30,61 +38,58 @@ type AgentPlugin struct {
 	ctx     *plugin.Context
 	state   AgentState
 	focused bool
+	width   int
+	height  int
 }
 
 // NewAgentPlugin creates a new Agent plugin instance
 func NewAgentPlugin() *AgentPlugin {
-	// Initialize textarea for message input
-	ta := textarea.New()
-	ta.Placeholder = "Type a message... (Ctrl+Enter to send)"
-	ta.SetHeight(3)
-	ta.SetWidth(50)
-	ta.CharLimit = 2000
-	ta.ShowLineNumbers = false
+	ti := textinput.New()
+	ti.Placeholder = "Type a message… (Ctrl+Enter to send)"
+	ti.CharLimit = 2000
+	ti.Width = 50
 
 	return &AgentPlugin{
 		state: AgentState{
-			Messages:       []chat.Message{},
-			WideMode:       true,
-			ConversationList: []string{"Current Session"},
-			SelectedConv:   0,
-			Input:          ta,
-			InputFocused:   true,
+			Messages:   []chat.Message{},
+			Input:      ti,
+			InputFocused: true,
 			ToolsCollapsed: make(map[int]bool),
+			ConversationList: []string{
+				"Current Session",
+				"Research: auth flow",
+				"Debug: API timeout",
+				"Plan: migration v2",
+			},
+			SelectedConv: 0,
+			WideMode:     true,
 		},
 	}
 }
 
 // ID returns the plugin identifier
-func (p *AgentPlugin) ID() string {
-	return "agent"
-}
+func (p *AgentPlugin) ID() string { return "agent" }
 
 // Name returns the display name
-func (p *AgentPlugin) Name() string {
-	return "Agent"
-}
+func (p *AgentPlugin) Name() string { return "Agent" }
 
 // Icon returns the tab icon
-func (p *AgentPlugin) Icon() string {
-	return ""
-}
+func (p *AgentPlugin) Icon() string { return "" }
 
 // Init initializes the plugin with context
 func (p *AgentPlugin) Init(ctx *plugin.Context) error {
 	p.ctx = ctx
-	// Initialize viewport for message history
-	p.state.MessageViewport = viewport.New(ctx.Width-4, ctx.Height-10)
-	p.state.Input.SetWidth(ctx.Width - 10)
+	p.state.MessageViewport = viewport.New(ctx.Width-4, ctx.Height-inputChromeHeight-1)
+	p.state.SidebarViewport = viewport.New(20, ctx.Height-1)
+	p.state.Input.Width = ctx.Width - 10
 	return nil
 }
 
 // Start is called when the plugin is first activated
 func (p *AgentPlugin) Start() tea.Cmd {
-	// Focus the input when the plugin starts
 	p.state.Input.Focus()
 	p.state.InputFocused = true
-	return textarea.Blink
+	return textinput.Blink
 }
 
 // Stop is called when deactivated
@@ -103,63 +108,188 @@ func (p *AgentPlugin) Update(msg tea.Msg) (plugin.Plugin, tea.Cmd) {
 		return p.handleKeyPress(msg)
 
 	case plugin.PluginResizeMsg:
-		// Update viewport and input dimensions
-		viewportHeight := msg.Height - 12 // Leave room for header, input, footer
-		if viewportHeight < 10 {
-			viewportHeight = 10
-		}
+		p.width = msg.Width
+		p.height = msg.Height
+		return p, nil
 
-		inputWidth := msg.Width - 10
-		if p.state.WideMode {
-			inputWidth = (msg.Width * 2 / 3) - 6 // 2/3 width in wide mode
-		}
-
-		p.state.MessageViewport.Width = inputWidth
-		p.state.MessageViewport.Height = viewportHeight
-		p.state.Input.SetWidth(inputWidth)
-
+	case AddMessageMsg:
+		p.state.Messages = append(p.state.Messages, msg.Message)
 		return p, nil
 	}
 
-	// Update input if focused
 	if p.state.InputFocused {
 		p.state.Input, cmd = p.state.Input.Update(msg)
 		cmds = append(cmds, cmd)
 	}
 
-	// Update viewport
 	p.state.MessageViewport, cmd = p.state.MessageViewport.Update(msg)
 	cmds = append(cmds, cmd)
 
 	return p, tea.Batch(cmds...)
 }
 
-// View renders the agent chat interface
+// View renders the agent chat interface.
+// Layout: breadcrumb + body = height (measured dynamically to avoid off-by-one)
 func (p *AgentPlugin) View(width, height int) string {
-	var sections []string
+	breadcrumb := renderBreadcrumb("Agent", width, p.ctx.HasNerdFont)
 
-	// Powerline breadcrumb header
-	sections = append(sections, renderBreadcrumb("Agent", width, p.ctx.HasNerdFont))
-	sections = append(sections, "")
-
-	// Main content area
-	if p.state.WideMode {
-		// Wide mode: sidebar + chat
-		content := p.renderWideMode(width, height-6)
-		sections = append(sections, content)
-	} else {
-		// Compact mode: full-width chat
-		content := p.renderCompactMode(width, height-6)
-		sections = append(sections, content)
+	bcHeight := lipgloss.Height(breadcrumb)
+	contentHeight := height - bcHeight
+	if contentHeight < 3 {
+		contentHeight = 3
 	}
 
-	return lipgloss.JoinVertical(lipgloss.Left, sections...)
+	var body string
+	if p.state.WideMode && width >= 60 {
+		body = p.renderWideLayout(width, contentHeight)
+	} else {
+		body = p.renderChatColumn(width, contentHeight)
+	}
+
+	return lipgloss.JoinVertical(lipgloss.Left, breadcrumb, body)
+}
+
+// renderWideLayout renders sidebar + divider + chat side by side.
+// Both columns produce exactly contentHeight lines, joined horizontally via manual line zipping.
+func (p *AgentPlugin) renderWideLayout(width, contentHeight int) string {
+	sidebarWidth := width * sidebarRatio / 100
+	if sidebarWidth < 20 {
+		sidebarWidth = 20
+	}
+	dividerWidth := 1
+	chatWidth := width - sidebarWidth - dividerWidth
+
+	sidebarStr := p.renderSidebar(sidebarWidth, contentHeight)
+	chatStr := p.renderChatColumn(chatWidth, contentHeight)
+
+	// Divider column (thin vertical line)
+	divStyle := lipgloss.NewStyle().Foreground(styles.Dim)
+	divLine := divStyle.Render("│")
+
+	sidebarLines := strings.Split(sidebarStr, "\n")
+	chatLines := strings.Split(chatStr, "\n")
+
+	var combined []string
+	for i := 0; i < contentHeight; i++ {
+		left := ""
+		if i < len(sidebarLines) {
+			left = sidebarLines[i]
+		}
+		// Pad left to exact sidebar width
+		leftW := lipgloss.Width(left)
+		if leftW < sidebarWidth {
+			left += strings.Repeat(" ", sidebarWidth-leftW)
+		}
+
+		right := ""
+		if i < len(chatLines) {
+			right = chatLines[i]
+		}
+
+		combined = append(combined, left+divLine+right)
+	}
+	return strings.Join(combined, "\n")
+}
+
+// renderChatColumn renders the chat viewport + separator + input as exactly `height` lines.
+func (p *AgentPlugin) renderChatColumn(width, height int) string {
+	vpHeight := height - inputChromeHeight
+	if vpHeight < 1 {
+		vpHeight = 1
+	}
+
+	// Sync viewport
+	p.state.MessageViewport.Width = width - 2
+	p.state.MessageViewport.Height = vpHeight
+	content := p.renderMessages(width - 2)
+	p.state.MessageViewport.SetContent(content)
+
+	vpView := p.state.MessageViewport.View()
+
+	// Pad/truncate viewport to exact height
+	vpLines := strings.Split(vpView, "\n")
+	for len(vpLines) < vpHeight {
+		vpLines = append(vpLines, "")
+	}
+	if len(vpLines) > vpHeight {
+		vpLines = vpLines[:vpHeight]
+	}
+
+	// Separator
+	sepStyle := lipgloss.NewStyle().Foreground(styles.Dim)
+	separator := sepStyle.Render(strings.Repeat("─", width))
+
+	// Input prompt
+	promptStyle := lipgloss.NewStyle().Foreground(styles.Primary).Bold(true)
+	p.state.Input.Width = width - 6
+	inputLine := " " + promptStyle.Render("❯ ") + p.state.Input.View()
+
+	return strings.Join(vpLines, "\n") + "\n" + separator + "\n" + inputLine
+}
+
+// renderSidebar renders the conversation list as exactly `height` lines with a scrollable viewport.
+func (p *AgentPlugin) renderSidebar(width, height int) string {
+	// Build conversation list content for the viewport
+	var lines []string
+
+	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(styles.White)
+	lines = append(lines, " "+titleStyle.Render("Conversations"))
+	lines = append(lines, "")
+
+	for i, conv := range p.state.ConversationList {
+		selected := i == p.state.SelectedConv
+
+		var icon string
+		if selected {
+			icon = "●"
+		} else {
+			icon = "○"
+		}
+
+		label := fmt.Sprintf(" %s %s", icon, conv)
+
+		// Truncate if wider than sidebar
+		if lipgloss.Width(label) > width-1 {
+			label = label[:width-2] + "…"
+		}
+
+		if selected {
+			line := lipgloss.NewStyle().
+				Foreground(styles.Primary).
+				Bold(true).
+				Background(styles.Secondary).
+				Width(width).
+				Render(label)
+			lines = append(lines, line)
+		} else {
+			line := lipgloss.NewStyle().
+				Foreground(styles.Dim).
+				Render(label)
+			lines = append(lines, line)
+		}
+	}
+
+	// Set viewport content and dimensions
+	p.state.SidebarViewport.Width = width
+	p.state.SidebarViewport.Height = height
+	p.state.SidebarViewport.SetContent(strings.Join(lines, "\n"))
+
+	vpView := p.state.SidebarViewport.View()
+
+	// Pad/truncate to exact height
+	vpLines := strings.Split(vpView, "\n")
+	for len(vpLines) < height {
+		vpLines = append(vpLines, "")
+	}
+	if len(vpLines) > height {
+		vpLines = vpLines[:height]
+	}
+
+	return strings.Join(vpLines, "\n")
 }
 
 // IsFocused returns whether the plugin is active
-func (p *AgentPlugin) IsFocused() bool {
-	return p.focused
-}
+func (p *AgentPlugin) IsFocused() bool { return p.focused }
 
 // SetFocused sets the focus state
 func (p *AgentPlugin) SetFocused(focused bool) {
@@ -188,29 +318,24 @@ func (p *AgentPlugin) handleKeyPress(msg tea.KeyMsg) (plugin.Plugin, tea.Cmd) {
 
 	switch key {
 	case "ctrl+b":
-		// Toggle wide/compact mode
 		p.state.WideMode = !p.state.WideMode
 		return p, nil
 
 	case "ctrl+enter":
-		// Send message
 		if p.state.InputFocused {
 			return p, p.sendMessage()
 		}
 		return p, nil
 
 	case "esc", "backspace":
-		// Return to home
 		return p, func() tea.Msg {
 			return plugin.FocusPluginMsg{ID: "home"}
 		}
 
 	case "ctrl+c":
-		// Let ctrl+c bubble up for quit
 		return p, nil
 
 	default:
-		// Forward to input if focused
 		if p.state.InputFocused {
 			var cmd tea.Cmd
 			p.state.Input, cmd = p.state.Input.Update(msg)
@@ -221,143 +346,7 @@ func (p *AgentPlugin) handleKeyPress(msg tea.KeyMsg) (plugin.Plugin, tea.Cmd) {
 	return p, nil
 }
 
-// renderWideMode renders the two-pane layout with sidebar
-func (p *AgentPlugin) renderWideMode(width, height int) string {
-	// Sidebar width (1/3 of total)
-	sidebarWidth := width / 3
-	if sidebarWidth < 20 {
-		sidebarWidth = 20
-	}
-
-	// Chat area width (2/3 of total)
-	chatWidth := width - sidebarWidth - 4
-
-	// Render sidebar (conversation list)
-	sidebar := p.renderSidebar(sidebarWidth, height)
-
-	// Render chat area (messages + input)
-	chatArea := p.renderChatArea(chatWidth, height)
-
-	// Combine side by side
-	sidebarLines := strings.Split(sidebar, "\n")
-	chatLines := strings.Split(chatArea, "\n")
-
-	maxLines := len(sidebarLines)
-	if len(chatLines) > maxLines {
-		maxLines = len(chatLines)
-	}
-
-	var combined []string
-	for i := 0; i < maxLines; i++ {
-		left := ""
-		right := ""
-
-		if i < len(sidebarLines) {
-			left = sidebarLines[i]
-		} else {
-			left = strings.Repeat(" ", sidebarWidth)
-		}
-
-		if i < len(chatLines) {
-			right = chatLines[i]
-		}
-
-		combined = append(combined, left+"  "+right)
-	}
-
-	return strings.Join(combined, "\n")
-}
-
-// renderCompactMode renders the full-width chat area
-func (p *AgentPlugin) renderCompactMode(width, height int) string {
-	return p.renderChatArea(width-4, height)
-}
-
-// renderSidebar renders the conversation list
-func (p *AgentPlugin) renderSidebar(width, height int) string {
-	var lines []string
-
-	// Title
-	title := styles.PanelTitleStyle.Render("Conversations")
-	lines = append(lines, "  "+title)
-	lines = append(lines, "")
-
-	// Conversation list
-	for i, conv := range p.state.ConversationList {
-		selected := i == p.state.SelectedConv
-		icon := "○"
-		if selected {
-			icon = "●"
-		}
-
-		line := fmt.Sprintf("  %s %s", icon, conv)
-		if selected {
-			line = styles.CurrentStyle.Render(line)
-		} else {
-			line = styles.DimStyle.Render(line)
-		}
-
-		lines = append(lines, line)
-	}
-
-	// Pad to height
-	for len(lines) < height {
-		lines = append(lines, "")
-	}
-
-	// Apply border
-	content := strings.Join(lines, "\n")
-	bordered := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(styles.Dim).
-		Width(width).
-		Height(height).
-		Render(content)
-
-	return bordered
-}
-
-// renderChatArea renders the message history and input area
-func (p *AgentPlugin) renderChatArea(width, height int) string {
-	var sections []string
-
-	// Message history viewport
-	historyHeight := height - 6 // Leave room for input area
-	if historyHeight < 5 {
-		historyHeight = 5
-	}
-
-	// Render messages
-	messageContent := p.renderMessages(width - 4)
-	p.state.MessageViewport.SetContent(messageContent)
-	p.state.MessageViewport.Width = width - 2
-	p.state.MessageViewport.Height = historyHeight
-
-	historyView := p.state.MessageViewport.View()
-	historyBordered := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(styles.Dim).
-		Width(width).
-		Height(historyHeight + 2).
-		Render(historyView)
-
-	sections = append(sections, historyBordered)
-	sections = append(sections, "")
-
-	// Input area
-	inputView := p.state.Input.View()
-	inputBordered := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(styles.Info).
-		Width(width).
-		Render(inputView)
-
-	sections = append(sections, inputBordered)
-
-	return strings.Join(sections, "\n")
-}
-
-// renderMessages renders all messages in the chat
+// renderMessages renders all messages as inline text
 func (p *AgentPlugin) renderMessages(width int) string {
 	if len(p.state.Messages) == 0 {
 		return styles.DimStyle.Render("  No messages yet. Start a conversation!")
@@ -368,9 +357,8 @@ func (p *AgentPlugin) renderMessages(width int) string {
 		collapsed := p.state.ToolsCollapsed[i]
 		msgRendered := chat.RenderMessage(msg, width, collapsed)
 		rendered = append(rendered, msgRendered)
-		rendered = append(rendered, "") // Spacing between messages
+		rendered = append(rendered, "")
 	}
-
 	return strings.Join(rendered, "\n")
 }
 
@@ -381,26 +369,18 @@ func (p *AgentPlugin) sendMessage() tea.Cmd {
 		return nil
 	}
 
-	// Add user message
 	userMsg := chat.Message{
 		Type:    chat.MessageTypeUser,
 		Content: content,
 	}
 	p.state.Messages = append(p.state.Messages, userMsg)
-
-	// Clear input
 	p.state.Input.Reset()
 
-	// TODO: Send to Claude CLI and stream response
-	// For now, add a placeholder assistant response
 	return func() tea.Msg {
-		// Placeholder: In a real implementation, this would call claude CLI
-		// and stream the response back
-		assistantMsg := chat.Message{
+		return AddMessageMsg{Message: chat.Message{
 			Type:    chat.MessageTypeAssistant,
-			Content: "I'm a placeholder response. In the future, I'll integrate with the Claude CLI to provide real responses.",
-		}
-		return AddMessageMsg{Message: assistantMsg}
+			Content: fmt.Sprintf("I'm a placeholder response. In the future, I'll integrate with the Claude CLI to provide real responses."),
+		}}
 	}
 }
 

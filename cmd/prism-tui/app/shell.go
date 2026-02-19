@@ -9,6 +9,46 @@ import (
 	"github.com/prism-plugin/prism-tui/styles"
 )
 
+// Chrome height constants for the app shell.
+const (
+	FooterHeight       = 3 // key hints (border-top + content) + powerline bar
+	PowerlineTabHeight = 3 // 3-line powerline tab bar
+	CompactTabHeight   = 2 // 1-line compact tabs + separator rule
+)
+
+// tabBarHeight returns the height of the tab bar based on whether powerline or compact mode is active.
+func (m Model) tabBarHeight(width int) int {
+	icons := styles.GetIcons(m.HasNerdFont)
+	totalPowerlineWidth := 0
+	for _, view := range m.TabOrder {
+		pluginID := viewToPluginID(view)
+		p := m.Registry.PluginByID(pluginID)
+		if p == nil {
+			continue
+		}
+		icon := tabIcon(pluginID, icons)
+		label := tabLabel(pluginID, p.Name(), icon)
+		totalPowerlineWidth += lipgloss.Width(label) + 2 + 1
+	}
+	if totalPowerlineWidth > width {
+		return CompactTabHeight
+	}
+	return PowerlineTabHeight
+}
+
+// contentHeight returns the available height for plugin content after subtracting chrome (tab bar + footer).
+func (m Model) contentHeight() int {
+	tabWidth := m.Width
+	if m.showSidebar() {
+		tabWidth = m.Width - SidebarWidth
+	}
+	h := m.Height - m.tabBarHeight(tabWidth) - FooterHeight
+	if h < 1 {
+		h = 1
+	}
+	return h
+}
+
 // renderAppShell renders the application shell with tab bar, content, and footer.
 // When the terminal is wide enough (>= 120 cols), a full-height right-side panel
 // (inspired by Crush) is rendered alongside the left column (tabs + content + footer).
@@ -20,8 +60,8 @@ func (m Model) renderAppShell(content string) string {
 		tabBar := m.renderTabBar(leftWidth)
 		leftColumn := lipgloss.JoinVertical(lipgloss.Left, tabBar, content)
 
-		// Sidebar spans full height (only subtract footer's 2 lines)
-		sidebarHeight := m.Height - 2
+		// Sidebar spans full height (subtract footer)
+		sidebarHeight := m.Height - FooterHeight
 		mainRow := lipgloss.JoinHorizontal(lipgloss.Top, leftColumn, m.renderSidebar(sidebarHeight))
 
 		// Two-tier footer at full terminal width

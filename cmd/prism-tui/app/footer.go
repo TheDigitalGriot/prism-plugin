@@ -44,26 +44,13 @@ func (m Model) workflowPhaseColor() lipgloss.Color {
 func (m Model) renderKeyHintsFooter(width int) string {
 	var hints []string
 
-	// Global hints
-	hints = append(hints, fmt.Sprintf("[1-%d] switch tabs", len(m.TabOrder)))
-	hints = append(hints, "[tab/shift+tab] cycle")
-
-	// Get view-specific hints from active plugin
+	// View-specific hints from active plugin (global keys are in the [?] help modal)
 	active := m.Registry.ActivePlugin()
 	if active != nil {
 		for _, kh := range active.KeyHints() {
 			hints = append(hints, fmt.Sprintf("[%s] %s", kh.Key, kh.Description))
 		}
 	}
-
-	// Sidebar toggle hint
-	if width >= CompactBreakpointWidth {
-		hints = append(hints, "[ctrl+d] details")
-	}
-
-	// Always show help and quit
-	hints = append(hints, "[?] help")
-	hints = append(hints, "[q] quit")
 
 	footerText := strings.Join(hints, "  ")
 	bg := lipgloss.Color("#232435")
@@ -142,7 +129,7 @@ func (m Model) renderPowerlineFooter(width int) string {
 		leftSegments = append(leftSegments, styles.Segment{
 			Content:    tabContent,
 			Foreground: styles.White,
-			Background: lipgloss.Color("#2c2d3a"),
+			Background: styles.Secondary,
 		})
 	}
 
@@ -245,11 +232,12 @@ func (m Model) renderPowerlineFooter(width int) string {
 		}
 	}
 
-	// Build powerline bars using detected icon set
-	left := styles.BuildPowerline(leftSegments, width, styles.FooterBg, icons)
-	right := styles.BuildPowerlineRight(rightSegments, styles.FooterBg, icons)
+	// Build powerline bars using detected terminal background
+	barBg := lipgloss.Color(fmt.Sprintf("#%02x%02x%02x", styles.TermBgR, styles.TermBgG, styles.TermBgB))
+	left := styles.BuildPowerline(leftSegments, width, barBg, icons)
+	right := styles.BuildPowerlineRight(rightSegments, barBg, icons)
 
-	return styles.RenderPowerlineBar(left, right, width, styles.FooterBg)
+	return styles.RenderPowerlineBar(left, right, width, barBg)
 }
 
 // renderTwoTierFooter renders both tiers stacked vertically

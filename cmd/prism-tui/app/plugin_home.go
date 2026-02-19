@@ -93,9 +93,6 @@ func (p *HomePlugin) Update(msg tea.Msg) (plugin.Plugin, tea.Cmd) {
 func (p *HomePlugin) View(width, height int) string {
 	var sections []string
 
-	// ASCII logo (prism is now in app shell header)
-	logo := renderPrismLogoStatic()
-	sections = append(sections, styles.PanelStyle.Width(width-2).Render(logo))
 	sections = append(sections, "")
 
 	// Menu items

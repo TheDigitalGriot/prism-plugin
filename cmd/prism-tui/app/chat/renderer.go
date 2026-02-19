@@ -44,118 +44,87 @@ func RenderMessage(msg Message, width int, collapsed bool) string {
 	}
 }
 
-// renderUserMessage renders a user message as a right-aligned bubble with blue border
+// renderUserMessage renders a user message with "> " prompt prefix (opencode style)
 func renderUserMessage(content string, width int) string {
-	// User message style: blue border, right-aligned
-	bubbleWidth := width - 20 // Leave space on the left for right-alignment
-	if bubbleWidth < 30 {
-		bubbleWidth = 30
+	promptStyle := lipgloss.NewStyle().Foreground(styles.Info).Bold(true)
+	contentStyle := lipgloss.NewStyle().Foreground(styles.White)
+
+	contentWidth := width - 4
+	if contentWidth < 20 {
+		contentWidth = 20
 	}
-	if bubbleWidth > 60 {
-		bubbleWidth = 60
+	wrapped := wrapText(content, contentWidth)
+	lines := strings.Split(wrapped, "\n")
+
+	var result []string
+	for i, line := range lines {
+		if i == 0 {
+			result = append(result, promptStyle.Render("> ")+contentStyle.Render(line))
+		} else {
+			result = append(result, "  "+contentStyle.Render(line))
+		}
 	}
-
-	// Wrap content to fit bubble width
-	wrapped := wrapText(content, bubbleWidth-4)
-
-	// Create bubble with blue border
-	bubbleStyle := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(styles.Info).
-		Padding(0, 1).
-		Width(bubbleWidth).
-		Align(lipgloss.Left)
-
-	bubble := bubbleStyle.Render(wrapped)
-
-	// Right-align the bubble
-	leftPadding := width - lipgloss.Width(bubble) - 2
-	if leftPadding < 0 {
-		leftPadding = 0
-	}
-
-	return strings.Repeat(" ", leftPadding) + bubble
+	return strings.Join(result, "\n")
 }
 
-// renderAssistantMessage renders an assistant message as left-aligned content
+// renderAssistantMessage renders assistant output with a colored left bar and
+// subtle background, inspired by the opencode chat style.
 func renderAssistantMessage(content string, width int) string {
-	// Assistant message style: left-aligned, subtle border
-	bubbleWidth := width - 10
-	if bubbleWidth < 40 {
-		bubbleWidth = 40
-	}
-	if bubbleWidth > 80 {
-		bubbleWidth = 80
+	// The left accent bar is 1 char ("▎") + 1 space padding = 2 chars of chrome
+	barWidth := 2
+	contentWidth := width - barWidth - 2
+	if contentWidth < 20 {
+		contentWidth = 20
 	}
 
-	// Parse and render markdown-lite
-	rendered := renderMarkdownLite(content, bubbleWidth-4)
+	rendered := renderMarkdownLite(content, contentWidth)
+	lines := strings.Split(rendered, "\n")
 
-	// Create content area with subtle border
-	bubbleStyle := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(styles.Dim).
-		Padding(0, 1).
-		Width(bubbleWidth).
-		Align(lipgloss.Left)
+	barStyle := lipgloss.NewStyle().Foreground(styles.Primary)
+	bgStyle := lipgloss.NewStyle().
+		Background(lipgloss.Color("#1e1f2e")).
+		Width(width - barWidth)
 
-	return "  " + bubbleStyle.Render(rendered)
+	var result []string
+	for _, line := range lines {
+		bar := barStyle.Render("▎")
+		padded := bgStyle.Render(" " + line)
+		result = append(result, bar+padded)
+	}
+	return strings.Join(result, "\n")
 }
 
-// renderToolMessage renders a tool call with icon, name, and status
+// renderToolMessage renders a tool call as a compact single-line status indicator
 func renderToolMessage(toolName, description, status string, width int, collapsed bool) string {
-	// Icon based on status
-	icon := "○"
-	iconColor := styles.Dim
+	var indicator string
 	switch status {
 	case "running":
-		icon = "▸"
-		iconColor = styles.Info
+		indicator = lipgloss.NewStyle().Foreground(styles.Info).Render("  ▸ ")
 	case "complete":
-		icon = "✓"
-		iconColor = styles.Success
+		indicator = lipgloss.NewStyle().Foreground(styles.Success).Render("  ✓ ")
 	case "error":
-		icon = "✗"
-		iconColor = styles.Error
+		indicator = lipgloss.NewStyle().Foreground(styles.Error).Render("  ✗ ")
+	default:
+		indicator = lipgloss.NewStyle().Foreground(styles.Dim).Render("  ○ ")
 	}
 
-	styledIcon := lipgloss.NewStyle().Foreground(iconColor).Render(icon)
-
-	// Tool name styling
 	toolStyle := lipgloss.NewStyle().Bold(true).Foreground(styles.Info)
-	toolNameStyled := toolStyle.Render(toolName)
+	header := indicator + toolStyle.Render(toolName)
 
-	// Status badge
-	statusBadge := ""
-	switch status {
-	case "running":
-		statusBadge = styles.InfoStyle.Render(" [running]")
-	case "complete":
-		statusBadge = styles.SuccessStyle.Render(" [done]")
-	case "error":
-		statusBadge = styles.ErrorStyle.Render(" [error]")
+	if description != "" && !collapsed {
+		descStyle := lipgloss.NewStyle().Foreground(styles.Dim)
+		desc := description
+		maxDesc := width - lipgloss.Width(header) - 4
+		if maxDesc > 0 && lipgloss.Width(desc) > maxDesc {
+			desc = desc[:maxDesc-1] + "…"
+		}
+		header += " " + descStyle.Render(desc)
 	}
 
-	// Header line
-	header := "  " + styledIcon + " " + toolNameStyled + statusBadge
-
-	if collapsed || description == "" {
-		return header
-	}
-
-	// Expanded view: show description/details
-	detailStyle := lipgloss.NewStyle().
-		Foreground(styles.Dim).
-		PaddingLeft(4)
-
-	wrapped := wrapText(description, width-8)
-	details := detailStyle.Render(wrapped)
-
-	return header + "\n" + details
+	return header
 }
 
 // renderMarkdownLite renders basic markdown formatting
-// Supports: **bold**, `code`, code blocks, and lists
 func renderMarkdownLite(content string, width int) string {
 	lines := strings.Split(content, "\n")
 	var rendered []string
@@ -164,17 +133,14 @@ func renderMarkdownLite(content string, width int) string {
 	codeBlockLines := []string{}
 
 	for _, line := range lines {
-		// Code block detection
 		if strings.HasPrefix(strings.TrimSpace(line), "```") {
 			if inCodeBlock {
-				// End code block
 				codeBlock := renderCodeBlock(codeBlockLines, width)
 				rendered = append(rendered, codeBlock)
 				codeBlockLines = []string{}
 				inCodeBlock = false
 				continue
 			} else {
-				// Start code block
 				inCodeBlock = true
 				continue
 			}
@@ -185,10 +151,8 @@ func renderMarkdownLite(content string, width int) string {
 			continue
 		}
 
-		// Process inline markdown
 		processed := processInlineMarkdown(line)
 
-		// List detection
 		if strings.HasPrefix(strings.TrimSpace(line), "- ") || strings.HasPrefix(strings.TrimSpace(line), "* ") {
 			processed = "  • " + strings.TrimSpace(strings.TrimPrefix(strings.TrimPrefix(strings.TrimSpace(line), "-"), "*"))
 		}
@@ -196,7 +160,6 @@ func renderMarkdownLite(content string, width int) string {
 		rendered = append(rendered, processed)
 	}
 
-	// Handle unclosed code block
 	if inCodeBlock && len(codeBlockLines) > 0 {
 		codeBlock := renderCodeBlock(codeBlockLines, width)
 		rendered = append(rendered, codeBlock)
@@ -207,7 +170,6 @@ func renderMarkdownLite(content string, width int) string {
 
 // processInlineMarkdown handles **bold** and `code` formatting
 func processInlineMarkdown(text string) string {
-	// Process **bold**
 	result := text
 	for strings.Contains(result, "**") {
 		start := strings.Index(result, "**")
@@ -225,7 +187,6 @@ func processInlineMarkdown(text string) string {
 		result = result[:start] + styledBold + result[end+2:]
 	}
 
-	// Process `code`
 	for strings.Contains(result, "`") {
 		start := strings.Index(result, "`")
 		if start == -1 {
@@ -275,7 +236,6 @@ func wrapText(text string, width int) string {
 	currentLine := words[0]
 
 	for _, word := range words[1:] {
-		// Check if adding this word would exceed width
 		if lipgloss.Width(currentLine+" "+word) > width {
 			lines = append(lines, currentLine)
 			currentLine = word
@@ -284,7 +244,6 @@ func wrapText(text string, width int) string {
 		}
 	}
 
-	// Add the last line
 	if currentLine != "" {
 		lines = append(lines, currentLine)
 	}

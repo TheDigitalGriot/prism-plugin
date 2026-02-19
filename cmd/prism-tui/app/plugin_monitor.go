@@ -156,21 +156,51 @@ func (p *MonitorPlugin) View(width, height int) string {
 	sections = append(sections, renderBreadcrumb("Monitor", width, p.ctx.HasNerdFont))
 	sections = append(sections, "")
 
-	// Main content: 3 panels side by side
-	contentHeight := height - 6
+	// height is now content-area; subtract breadcrumb(2) + footer area(2: blank + refresh timestamp)
+	contentHeight := height - 4
+	if contentHeight < 4 {
+		contentHeight = 4
+	}
 
-	// Panel 1: System Health (left third)
-	healthPanel := p.renderHealthPanel(width/3 - 2, contentHeight)
+	// Layout constants for three-panel horizontal split.
+	// lipgloss Width()/Height() are inner dimensions; border adds 2 to outer.
+	const (
+		minPanelInner  = 25 // minimum inner width per panel for readable content
+		panelBorder    = 2  // border adds 2 to outer width (left + right)
+		separatorChars = 2  // "  " gap between adjacent panels
+		numPanels      = 3
+		numGaps        = 2  // gaps between 3 panels
+	)
+	chrome := numGaps*separatorChars + numPanels*panelBorder // 4 + 6 = 10
+	minThreePanelWidth := minPanelInner*numPanels + chrome   // 75 + 10 = 85
 
-	// Panel 2: Execution History (middle third)
-	historyPanel := p.renderHistoryPanel(width/3 - 2, contentHeight)
+	if width >= minThreePanelWidth {
+		// Three-panel horizontal layout — fits comfortably
+		usable := width - chrome
+		panelWidth := usable / 3
+		lastPanelWidth := usable - panelWidth*2 // absorb integer-division remainder
 
-	// Panel 3: Quality Gates (right third)
-	gatesPanel := p.renderQualityGatesPanel(width/3 - 2, contentHeight)
+		healthPanel := p.renderHealthPanel(panelWidth, contentHeight)
+		historyPanel := p.renderHistoryPanel(panelWidth, contentHeight)
+		gatesPanel := p.renderQualityGatesPanel(lastPanelWidth, contentHeight)
 
-	// Combine panels horizontally
-	panelsRow := lipgloss.JoinHorizontal(lipgloss.Top, healthPanel, "  ", historyPanel, "  ", gatesPanel)
-	sections = append(sections, panelsRow)
+		panelsRow := lipgloss.JoinHorizontal(lipgloss.Top, healthPanel, "  ", historyPanel, "  ", gatesPanel)
+		sections = append(sections, panelsRow)
+	} else {
+		// Stacked vertical layout — terminal too narrow for three columns
+		stackWidth := width - panelBorder
+		if stackWidth < minPanelInner {
+			stackWidth = minPanelInner
+		}
+		stackHeight := (contentHeight - 2) / 3 // -2 for gaps between stacked panels
+		if stackHeight < 6 {
+			stackHeight = 6
+		}
+
+		sections = append(sections, p.renderHealthPanel(stackWidth, stackHeight))
+		sections = append(sections, p.renderHistoryPanel(stackWidth, stackHeight))
+		sections = append(sections, p.renderQualityGatesPanel(stackWidth, stackHeight))
+	}
 
 	// Footer with last refresh time
 	lastRefresh := p.state.LastRefresh.Format("15:04:05")
@@ -267,11 +297,12 @@ func (p *MonitorPlugin) renderHealthPanel(width, height int) string {
 	}
 
 	content := strings.Join(lines, "\n")
+	// Height() is inner in lipgloss v1.x; border adds 2 → use h-2 so outer = h
 	return lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(styles.Info).
 		Width(width).
-		Height(height).
+		Height(height - 2).
 		Render(content)
 }
 
@@ -287,10 +318,24 @@ func (p *MonitorPlugin) renderHistoryPanel(width, height int) string {
 	if len(p.state.History) == 0 {
 		lines = append(lines, "  "+styles.DimStyle.Render("No executions yet"))
 	} else {
-		// Table header
-		header := fmt.Sprintf("  %-10s %-16s %8s %s", "Story", "Result", "Duration", "Time")
+		// Responsive table: show Time column only when panel is wide enough.
+		// Compact row visual width ≈ 30 chars; with time ≈ 40 chars.
+		tableW := width - 2 // usable width inside 2-char left indent
+		showTime := tableW >= 40
+
+		// Table header (extra space accounts for icon column in data rows)
+		var header string
+		if showTime {
+			header = fmt.Sprintf("  %-10s    %-7s %6s  %-8s", "Story", "Result", "Dur.", "Time")
+		} else {
+			header = fmt.Sprintf("  %-10s    %-7s %6s", "Story", "Result", "Dur.")
+		}
 		lines = append(lines, styles.DimStyle.Render(header))
-		lines = append(lines, "  "+strings.Repeat("─", width-4))
+		sepW := tableW
+		if sepW < 1 {
+			sepW = 1
+		}
+		lines = append(lines, "  "+strings.Repeat("─", sepW))
 
 		// Show last 10 executions (most recent first)
 		start := 0
@@ -315,22 +360,32 @@ func (p *MonitorPlugin) renderHistoryPanel(width, height int) string {
 			// Format duration
 			durationStr := record.Duration.Truncate(time.Second).String()
 
-			// Format timestamp
-			timeStr := record.Timestamp.Format("15:04:05")
-
 			// Truncate story ID if needed
 			storyID := record.StoryID
 			if len(storyID) > 10 {
 				storyID = storyID[:10]
 			}
 
-			row := fmt.Sprintf("  %-10s %s %-10s %8s %s",
-				storyID,
-				statusStyle.Render(statusIcon),
-				record.Result,
-				durationStr,
-				timeStr,
-			)
+			// Build row with compact columns to prevent wrapping.
+			// ANSI-styled icon is placed via %s (1 visual char); other columns use fixed widths.
+			var row string
+			if showTime {
+				timeStr := record.Timestamp.Format("15:04:05")
+				row = fmt.Sprintf("  %10s  %s %-7s %6s  %s",
+					storyID,
+					statusStyle.Render(statusIcon),
+					record.Result,
+					durationStr,
+					timeStr,
+				)
+			} else {
+				row = fmt.Sprintf("  %10s  %s %-7s %6s",
+					storyID,
+					statusStyle.Render(statusIcon),
+					record.Result,
+					durationStr,
+				)
+			}
 
 			// Highlight selected row
 			if i == p.state.SelectedRow && p.focused {
@@ -347,11 +402,12 @@ func (p *MonitorPlugin) renderHistoryPanel(width, height int) string {
 	}
 
 	content := strings.Join(lines, "\n")
+	// Height() is inner in lipgloss v1.x; border adds 2 → use h-2 so outer = h
 	return lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(styles.Success).
 		Width(width).
-		Height(height).
+		Height(height - 2).
 		Render(content)
 }
 
@@ -413,8 +469,13 @@ func (p *MonitorPlugin) renderQualityGatesPanel(width, height int) string {
 		lines = append(lines, "")
 	}
 
-	// Hint
-	lines = append(lines, "  "+styles.DimStyle.Render("Run: make test, make lint, make build"))
+	// Hint — truncate to fit panel width (2-char indent + content must fit in width)
+	hint := "Run: make test, make lint, make build"
+	maxHint := width - 2
+	if maxHint > 0 && len(hint) > maxHint {
+		hint = hint[:maxHint-1] + "…"
+	}
+	lines = append(lines, "  "+styles.DimStyle.Render(hint))
 
 	// Pad to height
 	for len(lines) < height-2 {
@@ -422,11 +483,12 @@ func (p *MonitorPlugin) renderQualityGatesPanel(width, height int) string {
 	}
 
 	content := strings.Join(lines, "\n")
+	// Height() is inner in lipgloss v1.x; border adds 2 → use h-2 so outer = h
 	return lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(styles.Warning).
 		Width(width).
-		Height(height).
+		Height(height - 2).
 		Render(content)
 }
 

@@ -46,7 +46,7 @@ func (p *PlansPlugin) Icon() string {
 func (p *PlansPlugin) Init(ctx *plugin.Context) error {
 	p.ctx = ctx
 	// Initialize viewport with default dimensions
-	p.state.Viewport = viewport.New(ctx.Width-4, ctx.Height-6)
+	p.state.Viewport = viewport.New(ctx.Width-4, ctx.Height-4)
 	return nil
 }
 
@@ -73,8 +73,8 @@ func (p *PlansPlugin) Update(msg tea.Msg) (plugin.Plugin, tea.Cmd) {
 		return p.handleKeyPress(msg)
 
 	case plugin.PluginResizeMsg:
-		// Update viewport dimensions
-		viewportHeight := msg.Height - 6
+		// Update viewport dimensions (msg.Height is now content-area height)
+		viewportHeight := msg.Height - 4 // breadcrumb + margins
 		if viewportHeight < 10 {
 			viewportHeight = 10
 		}
