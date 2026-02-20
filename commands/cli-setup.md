@@ -98,25 +98,40 @@ After the binary is confirmed to exist, set up the shell so `prism-cli` is acces
 
 **If found in `~/.prism/bin/` or local build dir** — add to PATH:
 
-**For the current session (always do this):**
+#### 3a: Detect Platform and Shell Environment
+
+```bash
+# Detect platform
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*) PLATFORM="windows" ;;
+  Darwin*)               PLATFORM="macos" ;;
+  *)                     PLATFORM="linux" ;;
+esac
+echo "PLATFORM=$PLATFORM"
+```
+
+#### 3b: Set Up Current Session
 
 ```bash
 export PATH="$PATH:$HOME/.prism/bin"
+
+# Windows Git Bash — USERPROFILE may differ from HOME
+if [ "$PLATFORM" = "windows" ] && [ -n "$USERPROFILE" ] && [ "$HOME" != "$USERPROFILE" ]; then
+  export PATH="$PATH:$USERPROFILE/.prism/bin"
+fi
 ```
 
-Windows Git Bash:
+#### 3c: Make It Permanent
+
+**Ask the user** if they want to make it permanent using AskUserQuestion with these options:
+
+**Option A — Add to shell profiles (Recommended):**
+
+Configure ALL shells the user has on their platform in one pass — do not make the user choose which shell.
+
+**On macOS / Linux** — configure whichever shell rc file exists:
+
 ```bash
-export PATH="$PATH:$USERPROFILE/.prism/bin"
-```
-
-**Then ask the user** if they want to make it permanent using AskUserQuestion with these options:
-
-**Option A — Add to shell profile (Recommended):**
-
-Detect the user's shell rc file and append the PATH entry:
-
-```bash
-# Detect rc file
 if [ -f "$HOME/.zshrc" ]; then
   RC_FILE="$HOME/.zshrc"
 elif [ -f "$HOME/.bashrc" ]; then
@@ -125,20 +140,65 @@ elif [ -f "$HOME/.bash_profile" ]; then
   RC_FILE="$HOME/.bash_profile"
 fi
 
-# Check if already added
-grep -q '.prism/bin' "$RC_FILE" 2>/dev/null || \
-  echo '' >> "$RC_FILE" && \
-  echo '# Prism CLI' >> "$RC_FILE" && \
-  echo 'export PATH="$PATH:$HOME/.prism/bin"' >> "$RC_FILE"
+if [ -n "$RC_FILE" ]; then
+  grep -q '.prism/bin' "$RC_FILE" 2>/dev/null || {
+    echo '' >> "$RC_FILE"
+    echo '# Prism CLI' >> "$RC_FILE"
+    echo 'export PATH="$PATH:$HOME/.prism/bin"' >> "$RC_FILE"
+  }
+  echo "Updated $RC_FILE"
+fi
 ```
 
-For PowerShell users who want it in their `$PROFILE`:
-```powershell
-# Check if profile exists, create if not
-if (!(Test-Path $PROFILE)) { New-Item -Path $PROFILE -Force }
+**On Windows** — configure BOTH Git Bash AND PowerShell together. Users on Windows commonly switch between these shells, so both must work:
 
-# Append PATH addition
-Add-Content $PROFILE "`n# Prism CLI`n`$env:PATH += `";$env:USERPROFILE\.prism\bin`""
+```bash
+# 1. Git Bash profile
+RC_FILE=""
+if [ -f "$HOME/.bashrc" ]; then
+  RC_FILE="$HOME/.bashrc"
+elif [ -f "$HOME/.bash_profile" ]; then
+  RC_FILE="$HOME/.bash_profile"
+fi
+
+if [ -n "$RC_FILE" ]; then
+  grep -q '.prism/bin' "$RC_FILE" 2>/dev/null || {
+    echo '' >> "$RC_FILE"
+    echo '# Prism CLI' >> "$RC_FILE"
+    echo 'export PATH="$PATH:$HOME/.prism/bin"' >> "$RC_FILE"
+  }
+  echo "Updated $RC_FILE"
+fi
+
+# 2. PowerShell profile (always configure on Windows)
+# Strategy: get the profile path from PowerShell, then write to it from bash.
+# This avoids fragile nested bash->PowerShell escaping entirely.
+PWSH_CMD=$(command -v pwsh.exe 2>/dev/null || command -v powershell.exe 2>/dev/null)
+if [ -n "$PWSH_CMD" ]; then
+  # Get the PowerShell profile path as a Unix-style path
+  PWSH_PROFILE=$("$PWSH_CMD" -NoProfile -Command 'echo $PROFILE' 2>/dev/null | tr -d '\r')
+  # Convert Windows path to Unix path for bash file operations
+  PWSH_PROFILE_UNIX=$(cygpath -u "$PWSH_PROFILE" 2>/dev/null || echo "$PWSH_PROFILE")
+
+  if [ -n "$PWSH_PROFILE_UNIX" ]; then
+    # Check if already configured
+    if grep -q '.prism' "$PWSH_PROFILE_UNIX" 2>/dev/null; then
+      echo "PowerShell profile already configured"
+    else
+      # Ensure the profile directory and file exist
+      mkdir -p "$(dirname "$PWSH_PROFILE_UNIX")"
+      touch "$PWSH_PROFILE_UNIX"
+
+      # Write the PATH entry — single quotes keep $env vars literal in bash
+      echo '' >> "$PWSH_PROFILE_UNIX"
+      echo '# Prism CLI' >> "$PWSH_PROFILE_UNIX"
+      echo '$env:Path += ";$env:USERPROFILE\.prism\bin"' >> "$PWSH_PROFILE_UNIX"
+      echo "Updated PowerShell profile: $PWSH_PROFILE"
+    fi
+  fi
+else
+  echo "PowerShell not found — skipping (Git Bash still configured)"
+fi
 ```
 
 **Option B — Session only:**
@@ -183,7 +243,9 @@ Print a summary:
 Prism CLI Setup Complete
 
   Binary:    ~/.prism/bin/prism-cli (v X.X.X)
-  PATH:      Added to ~/.zshrc (permanent)
+  PATH:      Configured for platform shells (permanent)
+              macOS/Linux: ~/.zshrc or ~/.bashrc
+              Windows: Git Bash profile + PowerShell $PROFILE
   Project:   .prism/ initialized
   Registry:  Project auto-registered on next prism-cli launch
 
