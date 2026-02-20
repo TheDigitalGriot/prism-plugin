@@ -1,107 +1,43 @@
 ---
-description: Check for prism-cli installation, update if outdated, install if needed, and set up shell alias
+description: Install or update prism-cli binary with automatic PATH and workspace configuration
 model: sonnet
 ---
 
-# Prism CLI Setup
+# Prism CLI Install
 
-Set up the Prism CLI binary so it can be launched from any project terminal.
+Install the Prism CLI binary so it can be launched from any terminal. Delegates to platform-specific installer scripts that download pre-built release binaries, configure PATH for all shells, and initialize the global `~/.prism/` workspace registry.
 
-**IMPORTANT**: The prism-cli source and releases live at `https://github.com/TheDigitalGriot/prism-plugin` — NOT on any Anthropic repository.
-
-**Plugin source directory**: `${CLAUDE_PLUGIN_ROOT}` — this is where the CLI source code lives at `cmd/prism-cli/`.
+**Repository**: `https://github.com/TheDigitalGriot/prism-plugin`
 
 ## Process
-
-Follow these steps in order. Use the Bash tool for all checks and commands.
 
 ### Step 1: Check for Existing Installation
 
 ```bash
-# Check PATH, then standard install location
 which prism-cli 2>/dev/null || which prism-cli.exe 2>/dev/null && echo "FOUND_IN=path" || \
 { test -x "$HOME/.prism/bin/prism-cli" && echo "FOUND_IN=prism-bin"; } || \
 { test -x "$USERPROFILE/.prism/bin/prism-cli.exe" && echo "FOUND_IN=prism-bin"; } || \
 echo "NOT_FOUND"
 ```
 
-If found, report the location and continue to Step 1b to check for updates. If NOT found, skip to Step 2.
-
-### Step 1b: Check for Updates
-
-If the binary was found, compare local version against the latest GitHub release:
+If found, check for updates:
 
 ```bash
-# Get local version
 LOCAL_VERSION=$(prism-cli --version 2>/dev/null | grep -oP '\d+\.\d+\.\d+' || echo "unknown")
-echo "LOCAL_VERSION=$LOCAL_VERSION"
-
-# Get latest release version from GitHub
 LATEST_VERSION=$(gh release view --repo TheDigitalGriot/prism-plugin --json tagName -q '.tagName' 2>/dev/null | sed 's/^v//')
-echo "LATEST_VERSION=$LATEST_VERSION"
+echo "LOCAL=$LOCAL_VERSION LATEST=$LATEST_VERSION"
 ```
 
-**If versions match** — report that it's up to date and skip to Step 3.
+- **Versions match** — report up to date, skip to Step 3.
+- **Local is older** — ask user with AskUserQuestion: "Update to latest (Recommended)" or "Keep current version". If update, continue to Step 2.
+- **`gh` unavailable** — skip update check silently.
+- **NOT_FOUND** — proceed to Step 2.
 
-**If local is older (or "unknown")** — ask the user if they want to update using AskUserQuestion:
+### Step 2: Install via Platform Script
 
-- **Update to latest (Recommended)** — rebuild from plugin source or re-download
-- **Keep current version** — skip the update
-
-If the user chooses to update, proceed to Step 2 (which will overwrite the existing binary). If they decline, skip to Step 3.
-
-**If `gh` is not available** — skip the update check silently and continue to Step 3. Do NOT fail the setup just because the update check can't run.
-
-### Step 2: Install Binary
-
-The plugin source code is at `${CLAUDE_PLUGIN_ROOT}`. Build from source when possible (preferred), fall back to downloading a pre-built release binary.
-
-**Primary method — Build from source (if Go is installed):**
+Detect platform and run the appropriate installer script from `${CLAUDE_PLUGIN_ROOT}/scripts/`.
 
 ```bash
-# Check if Go is available
-command -v go &> /dev/null && echo "GO=available" || echo "GO=missing"
-```
-
-If Go is available:
-
-```bash
-cd "${CLAUDE_PLUGIN_ROOT}/cmd/prism-cli" && make build
-```
-
-Then install the built binary:
-
-```bash
-mkdir -p "$HOME/.prism/bin"
-cp "${CLAUDE_PLUGIN_ROOT}/cmd/prism-cli/bin/prism-cli"* "$HOME/.prism/bin/"
-```
-
-On Windows (Git Bash):
-```bash
-mkdir -p "$USERPROFILE/.prism/bin"
-cp "${CLAUDE_PLUGIN_ROOT}/cmd/prism-cli/bin/prism-cli"* "$USERPROFILE/.prism/bin/"
-```
-
-**Fallback — Download pre-built binary (if Go is not installed):**
-
-```bash
-bash "${CLAUDE_PLUGIN_ROOT}/scripts/prism-cli-install.sh" download
-```
-
-If the install script fails, do NOT try to download from any other URL. Report the error to the user.
-
-### Step 3: Set Up PATH / Alias
-
-After the binary is confirmed to exist, set up the shell so `prism-cli` is accessible.
-
-**If already in PATH** — skip this step, report that it's ready.
-
-**If found in `~/.prism/bin/` or local build dir** — add to PATH:
-
-#### 3a: Detect Platform and Shell Environment
-
-```bash
-# Detect platform
 case "$(uname -s)" in
   MINGW*|MSYS*|CYGWIN*) PLATFORM="windows" ;;
   Darwin*)               PLATFORM="macos" ;;
@@ -110,176 +46,87 @@ esac
 echo "PLATFORM=$PLATFORM"
 ```
 
-#### 3b: Set Up Current Session
+**On Windows (Git Bash / MSYS):**
 
 ```bash
-export PATH="$PATH:$HOME/.prism/bin"
-
-# Windows Git Bash — USERPROFILE may differ from HOME
-if [ "$PLATFORM" = "windows" ] && [ -n "$USERPROFILE" ] && [ "$HOME" != "$USERPROFILE" ]; then
-  export PATH="$PATH:$USERPROFILE/.prism/bin"
-fi
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/prism-cli-install.sh" download
 ```
 
-#### 3c: Make It Permanent
+This script will:
+- Download the correct binary from GitHub releases to `~/.prism/bin/`
+- Configure PATH in both Git Bash profile AND PowerShell `$PROFILE`
+- Initialize `~/.prism/workspaces.json`
 
-**Ask the user** if they want to make it permanent using AskUserQuestion with these options:
-
-**Option A — Add to shell profiles (Recommended):**
-
-Configure ALL shells the user has on their platform in one pass — do not make the user choose which shell.
-
-**On macOS / Linux** — configure whichever shell rc file exists:
+**On macOS / Linux:**
 
 ```bash
-if [ -f "$HOME/.zshrc" ]; then
-  RC_FILE="$HOME/.zshrc"
-elif [ -f "$HOME/.bashrc" ]; then
-  RC_FILE="$HOME/.bashrc"
-elif [ -f "$HOME/.bash_profile" ]; then
-  RC_FILE="$HOME/.bash_profile"
-fi
-
-if [ -n "$RC_FILE" ]; then
-  grep -q '.prism/bin' "$RC_FILE" 2>/dev/null || {
-    echo '' >> "$RC_FILE"
-    echo '# Prism CLI' >> "$RC_FILE"
-    echo 'export PATH="$PATH:$HOME/.prism/bin"' >> "$RC_FILE"
-  }
-  echo "Updated $RC_FILE"
-fi
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/prism-cli-install.sh" download
 ```
 
-**On Windows** — configure BOTH Git Bash AND PowerShell together. Users on Windows commonly switch between these shells, so both must work:
+This script will:
+- Download the correct binary from GitHub releases to `~/.prism/bin/`
+- Configure PATH in `~/.zshrc`, `~/.bashrc`, or `~/.bash_profile`
+- Initialize `~/.prism/workspaces.json`
 
-```bash
-# 1. Git Bash profile
-RC_FILE=""
-if [ -f "$HOME/.bashrc" ]; then
-  RC_FILE="$HOME/.bashrc"
-elif [ -f "$HOME/.bash_profile" ]; then
-  RC_FILE="$HOME/.bash_profile"
-fi
+**If running from a native PowerShell terminal** (not Git Bash), use the PowerShell script instead:
 
-if [ -n "$RC_FILE" ]; then
-  grep -q '.prism/bin' "$RC_FILE" 2>/dev/null || {
-    echo '' >> "$RC_FILE"
-    echo '# Prism CLI' >> "$RC_FILE"
-    echo 'export PATH="$PATH:$HOME/.prism/bin"' >> "$RC_FILE"
-  }
-  echo "Updated $RC_FILE"
-fi
-
-# 2. PowerShell profile (always configure on Windows)
-# Strategy: get the profile path from PowerShell, then write to it from bash.
-# This avoids fragile nested bash->PowerShell escaping entirely.
-PWSH_CMD=$(command -v pwsh.exe 2>/dev/null || command -v powershell.exe 2>/dev/null)
-if [ -n "$PWSH_CMD" ]; then
-  # Get the PowerShell profile path as a Unix-style path
-  PWSH_PROFILE=$("$PWSH_CMD" -NoProfile -Command 'echo $PROFILE' 2>/dev/null | tr -d '\r')
-  # Convert Windows path to Unix path for bash file operations
-  PWSH_PROFILE_UNIX=$(cygpath -u "$PWSH_PROFILE" 2>/dev/null || echo "$PWSH_PROFILE")
-
-  if [ -n "$PWSH_PROFILE_UNIX" ]; then
-    # Check if already configured
-    if grep -q '.prism' "$PWSH_PROFILE_UNIX" 2>/dev/null; then
-      echo "PowerShell profile already configured"
-    else
-      # Ensure the profile directory and file exist
-      mkdir -p "$(dirname "$PWSH_PROFILE_UNIX")"
-      touch "$PWSH_PROFILE_UNIX"
-
-      # Write the PATH entry — single quotes keep $env vars literal in bash
-      echo '' >> "$PWSH_PROFILE_UNIX"
-      echo '# Prism CLI' >> "$PWSH_PROFILE_UNIX"
-      echo '$env:Path += ";$env:USERPROFILE\.prism\bin"' >> "$PWSH_PROFILE_UNIX"
-      echo "Updated PowerShell profile: $PWSH_PROFILE"
-    fi
-  fi
-else
-  echo "PowerShell not found — skipping (Git Bash still configured)"
-fi
+```powershell
+& "${CLAUDE_PLUGIN_ROOT}\scripts\prism-cli-install.ps1" -Method download
 ```
 
-**Option B — Session only:**
+**If the script fails**, do NOT try alternate URLs. Report the error and suggest the user check https://github.com/TheDigitalGriot/prism-plugin/releases.
 
-Just use the export already done. User will need to re-export in new terminals.
-
-### Step 4: Verify Installation
+### Step 3: Verify Installation
 
 ```bash
 prism-cli --version
 ```
 
-If this succeeds, report the version. If it fails, troubleshoot the PATH.
-
-### Step 5: Initialize Global ~/.prism/ Directory
-
-The global `~/.prism/` directory is the machine-wide Prism home. It holds the CLI binary and the workspace registry (`workspaces.json`) that tracks all prism-enabled projects across the computer. This is NOT the per-project `.prism/` directory — that is initialized by `prism-cli` or the plugin itself.
+If this fails, try the full path:
 
 ```bash
-# Ensure global directory structure exists
-PRISM_HOME="$HOME/.prism"
-mkdir -p "$PRISM_HOME/bin"
-
-# Initialize workspaces.json if it doesn't exist
-if [ ! -f "$PRISM_HOME/workspaces.json" ]; then
-  echo '{"projects":[]}' > "$PRISM_HOME/workspaces.json"
-  echo "Created $PRISM_HOME/workspaces.json"
-else
-  echo "Workspace registry already exists"
-fi
+"$HOME/.prism/bin/prism-cli" --version 2>/dev/null || "$USERPROFILE/.prism/bin/prism-cli.exe" --version 2>/dev/null
 ```
 
-On Windows Git Bash, also ensure the USERPROFILE-based path is consistent:
-```bash
-if [ "$PLATFORM" = "windows" ] && [ -n "$USERPROFILE" ]; then
-  PRISM_HOME_WIN="$USERPROFILE/.prism"
-  if [ "$PRISM_HOME" != "$PRISM_HOME_WIN" ]; then
-    mkdir -p "$PRISM_HOME_WIN/bin"
-    # Symlink or copy workspaces.json if paths differ
-    if [ ! -f "$PRISM_HOME_WIN/workspaces.json" ] && [ -f "$PRISM_HOME/workspaces.json" ]; then
-      cp "$PRISM_HOME/workspaces.json" "$PRISM_HOME_WIN/workspaces.json"
-    fi
-  fi
-fi
-```
+If verification fails, tell the user to open a **new terminal** (shell profiles were just updated).
 
-**Global `~/.prism/` structure:**
-```
-~/.prism/
-├── bin/                  # CLI binary lives here
-│   └── prism-cli(.exe)
-└── workspaces.json       # Machine-wide project registry
-```
-
-The `workspaces.json` file is used by the Workspaces tab in prism-cli to discover projects across different directories. Projects auto-register themselves when `prism-cli` launches in a directory with a `.prism/` folder.
-
-### Step 6: Report Results
+### Step 4: Report Results
 
 Print a summary:
 
 ```
-Prism CLI Setup Complete
+Prism CLI Install Complete
 
-  Binary:      ~/.prism/bin/prism-cli (v X.X.X)
-  PATH:        Configured for platform shells (permanent)
-                macOS/Linux: ~/.zshrc or ~/.bashrc
-                Windows: Git Bash profile + PowerShell $PROFILE
-  Global home: ~/.prism/ (bin + workspaces.json)
-  Registry:    workspaces.json initialized (projects auto-register on launch)
+  Binary:      ~/.prism/bin/prism-cli (vX.X.X)
+  PATH:        Configured for all platform shells
+                 macOS/Linux: ~/.zshrc or ~/.bashrc
+                 Windows: Git Bash profile + PowerShell $PROFILE
+  Registry:    ~/.prism/workspaces.json initialized
 
-  Launch commands:
+  Launch:
     prism-cli              # auto-detect stories in current project
     prism-cli --demo       # preview with demo stories
     prism-cli --onboarding # run setup wizard
 
-  Note: Per-project .prism/ directories are initialized by prism-cli or the plugin, not by this setup.
+  Note: Open a new terminal for PATH changes to take effect.
 ```
+
+## Manual Source Build (Developer Fallback)
+
+If Go 1.22+ is installed and you need to build from source instead of downloading:
+
+```bash
+cd "${CLAUDE_PLUGIN_ROOT}/cmd/prism-cli" && make build
+mkdir -p "$HOME/.prism/bin"
+cp bin/prism-cli* "$HOME/.prism/bin/"
+```
+
+This is NOT the default method — only use when explicitly requested or when no pre-built release exists.
 
 ## Error Handling
 
-- If `make build` fails: check that Go 1.22+ is installed, report the error
-- If download fails: tell the user to check https://github.com/TheDigitalGriot/prism-plugin/releases for available binaries
-- If PATH update fails: print the export command for the user to run manually
-- NEVER attempt to download from any URL other than `https://github.com/TheDigitalGriot/prism-plugin/releases`
+- If download fails: check https://github.com/TheDigitalGriot/prism-plugin/releases for available binaries
+- If PATH update fails: the installer prints manual instructions
+- If verification fails: suggest opening a new terminal
+- NEVER download from any URL other than `https://github.com/TheDigitalGriot/prism-plugin/releases`
+- NEVER attempt `make build` unless the user explicitly requests a source build

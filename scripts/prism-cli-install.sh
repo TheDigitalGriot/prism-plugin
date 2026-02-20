@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # Prism CLI Installer
-# Downloads or builds prism-cli binary for the current platform
+# Downloads or builds prism-cli binary, configures shell PATH, and initializes global ~/.prism/
+#
+# Usage:
+#   bash prism-cli-install.sh [auto|source|download]
+#   curl -fsSL https://raw.githubusercontent.com/TheDigitalGriot/prism-plugin/main/scripts/prism-cli-install.sh | bash
 
 set -euo pipefail
 
@@ -40,6 +44,14 @@ detect_platform() {
     echo "${os}-${arch}"
 }
 
+# Check if running on Windows (Git Bash / MSYS / Cygwin)
+is_windows() {
+    case "$(uname -s)" in
+        MINGW*|MSYS*|CYGWIN*) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
 # Check if Go is installed
 has_go() {
     command -v go &> /dev/null
@@ -60,7 +72,7 @@ build_from_source() {
     cd "$source_dir"
 
     local ext=""
-    [[ "$(uname -s)" == MINGW* || "$(uname -s)" == MSYS* ]] && ext=".exe"
+    is_windows && ext=".exe"
 
     local ldversion
     ldversion=$(git describe --tags --always --dirty 2>/dev/null || echo "dev")
@@ -85,7 +97,7 @@ download_release() {
         url="https://github.com/${REPO}/releases/download/${version}/${binary_name}"
     fi
 
-    log "Downloading $binary_name from $url..."
+    log "Downloading $binary_name..."
 
     if command -v curl &> /dev/null; then
         curl -fsSL "$url" -o "${INSTALL_DIR}/${BINARY_NAME}${ext}"
@@ -100,9 +112,107 @@ download_release() {
     log "Downloaded to: ${INSTALL_DIR}/${BINARY_NAME}${ext}"
 }
 
+# Configure PATH in shell profiles
+setup_path() {
+    # Add to current session
+    export PATH="$PATH:$INSTALL_DIR"
+
+    # Find bash/zsh profile to update
+    local rc_file=""
+    if [[ -f "$HOME/.zshrc" ]]; then
+        rc_file="$HOME/.zshrc"
+    elif [[ -f "$HOME/.bashrc" ]]; then
+        rc_file="$HOME/.bashrc"
+    elif [[ -f "$HOME/.bash_profile" ]]; then
+        rc_file="$HOME/.bash_profile"
+    else
+        # Create .bashrc if nothing exists
+        rc_file="$HOME/.bashrc"
+        touch "$rc_file"
+    fi
+
+    # Update bash/zsh profile
+    if ! grep -q '.prism/bin' "$rc_file" 2>/dev/null; then
+        echo '' >> "$rc_file"
+        echo '# Prism CLI' >> "$rc_file"
+        echo 'export PATH="$PATH:$HOME/.prism/bin"' >> "$rc_file"
+        log "Updated $rc_file"
+    else
+        log "$rc_file already configured"
+    fi
+
+    # On Windows: also configure PowerShell
+    if is_windows; then
+        setup_powershell_path
+    fi
+}
+
+# Configure PowerShell $PROFILE on Windows
+setup_powershell_path() {
+    local pwsh_cmd=""
+    pwsh_cmd=$(command -v pwsh.exe 2>/dev/null || command -v powershell.exe 2>/dev/null || true)
+
+    if [[ -z "$pwsh_cmd" ]]; then
+        warn "PowerShell not found — skipping PowerShell PATH setup"
+        return
+    fi
+
+    # Get PowerShell profile path
+    local pwsh_profile
+    pwsh_profile=$("$pwsh_cmd" -NoProfile -Command 'echo $PROFILE' 2>/dev/null | tr -d '\r')
+
+    if [[ -z "$pwsh_profile" ]]; then
+        warn "Could not determine PowerShell profile path"
+        return
+    fi
+
+    # Convert to Unix path for bash file operations
+    local pwsh_profile_unix
+    pwsh_profile_unix=$(cygpath -u "$pwsh_profile" 2>/dev/null || echo "$pwsh_profile")
+
+    # Check if already configured
+    if grep -q '.prism' "$pwsh_profile_unix" 2>/dev/null; then
+        log "PowerShell profile already configured"
+        return
+    fi
+
+    # Create profile directory and file if needed
+    mkdir -p "$(dirname "$pwsh_profile_unix")"
+    touch "$pwsh_profile_unix"
+
+    # Write PATH entry (single quotes keep $env vars literal in bash)
+    echo '' >> "$pwsh_profile_unix"
+    echo '# Prism CLI' >> "$pwsh_profile_unix"
+    echo '$env:Path += ";$env:USERPROFILE\.prism\bin"' >> "$pwsh_profile_unix"
+    log "Updated PowerShell profile: $pwsh_profile"
+}
+
+# Initialize global ~/.prism/ directory and workspaces.json
+init_workspaces() {
+    local prism_home="$HOME/.prism"
+    mkdir -p "$prism_home/bin"
+
+    if [[ ! -f "$prism_home/workspaces.json" ]]; then
+        echo '{"projects":[]}' > "$prism_home/workspaces.json"
+        log "Created $prism_home/workspaces.json"
+    fi
+
+    # Windows: ensure USERPROFILE path is consistent
+    if is_windows && [[ -n "${USERPROFILE:-}" ]] && [[ "$HOME" != "$USERPROFILE" ]]; then
+        local prism_home_win="$USERPROFILE/.prism"
+        mkdir -p "$prism_home_win/bin"
+        if [[ ! -f "$prism_home_win/workspaces.json" ]]; then
+            cp "$prism_home/workspaces.json" "$prism_home_win/workspaces.json" 2>/dev/null || true
+        fi
+    fi
+}
+
 # Main installation
 main() {
     local method="${1:-auto}"
+
+    log "Prism CLI Installer"
+    log ""
 
     # Create install directory
     mkdir -p "$INSTALL_DIR"
@@ -142,20 +252,25 @@ main() {
             ;;
     esac
 
+    # Configure PATH in shell profiles
+    setup_path
+
+    # Initialize workspaces registry
+    init_workspaces
+
     # Verify installation
     local ext=""
-    [[ "$(uname -s)" == MINGW* || "$(uname -s)" == MSYS* ]] && ext=".exe"
+    is_windows && ext=".exe"
 
     if [[ -x "${INSTALL_DIR}/${BINARY_NAME}${ext}" ]]; then
+        log ""
         log "Installation complete!"
         log ""
-        log "Add to PATH (if not already):"
-        log "  export PATH=\"\$PATH:$INSTALL_DIR\""
+        log "  Binary:      ${INSTALL_DIR}/${BINARY_NAME}${ext}"
+        log "  PATH:        Configured in shell profiles"
+        log "  Registry:    ~/.prism/workspaces.json initialized"
         log ""
-        log "Or create an alias:"
-        log "  alias prism-cli=\"${INSTALL_DIR}/${BINARY_NAME}${ext}\""
-        log ""
-        log "Run: prism-cli --help"
+        log "  Open a new terminal, then run: prism-cli --version"
     else
         error "Installation failed"
         exit 1

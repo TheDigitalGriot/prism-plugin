@@ -55,8 +55,8 @@ Remove the `# Prism CLI` block and PATH export from all shell profiles.
 ```bash
 for RC_FILE in "$HOME/.zshrc" "$HOME/.bashrc" "$HOME/.bash_profile"; do
   if [ -f "$RC_FILE" ] && grep -q '.prism/bin' "$RC_FILE" 2>/dev/null; then
-    # Remove the Prism CLI comment and PATH line
-    sed -i.bak '/# Prism CLI/d' "$RC_FILE"
+    # Remove only the exact Prism CLI comment and PATH line added by installer
+    sed -i.bak '/# Prism CLI$/d' "$RC_FILE"
     sed -i.bak '/.prism\/bin/d' "$RC_FILE"
     # Clean up any resulting blank lines (two+ consecutive)
     sed -i.bak '/^$/N;/^\n$/d' "$RC_FILE"
@@ -80,15 +80,15 @@ for RC_FILE in "$HOME/.bashrc" "$HOME/.bash_profile"; do
   fi
 done
 
-# 2. PowerShell profile
+# 2. PowerShell profile — only remove the exact lines the installer adds
 PWSH_CMD=$(command -v pwsh.exe 2>/dev/null || command -v powershell.exe 2>/dev/null)
 if [ -n "$PWSH_CMD" ]; then
   PWSH_PROFILE=$("$PWSH_CMD" -NoProfile -Command 'echo $PROFILE' 2>/dev/null | tr -d '\r')
   PWSH_PROFILE_UNIX=$(cygpath -u "$PWSH_PROFILE" 2>/dev/null || echo "$PWSH_PROFILE")
 
-  if [ -n "$PWSH_PROFILE_UNIX" ] && [ -f "$PWSH_PROFILE_UNIX" ] && grep -q '.prism' "$PWSH_PROFILE_UNIX" 2>/dev/null; then
-    sed -i.bak '/# Prism CLI/d' "$PWSH_PROFILE_UNIX"
-    sed -i.bak '/.prism/d' "$PWSH_PROFILE_UNIX"
+  if [ -n "$PWSH_PROFILE_UNIX" ] && [ -f "$PWSH_PROFILE_UNIX" ] && grep -q '\.prism\\bin' "$PWSH_PROFILE_UNIX" 2>/dev/null; then
+    sed -i.bak '/# Prism CLI$/d' "$PWSH_PROFILE_UNIX"
+    sed -i.bak '/\\\.prism\\\\bin/d' "$PWSH_PROFILE_UNIX"
     sed -i.bak '/^$/N;/^\n$/d' "$PWSH_PROFILE_UNIX"
     rm -f "${PWSH_PROFILE_UNIX}.bak"
     echo "Cleaned PowerShell profile: $PWSH_PROFILE"

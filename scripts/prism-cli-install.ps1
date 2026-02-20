@@ -1,5 +1,9 @@
-# Prism CLI Installer for Windows
-# Downloads or builds prism-cli binary
+# Prism CLI Installer for Windows (PowerShell)
+# Downloads or builds prism-cli binary, configures PATH, and initializes global ~/.prism/
+#
+# Usage:
+#   .\prism-cli-install.ps1 [-Method auto|source|download]
+#   irm https://raw.githubusercontent.com/TheDigitalGriot/prism-plugin/main/scripts/prism-cli-install.ps1 | iex
 
 param(
     [string]$Method = "auto"
@@ -25,7 +29,13 @@ function Test-GoInstalled {
 }
 
 function Build-FromSource {
-    $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+    $ScriptDir = if ($MyInvocation.PSCommandPath) { Split-Path -Parent $MyInvocation.PSCommandPath } else { $null }
+
+    if (-not $ScriptDir) {
+        Write-Err "Source directory not available (running via pipe). Use -Method download"
+        return
+    }
+
     $SourceDir = Join-Path (Split-Path -Parent $ScriptDir) "cmd\prism-cli"
 
     if (-not (Test-Path $SourceDir)) {
@@ -54,7 +64,7 @@ function Get-Release {
         $Url = "https://github.com/$Repo/releases/download/$Version/$BinaryFile"
     }
 
-    Write-Log "Downloading from $Url..."
+    Write-Log "Downloading $BinaryFile..."
 
     try {
         Invoke-WebRequest -Uri $Url -OutFile "$InstallDir\$BinaryName.exe" -UseBasicParsing
@@ -66,7 +76,56 @@ function Get-Release {
     return $true
 }
 
+function Set-PathProfile {
+    $PrismBin = "$env:USERPROFILE\.prism\bin"
+
+    # Add to current session
+    if ($env:Path -notlike "*$PrismBin*") {
+        $env:Path += ";$PrismBin"
+        Write-Log "Added to current session PATH"
+    }
+
+    # Add to PowerShell $PROFILE
+    $ProfilePath = $PROFILE
+    if ($ProfilePath) {
+        $ProfileDir = Split-Path -Parent $ProfilePath
+        if (-not (Test-Path $ProfileDir)) {
+            New-Item -ItemType Directory -Path $ProfileDir -Force | Out-Null
+        }
+        if (-not (Test-Path $ProfilePath)) {
+            New-Item -ItemType File -Path $ProfilePath -Force | Out-Null
+        }
+
+        $Content = Get-Content $ProfilePath -Raw -ErrorAction SilentlyContinue
+        if (-not $Content -or $Content -notlike "*\.prism\bin*") {
+            Add-Content -Path $ProfilePath -Value "`n# Prism CLI`n`$env:Path += `";`$env:USERPROFILE\.prism\bin`""
+            Write-Log "Updated PowerShell profile: $ProfilePath"
+        } else {
+            Write-Log "PowerShell profile already configured"
+        }
+    }
+}
+
+function Initialize-Workspaces {
+    $PrismHome = "$env:USERPROFILE\.prism"
+    $WsFile = "$PrismHome\workspaces.json"
+
+    if (-not (Test-Path $PrismHome)) {
+        New-Item -ItemType Directory -Path $PrismHome -Force | Out-Null
+    }
+
+    if (-not (Test-Path $WsFile)) {
+        '{"projects":[]}' | Set-Content -Path $WsFile -Encoding UTF8
+        Write-Log "Created $WsFile"
+    } else {
+        Write-Log "Workspace registry already exists"
+    }
+}
+
 # Main
+Write-Log "Prism CLI Installer (PowerShell)"
+Write-Log ""
+
 if (-not (Test-Path $InstallDir)) {
     New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
 }
@@ -100,16 +159,22 @@ switch ($Method) {
     }
 }
 
+# Configure PATH
+Set-PathProfile
+
+# Initialize workspaces registry
+Initialize-Workspaces
+
 # Verify installation
 if (Test-Path "$InstallDir\$BinaryName.exe") {
+    Write-Log ""
     Write-Log "Installation complete!"
     Write-Log ""
-    Write-Log "Add to PATH:"
-    Write-Log "  `$env:PATH += `";$InstallDir`""
+    Write-Log "  Binary:      $InstallDir\$BinaryName.exe"
+    Write-Log "  PATH:        Configured in PowerShell profile"
+    Write-Log "  Registry:    $env:USERPROFILE\.prism\workspaces.json initialized"
     Write-Log ""
-    Write-Log "Or add permanently via System Properties > Environment Variables"
-    Write-Log ""
-    Write-Log "Run: prism-cli --help"
+    Write-Log "  Run: prism-cli --version"
 } else {
     Write-Err "Installation failed"
     exit 1
