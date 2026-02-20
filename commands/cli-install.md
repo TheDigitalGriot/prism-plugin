@@ -213,27 +213,47 @@ prism-cli --version
 
 If this succeeds, report the version. If it fails, troubleshoot the PATH.
 
-### Step 5: Initialize .prism/ Directory
+### Step 5: Initialize Global ~/.prism/ Directory
 
-Check if the current project has a `.prism/` directory:
-
-```bash
-test -d .prism && echo "PRISM_DIR=exists" || echo "PRISM_DIR=missing"
-```
-
-If missing, run `init_prism.py` from the plugin source:
+The global `~/.prism/` directory is the machine-wide Prism home. It holds the CLI binary and the workspace registry (`workspaces.json`) that tracks all prism-enabled projects across the computer. This is NOT the per-project `.prism/` directory — that is initialized by `prism-cli` or the plugin itself.
 
 ```bash
-python "${CLAUDE_PLUGIN_ROOT}/skills/prism/scripts/init_prism.py" .
+# Ensure global directory structure exists
+PRISM_HOME="$HOME/.prism"
+mkdir -p "$PRISM_HOME/bin"
+
+# Initialize workspaces.json if it doesn't exist
+if [ ! -f "$PRISM_HOME/workspaces.json" ]; then
+  echo '{"projects":[]}' > "$PRISM_HOME/workspaces.json"
+  echo "Created $PRISM_HOME/workspaces.json"
+else
+  echo "Workspace registry already exists"
+fi
 ```
 
-If the script fails, create the directory structure manually:
-
+On Windows Git Bash, also ensure the USERPROFILE-based path is consistent:
 ```bash
-mkdir -p .prism/stories .prism/shared/{research,plans,validation,handoffs,prs,spectrum,ref,docs} .prism/local/{ref,docs}
+if [ "$PLATFORM" = "windows" ] && [ -n "$USERPROFILE" ]; then
+  PRISM_HOME_WIN="$USERPROFILE/.prism"
+  if [ "$PRISM_HOME" != "$PRISM_HOME_WIN" ]; then
+    mkdir -p "$PRISM_HOME_WIN/bin"
+    # Symlink or copy workspaces.json if paths differ
+    if [ ! -f "$PRISM_HOME_WIN/workspaces.json" ] && [ -f "$PRISM_HOME/workspaces.json" ]; then
+      cp "$PRISM_HOME/workspaces.json" "$PRISM_HOME_WIN/workspaces.json"
+    fi
+  fi
+fi
 ```
 
-And add `.prism/local/` to `.gitignore` if not already present.
+**Global `~/.prism/` structure:**
+```
+~/.prism/
+├── bin/                  # CLI binary lives here
+│   └── prism-cli(.exe)
+└── workspaces.json       # Machine-wide project registry
+```
+
+The `workspaces.json` file is used by the Workspaces tab in prism-cli to discover projects across different directories. Projects auto-register themselves when `prism-cli` launches in a directory with a `.prism/` folder.
 
 ### Step 6: Report Results
 
@@ -242,19 +262,19 @@ Print a summary:
 ```
 Prism CLI Setup Complete
 
-  Binary:    ~/.prism/bin/prism-cli (v X.X.X)
-  PATH:      Configured for platform shells (permanent)
-              macOS/Linux: ~/.zshrc or ~/.bashrc
-              Windows: Git Bash profile + PowerShell $PROFILE
-  Project:   .prism/ initialized
-  Registry:  Project auto-registered on next prism-cli launch
+  Binary:      ~/.prism/bin/prism-cli (v X.X.X)
+  PATH:        Configured for platform shells (permanent)
+                macOS/Linux: ~/.zshrc or ~/.bashrc
+                Windows: Git Bash profile + PowerShell $PROFILE
+  Global home: ~/.prism/ (bin + workspaces.json)
+  Registry:    workspaces.json initialized (projects auto-register on launch)
 
   Launch commands:
     prism-cli              # auto-detect stories in current project
     prism-cli --demo       # preview with demo stories
     prism-cli --onboarding # run setup wizard
 
-  Next: Use /prism-research to start researching your codebase
+  Note: Per-project .prism/ directories are initialized by prism-cli or the plugin, not by this setup.
 ```
 
 ## Error Handling
@@ -262,5 +282,4 @@ Prism CLI Setup Complete
 - If `make build` fails: check that Go 1.22+ is installed, report the error
 - If download fails: tell the user to check https://github.com/TheDigitalGriot/prism-plugin/releases for available binaries
 - If PATH update fails: print the export command for the user to run manually
-- If .prism/ init fails: print the mkdir commands for manual creation
 - NEVER attempt to download from any URL other than `https://github.com/TheDigitalGriot/prism-plugin/releases`

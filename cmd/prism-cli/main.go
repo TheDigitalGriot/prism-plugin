@@ -1,9 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	zone "github.com/lrstanley/bubblezone"
@@ -12,7 +16,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var version = "2.1.7"
+var version = "2.1.8"
 
 func main() {
 	var (
@@ -22,6 +26,7 @@ func main() {
 		demoMode       bool
 		onboardingMode bool
 		prismStyle     string
+		uninstallMode  bool
 	)
 
 	rootCmd := &cobra.Command{
@@ -47,6 +52,11 @@ Keyboard controls:
   ?          Toggle help`,
 		Version: version,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			// Uninstall mode
+			if uninstallMode {
+				return runUninstall()
+			}
+
 			// Demo mode - run with simulated data
 			if demoMode {
 				return runDemoMode(version, prismStyle, onboardingMode)
@@ -140,6 +150,7 @@ Keyboard controls:
 	rootCmd.Flags().BoolVar(&demoMode, "demo", false, "Run in demo mode with simulated stories to preview animations")
 	rootCmd.Flags().BoolVar(&onboardingMode, "onboarding", false, "Force onboarding flow (for testing/refining the setup wizard)")
 	rootCmd.Flags().StringVar(&prismStyle, "prism-style", "gradient", "Prism animation style: gradient|simple|braille|ascii")
+	rootCmd.Flags().BoolVar(&uninstallMode, "uninstall", false, "Remove prism-cli binary, PATH entries, and global ~/.prism/ directory")
 
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
@@ -169,4 +180,160 @@ func runDemoMode(version string, prismStyle string, onboarding bool) error {
 	fmt.Print("\x1b(B\x1b[0m")
 
 	return nil
+}
+
+// runUninstall removes prism-cli binary, PATH entries from shell profiles,
+// and optionally the global ~/.prism/ directory.
+func runUninstall() error {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("failed to get home directory: %w", err)
+	}
+	prismHome := filepath.Join(home, ".prism")
+
+	fmt.Println("Prism CLI Uninstaller")
+	fmt.Println()
+	fmt.Printf("  Binary:     %s\n", filepath.Join(prismHome, "bin", "prism-cli"))
+	fmt.Printf("  Global dir: %s\n", prismHome)
+	fmt.Println()
+	fmt.Print("Remove prism-cli completely? This will remove the binary, PATH entries,\nand the global ~/.prism/ directory (including workspaces.json).\n")
+	fmt.Println()
+	fmt.Print("Type 'yes' to confirm: ")
+
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Scan()
+	answer := strings.TrimSpace(scanner.Text())
+	if answer != "yes" {
+		fmt.Println("Uninstall cancelled.")
+		return nil
+	}
+
+	fmt.Println()
+
+	// 1. Remove binary
+	for _, name := range []string{"prism-cli", "prism-cli.exe"} {
+		binPath := filepath.Join(prismHome, "bin", name)
+		if err := os.Remove(binPath); err == nil {
+			fmt.Printf("  Removed %s\n", binPath)
+		}
+	}
+
+	// 2. Clean shell profiles
+	cleanedProfiles := cleanShellProfiles(home)
+	for _, p := range cleanedProfiles {
+		fmt.Printf("  Cleaned %s\n", p)
+	}
+
+	// 3. Clean PowerShell profile (Windows only)
+	if runtime.GOOS == "windows" {
+		if cleaned := cleanPowerShellProfile(); cleaned != "" {
+			fmt.Printf("  Cleaned %s\n", cleaned)
+		}
+	}
+
+	// 4. Remove global ~/.prism/ directory
+	if err := os.RemoveAll(prismHome); err != nil {
+		fmt.Printf("  Warning: could not fully remove %s: %v\n", prismHome, err)
+	} else {
+		fmt.Printf("  Removed %s\n", prismHome)
+	}
+
+	fmt.Println()
+	fmt.Println("Prism CLI uninstalled.")
+	fmt.Println()
+	fmt.Println("  Note: Per-project .prism/ directories were NOT touched.")
+	fmt.Println("        Remove them manually if no longer needed.")
+	fmt.Println()
+	fmt.Println("  To reinstall: /prism:cli-install")
+
+	return nil
+}
+
+// cleanShellProfiles removes Prism CLI PATH entries from bash/zsh profiles.
+func cleanShellProfiles(home string) []string {
+	var cleaned []string
+	profiles := []string{
+		filepath.Join(home, ".zshrc"),
+		filepath.Join(home, ".bashrc"),
+		filepath.Join(home, ".bash_profile"),
+	}
+
+	for _, profile := range profiles {
+		if removeLinesFromFile(profile, ".prism/bin", "# Prism CLI") {
+			cleaned = append(cleaned, profile)
+		}
+	}
+	return cleaned
+}
+
+// cleanPowerShellProfile removes Prism CLI entries from the PowerShell profile.
+func cleanPowerShellProfile() string {
+	// Try pwsh first, fall back to powershell
+	pwshCmd := "pwsh.exe"
+	if _, err := exec.LookPath(pwshCmd); err != nil {
+		pwshCmd = "powershell.exe"
+		if _, err := exec.LookPath(pwshCmd); err != nil {
+			return ""
+		}
+	}
+
+	out, err := exec.Command(pwshCmd, "-NoProfile", "-Command", "echo $PROFILE").Output()
+	if err != nil {
+		return ""
+	}
+	profilePath := strings.TrimSpace(string(out))
+	if profilePath == "" {
+		return ""
+	}
+
+	if removeLinesFromFile(profilePath, ".prism", "# Prism CLI") {
+		return profilePath
+	}
+	return ""
+}
+
+// removeLinesFromFile removes lines containing any of the given markers from a file.
+// Returns true if the file was modified.
+func removeLinesFromFile(filePath string, markers ...string) bool {
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return false
+	}
+
+	lines := strings.Split(string(data), "\n")
+	var kept []string
+	removed := false
+
+	for _, line := range lines {
+		skip := false
+		for _, marker := range markers {
+			if strings.Contains(line, marker) {
+				skip = true
+				removed = true
+				break
+			}
+		}
+		if !skip {
+			kept = append(kept, line)
+		}
+	}
+
+	if !removed {
+		return false
+	}
+
+	// Clean up consecutive blank lines
+	var final []string
+	prevBlank := false
+	for _, line := range kept {
+		isBlank := strings.TrimSpace(line) == ""
+		if isBlank && prevBlank {
+			continue
+		}
+		final = append(final, line)
+		prevBlank = isBlank
+	}
+
+	os.WriteFile(filePath, []byte(strings.Join(final, "\n")), 0644)
+	return true
 }
