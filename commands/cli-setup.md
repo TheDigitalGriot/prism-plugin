@@ -1,5 +1,5 @@
 ---
-description: Check for prism-cli installation, install if needed, and set up shell alias
+description: Check for prism-cli installation, update if outdated, install if needed, and set up shell alias
 model: haiku
 ---
 
@@ -23,7 +23,32 @@ which prism-cli 2>/dev/null || which prism-cli.exe 2>/dev/null && echo "FOUND_IN
 echo "NOT_FOUND"
 ```
 
-If found, report the location and skip to Step 3.
+If found, report the location and continue to Step 1b to check for updates. If NOT found, skip to Step 2.
+
+### Step 1b: Check for Updates
+
+If the binary was found, compare local version against the latest GitHub release:
+
+```bash
+# Get local version
+LOCAL_VERSION=$(prism-cli --version 2>/dev/null | grep -oP '\d+\.\d+\.\d+' || echo "unknown")
+echo "LOCAL_VERSION=$LOCAL_VERSION"
+
+# Get latest release version from GitHub
+LATEST_VERSION=$(gh release view --repo TheDigitalGriot/prism-plugin --json tagName -q '.tagName' 2>/dev/null | sed 's/^v//')
+echo "LATEST_VERSION=$LATEST_VERSION"
+```
+
+**If versions match** — report that it's up to date and skip to Step 3.
+
+**If local is older (or "unknown")** — ask the user if they want to update using AskUserQuestion:
+
+- **Update to latest (Recommended)** — re-download the binary from the latest release
+- **Keep current version** — skip the update
+
+If the user chooses to update, proceed to Step 2 (which will overwrite the existing binary). If they decline, skip to Step 3.
+
+**If `gh` is not available** — skip the update check silently and continue to Step 3. Do NOT fail the setup just because the update check can't run.
 
 ### Step 2: Install Binary
 
