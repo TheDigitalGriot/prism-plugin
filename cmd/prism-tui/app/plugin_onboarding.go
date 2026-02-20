@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -32,6 +33,8 @@ type OnboardingState struct {
 	ClaudeAvailable bool
 	StoriesPath     string
 	Completed       bool
+	HasLegacyDir    bool   // True when migrating from thoughts/ to .prism/
+	LegacyDir       string // Absolute path to legacy thoughts/ directory
 }
 
 // OnboardingPlugin implements the first-run setup wizard
@@ -41,40 +44,11 @@ type OnboardingPlugin struct {
 	focused bool
 }
 
-// NewOnboardingPlugin creates a new Onboarding plugin instance
+// NewOnboardingPlugin creates a new Onboarding plugin instance.
+// Steps are populated during Init() based on whether a legacy directory exists.
 func NewOnboardingPlugin() *OnboardingPlugin {
 	return &OnboardingPlugin{
 		state: OnboardingState{
-			Steps: []OnboardingStep{
-				{
-					ID:          1,
-					Title:       "Project Directory",
-					Description: "Detect or select project directory",
-					Status:      "pending",
-					ActionLabel: "Detect",
-				},
-				{
-					ID:          2,
-					Title:       ".prism/ Directory",
-					Description: "Check for .prism/ directory structure",
-					Status:      "pending",
-					ActionLabel: "Create",
-				},
-				{
-					ID:          3,
-					Title:       "Claude CLI",
-					Description: "Verify claude CLI is installed",
-					Status:      "pending",
-					ActionLabel: "Check",
-				},
-				{
-					ID:          4,
-					Title:       "Stories File",
-					Description: "Verify stories.json exists",
-					Status:      "pending",
-					ActionLabel: "Create",
-				},
-			},
 			CurrentStep: 0,
 			Completed:   false,
 		},
@@ -106,10 +80,86 @@ func (p *OnboardingPlugin) Init(ctx *plugin.Context) error {
 		p.state.PrismDir = ctx.PrismDir
 	}
 
+	// Carry legacy dir info from context
+	p.state.HasLegacyDir = ctx.HasLegacyDir
+	p.state.LegacyDir = ctx.LegacyDir
+
+	// Build steps based on whether this is a migration or fresh setup
+	p.state.Steps = p.buildSteps()
+
 	// Start onboarding automatically
 	p.checkCurrentStep()
 
 	return nil
+}
+
+// buildSteps returns the appropriate step list based on legacy detection.
+func (p *OnboardingPlugin) buildSteps() []OnboardingStep {
+	if p.state.HasLegacyDir {
+		// Migration flow: thoughts/ exists, .prism/ does not
+		return []OnboardingStep{
+			{
+				ID:          1,
+				Title:       "Project Directory",
+				Description: "Detect or select project directory",
+				Status:      "pending",
+				ActionLabel: "Detect",
+			},
+			{
+				ID:          2,
+				Title:       "Legacy Migration",
+				Description: "Migrate thoughts/ → .prism/",
+				Status:      "pending",
+				ActionLabel: "Migrate",
+			},
+			{
+				ID:          3,
+				Title:       "Claude CLI",
+				Description: "Verify claude CLI is installed",
+				Status:      "pending",
+				ActionLabel: "Check",
+			},
+			{
+				ID:          4,
+				Title:       "Stories File",
+				Description: "Verify stories.json exists",
+				Status:      "pending",
+				ActionLabel: "Create",
+			},
+		}
+	}
+
+	// Regular onboarding: fresh project, no legacy artifacts
+	return []OnboardingStep{
+		{
+			ID:          1,
+			Title:       "Project Directory",
+			Description: "Detect or select project directory",
+			Status:      "pending",
+			ActionLabel: "Detect",
+		},
+		{
+			ID:          2,
+			Title:       ".prism/ Directory",
+			Description: "Check for .prism/ directory structure",
+			Status:      "pending",
+			ActionLabel: "Create",
+		},
+		{
+			ID:          3,
+			Title:       "Claude CLI",
+			Description: "Verify claude CLI is installed",
+			Status:      "pending",
+			ActionLabel: "Check",
+		},
+		{
+			ID:          4,
+			Title:       "Stories File",
+			Description: "Verify stories.json exists",
+			Status:      "pending",
+			ActionLabel: "Create",
+		},
+	}
 }
 
 // Start is called when the plugin is first activated
@@ -172,10 +222,17 @@ func (p *OnboardingPlugin) View(width, height int) string {
 
 	// Welcome message
 	if !p.state.Completed {
-		welcome := styles.TitleStyle.Render("Welcome to Prism TUI!")
-		subtitle := styles.DimStyle.Render("Let's get you set up in a few quick steps")
-		sections = append(sections, "  "+welcome)
-		sections = append(sections, "  "+subtitle)
+		if p.state.HasLegacyDir {
+			welcome := styles.TitleStyle.Render("Legacy Project Detected")
+			subtitle := styles.DimStyle.Render("Found thoughts/ directory — let's migrate to .prism/")
+			sections = append(sections, "  "+welcome)
+			sections = append(sections, "  "+subtitle)
+		} else {
+			welcome := styles.TitleStyle.Render("Welcome to Prism TUI!")
+			subtitle := styles.DimStyle.Render("Let's get you set up in a few quick steps")
+			sections = append(sections, "  "+welcome)
+			sections = append(sections, "  "+subtitle)
+		}
 		sections = append(sections, "")
 	} else {
 		complete := styles.SuccessStyle.Render("✓ Setup Complete!")
@@ -343,18 +400,23 @@ func (p *OnboardingPlugin) checkCurrentStep() {
 		}
 
 	case 2:
-		// Step 2: Check .prism/ directory
-		if p.state.PrismDir != "" {
-			if _, err := os.Stat(p.state.PrismDir); err == nil {
-				// .prism/ exists
-				step.Status = "complete"
-				p.state.CurrentStep++
-				p.checkCurrentStep()
+		if p.state.HasLegacyDir {
+			// Migration step: thoughts/ exists, .prism/ does not — needs user action
+			step.Status = "in_progress"
+		} else {
+			// Regular step: Check .prism/ directory
+			if p.state.PrismDir != "" {
+				if _, err := os.Stat(p.state.PrismDir); err == nil {
+					// .prism/ exists
+					step.Status = "complete"
+					p.state.CurrentStep++
+					p.checkCurrentStep()
+				} else {
+					step.Status = "in_progress"
+				}
 			} else {
 				step.Status = "in_progress"
 			}
-		} else {
-			step.Status = "in_progress"
 		}
 
 	case 3:
@@ -415,7 +477,14 @@ func (p *OnboardingPlugin) executeStepAction() tea.Cmd {
 			return OnboardingStepCompleteMsg{}
 
 		case 2:
-			// Step 2: Create .prism/ directory structure
+			if p.state.HasLegacyDir {
+				// Migration: create .prism/ and copy from thoughts/
+				if err := p.migrateLegacyProject(); err != nil {
+					return OnboardingStepErrorMsg{Error: err.Error()}
+				}
+				return OnboardingStepCompleteMsg{}
+			}
+			// Regular: Create .prism/ directory structure
 			if err := p.createPrismStructure(); err != nil {
 				return OnboardingStepErrorMsg{Error: err.Error()}
 			}
@@ -475,6 +544,69 @@ func (p *OnboardingPlugin) createPrismStructure() error {
 	return nil
 }
 
+// migrateLegacyProject migrates a legacy thoughts/ directory to .prism/.
+// Creates the .prism/ structure first, then copies files following the mapping:
+//
+//	thoughts/shared/ralph/stories.json  → .prism/stories/stories.json
+//	thoughts/shared/ralph/progress.md   → .prism/shared/spectrum/progress.md
+//	thoughts/shared/research/*          → .prism/shared/research/
+//	thoughts/shared/plans/*             → .prism/shared/plans/
+//	thoughts/shared/validation/*        → .prism/shared/validation/
+//	thoughts/shared/handoffs/*          → .prism/shared/handoffs/
+//	thoughts/shared/prs/*               → .prism/shared/prs/
+//	thoughts/local/*                    → .prism/local/
+func (p *OnboardingPlugin) migrateLegacyProject() error {
+	// Step 1: Create the .prism/ directory structure
+	if err := p.createPrismStructure(); err != nil {
+		return fmt.Errorf("failed to create .prism/ structure: %w", err)
+	}
+
+	legacyDir := p.state.LegacyDir
+
+	// Step 2: Copy stories.json (key separation — goes to .prism/stories/)
+	legacyStories := filepath.Join(legacyDir, "shared", "ralph", "stories.json")
+	if _, err := os.Stat(legacyStories); err == nil {
+		dst := filepath.Join(p.state.PrismDir, "stories", "stories.json")
+		if err := copyFile(legacyStories, dst); err != nil {
+			return fmt.Errorf("failed to copy stories.json: %w", err)
+		}
+	}
+
+	// Step 3: Copy progress.md (goes to .prism/shared/spectrum/)
+	legacyProgress := filepath.Join(legacyDir, "shared", "ralph", "progress.md")
+	if _, err := os.Stat(legacyProgress); err == nil {
+		dst := filepath.Join(p.state.PrismDir, "shared", "spectrum", "progress.md")
+		if err := copyFile(legacyProgress, dst); err != nil {
+			return fmt.Errorf("failed to copy progress.md: %w", err)
+		}
+	}
+
+	// Step 4: Copy shared artifact directories
+	dirMappings := []struct {
+		src string
+		dst string
+	}{
+		{filepath.Join(legacyDir, "shared", "research"), filepath.Join(p.state.PrismDir, "shared", "research")},
+		{filepath.Join(legacyDir, "shared", "plans"), filepath.Join(p.state.PrismDir, "shared", "plans")},
+		{filepath.Join(legacyDir, "shared", "validation"), filepath.Join(p.state.PrismDir, "shared", "validation")},
+		{filepath.Join(legacyDir, "shared", "handoffs"), filepath.Join(p.state.PrismDir, "shared", "handoffs")},
+		{filepath.Join(legacyDir, "shared", "prs"), filepath.Join(p.state.PrismDir, "shared", "prs")},
+	}
+
+	for _, m := range dirMappings {
+		if err := copyDirContents(m.src, m.dst); err != nil {
+			return fmt.Errorf("failed to copy %s: %w", filepath.Base(m.src), err)
+		}
+	}
+
+	// Step 5: Copy local artifacts
+	if err := copyDirContents(filepath.Join(legacyDir, "local"), filepath.Join(p.state.PrismDir, "local")); err != nil {
+		return fmt.Errorf("failed to copy local/: %w", err)
+	}
+
+	return nil
+}
+
 // createStoriesFile creates a minimal stories.json file
 func (p *OnboardingPlugin) createStoriesFile(path string) error {
 	content := `{
@@ -487,6 +619,58 @@ func (p *OnboardingPlugin) createStoriesFile(path string) error {
 }
 `
 	return os.WriteFile(path, []byte(content), 0644)
+}
+
+// copyFile copies a single file from src to dst, preserving content.
+func copyFile(src, dst string) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+
+	out, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	if _, err := io.Copy(out, in); err != nil {
+		return err
+	}
+	return out.Close()
+}
+
+// copyDirContents copies all files from srcDir into dstDir.
+// Skips .example and .template files. Non-fatal if srcDir doesn't exist.
+func copyDirContents(srcDir, dstDir string) error {
+	entries, err := os.ReadDir(srcDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil // Source doesn't exist, nothing to copy
+		}
+		return err
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue // Only copy files, not subdirectories
+		}
+
+		name := entry.Name()
+		// Skip obsolete template/example files
+		if strings.HasSuffix(name, ".example") || strings.HasSuffix(name, ".template") {
+			continue
+		}
+
+		src := filepath.Join(srcDir, name)
+		dst := filepath.Join(dstDir, name)
+		if err := copyFile(src, dst); err != nil {
+			return fmt.Errorf("copy %s: %w", name, err)
+		}
+	}
+
+	return nil
 }
 
 // OnboardingStepCompleteMsg signals that a step completed successfully

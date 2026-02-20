@@ -52,4 +52,12 @@ type Context struct {
 	// Epoch is a project-switch counter. Incremented on Reinit() to invalidate
 	// stale async messages from a previous project context.
 	Epoch uint64
+
+	// HasLegacyDir is true when a thoughts/ directory exists but .prism/ does not.
+	// Triggers the migration onboarding flow instead of fresh setup.
+	HasLegacyDir bool
+
+	// LegacyDir is the absolute path to the legacy thoughts/ directory.
+	// Only set when HasLegacyDir is true.
+	LegacyDir string
 }

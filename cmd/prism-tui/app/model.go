@@ -164,6 +164,39 @@ func NewModel(prismDir, storiesPath, projectDir string, maxIter, pause int, pris
 	gitRoot := resolveGitRoot(projectDir)
 	configDir := resolveConfigDir()
 
+	// Detect if onboarding is needed (before context creation so plugins see it)
+	needsOnboarding := false
+	hasLegacyDir := false
+	legacyDir := ""
+
+	// Check if .prism/ directory exists
+	if prismDir != "" && prismDir != "demo" {
+		if _, err := os.Stat(prismDir); os.IsNotExist(err) {
+			needsOnboarding = true
+			// Check for legacy thoughts/ directory
+			candidate := filepath.Join(projectDir, "thoughts")
+			if _, legacyErr := os.Stat(candidate); legacyErr == nil {
+				hasLegacyDir = true
+				legacyDir = candidate
+			}
+		}
+	}
+
+	// Check if stories.json exists
+	if storiesPath != "" && !needsOnboarding {
+		if _, err := os.Stat(storiesPath); os.IsNotExist(err) {
+			needsOnboarding = true
+		}
+	}
+
+	// Check if claude CLI is available
+	if !needsOnboarding {
+		if _, err := exec.LookPath("claude"); err != nil {
+			// Note: we don't force onboarding just for missing CLI,
+			// but it will be checked during onboarding if triggered
+		}
+	}
+
 	// Create plugin context
 	ctx := &plugin.Context{
 		PrismDir:      prismDir,
@@ -178,6 +211,8 @@ func NewModel(prismDir, storiesPath, projectDir string, maxIter, pause int, pris
 		WorkDir:       workDir,
 		GitRoot:       gitRoot,
 		ConfigDir:     configDir,
+		HasLegacyDir:  hasLegacyDir,
+		LegacyDir:     legacyDir,
 	}
 
 	// Create plugin registry
@@ -205,31 +240,6 @@ func NewModel(prismDir, storiesPath, projectDir string, maxIter, pause int, pris
 	registry.Register(monitorPlugin)
 	registry.Register(workspacesPlugin)
 	registry.Register(onboardingPlugin)
-
-	// Detect if onboarding is needed
-	needsOnboarding := false
-
-	// Check if .prism/ directory exists
-	if prismDir != "" && prismDir != "demo" {
-		if _, err := os.Stat(prismDir); os.IsNotExist(err) {
-			needsOnboarding = true
-		}
-	}
-
-	// Check if stories.json exists
-	if storiesPath != "" && !needsOnboarding {
-		if _, err := os.Stat(storiesPath); os.IsNotExist(err) {
-			needsOnboarding = true
-		}
-	}
-
-	// Check if claude CLI is available
-	if !needsOnboarding {
-		if _, err := exec.LookPath("claude"); err != nil {
-			// Note: we don't force onboarding just for missing CLI,
-			// but it will be checked during onboarding if triggered
-		}
-	}
 
 	// Create splash screen animation
 	termInfo := terminal.Detect()

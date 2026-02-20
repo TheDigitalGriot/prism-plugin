@@ -89,14 +89,20 @@ Keyboard controls:
 
 				// Check if .prism/ exists
 				if _, err := os.Stat(prismDir); os.IsNotExist(err) {
-					return fmt.Errorf(".prism/ directory not found in %s\n\nRun init_prism.py first to initialize the project", cwd)
-				}
-
-				// Check for legacy flat structure
-				flatPath := filepath.Join(prismDir, "stories", "stories.json")
-				if _, err := os.Stat(flatPath); err == nil {
-					// Legacy flat structure exists - can use it if no epics found
-					storiesFile = flatPath
+					// Check for legacy thoughts/ directory before erroring
+					legacyDir := filepath.Join(cwd, "thoughts")
+					if _, legacyErr := os.Stat(legacyDir); os.IsNotExist(legacyErr) {
+						// Neither .prism/ nor thoughts/ — original error
+						return fmt.Errorf(".prism/ directory not found in %s\n\nRun init_prism.py first to initialize the project", cwd)
+					}
+					// Legacy project detected — TUI will handle migration via onboarding
+				} else {
+					// Check for legacy flat structure
+					flatPath := filepath.Join(prismDir, "stories", "stories.json")
+					if _, err := os.Stat(flatPath); err == nil {
+						// Legacy flat structure exists - can use it if no epics found
+						storiesFile = flatPath
+					}
 				}
 				// Otherwise storiesFile stays empty -> launches at ViewHome
 			}
