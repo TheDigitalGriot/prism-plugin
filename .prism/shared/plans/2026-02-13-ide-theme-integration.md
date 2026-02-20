@@ -7,7 +7,7 @@
 
 ## Goal
 
-Make the prism-tui visually adapt to the user's IDE color theme by extracting accent/primary and foreground colors from VS Code/Cursor/Windsurf theme files. Tab borders, header backgrounds, and splash atmosphere should harmonize with the active theme. Fall back to current hardcoded palette when not running inside an IDE terminal.
+Make the prism-cli visually adapt to the user's IDE color theme by extracting accent/primary and foreground colors from VS Code/Cursor/Windsurf theme files. Tab borders, header backgrounds, and splash atmosphere should harmonize with the active theme. Fall back to current hardcoded palette when not running inside an IDE terminal.
 
 ## What We're NOT Doing
 
@@ -20,7 +20,7 @@ Make the prism-tui visually adapt to the user's IDE color theme by extracting ac
 
 ## Phase 1: Add ThemeColors Detection (`terminal/theme.go`)
 
-Create a new file `cmd/prism-tui/terminal/theme.go` based on the reference at `ref/tui-theming/theme.go`.
+Create a new file `cmd/prism-cli/terminal/theme.go` based on the reference at `ref/tui-theming/theme.go`.
 
 ### Steps
 
@@ -45,7 +45,7 @@ The reference `extractAccentFromThemeDir` uses `containsLower` for fuzzy matchin
 ### Verification
 
 ```
-cd cmd/prism-tui && go build ./terminal/
+cd cmd/prism-cli && go build ./terminal/
 ```
 
 ---
@@ -96,7 +96,7 @@ Only `Primary` and `TabBorderColor` get overridden. `Info`, `Success`, `Warning`
 ### Verification
 
 ```
-cd cmd/prism-tui && go build ./styles/
+cd cmd/prism-cli && go build ./styles/
 ```
 
 ---
@@ -143,7 +143,7 @@ Apply the reference `ref/tui-theming/splash.go` changes to the actual `splash/sp
 ### Verification
 
 ```
-cd cmd/prism-tui && go build ./splash/
+cd cmd/prism-cli && go build ./splash/
 ```
 
 ---
@@ -175,7 +175,7 @@ Connect the three pieces in `NewModel()`.
 - [ ] 4.3 Add `"fmt"` to imports if not present, and add `styles` import:
   ```go
   import (
-      "github.com/prism-plugin/prism-tui/styles"
+      "github.com/prism-plugin/prism-cli/styles"
   )
   ```
 
@@ -185,7 +185,7 @@ Connect the three pieces in `NewModel()`.
 ### Verification
 
 ```
-cd cmd/prism-tui && go build .
+cd cmd/prism-cli && go build .
 ```
 
 ---
@@ -194,9 +194,9 @@ cd cmd/prism-tui && go build .
 
 ### Automated Verification
 
-- [ ] `cd cmd/prism-tui && go build .` — compiles without errors
-- [ ] `cd cmd/prism-tui && go vet ./...` — no issues
-- [ ] `cd cmd/prism-tui && go test ./...` — tests pass (if any exist)
+- [ ] `cd cmd/prism-cli && go build .` — compiles without errors
+- [ ] `cd cmd/prism-cli && go vet ./...` — no issues
+- [ ] `cd cmd/prism-cli && go test ./...` — tests pass (if any exist)
 
 ### Manual Verification
 
@@ -223,7 +223,7 @@ cd cmd/prism-tui && go build .
 
 | File | Action | Lines Changed (est.) |
 |------|--------|---------------------|
-| `cmd/prism-tui/terminal/theme.go` | Create | ~250 |
-| `cmd/prism-tui/styles/theme.go` | Modify | ~25 |
-| `cmd/prism-tui/splash/splash.go` | Modify | ~80 |
-| `cmd/prism-tui/app/model.go` | Modify | ~15 |
+| `cmd/prism-cli/terminal/theme.go` | Create | ~250 |
+| `cmd/prism-cli/styles/theme.go` | Modify | ~25 |
+| `cmd/prism-cli/splash/splash.go` | Modify | ~80 |
+| `cmd/prism-cli/app/model.go` | Modify | ~15 |

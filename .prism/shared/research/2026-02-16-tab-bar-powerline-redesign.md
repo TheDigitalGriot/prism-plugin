@@ -19,15 +19,15 @@ The current tab bar uses bordered boxes with rounded corners (`╭─╮`) for e
 
 | File | Purpose | Key Lines |
 |------|---------|-----------|
-| `cmd/prism-tui/app/shell.go` | Tab bar rendering and layout | 104-204 |
-| `cmd/prism-tui/styles/powerline.go` | Powerline segment rendering system | 9-215 |
-| `cmd/prism-tui/styles/theme.go` | Tab styling definitions | 96-141 |
-| `cmd/prism-tui/app/footer.go` | Powerline footer implementation (reference) | 114-247 |
-| `cmd/prism-tui/app/sidebar.go` | Multi-line rendering examples | 42-109 |
-| `cmd/prism-tui/app/update.go` | Tab switching and mouse handling | 403-658 |
-| `cmd/prism-tui/app/views.go` | ActiveView enum definitions | 9-25 |
-| `cmd/prism-tui/app/model.go` | TabOrder initialization | 93, 257 |
-| `cmd/prism-tui/plugin/registry.go` | Plugin lookup by ID | 81-83 |
+| `cmd/prism-cli/app/shell.go` | Tab bar rendering and layout | 104-204 |
+| `cmd/prism-cli/styles/powerline.go` | Powerline segment rendering system | 9-215 |
+| `cmd/prism-cli/styles/theme.go` | Tab styling definitions | 96-141 |
+| `cmd/prism-cli/app/footer.go` | Powerline footer implementation (reference) | 114-247 |
+| `cmd/prism-cli/app/sidebar.go` | Multi-line rendering examples | 42-109 |
+| `cmd/prism-cli/app/update.go` | Tab switching and mouse handling | 403-658 |
+| `cmd/prism-cli/app/views.go` | ActiveView enum definitions | 9-25 |
+| `cmd/prism-cli/app/model.go` | TabOrder initialization | 93, 257 |
+| `cmd/prism-cli/plugin/registry.go` | Plugin lookup by ID | 81-83 |
 
 ## Component Analysis
 
@@ -496,4 +496,4 @@ Powerline approach uses:
 
 - Existing powerline footer plan: `.prism/shared/plans/2026-02-16-powerline-footer-status-bar.md`
 - Existing powerline footer research: `.prism/shared/research/2026-02-16-powerline-footer-status-bar.md`
-- TUI architecture deep dive: `.prism/shared/research/2026-02-12-prism-tui-deep-dive.md`
+- TUI architecture deep dive: `.prism/shared/research/2026-02-12-prism-cli-deep-dive.md`

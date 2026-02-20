@@ -1,11 +1,11 @@
 ---
-description: Check for prism-tui installation, install if needed, and set up shell alias
+description: Check for prism-cli installation, install if needed, and set up shell alias
 model: haiku
 ---
 
 # Prism CLI Setup
 
-Set up the Prism TUI binary so it can be launched from any project terminal.
+Set up the Prism CLI binary so it can be launched from any project terminal.
 
 ## Process
 
@@ -31,36 +31,36 @@ Check these locations in order. Stop at the first match:
 **Unix/Git Bash:**
 ```bash
 # 1. Already in PATH?
-which prism-tui 2>/dev/null && echo "FOUND_IN=path"
+which prism-cli 2>/dev/null && echo "FOUND_IN=path"
 
 # 2. Standard install location?
-test -x "$HOME/.prism/bin/prism-tui" && echo "FOUND_IN=prism-bin"
+test -x "$HOME/.prism/bin/prism-cli" && echo "FOUND_IN=prism-bin"
 
 # 3. Local plugin build? (find plugin dir from this command's context)
 # Check common locations
 for dir in \
-  "$HOME/.claude/plugins/prism/cmd/prism-tui/bin" \
-  "$HOME/.claude/plugins/prism-plugin/cmd/prism-tui/bin" \
+  "$HOME/.claude/plugins/prism/cmd/prism-cli/bin" \
+  "$HOME/.claude/plugins/prism-plugin/cmd/prism-cli/bin" \
   ; do
-  test -x "$dir/prism-tui" && echo "FOUND_IN=$dir" && break
+  test -x "$dir/prism-cli" && echo "FOUND_IN=$dir" && break
 done
 ```
 
 **PowerShell/Windows:**
 ```bash
 # 1. Already in PATH?
-which prism-tui.exe 2>/dev/null && echo "FOUND_IN=path"
+which prism-cli.exe 2>/dev/null && echo "FOUND_IN=path"
 
 # 2. Standard install location?
-test -x "$USERPROFILE/.prism/bin/prism-tui.exe" && echo "FOUND_IN=prism-bin"
+test -x "$USERPROFILE/.prism/bin/prism-cli.exe" && echo "FOUND_IN=prism-bin"
 
 # 3. Local plugin build?
 for dir in \
-  "$USERPROFILE/.claude/plugins/prism/cmd/prism-tui/bin" \
-  "$USERPROFILE/.claude/plugins/prism-plugin/cmd/prism-tui/bin" \
-  "$LOCALAPPDATA/claude/plugins/prism/cmd/prism-tui/bin" \
+  "$USERPROFILE/.claude/plugins/prism/cmd/prism-cli/bin" \
+  "$USERPROFILE/.claude/plugins/prism-plugin/cmd/prism-cli/bin" \
+  "$LOCALAPPDATA/claude/plugins/prism/cmd/prism-cli/bin" \
   ; do
-  test -x "$dir/prism-tui.exe" && echo "FOUND_IN=$dir" && break
+  test -x "$dir/prism-cli.exe" && echo "FOUND_IN=$dir" && break
 done
 ```
 
@@ -76,33 +76,33 @@ Find the plugin's `scripts/` directory and run the appropriate install script:
 
 ```bash
 # Unix
-./scripts/prism-tui-install.sh
+./scripts/prism-cli-install.sh
 
 # Windows (from Git Bash in IDE)
-./scripts/prism-tui-install.sh
+./scripts/prism-cli-install.sh
 ```
 
 Or if PowerShell is preferred:
 ```powershell
-.\scripts\prism-tui-install.ps1
+.\scripts\prism-cli-install.ps1
 ```
 
 **Option 2 — Build from source (requires Go 1.22+):**
 
 ```bash
-cd cmd/prism-tui && go build -o "$HOME/.prism/bin/prism-tui" .
+cd cmd/prism-cli && go build -o "$HOME/.prism/bin/prism-cli" .
 ```
 
 Windows:
 ```bash
-cd cmd/prism-tui && go build -o "$USERPROFILE/.prism/bin/prism-tui.exe" .
+cd cmd/prism-cli && go build -o "$USERPROFILE/.prism/bin/prism-cli.exe" .
 ```
 
 The install scripts automatically place the binary in `~/.prism/bin/`.
 
 ### Step 4: Set Up PATH / Alias
 
-After the binary is confirmed to exist, set up the shell so `prism-tui` is accessible.
+After the binary is confirmed to exist, set up the shell so `prism-cli` is accessible.
 
 **If already in PATH** — skip this step, report that it's ready.
 
@@ -138,7 +138,7 @@ fi
 # Check if already added
 grep -q '.prism/bin' "$RC_FILE" 2>/dev/null || \
   echo '' >> "$RC_FILE" && \
-  echo '# Prism TUI' >> "$RC_FILE" && \
+  echo '# Prism CLI' >> "$RC_FILE" && \
   echo 'export PATH="$PATH:$HOME/.prism/bin"' >> "$RC_FILE"
 ```
 
@@ -148,7 +148,7 @@ For PowerShell users who want it in their `$PROFILE`:
 if (!(Test-Path $PROFILE)) { New-Item -Path $PROFILE -Force }
 
 # Append PATH addition
-Add-Content $PROFILE "`n# Prism TUI`n`$env:PATH += `";$env:USERPROFILE\.prism\bin`""
+Add-Content $PROFILE "`n# Prism CLI`n`$env:PATH += `";$env:USERPROFILE\.prism\bin`""
 ```
 
 **Option B — Session only:**
@@ -158,7 +158,7 @@ Just use the export already done. User will need to re-export in new terminals.
 ### Step 5: Verify Installation
 
 ```bash
-prism-tui --version
+prism-cli --version
 ```
 
 If this succeeds, report the version. If it fails, troubleshoot the PATH.
@@ -175,7 +175,7 @@ If missing, find and run `init_prism.py`:
 
 ```bash
 # Find init script in plugin directory
-python "$(dirname "$(which prism-tui 2>/dev/null || echo "$HOME/.prism/bin/prism-tui")")"/../../skills/prism/scripts/init_prism.py .
+python "$(dirname "$(which prism-cli 2>/dev/null || echo "$HOME/.prism/bin/prism-cli")")"/../../skills/prism/scripts/init_prism.py .
 ```
 
 If the script can't be located, create the directory structure manually:
@@ -191,16 +191,16 @@ And add `.prism/local/` to `.gitignore` if not already present.
 Print a summary:
 
 ```
-Prism TUI Setup Complete
+Prism CLI Setup Complete
 
-  Binary:    ~/.prism/bin/prism-tui (v X.X.X)
+  Binary:    ~/.prism/bin/prism-cli (v X.X.X)
   PATH:      Added to ~/.zshrc (permanent)
   Project:   .prism/ initialized
 
   Launch commands:
-    prism-tui              # auto-detect stories in current project
-    prism-tui --demo       # preview with demo stories
-    prism-tui --onboarding # run setup wizard
+    prism-cli              # auto-detect stories in current project
+    prism-cli --demo       # preview with demo stories
+    prism-cli --onboarding # run setup wizard
 
   Next: Use /prism-research to start researching your codebase
 ```

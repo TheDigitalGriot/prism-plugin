@@ -75,7 +75,7 @@ Only the FIRST segment width changes per row (±1). All interior segments stay t
 
 ## Phase 1: Add Tab Icon Constants
 
-**File**: `cmd/prism-tui/styles/powerline.go`
+**File**: `cmd/prism-cli/styles/powerline.go`
 
 ### Steps
 
@@ -118,14 +118,14 @@ Only the FIRST segment width changes per row (±1). All interior segments stay t
 
 ### Verification
 ```bash
-cd cmd/prism-tui && go build ./...
+cd cmd/prism-cli && go build ./...
 ```
 
 ---
 
 ## Phase 2: Implement 3-Line Powerline Tab Bar
 
-**File**: `cmd/prism-tui/app/shell.go`
+**File**: `cmd/prism-cli/app/shell.go`
 
 ### Steps
 
@@ -209,14 +209,14 @@ Zone marks on the MIDDLE row only using existing `"tab-{i}"` IDs. The click hand
 
 ### Verification
 ```bash
-cd cmd/prism-tui && go build ./...
+cd cmd/prism-cli && go build ./...
 ```
 
 ---
 
 ## Phase 3: Clean Up Old Tab Styles
 
-**File**: `cmd/prism-tui/styles/theme.go`
+**File**: `cmd/prism-cli/styles/theme.go`
 
 ### Steps
 
@@ -235,7 +235,7 @@ cd cmd/prism-tui && go build ./...
 
 ### Verification
 ```bash
-cd cmd/prism-tui && go build ./...
+cd cmd/prism-cli && go build ./...
 ```
 
 ---
@@ -246,17 +246,17 @@ cd cmd/prism-tui && go build ./...
 
 1. Full build:
    ```bash
-   cd cmd/prism-tui && make build
+   cd cmd/prism-cli && make build
    ```
 
 2. Run tests:
    ```bash
-   cd cmd/prism-tui && make test
+   cd cmd/prism-cli && make test
    ```
 
 3. Run lint:
    ```bash
-   cd cmd/prism-tui && make lint
+   cd cmd/prism-cli && make lint
    ```
 
 ---

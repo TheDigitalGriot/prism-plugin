@@ -6,12 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Prism is a Claude Code plugin that implements a structured 4-phase development workflow: **Research → Plan → Implement → Validate**. It provides skills, commands, and agents that guide AI through deliberate phases rather than jumping straight into code. For large features, Spectrum autonomous execution runs one story per fresh Claude session in a loop.
 
-## Build & Test Commands (TUI only)
+## Build & Test Commands (CLI only)
 
-The plugin itself is markdown-based prompt engineering with no build step. The Go-based TUI dashboard lives in `cmd/prism-tui/`:
+The plugin itself is markdown-based prompt engineering with no build step. The Go-based CLI dashboard lives in `cmd/prism-cli/`:
 
 ```bash
-cd cmd/prism-tui
+cd cmd/prism-cli
 make build          # Build for current platform
 make build-all      # Cross-compile (windows/darwin/linux, amd64/arm64)
 make test           # Run Go tests: go test -v ./...
@@ -97,7 +97,7 @@ Initialize with: `python skills/prism/scripts/init_prism.py`
 - **Two-Category Success Criteria**: Plans always separate "Automated Verification" (runnable commands) from "Manual Verification" (human testing).
 - **Fresh Context Per Iteration**: Spectrum gives each story a new Claude session. Memory persists through files and git commits, not AI context.
 
-## TUI Dashboard (cmd/prism-tui/)
+## CLI Dashboard (cmd/prism-cli/)
 
 Go 1.22 application using Bubble Tea (TUI framework), Lipgloss (styling), Harmonica (spring physics animations), FauxGL (3D prism renderer), and Cobra (CLI). Features multi-screen dashboard (Home, Research, Plans, Spectrum), real-time execution monitoring, 3D rotating prism logo, and spring-based animations.
 

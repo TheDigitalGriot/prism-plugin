@@ -16,21 +16,21 @@ The TUI app shell calculates content dimensions from `m.Width` and `m.Height` (s
 
 | File | Role |
 |------|------|
-| `cmd/prism-tui/app/model.go` | Main model, `Width`/`Height` fields, `NewModel()` |
-| `cmd/prism-tui/app/update.go` | `WindowSizeMsg` handler — sets `m.Width`, `m.Height`, broadcasts `PluginResizeMsg` |
-| `cmd/prism-tui/app/view.go` | `View()` — routes to `renderAppShell(content)` |
-| `cmd/prism-tui/app/shell.go` | `renderAppShell()`, tab bar renderers (3-line powerline or 1-line compact) |
-| `cmd/prism-tui/app/footer.go` | `renderTwoTierFooter()` — 2-line footer (key hints + powerline bar) |
-| `cmd/prism-tui/app/sidebar.go` | `renderSidebar(height)` — fixed 38-col right panel |
-| `cmd/prism-tui/app/plugin_spectrum.go` | Spectrum screen — hardcoded panel sizes |
-| `cmd/prism-tui/app/plugin_files.go` | Files screen — uses `innerHeight = paneHeight - 2` |
-| `cmd/prism-tui/app/plugin_git.go` | Git screen — uses `innerHeight = paneHeight - 2` |
-| `cmd/prism-tui/app/plugin_agent.go` | Agent screen — hardcoded `-6`, `-12` offsets |
-| `cmd/prism-tui/app/plugin_monitor.go` | Monitor screen — `contentHeight = height - 6` |
-| `cmd/prism-tui/app/plugin_workspaces.go` | Workspaces screen — uses `innerHeight = paneHeight - 2` |
-| `cmd/prism-tui/app/plugin_research.go` | Research — viewport resized with `Height - 6` |
-| `cmd/prism-tui/app/plugin_plans.go` | Plans — viewport resized with `Height - 6` |
-| `cmd/prism-tui/app/plugin_home.go` | Home — no height-based layout |
+| `cmd/prism-cli/app/model.go` | Main model, `Width`/`Height` fields, `NewModel()` |
+| `cmd/prism-cli/app/update.go` | `WindowSizeMsg` handler — sets `m.Width`, `m.Height`, broadcasts `PluginResizeMsg` |
+| `cmd/prism-cli/app/view.go` | `View()` — routes to `renderAppShell(content)` |
+| `cmd/prism-cli/app/shell.go` | `renderAppShell()`, tab bar renderers (3-line powerline or 1-line compact) |
+| `cmd/prism-cli/app/footer.go` | `renderTwoTierFooter()` — 2-line footer (key hints + powerline bar) |
+| `cmd/prism-cli/app/sidebar.go` | `renderSidebar(height)` — fixed 38-col right panel |
+| `cmd/prism-cli/app/plugin_spectrum.go` | Spectrum screen — hardcoded panel sizes |
+| `cmd/prism-cli/app/plugin_files.go` | Files screen — uses `innerHeight = paneHeight - 2` |
+| `cmd/prism-cli/app/plugin_git.go` | Git screen — uses `innerHeight = paneHeight - 2` |
+| `cmd/prism-cli/app/plugin_agent.go` | Agent screen — hardcoded `-6`, `-12` offsets |
+| `cmd/prism-cli/app/plugin_monitor.go` | Monitor screen — `contentHeight = height - 6` |
+| `cmd/prism-cli/app/plugin_workspaces.go` | Workspaces screen — uses `innerHeight = paneHeight - 2` |
+| `cmd/prism-cli/app/plugin_research.go` | Research — viewport resized with `Height - 6` |
+| `cmd/prism-cli/app/plugin_plans.go` | Plans — viewport resized with `Height - 6` |
+| `cmd/prism-cli/app/plugin_home.go` | Home — no height-based layout |
 
 ---
 

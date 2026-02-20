@@ -1,11 +1,11 @@
 # Sidecar Port Screen Audit
 
 **Date**: 2026-02-17
-**Question**: What is the current state of each Prism TUI plugin screen vs the Sidecar reference implementation?
+**Question**: What is the current state of each Prism CLI plugin screen vs the Sidecar reference implementation?
 
 ## Summary
 
-The Prism TUI has 5 plugin screens (Git, Files, Agent, Workspaces, Monitor) that were scaffolded during the Sidecar/Crush integration. All screens are significantly simplified compared to the full Sidecar source at `ref/sidecar/internal/plugins/`. The Git screen is the most visually incomplete (single-column file list, no persistent diff pane). The Sidecar reference code provides complete two-pane layouts with draggable dividers, gradient-bordered panels, scrollbars, and rich content rendering for all plugins.
+The Prism CLI has 5 plugin screens (Git, Files, Agent, Workspaces, Monitor) that were scaffolded during the Sidecar/Crush integration. All screens are significantly simplified compared to the full Sidecar source at `ref/sidecar/internal/plugins/`. The Git screen is the most visually incomplete (single-column file list, no persistent diff pane). The Sidecar reference code provides complete two-pane layouts with draggable dividers, gradient-bordered panels, scrollbars, and rich content rendering for all plugins.
 
 ## Reference: SIDECAR.md Target Designs
 
@@ -94,17 +94,17 @@ SIDECAR.md (root of repo) describes the target design for each plugin screen. Ke
 
 ## Files Discovered
 
-### Prism TUI (current implementation)
+### Prism CLI (current implementation)
 | File | Description |
 |------|-------------|
-| `cmd/prism-tui/app/plugin_git.go` | Git plugin - single column file list |
-| `cmd/prism-tui/app/plugin_files.go` | Files plugin - basic tree + preview |
-| `cmd/prism-tui/app/plugin_agent.go` | Agent plugin - sidebar + chat |
-| `cmd/prism-tui/app/plugin_workspaces.go` | Workspaces plugin - single column |
-| `cmd/prism-tui/app/plugin_monitor.go` | Monitor plugin - three horizontal panels |
-| `cmd/prism-tui/app/view.go` | Main View() router |
-| `cmd/prism-tui/app/sidebar.go` | Right sidebar (SidebarWidth=38) |
-| `cmd/prism-tui/app/shell.go` | renderBreadcrumb() helper |
+| `cmd/prism-cli/app/plugin_git.go` | Git plugin - single column file list |
+| `cmd/prism-cli/app/plugin_files.go` | Files plugin - basic tree + preview |
+| `cmd/prism-cli/app/plugin_agent.go` | Agent plugin - sidebar + chat |
+| `cmd/prism-cli/app/plugin_workspaces.go` | Workspaces plugin - single column |
+| `cmd/prism-cli/app/plugin_monitor.go` | Monitor plugin - three horizontal panels |
+| `cmd/prism-cli/app/view.go` | Main View() router |
+| `cmd/prism-cli/app/sidebar.go` | Right sidebar (SidebarWidth=38) |
+| `cmd/prism-cli/app/shell.go` | renderBreadcrumb() helper |
 
 ### Sidecar Reference (target implementation)
 | Directory | File Count | Key Files |
@@ -116,7 +116,7 @@ SIDECAR.md (root of repo) describes the target design for each plugin screen. Ke
 
 ## Per-Screen Analysis
 
-### 1. Git Plugin (`cmd/prism-tui/app/plugin_git.go`)
+### 1. Git Plugin (`cmd/prism-cli/app/plugin_git.go`)
 
 **Current State**:
 - `View()` at line 165: Three mutually exclusive paths (error -> diff viewer -> file list)
@@ -140,7 +140,7 @@ SIDECAR.md (root of repo) describes the target design for each plugin screen. Ke
 
 **Gap**: Current has NO two-pane layout. Diff replaces entire view. No commits, no scrollbar, no syntax highlighting.
 
-### 2. Files Plugin (`cmd/prism-tui/app/plugin_files.go`)
+### 2. Files Plugin (`cmd/prism-cli/app/plugin_files.go`)
 
 **Current State**:
 - `View()` at line 138: Two-pane layout exists (tree left + preview right)
@@ -159,7 +159,7 @@ SIDECAR.md (root of repo) describes the target design for each plugin screen. Ke
 
 **Gap**: Current has basic two-pane but 50/50 split, no bordered panels, no line numbers, no syntax highlighting, no search.
 
-### 3. Agent Plugin (`cmd/prism-tui/app/plugin_agent.go`)
+### 3. Agent Plugin (`cmd/prism-cli/app/plugin_agent.go`)
 
 **Current State**:
 - `View()` at line 138: Two-pane exists (sidebar + chat) via `renderWideMode()`
@@ -179,7 +179,7 @@ SIDECAR.md (root of repo) describes the target design for each plugin screen. Ke
 
 **Gap**: Current has basic two-pane skeleton but all content is placeholder. No real conversation loading, no adapter integration.
 
-### 4. Workspaces Plugin (`cmd/prism-tui/app/plugin_workspaces.go`)
+### 4. Workspaces Plugin (`cmd/prism-cli/app/plugin_workspaces.go`)
 
 **Current State**:
 - `View()` at line 104: Three mutually exclusive paths (loading -> epics -> projects)
@@ -197,7 +197,7 @@ SIDECAR.md (root of repo) describes the target design for each plugin screen. Ke
 
 **Gap**: Current has NO two-pane layout. Single column only. No detail pane. No worktree/shell concepts.
 
-### 5. Monitor Plugin (`cmd/prism-tui/app/plugin_monitor.go`)
+### 5. Monitor Plugin (`cmd/prism-cli/app/plugin_monitor.go`)
 
 **Current State**:
 - `View()` at line 152: Three-panel horizontal layout using `lipgloss.JoinHorizontal`

@@ -1,6 +1,6 @@
 # Claude CLI Communication & Request/Response Flow
 
-How the Prism TUI (Go) and spectrum.sh (Bash) orchestrators communicate with the local `claude` CLI to iterate over stories autonomously.
+How the Prism CLI (Go) and spectrum.sh (Bash) orchestrators communicate with the local `claude` CLI to iterate over stories autonomously.
 
 ---
 
@@ -26,7 +26,7 @@ The `{progressPath}` is derived from the stories file location:
 claude --dangerously-skip-permissions --print --output-format stream-json --verbose "<prompt>"
 ```
 
-Source: [`runner.go:122-128`](cmd/prism-tui/claude/runner.go#L122-L128)
+Source: [`runner.go:122-128`](cmd/prism-cli/claude/runner.go#L122-L128)
 
 | Flag | Purpose |
 |------|---------|
@@ -58,7 +58,7 @@ The TUI gets **structured JSON events** in real-time, allowing it to display too
 | Kill (Unix) | `cmd.Process.Kill()` | Normal process lifecycle |
 | Cancel | `Runner.Cancel()` — context cancel + process kill | N/A |
 
-Source: [`runner.go:277-291`](cmd/prism-tui/claude/runner.go#L277-L291)
+Source: [`runner.go:277-291`](cmd/prism-cli/claude/runner.go#L277-L291)
 
 ### Who Picks the Next Story?
 
@@ -96,7 +96,7 @@ Event types:
 | `tool_result` | `tool_use_id` | A tool finished executing |
 | `result` | `result`, `is_error`, `duration_ms` | Session complete |
 
-Source: [`events.go:9-24`](cmd/prism-tui/claude/events.go#L9-L24)
+Source: [`events.go:9-24`](cmd/prism-cli/claude/events.go#L9-L24)
 
 ### Data Flow: CLI Process → TUI Display
 
@@ -134,29 +134,29 @@ claude process (child)
                     View() renders activity panel
 ```
 
-Source: [`runner.go:109-246`](cmd/prism-tui/claude/runner.go#L109-L246)
+Source: [`runner.go:109-246`](cmd/prism-cli/claude/runner.go#L109-L246)
 
 ### Channel Bridge Pattern
 
 The core pattern connecting Go's `os/exec` pipes to Bubble Tea's event loop:
 
 1. **Channel creation** — A buffered `chan tea.Msg` (capacity 100) is created at iteration start
-   - Source: [`update.go:333`](cmd/prism-tui/app/update.go#L333)
+   - Source: [`update.go:333`](cmd/prism-cli/app/update.go#L333)
 
 2. **Two producer goroutines** — Read stdout and stderr pipes concurrently via `streamOutput()`
-   - Source: [`runner.go:152-163`](cmd/prism-tui/claude/runner.go#L152-L163)
+   - Source: [`runner.go:152-163`](cmd/prism-cli/claude/runner.go#L152-L163)
 
 3. **Line parsing** — Each line is attempted as JSON via `ParseStreamEvent()`. Valid events get tool activity extracted; invalid lines become raw `ClaudeOutputMsg`
-   - Source: [`runner.go:219-244`](cmd/prism-tui/claude/runner.go#L219-L244)
+   - Source: [`runner.go:219-244`](cmd/prism-cli/claude/runner.go#L219-L244)
 
 4. **Consumer bridge** — `ListenToOutput()` returns a `tea.Cmd` that blocks on the channel. When a message arrives, it's returned to Bubble Tea's `Update()`. The handler then calls `ListenToOutput()` again, creating a recursive drain:
    ```
    ListenToOutput() → blocks → returns msg → Update() → ListenToOutput() → ...
    ```
-   - Source: [`runner.go:192-200`](cmd/prism-tui/claude/runner.go#L192-L200), [`update.go:223-235`](cmd/prism-tui/app/update.go#L223-L235)
+   - Source: [`runner.go:192-200`](cmd/prism-cli/claude/runner.go#L192-L200), [`update.go:223-235`](cmd/prism-cli/app/update.go#L223-L235)
 
 5. **Channel close** — When both pipes close (process exits), the channel is closed and `RunClaudeStreamingCmd` returns `ClaudeFinishedMsg` with the full accumulated output
-   - Source: [`runner.go:177-188`](cmd/prism-tui/claude/runner.go#L177-L188)
+   - Source: [`runner.go:177-188`](cmd/prism-cli/claude/runner.go#L177-L188)
 
 ### Tool Activity Extraction
 
@@ -175,7 +175,7 @@ The core pattern connecting Go's `os/exec` pipes to Bubble Tea's event loop:
 | `WebSearch` | `Web search...` |
 | `TodoWrite` | `Updating tasks...` |
 
-Source: [`events.go:104-173`](cmd/prism-tui/claude/events.go#L104-L173)
+Source: [`events.go:104-173`](cmd/prism-cli/claude/events.go#L104-L173)
 
 File paths are shortened for display (backslashes normalized, long paths truncated to last 2 components).
 
@@ -209,7 +209,7 @@ Files:
 </spectrum-story>
 ```
 
-Source: [`signals.go:44-53`](cmd/prism-tui/domain/signals.go#L44-L53)
+Source: [`signals.go:44-53`](cmd/prism-cli/domain/signals.go#L44-L53)
 
 ### TUI Signal Handling
 
@@ -230,7 +230,7 @@ Then `handleSignal()` routes the response:
 | **Error** | Sets `StateError`, stops execution. |
 | **No signal** | Assumes continue — schedules next iteration. |
 
-Source: [`update.go:622-676`](cmd/prism-tui/app/update.go#L622-L676)
+Source: [`update.go:622-676`](cmd/prism-cli/app/update.go#L622-L676)
 
 ### Bash Signal Handling
 
@@ -275,22 +275,22 @@ Source: [`spectrum.sh:176-209`](scripts/spectrum.sh#L176-L209)
 ### Iteration Lifecycle (TUI)
 
 1. **`StartExecutionMsg`** — User presses Enter. Sets `StateRunning`, `Iteration = 0`, emits `StartNextIterationMsg`.
-   - Source: [`update.go:359-392`](cmd/prism-tui/app/update.go#L359-L392)
+   - Source: [`update.go:359-392`](cmd/prism-cli/app/update.go#L359-L392)
 
 2. **`StartNextIterationMsg`** — Checks pause state and max iterations. Increments iteration counter. Creates output channel. Batches `RunClaudeStreamingCmd` + `ListenToOutput`.
-   - Source: [`update.go:308-337`](cmd/prism-tui/app/update.go#L308-L337)
+   - Source: [`update.go:308-337`](cmd/prism-cli/app/update.go#L308-L337)
 
 3. **Streaming** — `ToolActivityMsg` and `ClaudeOutputMsg` arrive via channel. Each handler re-invokes `ListenToOutput()` to keep draining.
-   - Source: [`update.go:205-236`](cmd/prism-tui/app/update.go#L205-L236)
+   - Source: [`update.go:205-236`](cmd/prism-cli/app/update.go#L205-L236)
 
 4. **`ClaudeFinishedMsg`** — Nils the output channel. On error: increments `ConsecutiveErrs`, retries with backoff (`ConsecutiveErrs * 2s`). On success: parses signal, batches `ReloadStoriesCmd` + `SignalDetectedMsg`.
-   - Source: [`update.go:238-279`](cmd/prism-tui/app/update.go#L238-L279)
+   - Source: [`update.go:238-279`](cmd/prism-cli/app/update.go#L238-L279)
 
 5. **`SignalDetectedMsg`** — Routes through `handleSignal()`. Most paths schedule `StartNextIterationMsg` after a `tea.Tick` delay, looping back to step 2.
-   - Source: [`update.go:281-282`](cmd/prism-tui/app/update.go#L281-L282)
+   - Source: [`update.go:281-282`](cmd/prism-cli/app/update.go#L281-L282)
 
 6. **`StoriesReloadedMsg`** — Refreshes the story list and progress animation target from the reloaded `stories.json`.
-   - Source: [`update.go:185-196`](cmd/prism-tui/app/update.go#L185-L196)
+   - Source: [`update.go:185-196`](cmd/prism-cli/app/update.go#L185-L196)
 
 ### Iteration Lifecycle (Bash)
 

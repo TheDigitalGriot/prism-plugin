@@ -367,14 +367,14 @@ bB = aBgB + (atmoB-aBgB)*t
 ## Files Involved
 
 ### Core Files
-- `cmd/prism-tui/splash/splash.go` - Main splash rendering (needs changes)
-- `cmd/prism-tui/splash/splash_original.go.bak` - Reference for original algorithm
+- `cmd/prism-cli/splash/splash.go` - Main splash rendering (needs changes)
+- `cmd/prism-cli/splash/splash_original.go.bak` - Reference for original algorithm
 
 ### Context Files (no changes needed)
-- `cmd/prism-tui/app/model.go` - Initializes splash Model fields
-- `cmd/prism-tui/terminal/detect.go` - Terminal background detection
-- `cmd/prism-tui/terminal/theme.go` - Theme color extraction
-- `cmd/prism-tui/styles/theme.go` - AtmosphereR/G/B computation
+- `cmd/prism-cli/app/model.go` - Initializes splash Model fields
+- `cmd/prism-cli/terminal/detect.go` - Terminal background detection
+- `cmd/prism-cli/terminal/theme.go` - Theme color extraction
+- `cmd/prism-cli/styles/theme.go` - AtmosphereR/G/B computation
 
 ---
 
@@ -391,5 +391,5 @@ bB = aBgB + (atmoB-aBgB)*t
 ## References
 
 - Git commits: 4f2a697, 7dcaa7a, c42424e
-- Backup file: `cmd/prism-tui/splash/splash_original.go.bak`
+- Backup file: `cmd/prism-cli/splash/splash_original.go.bak`
 - Related docs: `.prism/shared/research/2026-02-13-atmosphere-rendering-findings.md`

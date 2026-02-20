@@ -10,8 +10,8 @@
 | `thoughts/shared/ralph/stories.json` | `.prism/stories/stories.json` | Separated stories from execution state |
 | `thoughts/shared/ralph/progress.md` | `.prism/shared/spectrum/progress.md` | Execution state stays with spectrum |
 | "Ralph autonomous execution" | "Spectrum autonomous execution" | Light through prism → spectrum |
-| `ralph-tui` | `prism-tui` | Product cohesion |
-| `cmd/ralph-tui/` | `cmd/prism-tui/` | Binary and directory rename |
+| `ralph-tui` | `prism-cli` | Product cohesion |
+| `cmd/ralph-tui/` | `cmd/prism-cli/` | Binary and directory rename |
 
 **Why Spectrum?** Light through a prism creates a spectrum. Your feature, decomposed into a full spectrum of atomic stories. Perfect thematic fit! 🌈
 
@@ -48,7 +48,7 @@
 └── progress.md
 
 # TUI launch
-prism-tui --follow spectrum
+prism-cli --follow spectrum
 
 # Git commit messages
 "spectrum: Complete story 3/10 - Password reset flow"
@@ -95,7 +95,7 @@ grep -r "Ralph" skills/prism/ --include="*.md" --include="*.py" --include="*.sh"
 grep -r "RALPH" skills/prism/ --include="*.md" --include="*.py" --include="*.sh"
 ```
 
-### 1.3 Rename ralph-tui → prism-tui
+### 1.3 Rename ralph-tui → prism-cli
 **Rationale**: Better branding alignment, clearer that it's part of Prism ecosystem
 
 **Files to update**:
@@ -276,13 +276,13 @@ def create_structure(base_path: Path = Path('.')):
 
 ### 2.5 Update TUI Code for New Path Structure
 
-**Files to update**: `cmd/ralph-tui/` → `cmd/prism-tui/`
+**Files to update**: `cmd/ralph-tui/` → `cmd/prism-cli/`
 
 **Path changes needed**:
 
 1. **Rename directory**:
    ```bash
-   mv cmd/ralph-tui cmd/prism-tui
+   mv cmd/ralph-tui cmd/prism-cli
    ```
 
 2. **Update path constants** (in Go source files):
@@ -339,13 +339,13 @@ def create_structure(base_path: Path = Path('.')):
 5. **Update module names** (if using Go modules):
    ```go
    // go.mod
-   module github.com/TheDigitalGriot/prism-plugin/cmd/prism-tui
+   module github.com/TheDigitalGriot/prism-plugin/cmd/prism-cli
    ```
 
 6. **Update imports** throughout the codebase:
    ```go
    // Any references to ralph-tui package
-   import "github.com/TheDigitalGriot/prism-plugin/cmd/prism-tui/ui"
+   import "github.com/TheDigitalGriot/prism-plugin/cmd/prism-cli/ui"
    ```
 
 7. **Update build scripts**:
@@ -355,12 +355,12 @@ def create_structure(base_path: Path = Path('.')):
    go build -o bin/ralph-tui ./cmd/ralph-tui
    
    # NEW
-   go build -o bin/prism-tui ./cmd/prism-tui
+   go build -o bin/prism-cli ./cmd/prism-cli
    ```
 
 **Files likely to update**:
 ```
-cmd/prism-tui/
+cmd/prism-cli/
 ├── main.go                    # Path constants, file loading
 ├── config/
 │   └── paths.go               # Centralized path definitions
@@ -379,7 +379,7 @@ cmd/prism-tui/
 - [ ] File watchers update when either file changes
 - [ ] Error messages show correct new paths
 - [ ] TUI gracefully handles missing files (first run scenario)
-- [ ] Build produces `prism-tui` binary (not `ralph-tui`)
+- [ ] Build produces `prism-cli` binary (not `ralph-tui`)
 
 **Backward compatibility** (optional):
 ```go
@@ -454,7 +454,7 @@ func findStoriesFile() string {
 [Include code examples]
 ```
 
-### 3.3 Design prism-tui Dashboard
+### 3.3 Design prism-cli Dashboard
 
 **Dashboard screens**:
 
@@ -567,7 +567,7 @@ func findStoriesFile() string {
 
 **Implementation approach**:
 - Use Go with Bubble Tea framework
-- Support both `prism-tui` standalone and integrated into workflow
+- Support both `prism-cli` standalone and integrated into workflow
 - Real-time updates by monitoring `.prism/spectrum/` files
 - Keyboard shortcuts for all actions
 - Mouse support optional but recommended
@@ -580,12 +580,12 @@ func findStoriesFile() string {
 
 Launch the interactive dashboard:
 ```bash
-prism-tui
+prism-cli
 ```
 
 Or monitor a specific workflow:
 ```bash
-prism-tui --follow
+prism-cli --follow
 ```
 
 Key commands:
@@ -687,7 +687,7 @@ Sleep 500ms
 Enter
 Sleep 500ms
 
-Type "prism-tui"
+Type "prism-cli"
 Sleep 500ms
 Enter
 Sleep 5s
@@ -754,7 +754,7 @@ Sleep 5s
    python skills/prism/scripts/init_prism.py
    
    # 3. Launch the dashboard
-   prism-tui
+   prism-cli
    ```
    
    Or jump right in:
@@ -782,7 +782,7 @@ Sleep 5s
    ### Stories not executing?
    Check configuration:
    ```bash
-   prism-tui config
+   prism-cli config
    ```
    ```
 
@@ -930,7 +930,7 @@ Prism integrates with Claude Teams for collaborative development:
 - [ ] Update `.gitignore` templates
 - [ ] Document new structure in README
 - [ ] Update TUI paths:
-  - [ ] Rename `cmd/ralph-tui/` → `cmd/prism-tui/`
+  - [ ] Rename `cmd/ralph-tui/` → `cmd/prism-cli/`
   - [ ] Update path constants to `.prism/stories/` and `.prism/shared/spectrum/`
   - [ ] Update file watchers for new paths
   - [ ] Update data loaders
@@ -1044,7 +1044,7 @@ RALPH → SPECTRUM
 ralph.sh → spectrum.sh
 prism-ralph.md → prism-spectrum.md
 ralph/ → spectrum/
-ralph-tui → prism-tui
+ralph-tui → prism-cli
 
 # Directory renames
 thoughts/ → .prism/
@@ -1054,7 +1054,7 @@ thoughts/local/ → .prism/local/
 # Path updates in code (TUI and scripts)
 thoughts/shared/ralph/stories.json → .prism/stories/stories.json
 thoughts/shared/ralph/progress.md → .prism/shared/spectrum/progress.md
-cmd/ralph-tui → cmd/prism-tui
+cmd/ralph-tui → cmd/prism-cli
 ```
 
 ### Complete New Directory Structure
@@ -1078,7 +1078,7 @@ project/
 │       ├── ref/                          # Personal references
 │       └── docs/                         # Personal notes
 ├── cmd/
-│   └── prism-tui/                        # 🔄 RENAMED from cmd/ralph-tui/
+│   └── prism-cli/                        # 🔄 RENAMED from cmd/ralph-tui/
 │       ├── main.go                       # Updated paths
 │       ├── config/
 │       │   └── paths.go                 # Uses .prism/stories/ and .prism/shared/spectrum/

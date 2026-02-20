@@ -8,7 +8,7 @@
 
 ## Goal
 
-Make all main content sections in the Prism TUI fill exactly the available vertical space. Currently, the app shell passes `m.Height` (full terminal height) to plugins without subtracting chrome (tab bar + footer), causing panels to overflow or use hardcoded magic numbers.
+Make all main content sections in the Prism CLI fill exactly the available vertical space. Currently, the app shell passes `m.Height` (full terminal height) to plugins without subtracting chrome (tab bar + footer), causing panels to overflow or use hardcoded magic numbers.
 
 ## Chrome Height Budget
 
@@ -26,12 +26,12 @@ Make all main content sections in the Prism TUI fill exactly the available verti
 ## Success Criteria
 
 #### Automated Verification:
-- [ ] `cd cmd/prism-tui && make build` succeeds
-- [ ] `cd cmd/prism-tui && make test` passes
-- [ ] `cd cmd/prism-tui && make lint` passes (if golangci-lint available)
+- [ ] `cd cmd/prism-cli && make build` succeeds
+- [ ] `cd cmd/prism-cli && make test` passes
+- [ ] `cd cmd/prism-cli && make lint` passes (if golangci-lint available)
 
 #### Manual Verification:
-- [ ] Run `./prism-tui --demo` at various terminal sizes (80x24, 120x40, 200x60)
+- [ ] Run `./prism-cli --demo` at various terminal sizes (80x24, 120x40, 200x60)
 - [ ] Spectrum screen: stories + activity + log panels fill the space between tab bar and footer with no gap or overflow
 - [ ] Files screen: two-pane layout fills exactly to footer
 - [ ] Git screen: two-pane layout fills exactly to footer

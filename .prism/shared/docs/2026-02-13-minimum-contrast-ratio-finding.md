@@ -78,8 +78,8 @@ Use `█` for the ambient atmosphere background fill (subtle color), then overla
 ### Files modified
 | File | Changes |
 |------|---------|
-| `cmd/prism-tui/splash/splash.go` | cell struct bg fields, atmosphere hardcoded colors, renderGrid bg support |
-| `cmd/prism-tui/splash/splash_original.go.bak` | Backup before gutting beam glow formula |
+| `cmd/prism-cli/splash/splash.go` | cell struct bg fields, atmosphere hardcoded colors, renderGrid bg support |
+| `cmd/prism-cli/splash/splash_original.go.bak` | Backup before gutting beam glow formula |
 
 ### Removed from beam glow path
 - `greyMin`, `greyMax` multiplied by 255

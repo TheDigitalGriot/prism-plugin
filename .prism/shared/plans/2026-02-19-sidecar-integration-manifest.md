@@ -1,9 +1,9 @@
-# Sidecar → Prism TUI Integration Manifest
+# Sidecar → Prism CLI Integration Manifest
 
 > **Date**: 2026-02-19
-> **Scope**: Full integration of Sidecar functionality into 5 Prism TUI plugins
+> **Scope**: Full integration of Sidecar functionality into 5 Prism CLI plugins
 > **Source**: `ref/sidecar/` (Go, Bubble Tea, ~100+ files)
-> **Target**: `cmd/prism-tui/` (Go, Bubble Tea, ~67 files, ~19,900 LOC)
+> **Target**: `cmd/prism-cli/` (Go, Bubble Tea, ~67 files, ~19,900 LOC)
 
 ---
 
@@ -802,7 +802,7 @@ Phase 4: Remaining slices (can parallelize)
 
 **Design**:
 ```go
-// New package: cmd/prism-tui/watcher/
+// New package: cmd/prism-cli/watcher/
 type Watcher struct {
     fsWatcher  *fsnotify.Watcher
     debounce   time.Duration        // 500ms default
@@ -851,7 +851,7 @@ type Context struct {
 
     // New fields
     WorkDir       string            // Current working directory (may differ from ProjectDir)
-    ConfigDir     string            // ~/.config/prism-tui/ for global state
+    ConfigDir     string            // ~/.config/prism-cli/ for global state
     GitRoot       string            // Git repository root (result of git rev-parse --show-toplevel)
     Epoch         uint64            // Project switch counter (invalidates stale async messages)
     Adapters      map[string]bool   // Available AI agent adapters (detected at startup)
@@ -913,9 +913,9 @@ This already partially exists via `WhenSection`; `CustomSection` extends the esc
 
 **Design**:
 ```go
-// New package: cmd/prism-tui/state/
+// New package: cmd/prism-cli/state/
 type Store struct {
-    configDir string          // ~/.config/prism-tui/state/
+    configDir string          // ~/.config/prism-cli/state/
 }
 
 type ProjectState struct {
@@ -945,7 +945,7 @@ func (s *Store) Load(projectHash string) (*ProjectState, error)
 func (s *Store) Save(projectHash string, state *ProjectState) error
 ```
 
-**Storage Location**: `~/.config/prism-tui/state/<project-hash>.json`
+**Storage Location**: `~/.config/prism-cli/state/<project-hash>.json`
 **Project Hash**: SHA256 of `ProjectDir` path, truncated to 12 chars.
 
 ---
@@ -956,7 +956,7 @@ func (s *Store) Save(projectHash string, state *ProjectState) error
 
 **Steps**:
 1. Add `github.com/charmbracelet/glamour` to `go.mod`
-2. Create `cmd/prism-tui/markdown/renderer.go` with:
+2. Create `cmd/prism-cli/markdown/renderer.go` with:
    ```go
    func Render(content string, width int) (string, error)
    func RenderDark(content string, width int) (string, error) // Dark theme

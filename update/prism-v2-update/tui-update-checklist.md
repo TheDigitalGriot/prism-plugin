@@ -1,5 +1,5 @@
 # TUI Code Update Checklist
-## cmd/ralph-tui → cmd/prism-tui Migration
+## cmd/ralph-tui → cmd/prism-cli Migration
 
 ---
 
@@ -8,7 +8,7 @@
 - [ ] **Backup current code**: `cp -r cmd/ralph-tui cmd/ralph-tui.backup`
 - [ ] **Check current functionality**: Run `ralph-tui` to verify it works
 - [ ] **Document current paths**: Note all files that reference ralph paths
-- [ ] **Create feature branch**: `git checkout -b feat/prism-tui-migration`
+- [ ] **Create feature branch**: `git checkout -b feat/prism-cli-migration`
 
 ---
 
@@ -16,13 +16,13 @@
 
 ```bash
 # Rename the main directory
-mv cmd/ralph-tui cmd/prism-tui
+mv cmd/ralph-tui cmd/prism-cli
 
 # Update git tracking
-git mv cmd/ralph-tui cmd/prism-tui
+git mv cmd/ralph-tui cmd/prism-cli
 
 # Verify
-ls cmd/prism-tui
+ls cmd/prism-cli
 ```
 
 **Verification**:
@@ -34,7 +34,7 @@ ls cmd/prism-tui
 
 ## 🛠️ Step 2: Update Path Constants
 
-### File: `cmd/prism-tui/config/paths.go`
+### File: `cmd/prism-cli/config/paths.go`
 
 ```go
 package config
@@ -96,7 +96,7 @@ func GetProgressPath() (string, error) {
 
 ## 📂 Step 3: Update Data Models
 
-### File: `cmd/prism-tui/models/stories.go`
+### File: `cmd/prism-cli/models/stories.go`
 
 ```go
 package models
@@ -104,7 +104,7 @@ package models
 import (
     "encoding/json"
     "os"
-    "github.com/TheDigitalGriot/prism-plugin/cmd/prism-tui/config"
+    "github.com/TheDigitalGriot/prism-plugin/cmd/prism-cli/config"
 )
 
 // OLD - Update this function
@@ -157,14 +157,14 @@ func LoadStoriesWithFallback() (*Stories, error) {
 }
 ```
 
-### File: `cmd/prism-tui/models/progress.go`
+### File: `cmd/prism-cli/models/progress.go`
 
 ```go
 package models
 
 import (
     "os"
-    "github.com/TheDigitalGriot/prism-plugin/cmd/prism-tui/config"
+    "github.com/TheDigitalGriot/prism-plugin/cmd/prism-cli/config"
 )
 
 // OLD - Update this
@@ -214,14 +214,14 @@ func SaveProgress(progress *Progress) error {
 
 ## 👁️ Step 4: Update File Watchers
 
-### File: `cmd/prism-tui/ui/file_watcher.go`
+### File: `cmd/prism-cli/ui/file_watcher.go`
 
 ```go
 package ui
 
 import (
     "github.com/fsnotify/fsnotify"
-    "github.com/TheDigitalGriot/prism-plugin/cmd/prism-tui/config"
+    "github.com/TheDigitalGriot/prism-plugin/cmd/prism-cli/config"
 )
 
 // OLD - Update these watch calls
@@ -294,7 +294,7 @@ func (m *Model) watchLoop() {
 module github.com/TheDigitalGriot/prism-plugin/cmd/ralph-tui
 
 // NEW
-module github.com/TheDigitalGriot/prism-plugin/cmd/prism-tui
+module github.com/TheDigitalGriot/prism-plugin/cmd/prism-cli
 
 go 1.21
 ```
@@ -308,16 +308,16 @@ build:
 
 # NEW
 build:
-    go build -o bin/prism-tui ./cmd/prism-tui
+    go build -o bin/prism-cli ./cmd/prism-cli
 
 install:
-    go install ./cmd/prism-tui
+    go install ./cmd/prism-cli
 
 test:
-    go test ./cmd/prism-tui/...
+    go test ./cmd/prism-cli/...
 ```
 
-### File: `cmd/prism-tui/main.go`
+### File: `cmd/prism-cli/main.go`
 
 ```go
 package main
@@ -327,8 +327,8 @@ import (
     "os"
     
     tea "github.com/charmbracelet/bubbletea"
-    "github.com/TheDigitalGriot/prism-plugin/cmd/prism-tui/config"
-    "github.com/TheDigitalGriot/prism-plugin/cmd/prism-tui/ui"
+    "github.com/TheDigitalGriot/prism-plugin/cmd/prism-cli/config"
+    "github.com/TheDigitalGriot/prism-plugin/cmd/prism-cli/ui"
 )
 
 func main() {
@@ -345,7 +345,7 @@ func main() {
     p := tea.NewProgram(m, tea.WithAltScreen())
     
     if err := p.Start(); err != nil {
-        fmt.Fprintf(os.Stderr, "Error running prism-tui: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error running prism-cli: %v\n", err)
         os.Exit(1)
     }
 }
@@ -355,15 +355,15 @@ func main() {
 - [ ] Updated `go.mod` module path
 - [ ] Updated `Makefile` or build scripts
 - [ ] Updated `main.go` to check for `.prism/`
-- [ ] Binary name is now `prism-tui`
+- [ ] Binary name is now `prism-cli`
 - [ ] Build succeeds: `make build` or `go build`
-- [ ] Binary runs: `./bin/prism-tui`
+- [ ] Binary runs: `./bin/prism-cli`
 
 ---
 
 ## 🎨 Step 6: Update UI Display Text
 
-### File: `cmd/prism-tui/ui/dashboard.go`
+### File: `cmd/prism-cli/ui/dashboard.go`
 
 ```go
 // Update any UI text that references paths
@@ -389,12 +389,12 @@ func (m Model) View() string {
 }
 ```
 
-### File: `cmd/prism-tui/ui/help.go`
+### File: `cmd/prism-cli/ui/help.go`
 
 ```go
 func helpView() string {
     return `
-Prism TUI - Spectrum Workflow Dashboard
+Prism CLI - Spectrum Workflow Dashboard
 
 Files:
   Stories:  .prism/stories/stories.json
@@ -424,12 +424,12 @@ Keys:
 
 ```bash
 # 1. Build
-cd cmd/prism-tui
-go build -o prism-tui
+cd cmd/prism-cli
+go build -o prism-cli
 
 # 2. Test without .prism directory
 cd /tmp/test-project
-./prism-tui
+./prism-cli
 # Should show error about missing .prism/
 
 # 3. Initialize Prism
@@ -454,14 +454,14 @@ cat > .prism/shared/spectrum/progress.md << 'EOF'
 EOF
 
 # 6. Run TUI
-./prism-tui
+./prism-cli
 # Should load and display stories and progress
 ```
 
 ### Automated Testing (if applicable)
 
 ```go
-// cmd/prism-tui/config/paths_test.go
+// cmd/prism-cli/config/paths_test.go
 package config
 
 import (
@@ -494,7 +494,7 @@ func TestPathConstants(t *testing.T) {
 - [ ] TUI watches for file changes
 - [ ] TUI handles missing files gracefully
 - [ ] Error messages show correct paths
-- [ ] Build produces `prism-tui` binary
+- [ ] Build produces `prism-cli` binary
 - [ ] No hardcoded old paths remain
 
 ---
@@ -505,7 +505,7 @@ func TestPathConstants(t *testing.T) {
 
 ```bash
 # Search for old paths in code
-cd cmd/prism-tui
+cd cmd/prism-cli
 grep -r "thoughts/" . --exclude-dir=vendor
 grep -r "ralph" . --exclude-dir=vendor --exclude-dir=.git
 grep -ri "RALPH" . --exclude-dir=vendor
@@ -538,24 +538,24 @@ grep -ri "RALPH" . --exclude-dir=vendor
 ### Update README
 
 ```markdown
-# Prism TUI
+# Prism CLI
 
 Terminal dashboard for monitoring Spectrum workflow execution.
 
 ## Installation
 
 ```bash
-go install github.com/TheDigitalGriot/prism-plugin/cmd/prism-tui@latest
+go install github.com/TheDigitalGriot/prism-plugin/cmd/prism-cli@latest
 ```
 
 ## Usage
 
 ```bash
 # Launch dashboard
-prism-tui
+prism-cli
 
 # Follow live execution
-prism-tui --follow
+prism-cli --follow
 ```
 
 ## Requirements
@@ -581,7 +581,7 @@ prism-tui --follow
 
 - [ ] All tests pass: `go test ./...`
 - [ ] Build succeeds: `go build`
-- [ ] Binary name is `prism-tui`
+- [ ] Binary name is `prism-cli`
 - [ ] No references to `ralph` in code
 - [ ] No hardcoded old paths
 - [ ] Documentation updated
@@ -590,10 +590,10 @@ prism-tui --follow
 ### Commit Messages
 
 ```bash
-git add cmd/prism-tui
-git commit -m "refactor(tui): rename ralph-tui to prism-tui
+git add cmd/prism-cli
+git commit -m "refactor(tui): rename ralph-tui to prism-cli
 
-- Rename cmd/ralph-tui to cmd/prism-tui
+- Rename cmd/ralph-tui to cmd/prism-cli
 - Update paths to use .prism/ structure
 - Separate stories.json and progress.md paths
 - Update module name and imports
@@ -610,24 +610,24 @@ BREAKING CHANGE: TUI now expects .prism/ directory structure"
 
 ```bash
 # Build for current platform
-go build -o bin/prism-tui ./cmd/prism-tui
+go build -o bin/prism-cli ./cmd/prism-cli
 
 # Cross-compile for multiple platforms
-GOOS=darwin GOARCH=amd64 go build -o bin/prism-tui-darwin-amd64 ./cmd/prism-tui
-GOOS=darwin GOARCH=arm64 go build -o bin/prism-tui-darwin-arm64 ./cmd/prism-tui
-GOOS=linux GOARCH=amd64 go build -o bin/prism-tui-linux-amd64 ./cmd/prism-tui
-GOOS=windows GOARCH=amd64 go build -o bin/prism-tui-windows-amd64.exe ./cmd/prism-tui
+GOOS=darwin GOARCH=amd64 go build -o bin/prism-cli-darwin-amd64 ./cmd/prism-cli
+GOOS=darwin GOARCH=arm64 go build -o bin/prism-cli-darwin-arm64 ./cmd/prism-cli
+GOOS=linux GOARCH=amd64 go build -o bin/prism-cli-linux-amd64 ./cmd/prism-cli
+GOOS=windows GOARCH=amd64 go build -o bin/prism-cli-windows-amd64.exe ./cmd/prism-cli
 ```
 
 ### Installation
 
 ```bash
 # Install locally
-go install ./cmd/prism-tui
+go install ./cmd/prism-cli
 
 # Verify
-which prism-tui
-prism-tui --version
+which prism-cli
+prism-cli --version
 ```
 
 ---
@@ -655,7 +655,7 @@ chmod -R u+r .prism/
 **Issue**: Build fails with "package not found"
 ```bash
 # Update go.mod
-cd cmd/prism-tui
+cd cmd/prism-cli
 go mod tidy
 
 # Rebuild
@@ -668,7 +668,7 @@ go build
 
 | Step | Status | Notes |
 |------|--------|-------|
-| 1. Rename directory | ✅ | cmd/ralph-tui → cmd/prism-tui |
+| 1. Rename directory | ✅ | cmd/ralph-tui → cmd/prism-cli |
 | 2. Update path constants | ✅ | Paths handled inline (no separate config/paths.go) |
 | 3. Update data models | ✅ | .prism/ paths throughout |
 | 4. Update file watchers | ✅ | Watching .prism/ structure |

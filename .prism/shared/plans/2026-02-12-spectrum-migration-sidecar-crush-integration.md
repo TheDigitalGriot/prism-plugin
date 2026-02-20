@@ -5,16 +5,16 @@ repository: prism-plugin
 branch: feat/spectrum-migration
 ticket: N/A
 status: draft
-research: .prism/shared/research/2026-02-12-prism-tui-sidecar-crush-integration-architecture.md
+research: .prism/shared/research/2026-02-12-prism-cli-sidecar-crush-integration-architecture.md
 ---
 
-# Plan: Sidecar + Crush Integration into Prism TUI
+# Plan: Sidecar + Crush Integration into Prism CLI
 
 ## Overview
 
-**Goal**: Transform Prism TUI from a 4-screen monolithic Bubble Tea app into a plugin-based dashboard integrating Sidecar's plugin architecture and Crush's agentic UI components — adding 20 new screens across 9 zones while preserving existing functionality.
+**Goal**: Transform Prism CLI from a 4-screen monolithic Bubble Tea app into a plugin-based dashboard integrating Sidecar's plugin architecture and Crush's agentic UI components — adding 20 new screens across 9 zones while preserving existing functionality.
 
-**Research**: `.prism/shared/research/2026-02-12-prism-tui-sidecar-crush-integration-architecture.md`
+**Research**: `.prism/shared/research/2026-02-12-prism-cli-sidecar-crush-integration-architecture.md`
 
 **Complexity**: High
 
@@ -32,10 +32,10 @@ research: .prism/shared/research/2026-02-12-prism-tui-sidecar-crush-integration-
 ## Success Criteria
 
 ### Automated (CI/Scripts)
-- [x] `cd cmd/prism-tui && make build` — Builds for current platform
-- [x] `cd cmd/prism-tui && make test` — All tests pass
-- [ ] `cd cmd/prism-tui && make lint` — No lint errors (golangci-lint not in PATH, skipped)
-- [x] `cd cmd/prism-tui && go vet ./...` — No vet issues
+- [x] `cd cmd/prism-cli && make build` — Builds for current platform
+- [x] `cd cmd/prism-cli && make test` — All tests pass
+- [ ] `cd cmd/prism-cli && make lint` — No lint errors (golangci-lint not in PATH, skipped)
+- [x] `cd cmd/prism-cli && go vet ./...` — No vet issues
 - [ ] Demo mode (`--demo`) renders all screens without panic (manual verification needed)
 
 ### Manual Verification
@@ -71,18 +71,18 @@ research: .prism/shared/research/2026-02-12-prism-tui-sidecar-crush-integration-
 **Files to modify**:
 | File | Change |
 |------|--------|
-| `cmd/prism-tui/app/views.go` | Expand `ActiveView` enum to include all new views, add `ViewSplash` |
-| `cmd/prism-tui/app/model.go` | Add `TabOrder []ActiveView` field, remove Home from model init default |
-| `cmd/prism-tui/app/view.go` | Rewrite `View()` to render app shell (header + tab bar + active content + footer) |
-| `cmd/prism-tui/app/view_home.go` | Adapt to render inside app shell (remove standalone prism/header, becomes dashboard content) |
-| `cmd/prism-tui/app/view_spectrum.go` | Move header/prism rendering to app shell, spectrum becomes content-only |
-| `cmd/prism-tui/app/update.go` | Add tab switching via number keys (1-9) and tab/shift+tab in global handler |
-| `cmd/prism-tui/styles/theme.go` | Add `TabActiveStyle`, `TabInactiveStyle`, `AppHeaderStyle`, `FooterStyle` |
+| `cmd/prism-cli/app/views.go` | Expand `ActiveView` enum to include all new views, add `ViewSplash` |
+| `cmd/prism-cli/app/model.go` | Add `TabOrder []ActiveView` field, remove Home from model init default |
+| `cmd/prism-cli/app/view.go` | Rewrite `View()` to render app shell (header + tab bar + active content + footer) |
+| `cmd/prism-cli/app/view_home.go` | Adapt to render inside app shell (remove standalone prism/header, becomes dashboard content) |
+| `cmd/prism-cli/app/view_spectrum.go` | Move header/prism rendering to app shell, spectrum becomes content-only |
+| `cmd/prism-cli/app/update.go` | Add tab switching via number keys (1-9) and tab/shift+tab in global handler |
+| `cmd/prism-cli/styles/theme.go` | Add `TabActiveStyle`, `TabInactiveStyle`, `AppHeaderStyle`, `FooterStyle` |
 
 **Files to create**:
 | File | Purpose |
 |------|---------|
-| `cmd/prism-tui/app/shell.go` | App shell renderer: `renderAppShell()`, `renderTabBar()`, `renderAppHeader()`, `renderAppFooter()` |
+| `cmd/prism-cli/app/shell.go` | App shell renderer: `renderAppShell()`, `renderTabBar()`, `renderAppHeader()`, `renderAppFooter()` |
 
 **Steps**:
 1. [x] Add new `ActiveView` values to `views.go`: `ViewSplash`, `ViewFiles`, `ViewGit`, `ViewAgent`, `ViewChat`, `ViewMonitor`, `ViewWorkspaces`, `ViewOnboarding`
@@ -98,9 +98,9 @@ research: .prism/shared/research/2026-02-12-prism-tui-sidecar-crush-integration-
 
 **Verification**:
 ```bash
-cd cmd/prism-tui && go build ./...
-cd cmd/prism-tui && go test ./...
-cd cmd/prism-tui && go run . --demo  # Visual check: tab bar, header prism, existing screens work
+cd cmd/prism-cli && go build ./...
+cd cmd/prism-cli && go test ./...
+cd cmd/prism-cli && go run . --demo  # Visual check: tab bar, header prism, existing screens work
 ```
 
 **Checkpoint**: ✅ Phase 1 complete — App shell renders with tab bar, all 4 existing screens work inside it
@@ -114,15 +114,15 @@ cd cmd/prism-tui && go run . --demo  # Visual check: tab bar, header prism, exis
 **Files to modify**:
 | File | Change |
 |------|--------|
-| `cmd/prism-tui/app/model.go` | Add `SplashDone bool` field to Model |
-| `cmd/prism-tui/app/update.go` | Handle `SplashDoneMsg`, forward keypresses during splash |
-| `cmd/prism-tui/app/view.go` | Route `ViewSplash` before app shell |
-| `cmd/prism-tui/app/messages.go` | Add `SplashDoneMsg` |
+| `cmd/prism-cli/app/model.go` | Add `SplashDone bool` field to Model |
+| `cmd/prism-cli/app/update.go` | Handle `SplashDoneMsg`, forward keypresses during splash |
+| `cmd/prism-cli/app/view.go` | Route `ViewSplash` before app shell |
+| `cmd/prism-cli/app/messages.go` | Add `SplashDoneMsg` |
 
 **Files to create**:
 | File | Purpose |
 |------|---------|
-| `cmd/prism-tui/app/view_splash.go` | Splash screen renderer with centered prism, version, project info |
+| `cmd/prism-cli/app/view_splash.go` | Splash screen renderer with centered prism, version, project info |
 
 **Steps**:
 1. [x] Add `SplashDoneMsg` to `messages.go`
@@ -137,7 +137,7 @@ cd cmd/prism-tui && go run . --demo  # Visual check: tab bar, header prism, exis
 
 **Verification**:
 ```bash
-cd cmd/prism-tui && go build ./... && go run . --demo
+cd cmd/prism-cli && go build ./... && go run . --demo
 # Visual: splash appears, auto-transitions after 2s, any key skips to Home
 ```
 
@@ -147,27 +147,27 @@ cd cmd/prism-tui && go build ./... && go run . --demo
 
 ### Phase 3: Plugin Architecture
 
-**Goal**: Port Sidecar's Plugin interface and Registry into Prism TUI. Convert existing 4 screens into plugins. Enable adding new plugins without modifying core Model.
+**Goal**: Port Sidecar's Plugin interface and Registry into Prism CLI. Convert existing 4 screens into plugins. Enable adding new plugins without modifying core Model.
 
 **Files to create**:
 | File | Purpose |
 |------|---------|
-| `cmd/prism-tui/plugin/plugin.go` | Plugin interface (adapted from `ref/sidecar/internal/plugin/plugin.go`) |
-| `cmd/prism-tui/plugin/context.go` | Plugin context: PrismDir, ProjectDir, Config, Width, Height |
-| `cmd/prism-tui/plugin/registry.go` | Registry with Register, lifecycle, panic recovery, message broadcast |
-| `cmd/prism-tui/plugin/messages.go` | Shared plugin messages: `FocusPluginMsg`, `ResizeMsg`, `NavigateMsg` |
+| `cmd/prism-cli/plugin/plugin.go` | Plugin interface (adapted from `ref/sidecar/internal/plugin/plugin.go`) |
+| `cmd/prism-cli/plugin/context.go` | Plugin context: PrismDir, ProjectDir, Config, Width, Height |
+| `cmd/prism-cli/plugin/registry.go` | Registry with Register, lifecycle, panic recovery, message broadcast |
+| `cmd/prism-cli/plugin/messages.go` | Shared plugin messages: `FocusPluginMsg`, `ResizeMsg`, `NavigateMsg` |
 
 **Files to modify**:
 | File | Change |
 |------|--------|
-| `cmd/prism-tui/app/model.go` | Add `Registry *plugin.Registry`, remove per-view state fields (Home, Research, Plans, Epic) |
-| `cmd/prism-tui/app/update.go` | Route messages through registry broadcast, delegate to active plugin |
-| `cmd/prism-tui/app/view.go` | Call `registry.ActivePlugin().View(width, height)` for content area |
-| `cmd/prism-tui/app/shell.go` | Get tab labels from `registry.Plugins()` |
-| `cmd/prism-tui/app/view_home.go` | Refactor into `HomePlugin` struct implementing Plugin interface |
-| `cmd/prism-tui/app/view_research.go` | Refactor into `ResearchPlugin` |
-| `cmd/prism-tui/app/view_plans.go` | Refactor into `PlansPlugin` |
-| `cmd/prism-tui/app/view_spectrum.go` | Refactor into `SpectrumPlugin` (keeps all execution state) |
+| `cmd/prism-cli/app/model.go` | Add `Registry *plugin.Registry`, remove per-view state fields (Home, Research, Plans, Epic) |
+| `cmd/prism-cli/app/update.go` | Route messages through registry broadcast, delegate to active plugin |
+| `cmd/prism-cli/app/view.go` | Call `registry.ActivePlugin().View(width, height)` for content area |
+| `cmd/prism-cli/app/shell.go` | Get tab labels from `registry.Plugins()` |
+| `cmd/prism-cli/app/view_home.go` | Refactor into `HomePlugin` struct implementing Plugin interface |
+| `cmd/prism-cli/app/view_research.go` | Refactor into `ResearchPlugin` |
+| `cmd/prism-cli/app/view_plans.go` | Refactor into `PlansPlugin` |
+| `cmd/prism-cli/app/view_spectrum.go` | Refactor into `SpectrumPlugin` (keeps all execution state) |
 
 **Steps**:
 1. [x] Create `plugin/plugin.go` with Plugin interface (ID, Name, Icon, Init, Start, Stop, Update, View, IsFocused, SetFocused, KeyHints)
@@ -185,9 +185,9 @@ cd cmd/prism-tui && go build ./... && go run . --demo
 
 **Verification**:
 ```bash
-cd cmd/prism-tui && go build ./...
-cd cmd/prism-tui && go test ./...
-cd cmd/prism-tui && go run . --demo
+cd cmd/prism-cli && go build ./...
+cd cmd/prism-cli && go test ./...
+cd cmd/prism-cli && go run . --demo
 # Verify: all 4 screens render identically, tab switching works, no regressions
 ```
 
@@ -197,24 +197,24 @@ cd cmd/prism-tui && go run . --demo
 
 ### Phase 4: Modal System
 
-**Goal**: Port Sidecar's declarative modal builder into Prism TUI. Support text, buttons, checkbox, input, list sections. Modal captures focus when open.
+**Goal**: Port Sidecar's declarative modal builder into Prism CLI. Support text, buttons, checkbox, input, list sections. Modal captures focus when open.
 
 **Files to create**:
 | File | Purpose |
 |------|---------|
-| `cmd/prism-tui/modal/modal.go` | Modal struct, builder API (New, AddSection, options), key/mouse handling |
-| `cmd/prism-tui/modal/section.go` | Section interface + implementations: Text, Spacer, Buttons, Checkbox |
-| `cmd/prism-tui/modal/input.go` | Input, Textarea sections using `bubbles/textinput` and `bubbles/textarea` |
-| `cmd/prism-tui/modal/list.go` | Scrollable list section |
-| `cmd/prism-tui/modal/layout.go` | Two-pass rendering pipeline, scrollbar, viewport slicing |
+| `cmd/prism-cli/modal/modal.go` | Modal struct, builder API (New, AddSection, options), key/mouse handling |
+| `cmd/prism-cli/modal/section.go` | Section interface + implementations: Text, Spacer, Buttons, Checkbox |
+| `cmd/prism-cli/modal/input.go` | Input, Textarea sections using `bubbles/textinput` and `bubbles/textarea` |
+| `cmd/prism-cli/modal/list.go` | Scrollable list section |
+| `cmd/prism-cli/modal/layout.go` | Two-pass rendering pipeline, scrollbar, viewport slicing |
 
 **Files to modify**:
 | File | Change |
 |------|--------|
-| `cmd/prism-tui/app/model.go` | Add `ActiveModal *modal.Modal` field |
-| `cmd/prism-tui/app/update.go` | If modal active, route all input to modal first |
-| `cmd/prism-tui/app/view.go` | Overlay modal rendering on top of app shell |
-| `cmd/prism-tui/styles/theme.go` | Add `ModalStyle`, `ModalBackdropStyle`, `ModalTitleStyle` |
+| `cmd/prism-cli/app/model.go` | Add `ActiveModal *modal.Modal` field |
+| `cmd/prism-cli/app/update.go` | If modal active, route all input to modal first |
+| `cmd/prism-cli/app/view.go` | Overlay modal rendering on top of app shell |
+| `cmd/prism-cli/styles/theme.go` | Add `ModalStyle`, `ModalBackdropStyle`, `ModalTitleStyle` |
 
 **Steps**:
 1. [x] Create `modal/section.go` with `Section` interface:
@@ -245,9 +245,9 @@ cd cmd/prism-tui && go run . --demo
 
 **Verification**:
 ```bash
-cd cmd/prism-tui && go build ./...
-cd cmd/prism-tui && go test ./...
-cd cmd/prism-tui && go run . --demo  # Press ? to open help modal
+cd cmd/prism-cli && go build ./...
+cd cmd/prism-cli && go test ./...
+cd cmd/prism-cli && go run . --demo  # Press ? to open help modal
 # Verify: modal appears centered, tab cycles focus, esc closes, backdrop dims content
 ```
 
@@ -262,17 +262,17 @@ cd cmd/prism-tui && go run . --demo  # Press ? to open help modal
 **Files to create**:
 | File | Purpose |
 |------|---------|
-| `cmd/prism-tui/dialog/dialog.go` | Dialog interface, Overlay struct (stack), render/update routing |
-| `cmd/prism-tui/dialog/permissions.go` | Permission dialog: 3-button approval, tool preview, diff view |
-| `cmd/prism-tui/dialog/confirm.go` | Simple yes/no confirmation dialog |
+| `cmd/prism-cli/dialog/dialog.go` | Dialog interface, Overlay struct (stack), render/update routing |
+| `cmd/prism-cli/dialog/permissions.go` | Permission dialog: 3-button approval, tool preview, diff view |
+| `cmd/prism-cli/dialog/confirm.go` | Simple yes/no confirmation dialog |
 
 **Files to modify**:
 | File | Change |
 |------|--------|
-| `cmd/prism-tui/app/model.go` | Add `Dialogs *dialog.Overlay` field |
-| `cmd/prism-tui/app/update.go` | Route input through dialog overlay before modal/plugin |
-| `cmd/prism-tui/app/view.go` | Render dialog stack on top of everything |
-| `cmd/prism-tui/app/messages.go` | Add `PermissionRequestMsg`, `PermissionResponseMsg` |
+| `cmd/prism-cli/app/model.go` | Add `Dialogs *dialog.Overlay` field |
+| `cmd/prism-cli/app/update.go` | Route input through dialog overlay before modal/plugin |
+| `cmd/prism-cli/app/view.go` | Render dialog stack on top of everything |
+| `cmd/prism-cli/app/messages.go` | Add `PermissionRequestMsg`, `PermissionResponseMsg` |
 
 **Steps**:
 1. [x] Create `dialog/dialog.go`:
@@ -297,8 +297,8 @@ cd cmd/prism-tui && go run . --demo  # Press ? to open help modal
 
 **Verification**:
 ```bash
-cd cmd/prism-tui && go build ./...
-cd cmd/prism-tui && go test ./...
+cd cmd/prism-cli && go build ./...
+cd cmd/prism-cli && go test ./...
 # Manual: demo mode shows confirm dialog on destructive actions
 ```
 
@@ -313,14 +313,14 @@ cd cmd/prism-tui && go test ./...
 **Files to create**:
 | File | Purpose |
 |------|---------|
-| `cmd/prism-tui/app/plugin_files.go` | FilesPlugin: tree-view file browser with preview pane |
-| `cmd/prism-tui/app/plugin_git.go` | GitPlugin: git status, staged/unstaged diff viewer, branch info |
+| `cmd/prism-cli/app/plugin_files.go` | FilesPlugin: tree-view file browser with preview pane |
+| `cmd/prism-cli/app/plugin_git.go` | GitPlugin: git status, staged/unstaged diff viewer, branch info |
 
 **Files to modify**:
 | File | Change |
 |------|--------|
-| `cmd/prism-tui/app/model.go` | Register FilesPlugin and GitPlugin in NewModel |
-| `cmd/prism-tui/app/views.go` | Ensure ViewFiles, ViewGit exist in enum |
+| `cmd/prism-cli/app/model.go` | Register FilesPlugin and GitPlugin in NewModel |
+| `cmd/prism-cli/app/views.go` | Ensure ViewFiles, ViewGit exist in enum |
 
 **Steps**:
 1. [x] Create `plugin_files.go` — `FilesPlugin` implementing Plugin interface:
@@ -340,9 +340,9 @@ cd cmd/prism-tui && go test ./...
 
 **Verification**:
 ```bash
-cd cmd/prism-tui && go build ./...  # ✅ Passed
-cd cmd/prism-tui && go test ./...   # ✅ Passed
-cd cmd/prism-tui && go run . --demo  # Tab to Files and Git screens
+cd cmd/prism-cli && go build ./...  # ✅ Passed
+cd cmd/prism-cli && go test ./...   # ✅ Passed
+cd cmd/prism-cli && go run . --demo  # Tab to Files and Git screens
 # Verify: file tree renders, git status shows, navigation works
 ```
 
@@ -357,14 +357,14 @@ cd cmd/prism-tui && go run . --demo  # Tab to Files and Git screens
 **Files to create**:
 | File | Purpose |
 |------|---------|
-| `cmd/prism-tui/app/plugin_agent.go` | AgentPlugin: chat interface with message history, input editor |
-| `cmd/prism-tui/app/chat/renderer.go` | Message renderer: user/assistant bubbles, tool call display, markdown |
+| `cmd/prism-cli/app/plugin_agent.go` | AgentPlugin: chat interface with message history, input editor |
+| `cmd/prism-cli/app/chat/renderer.go` | Message renderer: user/assistant bubbles, tool call display, markdown |
 
 **Files to modify**:
 | File | Change |
 |------|--------|
-| `cmd/prism-tui/app/model.go` | Register AgentPlugin |
-| `cmd/prism-tui/app/views.go` | Ensure ViewAgent, ViewChat exist |
+| `cmd/prism-cli/app/model.go` | Register AgentPlugin |
+| `cmd/prism-cli/app/views.go` | Ensure ViewAgent, ViewChat exist |
 
 **Steps**:
 1. [x] Create `chat/renderer.go`: message rendering functions:
@@ -385,9 +385,9 @@ cd cmd/prism-tui && go run . --demo  # Tab to Files and Git screens
 
 **Verification**:
 ```bash
-cd cmd/prism-tui && go build ./...
-cd cmd/prism-tui && go test ./...
-cd cmd/prism-tui && go run . --demo  # Tab to Agent screen
+cd cmd/prism-cli && go build ./...
+cd cmd/prism-cli && go test ./...
+cd cmd/prism-cli && go run . --demo  # Tab to Agent screen
 # Verify: chat interface renders, messages display, input accepts text
 ```
 
@@ -402,13 +402,13 @@ cd cmd/prism-tui && go run . --demo  # Tab to Agent screen
 **Files to create**:
 | File | Purpose |
 |------|---------|
-| `cmd/prism-tui/app/plugin_monitor.go` | MonitorPlugin: system health, resource usage, execution history |
-| `cmd/prism-tui/app/plugin_workspaces.go` | WorkspacesPlugin: project/epic switcher with preview |
+| `cmd/prism-cli/app/plugin_monitor.go` | MonitorPlugin: system health, resource usage, execution history |
+| `cmd/prism-cli/app/plugin_workspaces.go` | WorkspacesPlugin: project/epic switcher with preview |
 
 **Files to modify**:
 | File | Change |
 |------|--------|
-| `cmd/prism-tui/app/model.go` | Register MonitorPlugin and WorkspacesPlugin |
+| `cmd/prism-cli/app/model.go` | Register MonitorPlugin and WorkspacesPlugin |
 
 **Steps**:
 1. [x] Create `plugin_monitor.go` — `MonitorPlugin`:
@@ -426,9 +426,9 @@ cd cmd/prism-tui && go run . --demo  # Tab to Agent screen
 
 **Verification**:
 ```bash
-cd cmd/prism-tui && go build ./...   # ✅ Passed
-cd cmd/prism-tui && go test ./...    # ✅ Passed
-cd cmd/prism-tui && go run . --demo  # Tab to Monitor and Workspaces screens
+cd cmd/prism-cli && go build ./...   # ✅ Passed
+cd cmd/prism-cli && go test ./...    # ✅ Passed
+cd cmd/prism-cli && go run . --demo  # Tab to Monitor and Workspaces screens
 ```
 
 **Checkpoint**: ✅ Phase 8 complete — Monitor and Workspaces plugins functional
@@ -442,13 +442,13 @@ cd cmd/prism-tui && go run . --demo  # Tab to Monitor and Workspaces screens
 **Files to create**:
 | File | Purpose |
 |------|---------|
-| `cmd/prism-tui/app/plugin_onboarding.go` | OnboardingPlugin: step-by-step setup wizard |
+| `cmd/prism-cli/app/plugin_onboarding.go` | OnboardingPlugin: step-by-step setup wizard |
 
 **Files to modify**:
 | File | Change |
 |------|--------|
-| `cmd/prism-tui/app/model.go` | Add onboarding detection logic to NewModel |
-| `cmd/prism-tui/app/update.go` | After onboarding complete, transition to Home |
+| `cmd/prism-cli/app/model.go` | Add onboarding detection logic to NewModel |
+| `cmd/prism-cli/app/update.go` | After onboarding complete, transition to Home |
 
 **Steps**:
 1. [x] Create `plugin_onboarding.go` — `OnboardingPlugin`:
@@ -464,8 +464,8 @@ cd cmd/prism-tui && go run . --demo  # Tab to Monitor and Workspaces screens
 
 **Verification**:
 ```bash
-cd cmd/prism-tui && go build ./...  # ✅ Passed
-cd cmd/prism-tui && go test ./...   # ✅ Passed
+cd cmd/prism-cli && go build ./...  # ✅ Passed
+cd cmd/prism-cli && go test ./...   # ✅ Passed
 # Manual: run in a directory without .prism/ to trigger onboarding
 ```
 
@@ -480,17 +480,17 @@ cd cmd/prism-tui && go test ./...   # ✅ Passed
 **Files to create**:
 | File | Purpose |
 |------|---------|
-| `cmd/prism-tui/plugin/events.go` | Event bus: pub/sub for plugin-to-plugin communication |
-| `cmd/prism-tui/app/command_palette.go` | Command palette modal: fuzzy search across all plugin commands |
+| `cmd/prism-cli/plugin/events.go` | Event bus: pub/sub for plugin-to-plugin communication |
+| `cmd/prism-cli/app/command_palette.go` | Command palette modal: fuzzy search across all plugin commands |
 
 **Files to modify**:
 | File | Change |
 |------|--------|
-| `cmd/prism-tui/plugin/context.go` | Add EventBus field to Context |
-| `cmd/prism-tui/plugin/registry.go` | Wire event bus into broadcast |
-| `cmd/prism-tui/app/model.go` | Add command palette state, update demo model with all plugins |
-| `cmd/prism-tui/app/update.go` | Handle command palette open (`ctrl+p` or `:`) |
-| `cmd/prism-tui/styles/theme.go` | Add styles for new components (palette, agent bubbles, etc.) |
+| `cmd/prism-cli/plugin/context.go` | Add EventBus field to Context |
+| `cmd/prism-cli/plugin/registry.go` | Wire event bus into broadcast |
+| `cmd/prism-cli/app/model.go` | Add command palette state, update demo model with all plugins |
+| `cmd/prism-cli/app/update.go` | Handle command palette open (`ctrl+p` or `:`) |
+| `cmd/prism-cli/styles/theme.go` | Add styles for new components (palette, agent bubbles, etc.) |
 
 **Steps**:
 1. [x] Create `plugin/events.go`: typed event bus with subscribe/publish:
@@ -520,9 +520,9 @@ cd cmd/prism-tui && go test ./...   # ✅ Passed
 
 **Verification**:
 ```bash
-cd cmd/prism-tui && go build ./...
-cd cmd/prism-tui && go test ./...
-cd cmd/prism-tui && go run . --demo
+cd cmd/prism-cli && go build ./...
+cd cmd/prism-cli && go test ./...
+cd cmd/prism-cli && go run . --demo
 # Full walkthrough: splash → home → tab through all screens → command palette → modals → back
 ```
 

@@ -11,10 +11,10 @@ ref/update-tui/
 
 # Build artifacts
 bin/
-cmd/prism-tui/bin/
-cmd/prism-tui/prism-tui
-cmd/prism-tui/prism-tui.exe
+cmd/prism-cli/bin/
+cmd/prism-cli/prism-cli
+cmd/prism-cli/prism-cli.exe
 *.exe
 
 # Go
-cmd/prism-tui/go.sum
+cmd/prism-cli/go.sum

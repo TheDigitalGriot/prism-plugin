@@ -26,7 +26,7 @@ project/
 │       └── spectrum/           ← 🆕 RENAMED FROM ralph/
 │           └── progress.md     ← Execution state only
 ├── cmd/
-│   └── prism-tui/              ← 🔄 RENAMED FROM ralph-tui/
+│   └── prism-cli/              ← 🔄 RENAMED FROM ralph-tui/
 └── scripts/
     └── spectrum.sh             ← 🔄 RENAMED FROM ralph.sh
 ```
@@ -59,7 +59,7 @@ OLD: cmd/ralph-tui/
      ↓
      ↓ Rename + Update paths
      ↓
-NEW: cmd/prism-tui/
+NEW: cmd/prism-cli/
 ```
 
 ### Execution Script
@@ -77,7 +77,7 @@ NEW: scripts/spectrum.sh
 
 ### 1. Path Constants (Go)
 ```go
-// cmd/prism-tui/config/paths.go
+// cmd/prism-cli/config/paths.go
 
 // BEFORE
 const (
@@ -94,7 +94,7 @@ const (
 
 ### 2. File Watchers (Go)
 ```go
-// cmd/prism-tui/ui/file_watcher.go
+// cmd/prism-cli/ui/file_watcher.go
 
 // BEFORE
 watchFile("thoughts/shared/ralph/stories.json", handler)
@@ -107,7 +107,7 @@ watchFile(".prism/shared/spectrum/progress.md", handler)    // ← New path
 
 ### 3. Data Loaders (Go)
 ```go
-// cmd/prism-tui/models/stories.go
+// cmd/prism-cli/models/stories.go
 
 // BEFORE
 func LoadStories() (*Stories, error) {
@@ -140,13 +140,13 @@ PROGRESS_FILE=".prism/shared/spectrum/progress.md"          # ← New path
 ### File Operations
 - [ ] Move `thoughts/shared/ralph/stories.json` → `.prism/stories/stories.json`
 - [ ] Move `thoughts/shared/ralph/progress.md` → `.prism/shared/spectrum/progress.md`
-- [ ] Rename `cmd/ralph-tui/` → `cmd/prism-tui/`
+- [ ] Rename `cmd/ralph-tui/` → `cmd/prism-cli/`
 - [ ] Rename `scripts/ralph.sh` → `scripts/spectrum.sh`
 
 ### Code Updates
-- [ ] Update path constants in `cmd/prism-tui/config/paths.go`
-- [ ] Update file loaders in `cmd/prism-tui/models/`
-- [ ] Update file watchers in `cmd/prism-tui/ui/`
+- [ ] Update path constants in `cmd/prism-cli/config/paths.go`
+- [ ] Update file loaders in `cmd/prism-cli/models/`
+- [ ] Update file watchers in `cmd/prism-cli/ui/`
 - [ ] Update script paths in `scripts/spectrum.sh`
 - [ ] Update import statements referencing old package names
 - [ ] Update build scripts (Makefile, go.mod, etc.)
@@ -157,7 +157,7 @@ PROGRESS_FILE=".prism/shared/spectrum/progress.md"          # ← New path
 - [ ] TUI watches both files for changes
 - [ ] `spectrum.sh` script finds both files
 - [ ] Error messages show correct new paths
-- [ ] Build produces `prism-tui` binary (not `ralph-tui`)
+- [ ] Build produces `prism-cli` binary (not `ralph-tui`)
 
 ### Documentation
 - [ ] Update README with new paths
@@ -228,7 +228,7 @@ func findStoriesFile() string {
 |-----------|----------|----------|
 | Stories | `thoughts/shared/ralph/stories.json` | `.prism/stories/stories.json` |
 | Progress | `thoughts/shared/ralph/progress.md` | `.prism/shared/spectrum/progress.md` |
-| TUI Code | `cmd/ralph-tui/` | `cmd/prism-tui/` |
+| TUI Code | `cmd/ralph-tui/` | `cmd/prism-cli/` |
 | Script | `scripts/ralph.sh` | `scripts/spectrum.sh` |
 | Command | `/prism:prism-ralph` | `/prism:prism-spectrum` |
 

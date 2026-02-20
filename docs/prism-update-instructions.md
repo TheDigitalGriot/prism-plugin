@@ -63,7 +63,7 @@ grep -r "Ralph" skills/prism/ --include="*.md" --include="*.py" --include="*.sh"
 grep -r "RALPH" skills/prism/ --include="*.md" --include="*.py" --include="*.sh"
 ```
 
-### 1.3 Rename ralph-tui → prism-tui
+### 1.3 Rename ralph-tui → prism-cli
 **Rationale**: Better branding alignment, clearer that it's part of Prism ecosystem
 
 **Files to update**:
@@ -234,7 +234,7 @@ STRUCTURE = {
 [Include code examples]
 ```
 
-### 3.3 Design prism-tui Dashboard
+### 3.3 Design prism-cli Dashboard
 
 **Dashboard screens**:
 
@@ -346,7 +346,7 @@ STRUCTURE = {
 
 **Implementation approach**:
 - Use Go with Bubble Tea framework
-- Support both `prism-tui` standalone and integrated into workflow
+- Support both `prism-cli` standalone and integrated into workflow
 - Real-time updates by monitoring `.prism/[new_name]/` files
 - Keyboard shortcuts for all actions
 - Mouse support optional but recommended
@@ -359,12 +359,12 @@ STRUCTURE = {
 
 Launch the interactive dashboard:
 ```bash
-prism-tui
+prism-cli
 ```
 
 Or monitor a specific workflow:
 ```bash
-prism-tui --follow
+prism-cli --follow
 ```
 
 Key commands:
@@ -466,7 +466,7 @@ Sleep 500ms
 Enter
 Sleep 500ms
 
-Type "prism-tui"
+Type "prism-cli"
 Sleep 500ms
 Enter
 Sleep 5s
@@ -533,7 +533,7 @@ Sleep 5s
    python skills/prism/scripts/init_prism.py
    
    # 3. Launch the dashboard
-   prism-tui
+   prism-cli
    ```
    
    Or jump right in:
@@ -561,7 +561,7 @@ Sleep 5s
    ### Stories not executing?
    Check configuration:
    ```bash
-   prism-tui config
+   prism-cli config
    ```
    ```
 

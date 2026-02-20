@@ -10,8 +10,8 @@
 # Files
 ralph.sh                     → spectrum.sh
 prism-ralph.md               → prism-spectrum.md
-ralph-tui                    → prism-tui
-cmd/ralph-tui/               → cmd/prism-tui/
+ralph-tui                    → prism-cli
+cmd/ralph-tui/               → cmd/prism-cli/
 
 # Directories
 thoughts/                    → .prism/
@@ -61,7 +61,7 @@ thoughts/shared/ralph/progress.md   → .prism/shared/spectrum/progress.md
 - [x] Test migration on sample project — command ready for use
 - [x] Update `.gitignore` templates
 - [x] Update TUI code paths:
-  - [x] Rename `cmd/ralph-tui/` → `cmd/prism-tui/`
+  - [x] Rename `cmd/ralph-tui/` → `cmd/prism-cli/`
   - [x] Update path constants (handled inline, no separate config/paths.go)
   - [x] Update file loaders in `models/`
   - [x] Update file watchers
@@ -76,7 +76,7 @@ thoughts/shared/ralph/progress.md   → .prism/shared/spectrum/progress.md
 
 ## TUI Dashboard (Week 2) — ✅ Complete
 
-> **Status: COMPLETE** — Multi-screen TUI with 3D prism rendering (FauxGL), spring physics (harmonica), 7 render views, story pagination, log history, and demo mode. See `cmd/prism-tui/`.
+> **Status: COMPLETE** — Multi-screen TUI with 3D prism rendering (FauxGL), spring physics (harmonica), 7 render views, story pagination, log history, and demo mode. See `cmd/prism-cli/`.
 
 ### Core Implementation
 ```bash
@@ -96,10 +96,10 @@ thoughts/shared/ralph/progress.md   → .prism/shared/spectrum/progress.md
 ### Integration
 ```bash
 # Launch standalone
-prism-tui
+prism-cli
 
 # Follow live execution
-prism-tui --follow
+prism-cli --follow
 
 # Add to workflow
 /prism:prism-spectrum  # Now shows TUI option
@@ -181,12 +181,12 @@ cmd/ralph-tui/
 /prism:prism-spectrum
 .prism/stories/stories.json          # ← Separated!
 .prism/shared/spectrum/progress.md   # ← In spectrum/
-cmd/prism-tui/
+cmd/prism-cli/
 
 # New Features
 /prism-dir-update              # Migrate existing project
-prism-tui                      # Launch dashboard
-prism-tui --follow             # Monitor live execution
+prism-cli                      # Launch dashboard
+prism-cli --follow             # Monitor live execution
 ```
 
 **Key architectural change**: `stories.json` now lives separately from `progress.md`

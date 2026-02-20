@@ -10,7 +10,7 @@ This migration involves **four key changes**:
 1. **Ralph → Spectrum** namespace rename
 2. **thoughts/ → .prism/** directory restructure  
 3. **stories.json separation** from execution state
-4. **ralph-tui → prism-tui** with path updates
+4. **ralph-tui → prism-cli** with path updates
 
 We've created **4 comprehensive documents** to guide you through:
 
@@ -69,7 +69,7 @@ We've created **4 comprehensive documents** to guide you through:
 **Use this for**: Step-by-step TUI code migration
 
 **Contents**:
-- 9-step detailed checklist for `cmd/ralph-tui → cmd/prism-tui`
+- 9-step detailed checklist for `cmd/ralph-tui → cmd/prism-cli`
 - **Exact code changes** needed for path updates
 - File-by-file update instructions:
   - `config/paths.go` - Path constants
@@ -145,7 +145,7 @@ thoughts/shared/ralph/
 ### High Priority (Week 1) — ✅ All Complete
 - [x] All skill/command markdown files (`ralph` → `spectrum`)
 - [x] `scripts/ralph.sh` → `scripts/spectrum.sh`
-- [x] `cmd/ralph-tui/` → `cmd/prism-tui/`
+- [x] `cmd/ralph-tui/` → `cmd/prism-cli/`
 - [x] `init_thoughts.py` → `init_prism.py`
 - [x] README.md (all references)
 
@@ -171,8 +171,8 @@ grep -r "thoughts/shared/ralph" . --exclude-dir=node_modules
 grep -r "thoughts/" . --exclude-dir=node_modules | grep -v ".prism"
 
 # Find TUI code that needs updating
-grep -r "stories.json" cmd/prism-tui/
-grep -r "progress.md" cmd/prism-tui/
+grep -r "stories.json" cmd/prism-cli/
+grep -r "progress.md" cmd/prism-cli/
 ```
 
 ---
@@ -230,7 +230,7 @@ Use this to track your migration progress:
 | Create /prism-dir-update | prism-update-instructions | ✅ | commands/prism_dir_update.md created |
 | Test migration | spectrum-migration-summary | ✅ | Command ready for use |
 | **Week 1: TUI Updates** | ||||
-| Rename directory | tui-update-checklist | ✅ | cmd/ralph-tui → cmd/prism-tui |
+| Rename directory | tui-update-checklist | ✅ | cmd/ralph-tui → cmd/prism-cli |
 | Update paths | tui-update-checklist | ✅ | All .prism/ paths, zero ralph/thoughts refs |
 | Update build | tui-update-checklist | ✅ | go.mod, Makefile, GitHub workflow |
 | Test TUI | tui-update-checklist | ✅ | Clean — no ralph/thoughts references |
@@ -278,7 +278,7 @@ Use this to track your migration progress:
    /prism:prism-spectrum --help
    
    # After path updates
-   prism-tui
+   prism-cli
    
    # After migration
    /prism-dir-update
@@ -305,7 +305,7 @@ Criteria status:
 - ✅ All paths use `.prism/` structure — **DONE**
 - ✅ `stories.json` is in `.prism/stories/` — **DONE**
 - ✅ `progress.md` is in `.prism/shared/spectrum/` — **DONE**
-- ✅ TUI binary is named `prism-tui` — **DONE**
+- ✅ TUI binary is named `prism-cli` — **DONE**
 - ✅ TUI loads and displays data correctly — **DONE**
 - ✅ Migration script works on test project — **DONE** (`commands/prism_dir_update.md` created)
 - ✅ README is polished with new branding — **DONE**

@@ -5,7 +5,7 @@
 
 ## Goal
 
-Add a two-tier footer to prism-tui that spans the full terminal width below both the content area and sidebar:
+Add a two-tier footer to prism-cli that spans the full terminal width below both the content area and sidebar:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -33,9 +33,9 @@ Add a two-tier footer to prism-tui that spans the full terminal width below both
 ## Success Criteria
 
 #### Automated Verification
-- [x] `cd cmd/prism-tui && go build ./...` compiles without errors
-- [x] `cd cmd/prism-tui && go vet ./...` passes
-- [x] `cd cmd/prism-tui && go test ./...` passes (if tests exist)
+- [x] `cd cmd/prism-cli && go build ./...` compiles without errors
+- [x] `cd cmd/prism-cli && go vet ./...` passes
+- [x] `cd cmd/prism-cli && go test ./...` passes (if tests exist)
 
 #### Manual Verification
 - [ ] Footer spans full terminal width (below sidebar) when sidebar is visible
@@ -60,7 +60,7 @@ Add a two-tier footer to prism-tui that spans the full terminal width below both
 **Goal**: Create a reusable powerline segment rendering system in the styles package.
 
 ### Files
-- **Create**: `cmd/prism-tui/styles/powerline.go`
+- **Create**: `cmd/prism-cli/styles/powerline.go`
 
 ### Steps
 
@@ -115,7 +115,7 @@ Add a two-tier footer to prism-tui that spans the full terminal width below both
 
 ### Verification
 ```bash
-cd cmd/prism-tui && go build ./...
+cd cmd/prism-cli && go build ./...
 ```
 
 ---
@@ -125,7 +125,7 @@ cd cmd/prism-tui && go build ./...
 **Goal**: Create the footer data collection and two-tier rendering in a new file.
 
 ### Files
-- **Create**: `cmd/prism-tui/app/footer.go`
+- **Create**: `cmd/prism-cli/app/footer.go`
 
 ### Steps
 
@@ -172,7 +172,7 @@ cd cmd/prism-tui && go build ./...
 
 ### Verification
 ```bash
-cd cmd/prism-tui && go build ./...
+cd cmd/prism-cli && go build ./...
 ```
 
 ---
@@ -182,7 +182,7 @@ cd cmd/prism-tui && go build ./...
 **Goal**: Move the two-tier footer below the sidebar+content composite so it spans full terminal width.
 
 ### Files
-- **Modify**: `cmd/prism-tui/app/shell.go`
+- **Modify**: `cmd/prism-cli/app/shell.go`
 
 ### Steps
 
@@ -223,7 +223,7 @@ cd cmd/prism-tui && go build ./...
 
 ### Verification
 ```bash
-cd cmd/prism-tui && go build ./...
+cd cmd/prism-cli && go build ./...
 ```
 
 ---
@@ -242,7 +242,7 @@ cd cmd/prism-tui && go build ./...
 
 - [x] 4.2 Build and run:
   ```bash
-  cd cmd/prism-tui && go build -o prism-tui . && ./prism-tui --demo
+  cd cmd/prism-cli && go build -o prism-cli . && ./prism-cli --demo
   ```
 
 - [ ] 4.3 Visual verification checklist:
@@ -258,7 +258,7 @@ cd cmd/prism-tui && go build ./...
 
 ### Verification
 ```bash
-cd cmd/prism-tui && go build ./... && go vet ./...
+cd cmd/prism-cli && go build ./... && go vet ./...
 ```
 
 ---

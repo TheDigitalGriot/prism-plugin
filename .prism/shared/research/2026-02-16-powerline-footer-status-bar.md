@@ -1,7 +1,7 @@
 # Research: Powerline Footer Status Bar
 
 **Date**: 2026-02-16
-**Research Question**: Understand everything needed to implement a Neovim lualine/powerline-style footer status bar for prism-tui that spans full terminal width below both content and sidebar.
+**Research Question**: Understand everything needed to implement a Neovim lualine/powerline-style footer status bar for prism-cli that spans full terminal width below both content and sidebar.
 
 ## Summary
 
@@ -15,20 +15,20 @@ The current footer in `shell.go` renders simple key hints inside the left column
 
 | File Path | Purpose | Lines Referenced |
 |-----------|---------|------------------|
-| `cmd/prism-tui/app/shell.go` | App shell renderer with footer | 15-39 (renderAppShell), 208-235 (renderAppFooter) |
-| `cmd/prism-tui/app/sidebar.go` | Sidebar renderer with plugin data access patterns | 125, 148, 231, 248, 322, 383 |
-| `cmd/prism-tui/app/plugin_spectrum.go` | Spectrum plugin with execution state fields | 60-118 (struct), 596-615 (helpers) |
-| `cmd/prism-tui/app/plugin_git.go` | Git plugin with branch/ahead/behind fields | 23-35 (GitState struct) |
-| `cmd/prism-tui/app/plugin_monitor.go` | Monitor plugin with quality gates | 24-31 (QualityGate struct), 34-53 (MonitorState struct) |
-| `cmd/prism-tui/app/update.go` | viewToPluginID mapping function | 461-487 |
-| `cmd/prism-tui/plugin/registry.go` | Plugin registry with PluginByID and ActivePlugin | 81-83 (PluginByID), 87-92 (ActivePlugin) |
-| `cmd/prism-tui/styles/theme.go` | Color palette and style definitions | 6-23 (colors), 235-253 (separators) |
+| `cmd/prism-cli/app/shell.go` | App shell renderer with footer | 15-39 (renderAppShell), 208-235 (renderAppFooter) |
+| `cmd/prism-cli/app/sidebar.go` | Sidebar renderer with plugin data access patterns | 125, 148, 231, 248, 322, 383 |
+| `cmd/prism-cli/app/plugin_spectrum.go` | Spectrum plugin with execution state fields | 60-118 (struct), 596-615 (helpers) |
+| `cmd/prism-cli/app/plugin_git.go` | Git plugin with branch/ahead/behind fields | 23-35 (GitState struct) |
+| `cmd/prism-cli/app/plugin_monitor.go` | Monitor plugin with quality gates | 24-31 (QualityGate struct), 34-53 (MonitorState struct) |
+| `cmd/prism-cli/app/update.go` | viewToPluginID mapping function | 461-487 |
+| `cmd/prism-cli/plugin/registry.go` | Plugin registry with PluginByID and ActivePlugin | 81-83 (PluginByID), 87-92 (ActivePlugin) |
+| `cmd/prism-cli/styles/theme.go` | Color palette and style definitions | 6-23 (colors), 235-253 (separators) |
 
 ## Component Analysis
 
 ### 1. Current Footer Implementation
 
-**Location**: `cmd/prism-tui/app/shell.go:208-235`
+**Location**: `cmd/prism-cli/app/shell.go:208-235`
 
 **How it works**:
 ```go
@@ -69,7 +69,7 @@ func (m Model) renderAppFooter(width int) string {
 
 ### 2. Current Shell Layout (The Problem)
 
-**Location**: `cmd/prism-tui/app/shell.go:15-39`
+**Location**: `cmd/prism-cli/app/shell.go:15-39`
 
 **Current structure**:
 ```go
@@ -125,7 +125,7 @@ func (m Model) renderAppShell(content string) string {
 
 **Access method**: `Registry.PluginByID(id)` with type assertion
 
-**Pattern from sidebar** (`cmd/prism-tui/app/sidebar.go`):
+**Pattern from sidebar** (`cmd/prism-cli/app/sidebar.go`):
 
 ```go
 // Access SpectrumPlugin data
@@ -163,7 +163,7 @@ if mp, ok := m.Registry.PluginByID("monitor").(*MonitorPlugin); ok {
 
 ### 4. viewToPluginID Mapping
 
-**Location**: `cmd/prism-tui/app/update.go:461-487`
+**Location**: `cmd/prism-cli/app/update.go:461-487`
 
 ```go
 func viewToPluginID(view ActiveView) string {
@@ -195,7 +195,7 @@ if activePlugin != nil {
 
 ### 5. Color System
 
-**Location**: `cmd/prism-tui/styles/theme.go:6-23`
+**Location**: `cmd/prism-cli/styles/theme.go:6-23`
 
 **Available colors**:
 ```go
@@ -311,7 +311,7 @@ b.WriteString(rightContent)
 
 ### Pattern 4: Existing Footer Style
 
-**Source**: `cmd/prism-tui/styles/theme.go:151-154`
+**Source**: `cmd/prism-cli/styles/theme.go:151-154`
 
 ```go
 FooterStyle = lipgloss.NewStyle().
@@ -372,7 +372,7 @@ return styles.FooterStyle.Width(width - 2).Render(footerText)
 4. **Elapsed Time**:
    - **Data source**: `m.Registry.PluginByID("spectrum").(*SpectrumPlugin)`
    - **Fields**: `sp.elapsedTime()` (returns `time.Duration`)
-   - **Format helper**: `formatDuration(d)` from `cmd/prism-tui/app/view.go:107-122`
+   - **Format helper**: `formatDuration(d)` from `cmd/prism-cli/app/view.go:107-122`
    - **Example**: `2m 34s`
 
 ## Open Questions

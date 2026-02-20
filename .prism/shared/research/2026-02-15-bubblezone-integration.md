@@ -1,4 +1,4 @@
-# Research: BubbleZone Mouse Event Integration for Prism TUI
+# Research: BubbleZone Mouse Event Integration for Prism CLI
 
 **Date**: 2026-02-15
 **Researcher**: Claude (Prism Research Phase)
@@ -6,26 +6,26 @@
 
 ## Research Question
 
-How can we integrate BubbleZone (github.com/lrstanley/bubblezone) mouse event tracking into the prism-tui Go application to enable clickable UI elements (tabs, buttons, list items, etc.)?
+How can we integrate BubbleZone (github.com/lrstanley/bubblezone) mouse event tracking into the prism-cli Go application to enable clickable UI elements (tabs, buttons, list items, etc.)?
 
 ## Summary
 
-BubbleZone is a Go library that enables mouse click detection in Bubble Tea applications using zero-width ANSI markers. The prism-tui currently uses keyboard-only navigation across all UI elements. Integration requires: (1) initializing a global zone manager, (2) enabling mouse events in the Bubble Tea program, (3) wrapping clickable content with `zone.Mark()` during rendering, (4) calling `zone.Scan()` at the root View, and (5) handling `tea.MouseMsg` in Update methods to detect clicks via `zone.Get(id).InBounds(msg)`. The codebase has extensive keyboard navigation patterns (tabs, modals, lists) that can be enhanced with mouse support, and the Sidecar reference codebase provides production examples of hit-region-based mouse handling in similar Bubble Tea applications.
+BubbleZone is a Go library that enables mouse click detection in Bubble Tea applications using zero-width ANSI markers. The prism-cli currently uses keyboard-only navigation across all UI elements. Integration requires: (1) initializing a global zone manager, (2) enabling mouse events in the Bubble Tea program, (3) wrapping clickable content with `zone.Mark()` during rendering, (4) calling `zone.Scan()` at the root View, and (5) handling `tea.MouseMsg` in Update methods to detect clicks via `zone.Get(id).InBounds(msg)`. The codebase has extensive keyboard navigation patterns (tabs, modals, lists) that can be enhanced with mouse support, and the Sidecar reference codebase provides production examples of hit-region-based mouse handling in similar Bubble Tea applications.
 
 ## Existing Knowledge
 
 ### Previous Research Documents
 
-1. **`.prism/shared/research/2026-02-12-prism-tui-deep-dive.md`** (1,300 lines)
-   - Comprehensive documentation of prism-tui architecture
+1. **`.prism/shared/research/2026-02-12-prism-cli-deep-dive.md`** (1,300 lines)
+   - Comprehensive documentation of prism-cli architecture
    - Bubble Tea Elm architecture implementation
    - 4 main screens: Home, Research, Plans, Spectrum
    - Plugin system with 10 plugins
    - Modal/dialog overlay system
    - **No mouse handling currently implemented**
 
-2. **`.prism/shared/research/2026-02-12-prism-tui-sidecar-crush-integration-architecture.md`** (1,150 lines)
-   - Comparative analysis: Prism TUI vs Sidecar vs Crush
+2. **`.prism/shared/research/2026-02-12-prism-cli-sidecar-crush-integration-architecture.md`** (1,150 lines)
+   - Comparative analysis: Prism CLI vs Sidecar vs Crush
    - Sidecar has extensive mouse handling with hit regions
    - Modal system with focus management
    - **Sidecar reference implementation in `ref/sidecar/`** provides production mouse handling patterns
@@ -40,48 +40,48 @@ BubbleZone is a Go library that enables mouse click detection in Bubble Tea appl
 
 | File Path | Purpose | Lines |
 |-----------|---------|-------|
-| `cmd/prism-tui/main.go` | Entry point, Cobra CLI, tea.NewProgram() initialization | 157 |
-| `cmd/prism-tui/app/model.go` | Model struct, AppState enum, plugin registry | 558 |
-| `cmd/prism-tui/app/update.go` | Update() method, message routing, keyboard handling | 623 |
-| `cmd/prism-tui/app/view.go` | View() method, overlay compositing | 235 |
-| `cmd/prism-tui/app/shell.go` | App shell rendering (tabs, footer, sidebar) | 203+ |
-| `cmd/prism-tui/app/sidebar.go` | Right sidebar with project info, files, quality gates | 441 |
+| `cmd/prism-cli/main.go` | Entry point, Cobra CLI, tea.NewProgram() initialization | 157 |
+| `cmd/prism-cli/app/model.go` | Model struct, AppState enum, plugin registry | 558 |
+| `cmd/prism-cli/app/update.go` | Update() method, message routing, keyboard handling | 623 |
+| `cmd/prism-cli/app/view.go` | View() method, overlay compositing | 235 |
+| `cmd/prism-cli/app/shell.go` | App shell rendering (tabs, footer, sidebar) | 203+ |
+| `cmd/prism-cli/app/sidebar.go` | Right sidebar with project info, files, quality gates | 441 |
 
 ### Plugin System
 
 | File Path | Purpose | Lines |
 |-----------|---------|-------|
-| `cmd/prism-tui/plugin/plugin.go` | Plugin interface definition (10 methods) | 42+ |
-| `cmd/prism-tui/plugin/registry.go` | Plugin lifecycle management, message broadcasting | 169 |
-| `cmd/prism-tui/plugin/events.go` | Event bus for inter-plugin communication | 128 |
-| `cmd/prism-tui/plugin/messages.go` | FocusPluginMsg, PluginResizeMsg | 15 |
+| `cmd/prism-cli/plugin/plugin.go` | Plugin interface definition (10 methods) | 42+ |
+| `cmd/prism-cli/plugin/registry.go` | Plugin lifecycle management, message broadcasting | 169 |
+| `cmd/prism-cli/plugin/events.go` | Event bus for inter-plugin communication | 128 |
+| `cmd/prism-cli/plugin/messages.go` | FocusPluginMsg, PluginResizeMsg | 15 |
 
 ### Plugin Implementations (10 plugins)
 
 | File Path | Plugin | Purpose |
 |-----------|--------|---------|
-| `cmd/prism-tui/app/plugin_home.go` | HomePlugin | Dashboard with menu items |
-| `cmd/prism-tui/app/plugin_spectrum.go` | SpectrumPlugin | Story execution monitoring |
-| `cmd/prism-tui/app/plugin_research.go` | ResearchPlugin | Research document browser |
-| `cmd/prism-tui/app/plugin_plans.go` | PlansPlugin | Implementation plan viewer |
-| `cmd/prism-tui/app/plugin_files.go` | FilesPlugin | File browser with git status |
-| `cmd/prism-tui/app/plugin_git.go` | GitPlugin | Git status and diff viewing |
-| `cmd/prism-tui/app/plugin_agent.go` | AgentPlugin | Agent monitoring |
-| `cmd/prism-tui/app/plugin_monitor.go` | MonitorPlugin | System monitoring |
-| `cmd/prism-tui/app/plugin_workspaces.go` | WorkspacesPlugin | Workspace management |
-| `cmd/prism-tui/app/plugin_onboarding.go` | OnboardingPlugin | Setup wizard |
+| `cmd/prism-cli/app/plugin_home.go` | HomePlugin | Dashboard with menu items |
+| `cmd/prism-cli/app/plugin_spectrum.go` | SpectrumPlugin | Story execution monitoring |
+| `cmd/prism-cli/app/plugin_research.go` | ResearchPlugin | Research document browser |
+| `cmd/prism-cli/app/plugin_plans.go` | PlansPlugin | Implementation plan viewer |
+| `cmd/prism-cli/app/plugin_files.go` | FilesPlugin | File browser with git status |
+| `cmd/prism-cli/app/plugin_git.go` | GitPlugin | Git status and diff viewing |
+| `cmd/prism-cli/app/plugin_agent.go` | AgentPlugin | Agent monitoring |
+| `cmd/prism-cli/app/plugin_monitor.go` | MonitorPlugin | System monitoring |
+| `cmd/prism-cli/app/plugin_workspaces.go` | WorkspacesPlugin | Workspace management |
+| `cmd/prism-cli/app/plugin_onboarding.go` | OnboardingPlugin | Setup wizard |
 
 ### Modal/Dialog System
 
 | File Path | Purpose | Lines |
 |-----------|---------|-------|
-| `cmd/prism-tui/modal/modal.go` | Modal struct, keyboard handling, focus management | 280+ |
-| `cmd/prism-tui/modal/section.go` | Section interface, TextSection, ButtonsSection, etc. | 332+ |
-| `cmd/prism-tui/modal/list.go` | Scrollable list section with selection | 240+ |
-| `cmd/prism-tui/modal/input.go` | Input and textarea sections | 285+ |
-| `cmd/prism-tui/dialog/dialog.go` | Dialog interface, Overlay stack manager | 107 |
-| `cmd/prism-tui/dialog/confirm.go` | Confirmation dialog | 235 |
-| `cmd/prism-tui/dialog/permissions.go` | Permission request dialog | 258 |
+| `cmd/prism-cli/modal/modal.go` | Modal struct, keyboard handling, focus management | 280+ |
+| `cmd/prism-cli/modal/section.go` | Section interface, TextSection, ButtonsSection, etc. | 332+ |
+| `cmd/prism-cli/modal/list.go` | Scrollable list section with selection | 240+ |
+| `cmd/prism-cli/modal/input.go` | Input and textarea sections | 285+ |
+| `cmd/prism-cli/dialog/dialog.go` | Dialog interface, Overlay stack manager | 107 |
+| `cmd/prism-cli/dialog/confirm.go` | Confirmation dialog | 235 |
+| `cmd/prism-cli/dialog/permissions.go` | Permission request dialog | 258 |
 
 ### Dependencies (go.mod)
 
@@ -98,7 +98,7 @@ BubbleZone is a Go library that enables mouse click detection in Bubble Tea appl
 
 ### 1. Current Bubble Tea Architecture
 
-#### Model Structure (`cmd/prism-tui/app/model.go:87-128`)
+#### Model Structure (`cmd/prism-cli/app/model.go:87-128`)
 
 The `Model` struct contains:
 - **Plugin System**: `Registry *plugin.Registry` - manages 10 registered plugins
@@ -110,7 +110,7 @@ The `Model` struct contains:
 
 **Key Insight**: No mouse-related state currently exists. We'll need to add BubbleZone manager reference.
 
-#### Message Routing (`cmd/prism-tui/app/update.go:48-183`)
+#### Message Routing (`cmd/prism-cli/app/update.go:48-183`)
 
 The `Update()` method handles:
 - `tea.KeyMsg` → `handleKeyPress()` (priority chain: splash → quit → dialog → modal → global keys → plugin)
@@ -121,7 +121,7 @@ The `Update()` method handles:
 
 **Critical Finding**: **No `tea.MouseMsg` handler exists anywhere in the codebase.**
 
-#### View Rendering (`cmd/prism-tui/app/view.go:15-67`)
+#### View Rendering (`cmd/prism-cli/app/view.go:15-67`)
 
 Rendering pipeline:
 1. Lifecycle guards: Splash fullscreen or Onboarding fullscreen
@@ -136,7 +136,7 @@ Rendering pipeline:
 
 ### 2. Plugin System Architecture
 
-#### Plugin Interface (`cmd/prism-tui/plugin/plugin.go:7-42`)
+#### Plugin Interface (`cmd/prism-cli/plugin/plugin.go:7-42`)
 
 All plugins implement:
 ```go
@@ -157,7 +157,7 @@ type Plugin interface {
 
 **Key Insight**: Plugin.Update() already receives `tea.Msg` generically. Adding MouseMsg handling requires no interface changes.
 
-#### Registry Broadcasting (`cmd/prism-tui/plugin/registry.go:118-133`)
+#### Registry Broadcasting (`cmd/prism-cli/plugin/registry.go:118-133`)
 
 `Registry.Broadcast(msg)` sends messages to ALL plugins, not just the active one. Each plugin's Update is called, and the returned plugin instance replaces the old one in the registry's slice and map.
 
@@ -167,7 +167,7 @@ type Plugin interface {
 
 Extensive keyboard navigation patterns exist throughout the codebase:
 
-#### Pattern: Arrow Key Navigation (`cmd/prism-tui/app/plugin_files.go:249-261`)
+#### Pattern: Arrow Key Navigation (`cmd/prism-cli/app/plugin_files.go:249-261`)
 
 ```go
 case "j", "down":
@@ -184,7 +184,7 @@ case "k", "up":
 
 **Mouse Enhancement**: Could detect clicks on list items to set SelectedIdx directly.
 
-#### Pattern: Tab/Shift+Tab Cycling (`cmd/prism-tui/modal/modal.go:125-131`)
+#### Pattern: Tab/Shift+Tab Cycling (`cmd/prism-cli/modal/modal.go:125-131`)
 
 ```go
 case "tab":
@@ -199,7 +199,7 @@ func (m *Modal) cycleFocus(delta int) {
 
 **Mouse Enhancement**: Could click directly on buttons/inputs to focus them.
 
-#### Pattern: Number Keys for Tab Switching (`cmd/prism-tui/app/update.go:305-342`)
+#### Pattern: Number Keys for Tab Switching (`cmd/prism-cli/app/update.go:305-342`)
 
 ```go
 case "1":
@@ -212,7 +212,7 @@ case "1":
 
 ### 4. Modal Focus Management
 
-#### Two-Pass Rendering (`cmd/prism-tui/modal/layout.go:15-165`)
+#### Two-Pass Rendering (`cmd/prism-cli/modal/layout.go:15-165`)
 
 1. **Pass 1**: Render each section, collect `focusIDs` list
 2. **Pass 2**: Join content, apply scroll viewport, add scrollbar
@@ -221,7 +221,7 @@ case "1":
 
 **BubbleZone Integration**: Each focusable element (button, input, list) could be wrapped with `zone.Mark(focusID, content)`.
 
-#### Keyboard Routing (`cmd/prism-tui/modal/modal.go:118-167`)
+#### Keyboard Routing (`cmd/prism-cli/modal/modal.go:118-167`)
 
 - `esc` returns `"cancel"`
 - `tab`/`shift+tab` cycles focus
@@ -418,7 +418,7 @@ func (p *Plugin) scrollSidebar(delta int) (*Plugin, tea.Cmd) {
 }
 ```
 
-**Adaptation for Prism TUI**:
+**Adaptation for Prism CLI**:
 - Use `tea.MouseButtonWheelUp`/`WheelDown` instead of action.Delta
 - Check `zone.Get("list-area").InBounds(msg)` to determine which pane to scroll
 - Update cursor/scroll offset directly
@@ -450,7 +450,7 @@ func (h *Handler) HandleClick(x, y int) ClickResult {
 }
 ```
 
-**Use Case for Prism TUI**:
+**Use Case for Prism CLI**:
 - Double-click list items to open/expand (e.g., files, stories)
 - Single-click for selection, double-click for action
 
@@ -459,37 +459,37 @@ func (h *Handler) HandleClick(x, y int) ClickResult {
 ### Phase 1: Core Setup (Foundation)
 
 **Files to Modify**:
-- `cmd/prism-tui/main.go` - Add `zone.NewGlobal()` before tea.NewProgram
-- `cmd/prism-tui/main.go` - Add `tea.WithMouseCellMotion()` to program options
-- `cmd/prism-tui/go.mod` - Add `github.com/lrstanley/bubblezone` dependency
-- `cmd/prism-tui/app/view.go:66` - Wrap final output with `zone.Scan()`
+- `cmd/prism-cli/main.go` - Add `zone.NewGlobal()` before tea.NewProgram
+- `cmd/prism-cli/main.go` - Add `tea.WithMouseCellMotion()` to program options
+- `cmd/prism-cli/go.mod` - Add `github.com/lrstanley/bubblezone` dependency
+- `cmd/prism-cli/app/view.go:66` - Wrap final output with `zone.Scan()`
 
 **Verification**: No errors, mouse events start arriving in Update (can add debug logging).
 
 ### Phase 2: Tab Bar Clicks
 
 **Files to Modify**:
-- `cmd/prism-tui/app/shell.go:124-175` - Wrap each tab with `zone.Mark(tabID, renderedTab)`
-- `cmd/prism-tui/app/update.go:48` - Add `case tea.MouseMsg:` before default case
-- `cmd/prism-tui/app/update.go` - Check `zone.Get("tab-X").InBounds(msg)` and switch tabs
+- `cmd/prism-cli/app/shell.go:124-175` - Wrap each tab with `zone.Mark(tabID, renderedTab)`
+- `cmd/prism-cli/app/update.go:48` - Add `case tea.MouseMsg:` before default case
+- `cmd/prism-cli/app/update.go` - Check `zone.Get("tab-X").InBounds(msg)` and switch tabs
 
 **Verification**: Clicking tabs switches active view.
 
 ### Phase 3: Modal Button Clicks
 
 **Files to Modify**:
-- `cmd/prism-tui/modal/section.go:138-238` - ButtonsSection: wrap each button with `zone.Mark(buttonID, content)`
-- `cmd/prism-tui/modal/modal.go:118` - Add MouseMsg handler that checks button zones and returns action
-- `cmd/prism-tui/app/update.go:237` - Route modal MouseMsg before keyboard handling
+- `cmd/prism-cli/modal/section.go:138-238` - ButtonsSection: wrap each button with `zone.Mark(buttonID, content)`
+- `cmd/prism-cli/modal/modal.go:118` - Add MouseMsg handler that checks button zones and returns action
+- `cmd/prism-cli/app/update.go:237` - Route modal MouseMsg before keyboard handling
 
 **Verification**: Clicking modal buttons triggers actions (confirm, cancel).
 
 ### Phase 4: List Item Clicks
 
 **Files to Modify**:
-- `cmd/prism-tui/modal/list.go:108-128` - Wrap each visible item with `zone.Mark(itemID, line)`
-- `cmd/prism-tui/modal/list.go` - Handle MouseMsg to detect item clicks and update selection
-- `cmd/prism-tui/app/plugin_files.go:319` - Similar for file tree items
+- `cmd/prism-cli/modal/list.go:108-128` - Wrap each visible item with `zone.Mark(itemID, line)`
+- `cmd/prism-cli/modal/list.go` - Handle MouseMsg to detect item clicks and update selection
+- `cmd/prism-cli/app/plugin_files.go:319` - Similar for file tree items
 
 **Verification**: Clicking list items selects them.
 
@@ -545,14 +545,14 @@ func (h *Handler) HandleClick(x, y int) ClickResult {
 - `ref/sidecar/internal/plugins/workspace/mouse.go:454-680` - Region-based click routing
 - `ref/sidecar/internal/plugins/filebrowser/mouse.go:245-362` - File browser mouse handling with double-click
 
-### Prism TUI Key Files
+### Prism CLI Key Files
 
-- `cmd/prism-tui/app/model.go` - Add zone manager reference
-- `cmd/prism-tui/app/update.go:48` - Add MouseMsg handler
-- `cmd/prism-tui/app/view.go:66` - Add zone.Scan() call
-- `cmd/prism-tui/app/shell.go:124-175` - Tab bar zone marking
-- `cmd/prism-tui/modal/modal.go:118` - Modal MouseMsg routing
-- `cmd/prism-tui/modal/section.go` - Button/list zone marking
+- `cmd/prism-cli/app/model.go` - Add zone manager reference
+- `cmd/prism-cli/app/update.go:48` - Add MouseMsg handler
+- `cmd/prism-cli/app/view.go:66` - Add zone.Scan() call
+- `cmd/prism-cli/app/shell.go:124-175` - Tab bar zone marking
+- `cmd/prism-cli/modal/modal.go:118` - Modal MouseMsg routing
+- `cmd/prism-cli/modal/section.go` - Button/list zone marking
 
 ## Next Steps
 

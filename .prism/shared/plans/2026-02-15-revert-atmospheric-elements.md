@@ -12,7 +12,7 @@ Revert the splash screen atmospheric elements rendering to the original density-
 
 ## Scope
 
-**Single file:** `cmd/prism-tui/splash/splash.go`
+**Single file:** `cmd/prism-cli/splash/splash.go`
 
 ### What We're NOT Doing
 - Not removing AccentR/AccentG/AccentB or AtmoR/AtmoG/AtmoB fields from the Model struct
@@ -24,7 +24,7 @@ Revert the splash screen atmospheric elements rendering to the original density-
 
 ## Phase 1: Revert Cell Struct
 
-**File:** `cmd/prism-tui/splash/splash.go:137-144`
+**File:** `cmd/prism-cli/splash/splash.go:137-144`
 
 **Change:** Remove the explicit background color fields from the cell struct.
 
@@ -48,13 +48,13 @@ type cell struct {
 }
 ```
 
-**Verification:** `cd cmd/prism-tui && go build ./...` — will show compile errors for references to removed fields, which are fixed in Phases 2 and 3.
+**Verification:** `cd cmd/prism-cli && go build ./...` — will show compile errors for references to removed fields, which are fixed in Phases 2 and 3.
 
 ---
 
 ## Phase 2: Restore Density-Based Atmospheric Color
 
-**File:** `cmd/prism-tui/splash/splash.go:460-574`
+**File:** `cmd/prism-cli/splash/splash.go:460-574`
 
 Three edits within the Phase 5 per-cell rendering loop:
 
@@ -160,13 +160,13 @@ This is the core fix. Replace the hardcoded `(30, 33, 39)` + `useExplicitBg` wit
 		}
 ```
 
-**Verification:** `cd cmd/prism-tui && go build ./...` — will still fail until Phase 3 removes renderGrid references.
+**Verification:** `cd cmd/prism-cli && go build ./...` — will still fail until Phase 3 removes renderGrid references.
 
 ---
 
 ## Phase 3: Simplify renderGrid
 
-**File:** `cmd/prism-tui/splash/splash.go` — `renderGrid()` method
+**File:** `cmd/prism-cli/splash/splash.go` — `renderGrid()` method
 
 Remove the SGR 48 background escape sequence logic and background tracking variables.
 
@@ -220,16 +220,16 @@ Remove the SGR 48 background escape sequence logic and background tracking varia
 		}
 ```
 
-**Verification:** `cd cmd/prism-tui && go build ./...` — should compile cleanly now.
+**Verification:** `cd cmd/prism-cli && go build ./...` — should compile cleanly now.
 
 ---
 
 ## Success Criteria
 
 ### Automated Verification
-- [ ] `cd cmd/prism-tui && go build ./...` compiles with no errors
-- [ ] `cd cmd/prism-tui && go vet ./...` passes
-- [ ] `cd cmd/prism-tui && make test` passes (if tests exist)
+- [ ] `cd cmd/prism-cli && go build ./...` compiles with no errors
+- [ ] `cd cmd/prism-cli && go vet ./...` passes
+- [ ] `cd cmd/prism-cli && make test` passes (if tests exist)
 
 ### Manual Verification
 - [ ] Atmospheric elements show animated ripple texture on left side of splash

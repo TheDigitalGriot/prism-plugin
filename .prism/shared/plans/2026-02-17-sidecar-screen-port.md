@@ -41,9 +41,9 @@ research: .prism/shared/research/2026-02-17-sidecar-port-screen-audit.md
 ## Success Criteria
 
 ### Automated (CI/Scripts)
-- [ ] `cd cmd/prism-tui && make build` — Build succeeds
-- [ ] `cd cmd/prism-tui && make test` — All tests pass
-- [ ] `cd cmd/prism-tui && make lint` — No lint errors
+- [ ] `cd cmd/prism-cli && make build` — Build succeeds
+- [ ] `cd cmd/prism-cli && make test` — All tests pass
+- [ ] `cd cmd/prism-cli && make lint` — No lint errors
 
 ### Manual Verification
 - [ ] Git screen shows persistent 30/70 two-pane (sidebar + diff) — selecting a file shows inline diff without replacing the view
@@ -67,29 +67,29 @@ research: .prism/shared/research/2026-02-17-sidecar-port-screen-audit.md
 **Files to create**:
 | File | Purpose |
 |------|---------|
-| `cmd/prism-tui/ui/divider.go` | Vertical pane divider renderer |
-| `cmd/prism-tui/ui/scrollbar.go` | Proportional scrollbar renderer |
-| `cmd/prism-tui/ui/pane.go` | `CalculatePaneWidths()` helper and `FocusPane` type |
+| `cmd/prism-cli/ui/divider.go` | Vertical pane divider renderer |
+| `cmd/prism-cli/ui/scrollbar.go` | Proportional scrollbar renderer |
+| `cmd/prism-cli/ui/pane.go` | `CalculatePaneWidths()` helper and `FocusPane` type |
 
 **Files to modify**:
 | File | Change |
 |------|--------|
-| `cmd/prism-tui/styles/theme.go` | Add `ScrollbarTrackColor`, `ScrollbarThumbColor`, `BorderNormal`, `BorderActive` vars |
-| `cmd/prism-tui/styles/borders.go` | Port `RenderPanel()`, `RenderPanelWithGradient()`, `RenderGradientBorder()` from `ref/sidecar/internal/styles/borders.go` |
-| `cmd/prism-tui/styles/gradient.go` | Port `Gradient`, `RGB`, `GradientStop` types and `NewGradient()`, `GetActiveGradient()`, `GetNormalGradient()` from `ref/sidecar/internal/styles/gradient.go` |
+| `cmd/prism-cli/styles/theme.go` | Add `ScrollbarTrackColor`, `ScrollbarThumbColor`, `BorderNormal`, `BorderActive` vars |
+| `cmd/prism-cli/styles/borders.go` | Port `RenderPanel()`, `RenderPanelWithGradient()`, `RenderGradientBorder()` from `ref/sidecar/internal/styles/borders.go` |
+| `cmd/prism-cli/styles/gradient.go` | Port `Gradient`, `RGB`, `GradientStop` types and `NewGradient()`, `GetActiveGradient()`, `GetNormalGradient()` from `ref/sidecar/internal/styles/gradient.go` |
 
 **Steps**:
-1. [x] Create `cmd/prism-tui/ui/` package directory
-2. [x] Port `RenderDivider()` from `ref/sidecar/internal/ui/divider.go` into `cmd/prism-tui/ui/divider.go` — adapt import paths to use Prism's styles package
-3. [x] Port `ScrollbarParams` and `RenderScrollbar()` from `ref/sidecar/internal/ui/scrollbar.go` into `cmd/prism-tui/ui/scrollbar.go` — adapt color references to Prism's styles
-4. [x] Create `cmd/prism-tui/ui/pane.go` with:
+1. [x] Create `cmd/prism-cli/ui/` package directory
+2. [x] Port `RenderDivider()` from `ref/sidecar/internal/ui/divider.go` into `cmd/prism-cli/ui/divider.go` — adapt import paths to use Prism's styles package
+3. [x] Port `ScrollbarParams` and `RenderScrollbar()` from `ref/sidecar/internal/ui/scrollbar.go` into `cmd/prism-cli/ui/scrollbar.go` — adapt color references to Prism's styles
+4. [x] Create `cmd/prism-cli/ui/pane.go` with:
    - `FocusPane` type (`int`) with `PaneLeft`/`PaneRight` constants
    - `PaneWidths` struct with `Left`, `Right`, `Divider`, `Available` fields
    - `CalculatePaneWidths(available, ratio, minLeft, minRight int) PaneWidths` — generic 2-pane calculator based on Sidecar's `calculatePaneWidths()` pattern (default 30/70 split, clamped bounds)
-5. [x] Port Sidecar's `RGB`, `Gradient`, `GradientStop` types into `cmd/prism-tui/styles/gradient.go` — extend existing file with `HexToRGB()`, `RGBToHex()`, `LerpRGB()`, `NewGradient()`, `ColorAt()`, `PositionAt()` from `ref/sidecar/internal/styles/gradient.go`
-6. [x] Add `GetActiveGradient()`, `GetNormalGradient()`, `GetFlashGradient()` to `cmd/prism-tui/styles/gradient.go` — use Prism's existing `Primary` and `Info` colors for active gradient, `Dim` for normal
-7. [x] Create `cmd/prism-tui/styles/borders.go` with `RenderPanel()`, `RenderPanelWithGradient()`, `RenderGradientBorder()` ported from `ref/sidecar/internal/styles/borders.go:27-309` — includes `truncateString()`, `decodeRune()`, `runeWidth()` helpers
-8. [x] Add `ScrollbarTrackColor`, `ScrollbarThumbColor` vars to `cmd/prism-tui/styles/theme.go` (default to existing `Dim` color)
+5. [x] Port Sidecar's `RGB`, `Gradient`, `GradientStop` types into `cmd/prism-cli/styles/gradient.go` — extend existing file with `HexToRGB()`, `RGBToHex()`, `LerpRGB()`, `NewGradient()`, `ColorAt()`, `PositionAt()` from `ref/sidecar/internal/styles/gradient.go`
+6. [x] Add `GetActiveGradient()`, `GetNormalGradient()`, `GetFlashGradient()` to `cmd/prism-cli/styles/gradient.go` — use Prism's existing `Primary` and `Info` colors for active gradient, `Dim` for normal
+7. [x] Create `cmd/prism-cli/styles/borders.go` with `RenderPanel()`, `RenderPanelWithGradient()`, `RenderGradientBorder()` ported from `ref/sidecar/internal/styles/borders.go:27-309` — includes `truncateString()`, `decodeRune()`, `runeWidth()` helpers
+8. [x] Add `ScrollbarTrackColor`, `ScrollbarThumbColor` vars to `cmd/prism-cli/styles/theme.go` (default to existing `Dim` color)
 9. [x] Write unit tests for `CalculatePaneWidths()`, `RenderScrollbar()`, `RenderDivider()`, `RenderPanel()`
 
 **Key references**:
@@ -101,8 +101,8 @@ research: .prism/shared/research/2026-02-17-sidecar-port-screen-audit.md
 
 **Verification**:
 ```bash
-cd cmd/prism-tui && go build ./...
-cd cmd/prism-tui && go test ./ui/... ./styles/...
+cd cmd/prism-cli && go build ./...
+cd cmd/prism-cli && go test ./ui/... ./styles/...
 ```
 
 **Checkpoint**: ✅ Phase 1 complete — shared layout utilities build and pass tests
@@ -116,15 +116,15 @@ cd cmd/prism-tui && go test ./ui/... ./styles/...
 **Files to create**:
 | File | Purpose |
 |------|---------|
-| `cmd/prism-tui/diff/parser.go` | `ParseUnifiedDiff()`, `ParseMultiFileDiff()`, types (`ParsedDiff`, `Hunk`, `DiffLine`, `LineType`) |
-| `cmd/prism-tui/diff/renderer.go` | `RenderLineDiff()`, `RenderSideBySide()`, `RenderFileHeader()`, `RenderMultiFileDiff()` |
-| `cmd/prism-tui/diff/highlight.go` | `SyntaxHighlighter` using chroma, `HighlightLine()`, `blendSyntaxWithDiff()` |
-| `cmd/prism-tui/diff/parser_test.go` | Tests for ParseUnifiedDiff with edge cases |
-| `cmd/prism-tui/diff/renderer_test.go` | Tests for RenderLineDiff output |
+| `cmd/prism-cli/diff/parser.go` | `ParseUnifiedDiff()`, `ParseMultiFileDiff()`, types (`ParsedDiff`, `Hunk`, `DiffLine`, `LineType`) |
+| `cmd/prism-cli/diff/renderer.go` | `RenderLineDiff()`, `RenderSideBySide()`, `RenderFileHeader()`, `RenderMultiFileDiff()` |
+| `cmd/prism-cli/diff/highlight.go` | `SyntaxHighlighter` using chroma, `HighlightLine()`, `blendSyntaxWithDiff()` |
+| `cmd/prism-cli/diff/parser_test.go` | Tests for ParseUnifiedDiff with edge cases |
+| `cmd/prism-cli/diff/renderer_test.go` | Tests for RenderLineDiff output |
 
 **Steps**:
-1. [x] Create `cmd/prism-tui/diff/` package directory
-2. [x] Port types from `ref/sidecar/internal/plugins/gitstatus/diff_parser.go:9-58` into `cmd/prism-tui/diff/parser.go`:
+1. [x] Create `cmd/prism-cli/diff/` package directory
+2. [x] Port types from `ref/sidecar/internal/plugins/gitstatus/diff_parser.go:9-58` into `cmd/prism-cli/diff/parser.go`:
    - `LineType` (LineContext, LineAdd, LineRemove)
    - `WordSegment{Text, IsChange}`
    - `DiffLine{Type, OldLineNo, NewLineNo, Content, WordDiff}`
@@ -150,8 +150,8 @@ cd cmd/prism-tui && go test ./ui/... ./styles/...
 
 **Verification**:
 ```bash
-cd cmd/prism-tui && go build ./diff/...
-cd cmd/prism-tui && go test ./diff/... -v
+cd cmd/prism-cli && go build ./diff/...
+cd cmd/prism-cli && go test ./diff/... -v
 ```
 
 **Checkpoint**: ✅ Phase 2 complete — diff package builds, parses real `git diff` output, renders correctly
@@ -165,7 +165,7 @@ cd cmd/prism-tui && go test ./diff/... -v
 **Files to modify**:
 | File | Change |
 |------|--------|
-| `cmd/prism-tui/app/plugin_git.go` | Structural refactor: add `FocusPane`, `activePane`, `sidebarWidth`, `diffPaneWidth` state; replace 3-path `View()` with `renderTwoPane()`; add `calculatePaneWidths()`; wire diff package; add scrollbar; add commit history |
+| `cmd/prism-cli/app/plugin_git.go` | Structural refactor: add `FocusPane`, `activePane`, `sidebarWidth`, `diffPaneWidth` state; replace 3-path `View()` with `renderTwoPane()`; add `calculatePaneWidths()`; wire diff package; add scrollbar; add commit history |
 
 **Steps**:
 1. [x] Add state fields to `GitState` struct (`plugin_git.go:23-35`):
@@ -209,8 +209,8 @@ cd cmd/prism-tui && go test ./diff/... -v
 
 **Verification**:
 ```bash
-cd cmd/prism-tui && go build ./...
-cd cmd/prism-tui && go test ./... -v
+cd cmd/prism-cli && go build ./...
+cd cmd/prism-cli && go test ./... -v
 # Manual: run TUI, navigate to Git screen, verify two-pane layout
 ```
 
@@ -225,7 +225,7 @@ cd cmd/prism-tui && go test ./... -v
 **Files to modify**:
 | File | Change |
 |------|--------|
-| `cmd/prism-tui/app/plugin_workspaces.go` | Add two-pane layout, detail preview pane, focus tracking, scrollbar, richer item rendering |
+| `cmd/prism-cli/app/plugin_workspaces.go` | Add two-pane layout, detail preview pane, focus tracking, scrollbar, richer item rendering |
 
 **Steps**:
 1. [x] Add state fields to `WorkspacesState` (`plugin_workspaces.go:28-34`):
@@ -261,8 +261,8 @@ cd cmd/prism-tui && go test ./... -v
 
 **Verification**:
 ```bash
-cd cmd/prism-tui && go build ./...
-cd cmd/prism-tui && go test ./... -v
+cd cmd/prism-cli && go build ./...
+cd cmd/prism-cli && go test ./... -v
 # Manual: run TUI, navigate to Workspaces, verify two-pane with project detail
 ```
 
@@ -277,7 +277,7 @@ cd cmd/prism-tui && go test ./... -v
 **Files to modify**:
 | File | Change |
 |------|--------|
-| `cmd/prism-tui/app/plugin_files.go` | Replace manual line-by-line join with `lipgloss.JoinHorizontal` + `RenderPanel()`; add line numbers, scrollbar, focus tracking, filename search |
+| `cmd/prism-cli/app/plugin_files.go` | Replace manual line-by-line join with `lipgloss.JoinHorizontal` + `RenderPanel()`; add line numbers, scrollbar, focus tracking, filename search |
 
 **Steps**:
 1. [x] Add state fields to `FilesState` (`plugin_files.go:29-38`):
@@ -319,8 +319,8 @@ cd cmd/prism-tui && go test ./... -v
 
 **Verification**:
 ```bash
-cd cmd/prism-tui && go build ./...
-cd cmd/prism-tui && go test ./... -v
+cd cmd/prism-cli && go build ./...
+cd cmd/prism-cli && go test ./... -v
 # Manual: run TUI, navigate to Files, verify bordered 30/70 layout with line numbers
 ```
 
@@ -356,7 +356,7 @@ Each phase is independently useful and each plugin retains its existing interfac
 
 ```bash
 git revert HEAD~N..HEAD  # Revert commits from problematic phase
-cd cmd/prism-tui && make build && make test  # Verify rollback
+cd cmd/prism-cli && make build && make test  # Verify rollback
 ```
 
 Phases can also be deployed independently:

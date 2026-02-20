@@ -124,10 +124,10 @@ func ComputeAtmosphere(bgR, bgG, bgB uint8) {
 
 | File | Changes |
 |------|---------|
-| `cmd/prism-tui/terminal/theme.go` | NEW — ThemeColors detection, accent extraction, known theme lookups |
-| `cmd/prism-tui/styles/theme.go` | Added ApplyTheme(), AtmosphereR/G/B, ComputeAtmosphere() |
-| `cmd/prism-tui/splash/splash.go` | Added AtmoR/G/B fields, modified ambient section, removed lerpColor/atmosphereTint |
-| `cmd/prism-tui/app/model.go` | Wired theme detection → styles → splash, debug env line |
+| `cmd/prism-cli/terminal/theme.go` | NEW — ThemeColors detection, accent extraction, known theme lookups |
+| `cmd/prism-cli/styles/theme.go` | Added ApplyTheme(), AtmosphereR/G/B, ComputeAtmosphere() |
+| `cmd/prism-cli/splash/splash.go` | Added AtmoR/G/B fields, modified ambient section, removed lerpColor/atmosphereTint |
+| `cmd/prism-cli/app/model.go` | Wired theme detection → styles → splash, debug env line |
 
 ## Files NOT Modified (confirmed working, do not touch)
 

@@ -1,4 +1,4 @@
-# Plan: BubbleZone Mouse Event Integration for Prism TUI
+# Plan: BubbleZone Mouse Event Integration for Prism CLI
 
 **Date**: 2026-02-15
 **Status**: Approved
@@ -6,7 +6,7 @@
 
 ## Goal
 
-Add mouse event tracking to prism-tui via BubbleZone (`github.com/lrstanley/bubblezone`), enabling clickable tabs, modal buttons, list items, and scroll wheel support while preserving all existing keyboard navigation.
+Add mouse event tracking to prism-cli via BubbleZone (`github.com/lrstanley/bubblezone`), enabling clickable tabs, modal buttons, list items, and scroll wheel support while preserving all existing keyboard navigation.
 
 ## Scope
 
@@ -49,14 +49,14 @@ Add mouse event tracking to prism-tui via BubbleZone (`github.com/lrstanley/bubb
 #### 1.1 Add dependency
 
 ```bash
-cd cmd/prism-tui && go get github.com/lrstanley/bubblezone
+cd cmd/prism-cli && go get github.com/lrstanley/bubblezone
 ```
 
 #### 1.2 Initialize zone manager in `main.go`
 
 Add import and `zone.NewGlobal()` before both `tea.NewProgram` calls. Add `tea.WithMouseCellMotion()` to both program constructors.
 
-**File**: `cmd/prism-tui/main.go`
+**File**: `cmd/prism-cli/main.go`
 
 Add import:
 ```go
@@ -85,7 +85,7 @@ p := tea.NewProgram(model, tea.WithAltScreen(), tea.WithMouseCellMotion())
 
 #### 1.3 Add `zone.Scan()` to root View
 
-**File**: `cmd/prism-tui/app/view.go`
+**File**: `cmd/prism-cli/app/view.go`
 
 Add import:
 ```go
@@ -105,7 +105,7 @@ return "\x1b(B" + zone.Scan(base)
 
 #### 1.4 Add `tea.MouseMsg` handler in Update
 
-**File**: `cmd/prism-tui/app/update.go`
+**File**: `cmd/prism-cli/app/update.go`
 
 Add import:
 ```go
@@ -184,9 +184,9 @@ func (m Model) handleScrollWheel(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
 
 ### Phase 1 Verification
 
-- [x] `cd cmd/prism-tui && go build ./...` compiles without errors
-- [x] `cd cmd/prism-tui && go test ./...` passes
-- [ ] Run `prism-tui --demo` — UI renders identically to before (no visual changes)
+- [x] `cd cmd/prism-cli && go build ./...` compiles without errors
+- [x] `cd cmd/prism-cli && go test ./...` passes
+- [ ] Run `prism-cli --demo` — UI renders identically to before (no visual changes)
 - [ ] Mouse events arrive (add temporary log or check that clicking doesn't crash)
 
 ---
@@ -199,7 +199,7 @@ func (m Model) handleScrollWheel(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
 
 #### 2.1 Mark tabs with zones in `shell.go`
 
-**File**: `cmd/prism-tui/app/shell.go`
+**File**: `cmd/prism-cli/app/shell.go`
 
 Add import:
 ```go
@@ -227,7 +227,7 @@ if isActive {
 
 #### 2.2 Detect tab clicks in handleMouseEvent
 
-**File**: `cmd/prism-tui/app/update.go`
+**File**: `cmd/prism-cli/app/update.go`
 
 Replace the `// TODO Phase 2: check tab zones` comment with:
 ```go
@@ -243,7 +243,7 @@ for i := range m.TabOrder {
 
 - [x] Build succeeds: `go build ./...`
 - [x] Tests pass: `go test ./...`
-- [ ] Manual: Run `prism-tui --demo`, click tabs — active view switches
+- [ ] Manual: Run `prism-cli --demo`, click tabs — active view switches
 - [ ] Manual: Keyboard tab switching (1-9, Tab, Shift+Tab) still works
 - [ ] Manual: Both bordered and compact tab bars are clickable
 
@@ -257,7 +257,7 @@ for i := range m.TabOrder {
 
 #### 3.1 Add `HandleMouse()` to Modal
 
-**File**: `cmd/prism-tui/modal/modal.go`
+**File**: `cmd/prism-cli/modal/modal.go`
 
 Add import:
 ```go
@@ -287,7 +287,7 @@ func (m *Modal) HandleMouse(msg tea.MouseMsg) (action string, cmd tea.Cmd) {
 
 #### 3.2 Mark buttons with zones in ButtonsSection
 
-**File**: `cmd/prism-tui/modal/section.go`
+**File**: `cmd/prism-cli/modal/section.go`
 
 Add import:
 ```go
@@ -307,7 +307,7 @@ parts = append(parts, zone.Mark("modal-"+btn.ID, styled))
 
 #### 3.3 Mark list items with zones in ListSection
 
-**File**: `cmd/prism-tui/modal/list.go`
+**File**: `cmd/prism-cli/modal/list.go`
 
 Add import:
 ```go
@@ -350,7 +350,7 @@ for _, section := range m.sections {
 
 #### 3.4 Add HandleMouse to Dialog system
 
-**File**: `cmd/prism-tui/dialog/confirm.go`
+**File**: `cmd/prism-cli/dialog/confirm.go`
 
 Add import and method:
 ```go
@@ -374,11 +374,11 @@ func (d *ConfirmDialog) HandleMouse(msg tea.MouseMsg) Action {
 }
 ```
 
-**File**: `cmd/prism-tui/dialog/permissions.go`
+**File**: `cmd/prism-cli/dialog/permissions.go`
 
 Similar pattern — mark Allow/Allow Session/Deny buttons with zones and add HandleMouse.
 
-**File**: `cmd/prism-tui/dialog/dialog.go`
+**File**: `cmd/prism-cli/dialog/dialog.go`
 
 Add HandleMouse to Dialog interface:
 ```go
@@ -402,7 +402,7 @@ func (o *Overlay) HandleMouse(msg tea.MouseMsg) Action {
 
 #### 3.5 Wire modal/dialog mouse routing in Update
 
-**File**: `cmd/prism-tui/app/update.go`
+**File**: `cmd/prism-cli/app/update.go`
 
 Replace `// TODO Phase 3: route to dialog`:
 ```go
@@ -462,7 +462,7 @@ return m, nil
 
 #### 4.1 File browser click-to-select
 
-**File**: `cmd/prism-tui/app/plugin_files.go`
+**File**: `cmd/prism-cli/app/plugin_files.go`
 
 Add import:
 ```go
@@ -490,7 +490,7 @@ case tea.MouseMsg:
 
 #### 4.2 Home menu item clicks
 
-**File**: `cmd/prism-tui/app/plugin_home.go`
+**File**: `cmd/prism-cli/app/plugin_home.go`
 
 Same pattern — mark menu items with `zone.Mark("home:menu-N", ...)`, handle clicks to navigate.
 
@@ -512,7 +512,7 @@ Same pattern — mark menu items with `zone.Mark("home:menu-N", ...)`, handle cl
 
 #### 5.1 Modal scroll wheel
 
-**File**: `cmd/prism-tui/app/update.go`
+**File**: `cmd/prism-cli/app/update.go`
 
 In `handleScrollWheel`, replace `// TODO Phase 5: modal scroll`:
 ```go
@@ -562,9 +562,9 @@ case tea.MouseMsg:
 ## Success Criteria
 
 ### Automated Verification
-- [x] `cd cmd/prism-tui && go build ./...` compiles
-- [x] `cd cmd/prism-tui && go test ./...` passes
-- [x] `cd cmd/prism-tui && go vet ./...` passes
+- [x] `cd cmd/prism-cli && go build ./...` compiles
+- [x] `cd cmd/prism-cli && go test ./...` passes
+- [x] `cd cmd/prism-cli && go vet ./...` passes
 
 ### Manual Verification
 - [ ] Tab bar: clicking any tab switches to that view
