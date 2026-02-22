@@ -7,7 +7,9 @@ BINARY := prism-cli
 # Platforms for cross-compilation
 PLATFORMS := windows/amd64 darwin/amd64 darwin/arm64 linux/amd64 linux/arm64
 
-.PHONY: build build-all test lint clean install help
+REPO_ROOT := $(shell git rev-parse --show-toplevel)
+
+.PHONY: build build-all test test-install test-install-bats test-all lint clean install help
 
 # Default target
 all: build
@@ -35,6 +37,17 @@ build-all:
 test:
 	go test -v ./...
 
+# Run shell installer tests (zero dependencies)
+test-install:
+	bash $(REPO_ROOT)/scripts/tests/test_install.sh
+
+# Run BATS installer tests (requires bats-core)
+test-install-bats:
+	bats $(REPO_ROOT)/scripts/tests/prism-cli-install.bats
+
+# Run all tests (Go + shell)
+test-all: test test-install
+
 # Run linter
 lint:
 	@which golangci-lint > /dev/null || (echo "golangci-lint not installed" && exit 1)
@@ -60,7 +73,10 @@ help:
 	@echo "Usage:"
 	@echo "  make build       Build for current platform"
 	@echo "  make build-all   Build for all platforms"
-	@echo "  make test        Run tests"
+	@echo "  make test             Run Go tests"
+	@echo "  make test-install     Run shell installer tests"
+	@echo "  make test-install-bats Run BATS installer tests (requires bats-core)"
+	@echo "  make test-all         Run all tests (Go + shell)"
 	@echo "  make lint        Run linter"
 	@echo "  make clean       Remove build artifacts"
 	@echo "  make install     Install to GOPATH/bin"
