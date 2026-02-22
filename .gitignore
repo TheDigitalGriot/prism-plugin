@@ -1,13 +1,5 @@
 # Reference files
-# ref/
-ref/archive/
-ref/backup-skills/
-ref/docs/
-ref/framebuffer/
-ref/newskills/
-ref/prism-anim/
-ref/ralph/
-ref/update-tui/
+.prism/shared/ref/
 
 # Build artifacts
 bin/
