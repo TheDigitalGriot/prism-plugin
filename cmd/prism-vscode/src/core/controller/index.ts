@@ -58,13 +58,17 @@ export class PrismController implements vscode.Disposable {
   readonly onDidChangeState: vscode.Event<void> = this._onDidChangeState.event
 
   // Phase 4: Office integration events
-  private readonly _onDidStartSession = new vscode.EventEmitter<{ sessionId: string; storyId?: string; storyTitle?: string }>()
+  private readonly _onDidStartSession = new vscode.EventEmitter<{ sessionId: string; storyId?: string; storyTitle?: string; isSpectrum?: boolean }>()
   /** Fires when a Prism-managed Claude session starts (chat, skill, or spectrum story). */
-  readonly onDidStartSession: vscode.Event<{ sessionId: string; storyId?: string; storyTitle?: string }> = this._onDidStartSession.event
+  readonly onDidStartSession: vscode.Event<{ sessionId: string; storyId?: string; storyTitle?: string; isSpectrum?: boolean }> = this._onDidStartSession.event
 
   private readonly _onDidUpdateStory = new vscode.EventEmitter<{ storyId: string; storyTitle: string }>()
   /** Fires when the active Spectrum story changes (story_started event). */
   readonly onDidUpdateStory: vscode.Event<{ storyId: string; storyTitle: string }> = this._onDidUpdateStory.event
+
+  private readonly _onDidEndSpectrumStory = new vscode.EventEmitter<{ sessionId: string }>()
+  /** Fires when a Spectrum story finishes (complete, blocked, retry, or error). */
+  readonly onDidEndSpectrumStory: vscode.Event<{ sessionId: string }> = this._onDidEndSpectrumStory.event
 
   // Chat / Task management (CLI-based)
   private _chatRunner: ClaudeRunner | null = null
@@ -100,6 +104,7 @@ export class PrismController implements vscode.Disposable {
     this._onDidChangeState.dispose()
     this._onDidStartSession.dispose()
     this._onDidUpdateStory.dispose()
+    this._onDidEndSpectrumStory.dispose()
     if (this._modeBridge) {
       this._modeBridge.terminate()
     }
@@ -704,10 +709,10 @@ export class PrismController implements vscode.Disposable {
             this.storiesManager.completedCount(),
             this.storiesManager.completedCount() + this.storiesManager.remainingCount(),
           )
-          // Register story context in agent bridge for active spectrum sessions
-          for (const [agentId] of this.agentBridge.getAllContexts()) {
-            this.agentBridge.updateStoryContext(agentId, event.storyId, event.storyTitle)
-          }
+          // Register session in agent bridge for Office integration
+          this.agentBridge.registerSession(event.sessionId, { storyId: event.storyId, storyTitle: event.storyTitle })
+          // Notify OfficeViewProvider to create a headless agent for this Spectrum story
+          this._onDidStartSession.fire({ sessionId: event.sessionId, storyId: event.storyId, storyTitle: event.storyTitle, isSpectrum: true })
           // Notify OfficeViewProvider so it can send agentStoryContext to webview
           this._onDidUpdateStory.fire({ storyId: event.storyId, storyTitle: event.storyTitle })
           break
@@ -719,10 +724,14 @@ export class PrismController implements vscode.Disposable {
             this.storiesManager.completedCount(),
             this.storiesManager.completedCount() + this.storiesManager.remainingCount(),
           )
+          // Notify OfficeViewProvider to remove the headless agent for this story
+          this._onDidEndSpectrumStory.fire({ sessionId: event.sessionId })
           break
         case "story_error":
           this._spectrumEngine.recordSignal("error", event.error)
           this._spectrumEngine.setCurrentStory(null, 0, 0)
+          // Notify OfficeViewProvider to remove the headless agent for this story
+          this._onDidEndSpectrumStory.fire({ sessionId: event.sessionId })
           break
         case "tool_activity":
           this._spectrumEngine.addActivity(event.activity.toolName, event.activity.description)

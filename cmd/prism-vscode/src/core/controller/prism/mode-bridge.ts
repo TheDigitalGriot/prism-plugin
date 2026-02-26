@@ -212,7 +212,7 @@ export class ModeBridge {
     this._pushUpdate()
 
     try {
-      await this._pluginBridge.executeSpectrum(storiesPath)
+      await this._pluginBridge.executeSpectrum(storiesPath, crypto.randomUUID())
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : String(err)
       this._addPluginMessage({

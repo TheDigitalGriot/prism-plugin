@@ -137,6 +137,8 @@ export function persistAgents(
 ): void {
 	const persisted: PersistedAgent[] = [];
 	for (const agent of agents.values()) {
+		// Skip headless Spectrum agents — they're transient and have no terminal to restore
+		if (!agent.terminalRef) continue;
 		persisted.push({
 			id: agent.id,
 			terminalName: agent.terminalRef.name,
@@ -145,6 +147,66 @@ export function persistAgents(
 		});
 	}
 	void context.workspaceState.update(WORKSPACE_KEY_AGENTS, persisted);
+}
+
+/**
+ * Create a headless agent for a Spectrum story (no VS Code terminal).
+ * Registers the expected JSONL path and polls until Claude writes the file.
+ * Returns the new agent ID.
+ */
+export function createHeadlessAgent(
+	sessionId: string,
+	projectDir: string,
+	nextAgentIdRef: { current: number },
+	agents: Map<number, AgentState>,
+	knownJsonlFiles: Set<string>,
+	jsonlPollTimers: Map<number, ReturnType<typeof setInterval>>,
+	fileWatchers: Map<number, fs.FSWatcher>,
+	pollingTimers: Map<number, ReturnType<typeof setInterval>>,
+	waitingTimers: Map<number, ReturnType<typeof setTimeout>>,
+	permissionTimers: Map<number, ReturnType<typeof setTimeout>>,
+	webview: vscode.Webview | undefined,
+): number {
+	const expectedFile = path.join(projectDir, `${sessionId}.jsonl`);
+	knownJsonlFiles.add(expectedFile);
+
+	const id = nextAgentIdRef.current++;
+	const agent: AgentState = {
+		id,
+		terminalRef: null,
+		projectDir,
+		jsonlFile: expectedFile,
+		fileOffset: 0,
+		lineBuffer: '',
+		activeToolIds: new Set(),
+		activeToolStatuses: new Map(),
+		activeToolNames: new Map(),
+		activeSubagentToolIds: new Map(),
+		activeSubagentToolNames: new Map(),
+		isWaiting: false,
+		permissionSent: false,
+		hadToolsInTurn: false,
+	};
+
+	agents.set(id, agent);
+	webview?.postMessage({ type: 'agentCreated', id });
+	console.log(`[Prism Office] Headless agent ${id}: created for Spectrum session ${sessionId}`);
+
+	// Poll until Claude creates the JSONL transcript file
+	const pollTimer = setInterval(() => {
+		try {
+			if (fs.existsSync(agent.jsonlFile)) {
+				console.log(`[Prism Office] Headless agent ${id}: found JSONL file ${path.basename(agent.jsonlFile)}`);
+				clearInterval(pollTimer);
+				jsonlPollTimers.delete(id);
+				startFileWatching(id, agent.jsonlFile, agents, fileWatchers, pollingTimers, waitingTimers, permissionTimers, webview);
+				readNewLines(id, agents, waitingTimers, permissionTimers, webview);
+			}
+		} catch { /* file may not exist yet */ }
+	}, JSONL_POLL_INTERVAL_MS);
+	jsonlPollTimers.set(id, pollTimer);
+
+	return id;
 }
 
 export function restoreAgents(

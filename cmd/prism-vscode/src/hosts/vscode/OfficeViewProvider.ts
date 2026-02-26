@@ -11,6 +11,7 @@ import {
 	sendExistingAgents,
 	sendLayout,
 	getProjectDirPath,
+	createHeadlessAgent,
 } from '../../office/agentManager';
 import { ensureProjectScan } from '../../office/fileWatcher';
 import {
@@ -60,15 +61,48 @@ export class OfficeViewProvider implements vscode.WebviewViewProvider {
 	// Controller event subscriptions (disposed with the provider)
 	private readonly _subscriptions: vscode.Disposable[] = [];
 
+	// Maps Spectrum sessionId → office agent ID (for headless agent lifecycle)
+	private readonly _spectrumAgentMap = new Map<string, number>();
+
 	constructor(
 		private readonly _context: vscode.ExtensionContext,
 		private readonly _controller?: PrismController,
 	) {
 		if (_controller) {
-			// When a Prism session starts, ensure it's registered in the agent bridge
+			// When a Prism session starts, register in agent bridge.
+			// For Spectrum stories (isSpectrum=true), also create a headless office agent.
 			this._subscriptions.push(
-				_controller.onDidStartSession(({ sessionId, storyId, storyTitle }) => {
+				_controller.onDidStartSession(({ sessionId, storyId, storyTitle, isSpectrum }) => {
 					_controller.agentBridge.registerSession(sessionId, { storyId, storyTitle });
+					if (isSpectrum) {
+						const projectDir = getProjectDirPath();
+						if (projectDir) {
+							const agentId = createHeadlessAgent(
+								sessionId, projectDir,
+								this.nextAgentId, this.agents, this.knownJsonlFiles,
+								this.jsonlPollTimers, this.fileWatchers, this.pollingTimers,
+								this.waitingTimers, this.permissionTimers, this._webview,
+							);
+							this._spectrumAgentMap.set(sessionId, agentId);
+							this._persistAgents();
+						}
+					}
+				}),
+			);
+
+			// When a Spectrum story ends, remove its headless agent from the office.
+			this._subscriptions.push(
+				_controller.onDidEndSpectrumStory(({ sessionId }) => {
+					const agentId = this._spectrumAgentMap.get(sessionId);
+					if (agentId !== undefined) {
+						removeAgent(
+							agentId, this.agents,
+							this.fileWatchers, this.pollingTimers, this.waitingTimers,
+							this.permissionTimers, this.jsonlPollTimers, this._persistAgents,
+						);
+						this._spectrumAgentMap.delete(sessionId);
+						this._webview?.postMessage({ type: 'agentClosed', id: agentId });
+					}
 				}),
 			);
 
@@ -187,13 +221,22 @@ export class OfficeViewProvider implements vscode.WebviewViewProvider {
 			);
 		} else if (message.type === 'focusAgent') {
 			const agent = this.agents.get(message.id as number);
-			if (agent) {
+			if (agent?.terminalRef) {
 				agent.terminalRef.show();
 			}
 		} else if (message.type === 'closeAgent') {
 			const agent = this.agents.get(message.id as number);
-			if (agent) {
+			if (agent?.terminalRef) {
 				agent.terminalRef.dispose();
+				// Terminal close handler will call removeAgent + postMessage agentClosed
+			} else if (agent) {
+				// Headless agent (no terminal) — remove directly
+				removeAgent(
+					agent.id, this.agents,
+					this.fileWatchers, this.pollingTimers, this.waitingTimers,
+					this.permissionTimers, this.jsonlPollTimers, this._persistAgents,
+				);
+				this._webview?.postMessage({ type: 'agentClosed', id: agent.id });
 			}
 		} else if (message.type === 'saveAgentSeats') {
 			console.log(`[Prism Office] saveAgentSeats:`, JSON.stringify(message.seats));

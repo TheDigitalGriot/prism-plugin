@@ -67,7 +67,9 @@ export async function loadFurnitureAssets(
 
     console.log('📦 Loading furniture assets from:', catalogPath);
 
-    const catalogContent = fs.readFileSync(catalogPath, 'utf-8');
+    let catalogContent = fs.readFileSync(catalogPath, 'utf-8');
+    // Strip UTF-8 BOM if present (some editors add it)
+    if (catalogContent.charCodeAt(0) === 0xFEFF) catalogContent = catalogContent.slice(1);
     const catalogData = JSON.parse(catalogContent) as { assets?: FurnitureAsset[] };
     const catalog: FurnitureAsset[] = catalogData.assets || [];
 

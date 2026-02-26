@@ -23,11 +23,11 @@ import { ToolActivity } from "../../../claude/events"
 // ---------------------------------------------------------------------------
 
 export type SpectrumRunnerEventType =
-  | { type: "story_started"; storyId: string; storyTitle: string }
-  | { type: "story_complete"; storyId: string }
-  | { type: "story_blocked"; storyId: string; reason: string }
-  | { type: "story_retry"; storyId: string; reason: string }
-  | { type: "story_error"; storyId: string; error: string }
+  | { type: "story_started"; storyId: string; storyTitle: string; sessionId: string }
+  | { type: "story_complete"; storyId: string; sessionId: string }
+  | { type: "story_blocked"; storyId: string; reason: string; sessionId: string }
+  | { type: "story_retry"; storyId: string; reason: string; sessionId: string }
+  | { type: "story_error"; storyId: string; error: string; sessionId: string }
   | { type: "all_complete" }
   | { type: "no_next_story" }
   | { type: "tool_activity"; activity: ToolActivity }
@@ -108,10 +108,11 @@ export class SpectrumRunner extends EventEmitter {
     }
 
     // -----------------------------------------------------------------------
-    // 2. Mark in-progress
+    // 2. Mark in-progress and generate a session ID for JSONL tracking
     // -----------------------------------------------------------------------
     await this._storiesManager.markInProgress(story.id)
-    this._emit({ type: "story_started", storyId: story.id, storyTitle: story.title })
+    const sessionId = crypto.randomUUID()
+    this._emit({ type: "story_started", storyId: story.id, storyTitle: story.title, sessionId })
     this._emit({
       type: "log",
       level: "info",
@@ -119,9 +120,9 @@ export class SpectrumRunner extends EventEmitter {
     })
 
     // -----------------------------------------------------------------------
-    // 3. Execute via Claude CLI
+    // 3. Execute via Claude CLI (passes --session-id so Claude writes JSONL)
     // -----------------------------------------------------------------------
-    const result = await this._bridge.executeSpectrum(storiesPath)
+    const result = await this._bridge.executeSpectrum(storiesPath, sessionId)
     const signal = parseSignal(result.output)
 
     this._emit({
@@ -136,7 +137,7 @@ export class SpectrumRunner extends EventEmitter {
     switch (signal.type) {
       case "complete": {
         await this._storiesManager.markComplete(story.id, "")
-        this._emit({ type: "story_complete", storyId: story.id })
+        this._emit({ type: "story_complete", storyId: story.id, sessionId })
 
         // Append to progress.md
         if (this._progressFile) {
@@ -168,6 +169,7 @@ export class SpectrumRunner extends EventEmitter {
           type: "story_blocked",
           storyId: story.id,
           reason: signal.content,
+          sessionId,
         })
         break
       }
@@ -179,6 +181,7 @@ export class SpectrumRunner extends EventEmitter {
           type: "story_retry",
           storyId: story.id,
           reason: signal.content,
+          sessionId,
         })
         break
       }
@@ -188,6 +191,7 @@ export class SpectrumRunner extends EventEmitter {
           type: "story_error",
           storyId: story.id,
           error: signal.content || result.error || "Unknown error",
+          sessionId,
         })
         // Keep story as in_progress — controller decides whether to stop
         break
@@ -196,7 +200,7 @@ export class SpectrumRunner extends EventEmitter {
       default: {
         // "continue" or "none" — treat as a successful iteration
         await this._storiesManager.markComplete(story.id, "")
-        this._emit({ type: "story_complete", storyId: story.id })
+        this._emit({ type: "story_complete", storyId: story.id, sessionId })
         break
       }
     }

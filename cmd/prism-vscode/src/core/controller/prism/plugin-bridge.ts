@@ -201,8 +201,9 @@ export class PluginBridge extends EventEmitter {
    * Execute a Spectrum iteration — spawns Claude for the next story.
    *
    * @param storiesPath  Path to stories.json
+   * @param sessionId    UUID passed as --session-id so Claude writes a JSONL transcript
    */
-  async executeSpectrum(storiesPath: string): Promise<RunSessionResult> {
+  async executeSpectrum(storiesPath: string, sessionId: string): Promise<RunSessionResult> {
     if (this._runner?.isRunning) {
       throw new Error(`PluginBridge: skill '${this._activeSkill}' is already running`)
     }
@@ -220,6 +221,7 @@ export class PluginBridge extends EventEmitter {
     const options: RunnerOptions = {
       projectDir: this._projectDir,
       storiesPath,
+      sessionId,
     }
 
     try {

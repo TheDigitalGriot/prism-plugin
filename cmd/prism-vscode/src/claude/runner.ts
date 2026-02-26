@@ -38,6 +38,8 @@ export interface RunnerOptions {
   timeoutMs?: number
   /** Extra CLI arguments to pass to `claude`. */
   extraArgs?: string[]
+  /** Session ID to pass as --session-id. Causes Claude to write a JSONL transcript. */
+  sessionId?: string
 }
 
 export interface RunSessionResult {
@@ -276,6 +278,10 @@ export class ClaudeRunner extends EventEmitter {
       "--dangerously-skip-permissions",
       "--print",
     ]
+
+    if (options.sessionId) {
+      args.push("--session-id", options.sessionId)
+    }
 
     if (streaming) {
       args.push("--output-format", "stream-json")
