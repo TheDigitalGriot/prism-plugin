@@ -1,0 +1,98 @@
+/**
+ * VS Code theme integration.
+ *
+ * Maps VS Code CSS variables (--vscode-*) to Prism semantic tokens,
+ * consumed by Tailwind v4 @theme declarations in index.css.
+ *
+ * This file provides fallback values for development mode (outside VS Code).
+ */
+
+:root {
+  /* -------------------------------------------------------------------------
+   * Typography — follows VS Code editor font settings
+   * ----------------------------------------------------------------------- */
+  --prism-font-family: var(--vscode-font-family, system-ui, -apple-system, sans-serif);
+  --prism-font-mono: var(
+    --vscode-editor-font-family,
+    ui-monospace,
+    "Cascadia Code",
+    "Fira Code",
+    monospace
+  );
+  --prism-font-size: var(--vscode-font-size, 13px);
+
+  /* -------------------------------------------------------------------------
+   * Backgrounds
+   * ----------------------------------------------------------------------- */
+  --prism-bg: var(--vscode-sideBar-background, #1e1e1e);
+  --prism-bg-panel: var(--vscode-panel-background, #252526);
+  --prism-bg-editor: var(--vscode-editor-background, #1e1e1e);
+  --prism-bg-hover: var(--vscode-list-hoverBackground, rgb(255 255 255 / 0.05));
+  --prism-bg-active: var(--vscode-list-activeSelectionBackground, rgb(255 255 255 / 0.1));
+  --prism-bg-input: var(--vscode-input-background, #3c3c3c);
+  --prism-bg-dropdown: var(--vscode-dropdown-background, #3c3c3c);
+  --prism-bg-button: var(--vscode-button-background, #0e639c);
+  --prism-bg-button-hover: var(--vscode-button-hoverBackground, #1177bb);
+  --prism-bg-button-secondary: var(--vscode-button-secondaryBackground, #3a3d41);
+
+  /* -------------------------------------------------------------------------
+   * Foregrounds / Text
+   * ----------------------------------------------------------------------- */
+  --prism-fg: var(--vscode-foreground, #cccccc);
+  --prism-fg-muted: var(--vscode-descriptionForeground, #9d9d9d);
+  --prism-fg-disabled: var(--vscode-disabledForeground, #6e6e6e);
+  --prism-fg-active: var(--vscode-list-activeSelectionForeground, #ffffff);
+  --prism-fg-button: var(--vscode-button-foreground, #ffffff);
+  --prism-fg-editor: var(--vscode-editor-foreground, #d4d4d4);
+  --prism-fg-link: var(--vscode-textLink-foreground, #4daafc);
+  --prism-fg-link-hover: var(--vscode-textLink-activeForeground, #4daafc);
+
+  /* -------------------------------------------------------------------------
+   * Borders
+   * ----------------------------------------------------------------------- */
+  --prism-border: var(--vscode-panel-border, #454545);
+  --prism-border-focus: var(--vscode-focusBorder, #007fd4);
+  --prism-border-input: var(--vscode-input-border, transparent);
+
+  /* -------------------------------------------------------------------------
+   * Status colors (map to VS Code status semantics)
+   * ----------------------------------------------------------------------- */
+  --prism-success: var(--vscode-testing-iconPassed, #4ec9b0);
+  --prism-warning: var(--vscode-list-warningForeground, #cca700);
+  --prism-error: var(--vscode-list-errorForeground, #f14c4c);
+  --prism-info: var(--vscode-notificationsInfoIcon-foreground, #75beff);
+
+  /* -------------------------------------------------------------------------
+   * Scrollbar
+   * ----------------------------------------------------------------------- */
+  --prism-scrollbar: var(--vscode-scrollbarSlider-background, rgba(121, 121, 121, 0.4));
+  --prism-scrollbar-hover: var(
+    --vscode-scrollbarSlider-hoverBackground,
+    rgba(100, 100, 100, 0.7)
+  );
+
+  /* -------------------------------------------------------------------------
+   * Radius / Spacing
+   * ----------------------------------------------------------------------- */
+  --prism-radius: 4px;
+  --prism-radius-md: 6px;
+  --prism-radius-lg: 8px;
+}
+
+/* -----------------------------------------------------------------------
+ * Scrollbar styling
+ * --------------------------------------------------------------------- */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--prism-scrollbar);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--prism-scrollbar-hover);
+}

@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/providers.tsx","./src/main.tsx","./src/vscode.ts","./src/context/prismstatecontext.tsx","./src/lib/utils.ts","./src/services/grpc-client-base.ts","./src/services/grpc-client.ts"],"version":"5.9.3"}

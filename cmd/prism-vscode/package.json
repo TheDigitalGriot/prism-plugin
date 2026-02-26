@@ -1,0 +1,176 @@
+{
+  "name": "prism",
+  "displayName": "Prism",
+  "description": "Prism 4-phase development workflow: Research → Plan → Implement → Validate",
+  "version": "2.1.8",
+  "publisher": "prism",
+  "private": true,
+  "engines": {
+    "vscode": "^1.84.0"
+  },
+  "categories": [
+    "AI",
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "ai",
+    "claude",
+    "workflow",
+    "spectrum",
+    "prism"
+  ],
+  "activationEvents": [
+    "onView:prism.sidebar",
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "icon": "media/prism-icon.png",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "prism",
+          "title": "Prism",
+          "icon": "media/prism-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "prism": [
+        {
+          "type": "webview",
+          "id": "prism.sidebar",
+          "name": "Prism"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "prism.openSidebar",
+        "title": "Open Prism Sidebar",
+        "category": "Prism"
+      },
+      {
+        "command": "prism.research",
+        "title": "Start Research Phase",
+        "category": "Prism"
+      },
+      {
+        "command": "prism.plan",
+        "title": "Start Plan Phase",
+        "category": "Prism"
+      },
+      {
+        "command": "prism.implement",
+        "title": "Start Implement Phase",
+        "category": "Prism"
+      },
+      {
+        "command": "prism.validate",
+        "title": "Start Validate Phase",
+        "category": "Prism"
+      },
+      {
+        "command": "prism.spectrum",
+        "title": "Start Spectrum Execution",
+        "category": "Prism"
+      },
+      {
+        "command": "prism.initPrism",
+        "title": "Initialize .prism/ Directory",
+        "category": "Prism"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "prism.research",
+        "key": "ctrl+shift+r",
+        "mac": "cmd+shift+r",
+        "when": "prism.hasPrismDir"
+      },
+      {
+        "command": "prism.implement",
+        "key": "ctrl+shift+i",
+        "mac": "cmd+shift+i",
+        "when": "prism.hasPrismDir"
+      },
+      {
+        "command": "prism.validate",
+        "key": "ctrl+shift+v",
+        "mac": "cmd+shift+v",
+        "when": "prism.hasPrismDir"
+      },
+      {
+        "command": "prism.spectrum",
+        "key": "ctrl+shift+s",
+        "mac": "cmd+shift+s",
+        "when": "prism.hasStoriesJson"
+      }
+    ],
+    "configuration": {
+      "title": "Prism",
+      "properties": {
+        "prism.defaultModel": {
+          "type": "string",
+          "enum": ["opus", "sonnet"],
+          "default": "sonnet",
+          "description": "Default Claude model for implementation"
+        },
+        "prism.planningModel": {
+          "type": "string",
+          "enum": ["opus", "sonnet"],
+          "default": "opus",
+          "description": "Claude model for research and planning"
+        },
+        "prism.spectrum.maxIterations": {
+          "type": "number",
+          "default": 50,
+          "description": "Maximum Spectrum iterations before stopping"
+        },
+        "prism.spectrum.pauseSeconds": {
+          "type": "number",
+          "default": 2,
+          "description": "Pause between Spectrum iterations (seconds)"
+        },
+        "prism.autoApprove.readFile": {
+          "type": "boolean",
+          "default": true,
+          "description": "Auto-approve file read operations"
+        },
+        "prism.autoApprove.listFiles": {
+          "type": "boolean",
+          "default": true,
+          "description": "Auto-approve file listing operations"
+        },
+        "prism.autoApprove.searchFiles": {
+          "type": "boolean",
+          "default": true,
+          "description": "Auto-approve file search operations"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "npm run check-types && node esbuild.mjs",
+    "watch": "npm-run-all -p watch:esbuild watch:webview",
+    "watch:esbuild": "node esbuild.mjs --watch",
+    "watch:webview": "cd webview-ui && npm run dev",
+    "build:webview": "cd webview-ui && npm run build",
+    "package": "npm run check-types && npm run build:webview && node esbuild.mjs --production",
+    "check-types": "tsc --noEmit",
+    "lint": "eslint src --ext ts",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.84.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.3.0",
+    "esbuild": "^0.25.0",
+    "npm-run-all": "^4.1.5",
+    "typescript": "^5.4.5"
+  },
+  "dependencies": {}
+}

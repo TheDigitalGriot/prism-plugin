@@ -1,0 +1,9 @@
+node_modules/
+dist/
+out/
+*.vsix
+webview-ui/node_modules/
+webview-ui/build/
+webview-ui/.vite-port
+.vscode-test/
+*.js.map

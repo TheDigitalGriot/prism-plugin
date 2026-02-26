@@ -44,15 +44,15 @@ Build a full-featured VS Code extension at `cmd/prism-vscode/` that delivers the
 
 ### Phase 1.1: Project Scaffold
 
-- [ ] Initialize `cmd/prism-vscode/` with `yo code` (TypeScript extension)
-- [ ] Set up `package.json` with extension manifest:
+- [x] Initialize `cmd/prism-vscode/` with `yo code` (TypeScript extension)
+- [x] Set up `package.json` with extension manifest:
   - `activationEvents`: `["onView:prism-sidebar", "onStartupFinished"]`
   - `viewsContainers.activitybar`: Prism icon entry
   - `views.prism-sidebar`: Main sidebar view
   - `commands`: `prism.openSidebar`, `prism.research`, `prism.plan`, `prism.implement`, `prism.validate`, `prism.spectrum`
-- [ ] Set up TypeScript config (`tsconfig.json`) targeting ES2022, Node module resolution
-- [ ] Set up esbuild config (`esbuild.mjs`) for extension bundling (adapt from Cline)
-- [ ] Set up `.vscodeignore` to exclude source files from VSIX package
+- [x] Set up TypeScript config (`tsconfig.json`) targeting ES2022, Node module resolution
+- [x] Set up esbuild config (`esbuild.mjs`) for extension bundling (adapt from Cline)
+- [x] Set up `.vscodeignore` to exclude source files from VSIX package
 
 **Files to create**:
 ```
@@ -66,11 +66,11 @@ cmd/prism-vscode/
 
 ### Phase 1.2: Extension Host Entry Point
 
-- [ ] Create `src/extension.ts` with `activate()` / `deactivate()` lifecycle
-- [ ] Register `PrismSidebarProvider` as a `WebviewViewProvider`
-- [ ] Register initial commands (placeholders)
-- [ ] Detect `.prism/` directory in workspace
-- [ ] Set extension context for conditional UI (`prism.hasPrismDir`, `prism.hasStoriesJson`)
+- [x] Create `src/extension.ts` with `activate()` / `deactivate()` lifecycle
+- [x] Register `PrismSidebarProvider` as a `WebviewViewProvider`
+- [x] Register initial commands (placeholders)
+- [x] Detect `.prism/` directory in workspace
+- [x] Set extension context for conditional UI (`prism.hasPrismDir`, `prism.hasStoriesJson`)
 
 **Files to create**:
 ```
@@ -83,12 +83,12 @@ src/
 
 ### Phase 1.3: Webview UI Scaffold
 
-- [ ] Initialize `webview-ui/` with React 18, Vite, TypeScript
-- [ ] Install and configure: `tailwindcss`, `@tailwindcss/vite`, `shadcn/ui` components
-- [ ] Create `theme.css` with VS Code CSS variable mappings (from Cline) + Prism spectral colors
-- [ ] Create `App.tsx` with basic view routing
-- [ ] Create `PrismProviders.tsx` with `PrismStateContextProvider`
-- [ ] Verify hot-reload works in development via Vite dev server
+- [x] Initialize `webview-ui/` with React 18, Vite, TypeScript
+- [x] Install and configure: `tailwindcss`, `@tailwindcss/vite`, `shadcn/ui` components
+- [x] Create `theme.css` with VS Code CSS variable mappings (from Cline) + Prism spectral colors
+- [x] Create `App.tsx` with basic view routing
+- [x] Create `PrismProviders.tsx` with `PrismStateContextProvider`
+- [x] Verify hot-reload works in development via Vite dev server
 
 **Files to create**:
 ```
@@ -114,16 +114,16 @@ webview-ui/
 
 ### Phase 1.4: IPC Bridge
 
-- [ ] Define Prism proto/message types in `src/shared/`:
+- [x] Define Prism proto/message types in `src/shared/`:
   - `PrismMessage.ts` — `grpc_request` / `grpc_response` types
   - `PrismState.ts` — `PrismExtensionState` interface (workflow phase, stories, chat messages, config)
-- [ ] Create `src/core/controller/grpc-handler.ts` — request dispatcher (adapted from Cline)
-- [ ] Create `webview-ui/src/services/grpc-client-base.ts` — `ProtoBusClient` (adapted from Cline)
-- [ ] Create initial service definitions:
-  - `StateService` — `subscribeToState`, `setState`
-  - `UiService` — `initializeWebview`, `subscribeToPartialMessage`
-- [ ] Wire up: webview `postMessage` → extension host handler → state broadcast → webview subscription
-- [ ] Verify round-trip: webview sends init → host responds with state → webview renders state
+- [x] Create `src/core/controller/grpc-handler.ts` — request dispatcher (adapted from Cline)
+- [x] Create `webview-ui/src/services/grpc-client-base.ts` — `ProtoBusClient` (adapted from Cline)
+- [x] Create initial service definitions:
+  - `StateService` — `subscribeToState`, `getState`
+  - `UiService` — `initializeWebview`
+- [x] Wire up: webview `postMessage` → extension host handler → state broadcast → webview subscription
+- [x] Verify round-trip: webview sends init → host responds with state → webview renders state
 
 **Files to create**:
 ```
@@ -152,8 +152,8 @@ webview-ui/src/
 ### Phase 1 Verification
 
 **Automated**:
-- [ ] `npm run compile` — extension builds without errors
-- [ ] `npm run build:webview` — webview builds without errors
+- [x] `npm run compile` — extension builds without errors
+- [x] `npm run build:webview` — webview builds without errors
 - [ ] Extension activates in Extension Development Host
 
 **Manual**:
