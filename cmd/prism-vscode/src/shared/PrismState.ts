@@ -61,6 +61,14 @@ export interface PrismExtensionState {
   spectrum: SpectrumState
 
   // -------------------------------------------------------------------------
+  // Office (Phase 7: pixel-art office visualization)
+  // -------------------------------------------------------------------------
+  office: {
+    enabled: boolean;
+    agentCount: number;
+  }
+
+  // -------------------------------------------------------------------------
   // Config
   // -------------------------------------------------------------------------
   defaultModel: string
@@ -101,6 +109,7 @@ export const DEFAULT_PRISM_STATE: PrismExtensionState = {
     recentActivities: [],
     logs: [],
   },
+  office: { enabled: false, agentCount: 0 },
   defaultModel: "sonnet",
   planningModel: "opus",
 }

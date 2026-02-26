@@ -1,11 +1,13 @@
 import * as vscode from "vscode"
 import { VscodeWebviewProvider } from "./hosts/vscode/VscodeWebviewProvider"
+import { OfficeViewProvider } from "./hosts/vscode/OfficeViewProvider"
 import { ResearchTreeDataProvider } from "./providers/research-tree"
 import { PlansTreeDataProvider } from "./providers/plans-tree"
 import { StoriesTreeDataProvider } from "./providers/stories-tree"
 import { WorkflowStatusBar } from "./providers/workflow-status"
 
 let _provider: VscodeWebviewProvider | undefined
+let _officeProvider: OfficeViewProvider | undefined
 
 /**
  * Extension activation.
@@ -70,6 +72,22 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       {
         webviewOptions: {
           // Keep webview alive when hidden (preserves React state, active subscriptions)
+          retainContextWhenHidden: true,
+        },
+      },
+    ),
+  )
+
+  // ---------------------------------------------------------------------------
+  // Office view provider
+  // ---------------------------------------------------------------------------
+  _officeProvider = new OfficeViewProvider(context)
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider(
+      OfficeViewProvider.VIEW_ID,
+      _officeProvider,
+      {
+        webviewOptions: {
           retainContextWhenHidden: true,
         },
       },
@@ -149,6 +167,23 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     vscode.commands.registerCommand("prism.describePR", async () => {
       await _provider?.sendCommandToWebview("runSkill", { skill: "/describe_pr" })
       await vscode.commands.executeCommand("prism.sidebar.focus")
+    }),
+  )
+
+  // ---------------------------------------------------------------------------
+  // Commands — Office
+  // ---------------------------------------------------------------------------
+  context.subscriptions.push(
+    vscode.commands.registerCommand("prism.office.show", async () => {
+      await vscode.commands.executeCommand("prism.officeView.focus")
+    }),
+
+    vscode.commands.registerCommand("prism.office.launchAgent", () => {
+      _officeProvider?.launchNewTerminal()
+    }),
+
+    vscode.commands.registerCommand("prism.office.exportLayout", () => {
+      _officeProvider?.exportDefaultLayout()
     }),
   )
 
@@ -262,4 +297,5 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 export async function deactivate(): Promise<void> {
   console.log("[Prism] Extension deactivated")
   _provider = undefined
+  _officeProvider = undefined
 }
