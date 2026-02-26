@@ -2,6 +2,10 @@ import * as vscode from "vscode"
 import { PrismExtensionState, DEFAULT_PRISM_STATE } from "../../shared/PrismState"
 import { WorkflowPhase } from "../../shared/types"
 import { registerUnary, registerStream, StreamResponseFn } from "./grpc-handler"
+import { WorkflowStateMachine, WorkflowTransition } from "./prism/workflow"
+import { StoriesManager } from "./prism/stories"
+import { PrismWatcher } from "../../prism/watcher"
+import { detectPrismDir, detectStoriesPath } from "../../prism/config"
 
 export type PostMessageFn = (message: unknown) => Promise<void>
 
@@ -9,16 +13,30 @@ export type PostMessageFn = (message: unknown) => Promise<void>
  * PrismController — central orchestrator for the extension.
  *
  * Manages application state and broadcasts it to all webview subscribers.
- * Registers gRPC service handlers on construction.
+ * Integrates the workflow state machine, stories manager, and .prism/ watcher.
  */
-export class PrismController {
+export class PrismController implements vscode.Disposable {
   private _state: PrismExtensionState
   private _stateSubscribers = new Map<string, StreamResponseFn>()
   private _postMessage: PostMessageFn | null = null
 
+  // Prism Core Services
+  readonly workflow = new WorkflowStateMachine()
+  readonly storiesManager = new StoriesManager()
+  private readonly _watcher = new PrismWatcher()
+  private readonly _watcherSub: vscode.Disposable
+
   constructor() {
     this._state = { ...DEFAULT_PRISM_STATE }
+    this._watcherSub = this._watcher.onDidChange((event) => {
+      void this._onPrismFileChange(event.type)
+    })
     this._registerHandlers()
+  }
+
+  dispose(): void {
+    this._watcher.dispose()
+    this._watcherSub.dispose()
   }
 
   /** Called once by VscodeWebviewProvider after webview resolves. */
@@ -60,53 +78,89 @@ export class PrismController {
     // UiService
     // -----------------------------------------------------------------------
 
-    /** Initialize webview: webview sends this on mount to kick off state subscription. */
+    /** Initialize webview: sent on mount to kick off state subscription. */
     registerUnary("UiService", "initializeWebview", async (_message: unknown) => {
-      // Detect workspace .prism/ on webview init
       await this._detectPrismDir()
       return { ok: true }
     })
+
+    // -----------------------------------------------------------------------
+    // WorkflowService
+    // -----------------------------------------------------------------------
+
+    /** Attempt a workflow phase transition. */
+    registerUnary(
+      "WorkflowService",
+      "transition",
+      async (message: unknown) => {
+        const { transition } = message as { transition: WorkflowTransition }
+        const result = this.workflow.transition(transition)
+        if (result.ok && result.newPhase !== undefined) {
+          await this.updateState({
+            workflowPhase: result.newPhase,
+            workflowContext: this.workflow.context,
+          })
+        }
+        return result
+      },
+    )
+
+    /** Get available transitions from the current phase. */
+    registerUnary("WorkflowService", "getAvailableTransitions", async () => {
+      return { transitions: this.workflow.availableTransitions() }
+    })
   }
 
-  /** Detect .prism/ directory in the current workspace. */
+  // ---------------------------------------------------------------------------
+  // .prism/ detection + watcher
+  // ---------------------------------------------------------------------------
+
+  /** Detect .prism/ directory in the current workspace and start watching. */
   async _detectPrismDir(): Promise<void> {
     const workspaceFolders = vscode.workspace.workspaceFolders
     if (!workspaceFolders || workspaceFolders.length === 0) {
       return
     }
 
-    const rootUri = workspaceFolders[0].uri
-    const prismDirUri = vscode.Uri.joinPath(rootUri, ".prism")
-    const storiesUri = vscode.Uri.joinPath(prismDirUri, "stories", "stories.json")
-
-    let hasPrismDir = false
+    const prismDir = await detectPrismDir()
+    const hasPrismDir = prismDir !== undefined
     let hasStoriesJson = false
-    let prismDir: string | undefined
     let storiesPath: string | undefined
 
-    try {
-      await vscode.workspace.fs.stat(prismDirUri)
-      hasPrismDir = true
-      prismDir = prismDirUri.fsPath
-    } catch {
-      // .prism/ does not exist
-    }
-
-    if (hasPrismDir) {
-      try {
-        await vscode.workspace.fs.stat(storiesUri)
-        hasStoriesJson = true
-        storiesPath = storiesUri.fsPath
-      } catch {
-        // stories.json does not exist
+    if (prismDir) {
+      storiesPath = await detectStoriesPath(prismDir)
+      hasStoriesJson = storiesPath !== undefined
+      this._watcher.start(prismDir)
+      if (storiesPath) {
+        await this._loadStories(storiesPath)
       }
     }
 
     await this.updateState({ hasPrismDir, hasStoriesJson, prismDir, storiesPath })
-
-    // Update VS Code context keys
     await vscode.commands.executeCommand("setContext", "prism.hasPrismDir", hasPrismDir)
     await vscode.commands.executeCommand("setContext", "prism.hasStoriesJson", hasStoriesJson)
+  }
+
+  private async _loadStories(storiesPath: string): Promise<void> {
+    try {
+      const sf = await this.storiesManager.load(storiesPath)
+      await this.updateState({
+        stories: sf.stories,
+        plan: sf.plan,
+        completedCount: this.storiesManager.completedCount(),
+        remainingCount: this.storiesManager.remainingCount(),
+      })
+    } catch (err) {
+      console.error("[Prism] Failed to load stories:", err)
+    }
+  }
+
+  private async _onPrismFileChange(
+    type: "stories" | "research" | "plans" | "validation" | "spectrum" | "other",
+  ): Promise<void> {
+    if (type === "stories" && this._state.storiesPath) {
+      await this._loadStories(this._state.storiesPath)
+    }
   }
 
   /** Remove a state subscriber (called when webview sends grpc_request_cancel). */
@@ -120,9 +174,10 @@ export class PrismController {
     await this._broadcastState()
   }
 
-  /** Set workflow phase and broadcast. */
+  /** Set workflow phase (force) and broadcast. */
   async setPhase(phase: WorkflowPhase): Promise<void> {
-    await this.updateState({ workflowPhase: phase })
+    this.workflow.setPhase(phase)
+    await this.updateState({ workflowPhase: phase, workflowContext: this.workflow.context })
   }
 
   /** Push current state to all subscribed webview clients. */

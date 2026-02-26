@@ -169,15 +169,15 @@ webview-ui/src/
 
 ### Phase 2.1: .prism/ Directory Integration
 
-- [ ] Create `src/prism/config.ts` — detect `.prism/` in workspace root
-- [ ] Create `src/prism/init.ts` — initialize `.prism/` directory structure (port `init_prism.py` logic)
-- [ ] Create `src/prism/watcher.ts` — file system watcher for `.prism/` changes:
+- [x] Create `src/prism/config.ts` — detect `.prism/` in workspace root
+- [x] Create `src/prism/init.ts` — initialize `.prism/` directory structure (port `init_prism.py` logic)
+- [x] Create `src/prism/watcher.ts` — file system watcher for `.prism/` changes:
   - Watch `stories.json` for status updates
   - Watch `shared/research/` for new research docs
   - Watch `shared/plans/` for new/updated plans
   - Watch `shared/validation/` for validation reports
   - Watch `shared/spectrum/progress.md` for progress updates
-- [ ] Emit VS Code events on file changes → update extension state
+- [x] Emit VS Code events on file changes → update extension state
 
 **Files to create**:
 ```
@@ -189,16 +189,16 @@ src/prism/
 
 ### Phase 2.2: Domain Models (Port from CLI)
 
-- [ ] Create `src/prism/stories.ts` — stories.json parser:
+- [x] Create `src/prism/stories.ts` — stories.json parser:
   - `Story`, `Plan`, `StoryFile`, `Step` interfaces (match CLI's `domain/story.go`)
   - `loadStories()`, `saveStories()`, `getNextStory()`, `updateStoryStatus()`
   - Dependency resolution (`blockedBy` field)
   - Epic support (nested directories)
-- [ ] Create `src/prism/signals.ts` — signal protocol parser:
+- [x] Create `src/prism/signals.ts` — signal protocol parser:
   - Parse `<promise>COMPLETE</promise>`, `<spectrum-continue>`, `<spectrum-retry>`, `<spectrum-blocked>`, `<spectrum-error>`
   - Priority ordering (Complete > Error > Retry > Blocked > Continue)
   - Same regex patterns as CLI's `domain/signals.go`
-- [ ] Create `src/prism/progress.ts` — progress.md management:
+- [x] Create `src/prism/progress.ts` — progress.md management:
   - Create/read/update progress files
   - Parse YAML frontmatter
   - Derive progress path from stories path (flat vs epic)
@@ -213,7 +213,7 @@ src/prism/
 
 ### Phase 2.3: Workflow State Machine
 
-- [ ] Create `src/core/controller/prism/workflow.ts` — 4-phase state machine:
+- [x] Create `src/core/controller/prism/workflow.ts` — 4-phase state machine:
   ```typescript
   enum WorkflowPhase { Idle, Research, Plan, Implement, Validate }
   enum WorkflowTransition { StartResearch, StartPlan, StartImplement, StartValidate, Complete, Reset }
@@ -222,7 +222,7 @@ src/prism/
   - Phase transition validation (Research → Plan → Implement → Validate)
   - Phase-specific context (which research doc, which plan, which stories)
   - Emit state changes to webview via state subscription
-- [ ] Integrate workflow state into `PrismExtensionState`
+- [x] Integrate workflow state into `PrismExtensionState`
 
 **Files to create**:
 ```
@@ -235,9 +235,9 @@ src/core/controller/prism/
 ### Phase 2 Verification
 
 **Automated**:
-- [ ] Unit tests for stories.ts (load, save, dependency resolution, next story selection)
-- [ ] Unit tests for signals.ts (all signal types, priority ordering, edge cases)
-- [ ] Unit tests for workflow.ts (phase transitions, invalid transitions rejected)
+- [x] Unit tests for stories.ts (load, save, dependency resolution, next story selection)
+- [x] Unit tests for signals.ts (all signal types, priority ordering, edge cases)
+- [x] Unit tests for workflow.ts (phase transitions, invalid transitions rejected)
 
 **Manual**:
 - [ ] Extension detects existing `.prism/` directory
