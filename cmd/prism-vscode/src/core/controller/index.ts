@@ -9,11 +9,10 @@ import { SpectrumRunner, type SpectrumRunnerEventType } from "./prism/spectrum-r
 import { ProgressFile } from "../../prism/progress"
 import { PrismWatcher } from "../../prism/watcher"
 import { detectPrismDir, detectStoriesPath } from "../../prism/config"
-import { getApiKey, promptForApiKey } from "../api/auth"
-import { PrismApiHandler, ModelName } from "../api/claude-sdk"
-import { PrismTask } from "../task/index"
 import { PrismChatMessage } from "../api/types"
-import { SystemPromptContext } from "../prompts/system-prompt"
+import { buildSystemPrompt, SystemPromptContext } from "../prompts/system-prompt"
+import { ClaudeRunner, type RunnerOptions } from "../../claude/runner"
+import type { ClaudeRunnerEvent, ClaudeStreamEvent } from "../../claude/events"
 import { ModeBridge, detectSkillTrigger, type ChatMode } from "./prism/mode-bridge"
 import { SKILL_MAP } from "./prism/plugin-bridge"
 import { checkClaudeCli } from "../../claude/runner"
@@ -57,8 +56,9 @@ export class PrismController implements vscode.Disposable {
   /** Fires after every state update, letting status bar items re-render. */
   readonly onDidChangeState: vscode.Event<void> = this._onDidChangeState.event
 
-  // Chat / Task management
-  private _currentTask: PrismTask | undefined
+  // Chat / Task management (CLI-based)
+  private _chatRunner: ClaudeRunner | null = null
+  private _chatMessages: PrismChatMessage[] = []
 
   // Phase 4: Claude CLI Integration
   private _modeBridge: ModeBridge | undefined
@@ -76,8 +76,7 @@ export class PrismController implements vscode.Disposable {
     })
     this._registerHandlers()
 
-    // Check if API key and Claude CLI exist on startup
-    void this._checkApiKey()
+    // Check if Claude CLI exists on startup
     void this._checkClaudeCli()
   }
 
@@ -216,67 +215,61 @@ export class PrismController implements vscode.Disposable {
         }
 
         // ---------------------------------------------------------------
-        // SDK Mode: interactive chat
+        // CLI Mode: interactive chat
         // ---------------------------------------------------------------
-        const apiKey = await getApiKey(this._context)
-        if (!apiKey) {
-          // Prompt user for API key
-          const key = await promptForApiKey(this._context)
-          if (!key) {
-            return { ok: false, error: "Anthropic API key required. Please configure it in Prism settings." }
-          }
+        if (!this._state.hasClaudeCli) {
+          return { ok: false, error: "Claude CLI not found. Install Claude Code and run 'claude login' to use Prism chat." }
         }
 
-        const finalApiKey = await getApiKey(this._context)
-        if (!finalApiKey) {
-          return { ok: false, error: "No API key configured" }
+        // Add user message to chat history
+        const { v4: uuidv4 } = await import("uuid")
+        const userMsg: PrismChatMessage = {
+          id: uuidv4(), ts: Date.now(), type: "user", text,
         }
+        this._chatMessages = [...this._chatMessages, userMsg]
 
-        // Create or reuse task
-        if (!this._currentTask || this._currentTask.isComplete) {
-          const model = this._state.defaultModel as ModelName
-          const apiHandler = new PrismApiHandler({ apiKey: finalApiKey, model })
-          const systemPromptCtx: SystemPromptContext = {
-            workflowPhase: this._state.workflowPhase,
-            workflowContext: this.workflow.context,
-            workspaceRoot,
-            prismDir: this._state.prismDir,
-            hasPrismDir: this._state.hasPrismDir,
-            hasStoriesJson: this._state.hasStoriesJson,
-          }
-          this._currentTask = new PrismTask({
-            apiHandler,
-            workspaceRoot,
-            systemPromptCtx,
-            onUpdate: (messages: PrismChatMessage[], isStreaming: boolean) => {
-              void this.updateState({
-                chatMessages: messages,
-                isChatStreaming: isStreaming,
-                hasActiveTask: true,
-                pendingApprovalToolUseId: this._currentTask?.['_state']?.pendingApprovalToolUseId,
-              })
-            },
-          })
+        // Create streaming assistant message
+        const assistantMsg: PrismChatMessage = {
+          id: uuidv4(), ts: Date.now(), type: "assistant_text", text: "", isStreaming: true,
         }
+        this._chatMessages = [...this._chatMessages, assistantMsg]
 
-        // Run in background (non-blocking)
-        void this._currentTask.sendMessage(text).catch((err: Error) => {
-          console.error("[Prism] Task error:", err)
+        await this.updateState({
+          chatMessages: [...this._chatMessages],
+          isChatStreaming: true,
+          hasActiveTask: true,
+        })
+
+        // Build prompt with conversation context
+        const systemPrompt = buildSystemPrompt({
+          workflowPhase: this._state.workflowPhase,
+          workflowContext: this.workflow.context,
+          workspaceRoot,
+          prismDir: this._state.prismDir,
+          hasPrismDir: this._state.hasPrismDir,
+          hasStoriesJson: this._state.hasStoriesJson,
+        })
+        const prompt = this._buildChatPrompt(text, systemPrompt)
+
+        // Run in background via ClaudeRunner
+        void this._runChatSession(prompt, workspaceRoot, assistantMsg).catch((err: Error) => {
+          console.error("[Prism] Chat session error:", err)
         })
 
         return { ok: true }
       },
     )
 
-    /** Abort the current streaming task (SDK or Plugin mode). */
+    /** Abort the current streaming task (CLI chat or Plugin mode). */
     registerUnary("ChatService", "abortTask", async () => {
       // Abort Plugin mode if running
       if (this._modeBridge?.isPluginStreaming) {
         this._modeBridge.terminate()
       }
-      // Abort SDK mode if running
-      if (this._currentTask) {
-        this._currentTask.abort()
+      // Abort CLI chat if running
+      if (this._chatRunner) {
+        this._chatRunner.terminate()
+        this._chatRunner = null
       }
       await this.updateState({
         isChatStreaming: false,
@@ -288,7 +281,12 @@ export class PrismController implements vscode.Disposable {
 
     /** Clear all chat messages (start fresh). */
     registerUnary("ChatService", "clearMessages", async () => {
-      this._currentTask = undefined
+      // Terminate any running chat session
+      if (this._chatRunner) {
+        this._chatRunner.terminate()
+        this._chatRunner = null
+      }
+      this._chatMessages = []
       await this.updateState({
         chatMessages: [],
         isChatStreaming: false,
@@ -298,45 +296,15 @@ export class PrismController implements vscode.Disposable {
       return { ok: true }
     })
 
-    /** Approve or deny a pending tool use. */
-    registerUnary(
-      "ChatService",
-      "approveToolUse",
-      async (message: unknown) => {
-        const { toolUseId, approved } = message as { toolUseId: string; approved: boolean }
+    /** Approve or deny a pending tool use — no-op with CLI mode (permissions bypassed). */
+    registerUnary("ChatService", "approveToolUse", async () => {
+      return { ok: true }
+    })
 
-        if (!this._currentTask) {
-          return { ok: false, error: "No active task" }
-        }
-
-        this._currentTask.resolveApproval(toolUseId, approved)
-        this._currentTask['_messages'].setToolApproval(toolUseId, approved)
-
-        await this.updateState({
-          pendingApprovalToolUseId: undefined,
-          chatMessages: [...this._currentTask.chatMessages],
-        })
-
-        return { ok: true }
-      },
-    )
-
-    /** Set API key. */
-    registerUnary(
-      "ChatService",
-      "setApiKey",
-      async (message: unknown) => {
-        const { apiKey } = message as { apiKey: string }
-        try {
-          const { setApiKey } = await import("../api/auth")
-          await setApiKey(this._context, apiKey)
-          await this.updateState({ hasApiKey: true })
-          return { ok: true }
-        } catch (err) {
-          return { ok: false, error: String(err) }
-        }
-      },
-    )
+    /** Set API key — no-op (using Claude CLI Max subscription now). */
+    registerUnary("ChatService", "setApiKey", async () => {
+      return { ok: true }
+    })
 
     // -----------------------------------------------------------------------
     // PluginService (Phase 4: Claude CLI Integration)
@@ -541,11 +509,6 @@ export class PrismController implements vscode.Disposable {
     this._onDidChangeFile.fire({ type })
   }
 
-  private async _checkApiKey(): Promise<void> {
-    const apiKey = await getApiKey(this._context)
-    await this.updateState({ hasApiKey: !!apiKey })
-  }
-
   /** Check if Claude CLI is available on PATH. */
   private async _checkClaudeCli(): Promise<void> {
     const claudePath = await checkClaudeCli()
@@ -571,6 +534,106 @@ export class PrismController implements vscode.Disposable {
       this._modeBridge.setProjectDir(workspaceRoot)
     }
     return this._modeBridge
+  }
+
+  // ---------------------------------------------------------------------------
+  // CLI-based interactive chat
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Run an interactive chat session via ClaudeRunner.
+   * Streams clean text from CLI output into the chat UI.
+   */
+  private async _runChatSession(
+    prompt: string,
+    workspaceRoot: string,
+    assistantMsg: PrismChatMessage,
+  ): Promise<void> {
+    // Abort any previous chat runner
+    if (this._chatRunner) {
+      this._chatRunner.terminate()
+      this._chatRunner = null
+    }
+
+    const runner = new ClaudeRunner()
+    this._chatRunner = runner
+
+    runner.on("event", (event: ClaudeRunnerEvent) => {
+      // Extract clean text from assistant stream events
+      if (event.type === "stream_event") {
+        const se = event.event as ClaudeStreamEvent
+        if (se.type === "assistant" && se.message) {
+          for (const block of se.message.content) {
+            if (block.type === "text" && block.text) {
+              assistantMsg.text = (assistantMsg.text ?? "") + block.text
+            }
+          }
+          void this.updateState({ chatMessages: [...this._chatMessages] })
+        } else if (se.type === "result" && se.result) {
+          // Final result — may contain summary text
+          if (!assistantMsg.text) {
+            assistantMsg.text = se.result
+          }
+          void this.updateState({ chatMessages: [...this._chatMessages] })
+        }
+      }
+
+      // Show tool activities in chat (same pattern as ModeBridge)
+      if (event.type === "tool_activity") {
+        const { v4: uuidv4 } = require("uuid") as typeof import("uuid")
+        const toolMsg: PrismChatMessage = {
+          id: uuidv4(), ts: Date.now(), type: "tool_use",
+          toolName: event.activity.toolName,
+          toolInput: { description: event.activity.description },
+          toolUseId: uuidv4(),
+          needsApproval: false, approved: true,
+        }
+        // Insert tool message before the streaming assistant message
+        const idx = this._chatMessages.indexOf(assistantMsg)
+        if (idx >= 0) {
+          this._chatMessages.splice(idx, 0, toolMsg)
+        } else {
+          this._chatMessages.push(toolMsg)
+        }
+        void this.updateState({ chatMessages: [...this._chatMessages] })
+      }
+    })
+
+    try {
+      const options: RunnerOptions = { projectDir: workspaceRoot }
+      await runner.runStreaming(prompt, options)
+    } finally {
+      assistantMsg.isStreaming = false
+      this._chatRunner = null
+      await this.updateState({
+        chatMessages: [...this._chatMessages],
+        isChatStreaming: false,
+      })
+    }
+  }
+
+  /**
+   * Build a CLI prompt that includes conversation history as context.
+   * Prior messages are encoded as text so the CLI session has context.
+   */
+  private _buildChatPrompt(currentText: string, systemPrompt: string): string {
+    // Collect prior conversation (excluding the just-added user message and assistant placeholder)
+    const priorMessages = this._chatMessages.filter(
+      m => (m.type === "user" || m.type === "assistant_text") && m.text && !m.isStreaming
+    )
+    // Exclude the last entry (the current user message we just added)
+    const historyMsgs = priorMessages.slice(0, -1)
+
+    if (historyMsgs.length === 0) {
+      return `${systemPrompt}\n\n${currentText}`
+    }
+
+    const history = historyMsgs.map(m => {
+      const role = m.type === "user" ? "User" : "Assistant"
+      return `${role}: ${m.text}`
+    }).join("\n\n")
+
+    return `${systemPrompt}\n\n## Previous conversation\n${history}\n\n## Current request\n${currentText}`
   }
 
   // ---------------------------------------------------------------------------

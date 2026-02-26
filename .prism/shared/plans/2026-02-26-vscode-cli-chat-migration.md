@@ -2,7 +2,7 @@
 title: "VS Code Extension: Replace Anthropic SDK with Claude CLI for Interactive Chat"
 date: 2026-02-26
 type: plan
-status: DRAFT
+status: IMPLEMENTED
 research: .prism/shared/research/2026-02-26-vscode-extension-cli-migration.md
 tags: [vscode-extension, claude-cli, max-subscription, api-key-removal]
 ---
@@ -24,9 +24,9 @@ Replace the `@anthropic-ai/sdk` (direct API) interactive chat flow with `ClaudeR
 ## Success Criteria
 
 ### Automated Verification
-- [ ] TypeScript compiles: `cd cmd/prism-vscode && npm run check-types`
-- [ ] Extension builds: `cd cmd/prism-vscode && npm run compile`
-- [ ] Webview builds: `cd cmd/prism-vscode/webview-ui && npm run build`
+- [x] TypeScript compiles: `cd cmd/prism-vscode && npm run check-types`
+- [x] Extension builds: `cd cmd/prism-vscode && npm run compile`
+- [x] Webview builds: `cd cmd/prism-vscode/webview-ui && npm run build`
 
 ### Manual Verification
 - [ ] Extension loads without errors in VS Code
@@ -304,7 +304,7 @@ registerUnary("ChatService", "setApiKey", async () => {
 })
 ```
 
-### Checkpoint
+### Checkpoint: [x] Phase 1 complete
 
 After Phase 1, run `npm run check-types` from `cmd/prism-vscode/`. The controller should compile. The webview will have type errors since `hasApiKey` still exists in the state interface — that's expected and fixed in Phase 2.
 
@@ -349,7 +349,7 @@ Remove from `DEFAULT_STATE` at line 170:
 hasApiKey: false,
 ```
 
-### Checkpoint
+### Checkpoint: [x] Phase 2 complete
 
 Run `npm run check-types` from `cmd/prism-vscode/`. Any remaining references to `hasApiKey` will surface as type errors — fix them in Phase 3.
 
@@ -453,7 +453,7 @@ static setApiKey(apiKey: string): Promise<ChatResponse> {
 }
 ```
 
-### Checkpoint
+### Checkpoint: [x] Phase 3 complete
 
 Run `cd cmd/prism-vscode/webview-ui && npm run build`. Webview should compile. Then run `cd cmd/prism-vscode && npm run check-types` for the full extension.
 
@@ -505,9 +505,11 @@ Change the description text from API key instructions to CLI instructions:
 }
 ```
 
-### Checkpoint
+### Checkpoint: [x] Phase 4 complete
 
 Run `cd cmd/prism-vscode && npm install` (to update `node_modules` after removing the dep). Then `npm run compile` for a full build.
+
+**Note**: `@anthropic-ai/sdk` was moved to `devDependencies` (not fully removed) because `claude-sdk.ts` and the `task/` directory still import it. Those files are dead code but the plan defers their deletion to a separate task. The SDK is not bundled into the production extension — esbuild only includes reachable code from the entry point.
 
 ---
 

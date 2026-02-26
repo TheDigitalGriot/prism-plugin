@@ -65,7 +65,6 @@ export interface PrismExtensionState {
   // -------------------------------------------------------------------------
   defaultModel: string
   planningModel: string
-  hasApiKey: boolean
 }
 
 export const DEFAULT_PRISM_STATE: PrismExtensionState = {
@@ -104,5 +103,4 @@ export const DEFAULT_PRISM_STATE: PrismExtensionState = {
   },
   defaultModel: "sonnet",
   planningModel: "opus",
-  hasApiKey: false,
 }

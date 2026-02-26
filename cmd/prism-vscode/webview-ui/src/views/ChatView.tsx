@@ -7,92 +7,46 @@ import { ChatTextArea } from "../components/chat/ChatTextArea"
 import { PhaseIndicator, PhaseTransition } from "../components/workflow/PhaseIndicator"
 
 // ---------------------------------------------------------------------------
-// ApiKeySetup — shown when no API key is configured
+// CliNotFound — shown when Claude CLI is not installed
 // ---------------------------------------------------------------------------
 
-const ApiKeySetup: React.FC = () => {
-  const [apiKey, setApiKey] = useState("")
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const handleSave = async () => {
-    if (!apiKey.startsWith("sk-ant-") || apiKey.length < 20) {
-      setError("Invalid API key format — must start with sk-ant-")
-      return
-    }
-    setSaving(true)
-    setError(null)
-    try {
-      const result = await ChatServiceClient.setApiKey(apiKey)
-      if (!result.ok) {
-        setError(result.error ?? "Failed to save API key")
-      }
-    } catch (err) {
-      setError(String(err))
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        height: "100%",
-        padding: "24px",
-        gap: "16px",
-        textAlign: "center",
-      }}
-    >
-      <div style={{ fontSize: "24px" }}>🔑</div>
-      <div style={{ fontWeight: 600, fontSize: "14px" }}>Configure API Key</div>
-      <div style={{ color: "var(--vscode-descriptionForeground)", fontSize: "12px", maxWidth: "300px" }}>
-        Enter your Anthropic API key to use Prism chat. Keys are stored securely in VS Code's Secret Storage.
-      </div>
-      <div style={{ width: "100%", maxWidth: "320px", display: "flex", flexDirection: "column", gap: "8px" }}>
-        <input
-          type="password"
-          value={apiKey}
-          onChange={(e) => setApiKey(e.target.value)}
-          placeholder="sk-ant-..."
-          style={{
-            padding: "8px 12px",
-            borderRadius: "6px",
-            border: "1px solid var(--vscode-input-border, #3c3c3c)",
-            backgroundColor: "var(--vscode-input-background)",
-            color: "var(--vscode-input-foreground)",
-            fontSize: "13px",
-            width: "100%",
-            boxSizing: "border-box",
-          }}
-          onKeyDown={(e) => e.key === "Enter" && void handleSave()}
-        />
-        {error && (
-          <div style={{ color: "#ef4444", fontSize: "11px" }}>{error}</div>
-        )}
-        <button
-          onClick={() => void handleSave()}
-          disabled={saving || !apiKey}
-          style={{
-            padding: "8px",
-            borderRadius: "6px",
-            border: "none",
-            backgroundColor: "var(--vscode-button-background, #0e639c)",
-            color: "var(--vscode-button-foreground, #fff)",
-            cursor: saving || !apiKey ? "not-allowed" : "pointer",
-            fontSize: "13px",
-            fontWeight: 500,
-          }}
-        >
-          {saving ? "Saving…" : "Save API Key"}
-        </button>
+const CliNotFound: React.FC = () => (
+  <div
+    style={{
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      height: "100%",
+      padding: "24px",
+      gap: "16px",
+      textAlign: "center",
+    }}
+  >
+    <div style={{ fontSize: "24px" }}>&#x2699;</div>
+    <div style={{ fontWeight: 600, fontSize: "14px" }}>Claude CLI Not Found</div>
+    <div style={{ color: "var(--vscode-descriptionForeground)", fontSize: "12px", maxWidth: "300px" }}>
+      Prism uses your Claude Max subscription via the Claude CLI. Install it and log in to get started.
+    </div>
+    <div style={{ display: "flex", flexDirection: "column", gap: "8px", width: "100%", maxWidth: "320px", fontSize: "12px" }}>
+      <div style={{
+        padding: "8px 12px",
+        borderRadius: "6px",
+        backgroundColor: "var(--vscode-textBlockQuote-background)",
+        fontFamily: "var(--vscode-editor-font-family, monospace)",
+        textAlign: "left",
+      }}>
+        <div style={{ color: "var(--vscode-descriptionForeground)", marginBottom: "4px" }}>1. Install Claude Code:</div>
+        <div>npm install -g @anthropic-ai/claude-code</div>
+        <div style={{ color: "var(--vscode-descriptionForeground)", marginTop: "8px", marginBottom: "4px" }}>2. Log in with your Max subscription:</div>
+        <div>claude login</div>
       </div>
     </div>
-  )
-}
+    <div style={{ color: "var(--vscode-descriptionForeground)", fontSize: "11px", maxWidth: "300px" }}>
+      After installing and logging in, reload VS Code to detect the CLI.
+    </div>
+  </div>
+)
 
 // ---------------------------------------------------------------------------
 // EmptyChat — shown when no messages yet
@@ -263,9 +217,9 @@ export const ChatView: React.FC = () => {
     }
   }, [])
 
-  // Show API key setup if not configured
-  if (!state.hasApiKey) {
-    return <ApiKeySetup />
+  // Show CLI not found if Claude CLI is not installed
+  if (!state.hasClaudeCli) {
+    return <CliNotFound />
   }
 
   return (

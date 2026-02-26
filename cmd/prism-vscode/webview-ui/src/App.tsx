@@ -38,8 +38,8 @@ export const App: React.FC = () => {
   const state = usePrismState()
   const [currentView, setCurrentView] = useState<AppView>("chat")
 
-  // True first-time user: no .prism/ dir and no API key
-  const isFirstTimeUser = !state.hasPrismDir && !state.hasApiKey
+  // True first-time user: no .prism/ dir
+  const isFirstTimeUser = !state.hasPrismDir
 
   // Listen for command messages from extension host
   // (e.g. "startSpectrum" triggered by prism.spectrum command or status bar click)

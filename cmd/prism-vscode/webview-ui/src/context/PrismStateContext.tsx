@@ -125,7 +125,6 @@ export interface PrismExtensionState {
   isChatStreaming: boolean
   pendingApprovalToolUseId: string | undefined
   hasActiveTask: boolean
-  hasApiKey: boolean
   // CLI
   chatMode: "sdk" | "plugin"
   activePluginSkill: string | null
@@ -167,7 +166,6 @@ const DEFAULT_STATE: PrismExtensionState = {
   isChatStreaming: false,
   pendingApprovalToolUseId: undefined,
   hasActiveTask: false,
-  hasApiKey: false,
   chatMode: "sdk",
   activePluginSkill: null,
   hasClaudeCli: false,

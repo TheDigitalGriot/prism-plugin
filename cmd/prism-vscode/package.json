@@ -324,7 +324,7 @@
           {
             "id": "configure-claude",
             "title": "Configure Claude",
-            "description": "Enter your Anthropic API key in the Prism sidebar. Keys are stored securely in VS Code's Secret Storage. Alternatively, install the Claude CLI for Spectrum autonomous execution.\n\n[Open Prism Sidebar](command:prism.openSidebar)",
+            "description": "Prism uses your Claude Max subscription via the Claude CLI. Install it globally with `npm install -g @anthropic-ai/claude-code`, then run `claude login` to authenticate.\n\n[Open Prism Sidebar](command:prism.openSidebar)",
             "media": {
               "svg": "media/prism-icon.svg",
               "altText": "Configure Claude"
@@ -349,11 +349,6 @@
     "configuration": {
       "title": "Prism",
       "properties": {
-        "prism.claudeApiKey": {
-          "type": "string",
-          "default": "",
-          "description": "Anthropic API key for Claude Agent SDK (stored in Settings; prefer using the sidebar to store in SecretStorage)"
-        },
         "prism.defaultModel": {
           "type": "string",
           "enum": [
@@ -414,10 +409,10 @@
     "test:unit": "jest"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.36.0",
     "uuid": "^11.0.5"
   },
   "devDependencies": {
+    "@anthropic-ai/sdk": "^0.36.0",
     "@types/jest": "^29.5.14",
     "@types/node": "^20.0.0",
     "@types/uuid": "^10.0.0",

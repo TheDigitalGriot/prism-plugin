@@ -108,10 +108,6 @@ export class ChatServiceClient extends ProtoBusClient {
     return this.makeUnaryRequest("ChatService", "approveToolUse", { toolUseId, approved })
   }
 
-  /** Set the Anthropic API key. */
-  static setApiKey(apiKey: string): Promise<ChatResponse> {
-    return this.makeUnaryRequest("ChatService", "setApiKey", { apiKey })
-  }
 }
 
 // ---------------------------------------------------------------------------
