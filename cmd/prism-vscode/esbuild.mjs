@@ -1,5 +1,9 @@
 import * as esbuild from "esbuild"
-import { existsSync, mkdirSync } from "fs"
+import { existsSync, mkdirSync, cpSync } from "fs"
+import { join, dirname } from "path"
+import { fileURLToPath } from "url"
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
 
 const production = process.argv.includes("--production")
 const watch = process.argv.includes("--watch")
@@ -48,6 +52,16 @@ const extensionConfig = {
   },
 }
 
+function copyOfficeAssets() {
+  const src = join(__dirname, "assets")
+  const dest = join(__dirname, "dist", "assets")
+  if (existsSync(src)) {
+    mkdirSync(dest, { recursive: true })
+    cpSync(src, dest, { recursive: true })
+    console.log("Office assets copied to dist/assets/")
+  }
+}
+
 async function main() {
   if (watch) {
     const ctx = await esbuild.context(extensionConfig)
@@ -55,6 +69,7 @@ async function main() {
     console.log("[watch] watching for changes...")
   } else {
     await esbuild.build(extensionConfig)
+    copyOfficeAssets()
     console.log("Build complete!")
   }
 }

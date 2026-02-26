@@ -382,11 +382,21 @@ export class OfficeViewProvider implements vscode.WebviewViewProvider {
 
 		if (fs.existsSync(indexPath)) {
 			let html = fs.readFileSync(indexPath, 'utf-8');
+			// Rewrite relative asset URLs to webview URIs
 			html = html.replace(/(href|src)="\.\/([^"]+)"/g, (_match: string, attr: string, filePath: string) => {
 				const fileUri = vscode.Uri.joinPath(distPath, filePath);
 				const webviewUri = webview.asWebviewUri(fileUri);
 				return `${attr}="${webviewUri}"`;
 			});
+			// Inject CSP after <head>
+			const csp = [
+				`default-src 'none'`,
+				`style-src ${cspSource} 'unsafe-inline'`,
+				`img-src ${cspSource} data:`,
+				`font-src ${cspSource} data:`,
+				`script-src ${cspSource} 'unsafe-eval'`,
+			].join('; ');
+			html = html.replace('<head>', `<head>\n  <meta http-equiv="Content-Security-Policy" content="${csp}" />`);
 			return html;
 		}
 
