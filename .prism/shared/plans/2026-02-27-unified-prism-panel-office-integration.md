@@ -199,7 +199,17 @@ The component logic stays identical to the original `App.tsx` — just the impor
 cd cmd/prism-vscode/webview-panel && npm install && npm run build
 ```
 
-**Checkpoint**: `dist/webview-panel/` builds successfully with all office code included. No TypeScript errors.
+**Checkpoint**: [x] `dist/webview-panel/` builds successfully with all office code included. No TypeScript errors.
+
+## Phase 1 Complete — 2026-02-27
+
+**Changes**:
+- Copied 42 office source files into webview-panel/src/ (office/, hooks/office/, components/office/, fonts/, theme/)
+- Renamed constants.ts → office-constants.ts (no collision with panel's own files)
+- Fixed all import paths: vscodeApi (4 files), constants (15 files), cross-references (10 files)
+- Created src/views/OfficeApp.tsx (adapted from webview-office/src/App.tsx)
+
+**Verification**: `npm run build` → tsc -b passed, 39 modules, 209.86 kB bundle, 512ms
 
 ---
 

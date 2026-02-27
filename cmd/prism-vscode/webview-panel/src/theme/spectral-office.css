@@ -1,0 +1,88 @@
+/**
+ * Spectral Office Theme — Prism brand colors for the pixel-art office UI.
+ * Imported after index.css to override the default pixel-agents palette.
+ */
+
+:root {
+  /* ── Prism Brand Colors ──────────────────────────────────────── */
+  --prism-blue: #3B82F6;
+  --prism-teal: #14B8A6;
+  --prism-green: #22C55E;
+  --prism-amber: #F59E0B;
+  --prism-indigo: #6366F1;
+  --prism-rose: #F43F5E;
+
+  /* ── Prism Dark Surface Palette ─────────────────────────────── */
+  --prism-bg: #0F172A;
+  --prism-surface: #1E293B;
+  --prism-surface-raised: #273548;
+  --prism-border: #334155;
+  --prism-border-bright: #475569;
+  --prism-text: #E2E8F0;
+  --prism-text-dim: #94A3B8;
+  --prism-shadow: 2px 2px 0px rgba(0, 0, 0, 0.6);
+
+  /* ── Override pixel-agents CSS variables with Prism spectral ── */
+  --pixel-bg: var(--prism-surface);
+  --pixel-border: var(--prism-border);
+  --pixel-border-light: var(--prism-border-bright);
+  --pixel-accent: var(--prism-blue);
+  --pixel-green: var(--prism-teal);
+  --pixel-shadow: var(--prism-shadow);
+
+  /* Button states */
+  --pixel-text: var(--prism-text);
+  --pixel-text-dim: var(--prism-text-dim);
+  --pixel-btn-bg: rgba(59, 130, 246, 0.08);
+  --pixel-btn-hover-bg: rgba(59, 130, 246, 0.18);
+  --pixel-active-bg: rgba(59, 130, 246, 0.25);
+
+  /* "+ Agent" button — teal to stand out */
+  --pixel-agent-bg: rgba(20, 184, 166, 0.12);
+  --pixel-agent-hover-bg: rgba(20, 184, 166, 0.25);
+  --pixel-agent-border: var(--prism-teal);
+  --pixel-agent-text: rgba(167, 243, 208, 0.95);
+
+  /* Hints & danger */
+  --pixel-hint-bg: var(--prism-blue);
+  --pixel-reset-text: #fca5a5;
+  --pixel-danger-bg: #9f1239;
+
+  /* Status dots — use Prism amber for permission, blue for active */
+  --pixel-status-permission: var(--prism-amber);
+  --pixel-status-active: var(--prism-blue);
+
+  /* Vignette — subtle deep indigo */
+  --pixel-vignette: radial-gradient(ellipse at center, transparent 50%, rgba(15, 23, 42, 0.4) 100%);
+}
+
+/* ── Toolbar panel background ────────────────────────────────── */
+/* Applied to the bottom toolbar and editor action bar panels */
+div[style*="--pixel-bg"] {
+  background: var(--pixel-bg);
+}
+
+/* ── Agent label name tags ───────────────────────────────────── */
+/* Override the hardcoded rgba(30,30,46,0.7) background */
+[class*="agent-label"] span,
+[data-agent-label] span {
+  background: rgba(15, 23, 42, 0.75) !important;
+  color: var(--prism-text) !important;
+}
+
+/* ── Story label pill badges ─────────────────────────────────── */
+[data-story-label] {
+  background: rgba(20, 184, 166, 0.2);
+  border: 1px solid var(--prism-teal);
+  color: var(--prism-teal);
+  font-size: 14px;
+  padding: 1px 6px;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+
+/* ── Button focus ring ───────────────────────────────────────── */
+button:focus-visible {
+  outline: 2px solid var(--prism-blue);
+  outline-offset: 1px;
+}
