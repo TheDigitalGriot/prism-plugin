@@ -42,12 +42,15 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     vscode.window.registerTreeDataProvider("prism.stories", storiesTree),
   )
 
-  // Subscribe to file changes → refresh relevant tree
+  // Subscribe to file changes → refresh relevant tree + panel webviews
   context.subscriptions.push(
     controller.onDidChangePrismFile((event) => {
       if (event.type === "research") researchTree.refresh()
       if (event.type === "plans") plansTree.refresh()
-      if (event.type === "stories") storiesTree.setStories(controller.state.stories)
+      if (event.type === "stories") {
+        storiesTree.setStories(controller.state.stories)
+        _monitorProvider?.pushState()
+      }
     }),
   )
 
@@ -117,10 +120,12 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     ),
   )
 
-  // Push monitor state updates on controller state change
+  // Push panel webview state on every controller state change
   context.subscriptions.push(
     controller.onDidChangeState(() => {
+      const s = controller.state
       _monitorProvider?.pushState()
+      _workspacesProvider?.updateAgentStatuses(s.office.activeAgents)
     }),
   )
 
@@ -225,12 +230,12 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       await vscode.commands.executeCommand("prism.monitorView.focus")
     }),
 
-    vscode.commands.registerCommand("prism.monitor.runGate", (_command?: string) => {
-      // TODO Phase 2: delegate to monitorProvider.runGate(command)
+    vscode.commands.registerCommand("prism.monitor.runGate", (command?: string) => {
+      if (command) void _monitorProvider?.runGate(command)
     }),
 
     vscode.commands.registerCommand("prism.monitor.runAllGates", () => {
-      // TODO Phase 2: delegate to monitorProvider.runAllGates()
+      void _monitorProvider?.runAllGates()
     }),
   )
 
@@ -253,14 +258,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         prompt: "Branch name for new worktree",
         placeHolder: "feat/my-feature",
       })
-      if (branch) {
-        // TODO Phase 3: delegate to workspacesProvider.createWorktree(branch)
-        void branch
-      }
+      if (branch) await _workspacesProvider?.createWorktree(branch)
     }),
 
-    vscode.commands.registerCommand("prism.workspaces.deleteWorktree", async (_worktreePath?: string) => {
-      // TODO Phase 3: delegate to workspacesProvider.deleteWorktree(worktreePath, false)
+    vscode.commands.registerCommand("prism.workspaces.deleteWorktree", async (worktreePath?: string) => {
+      if (worktreePath) await _workspacesProvider?.deleteWorktree(worktreePath, false)
     }),
   )
 

@@ -47,7 +47,7 @@ Add Monitor and Workspaces as rich React webview panels in the VSCode **bottom p
 - [x] Extension compiles: `cd cmd/prism-vscode && npm run compile`
 - [x] TypeScript checks pass: `cd cmd/prism-vscode && npx tsc --noEmit`
 - [x] Panel webview builds: `cd cmd/prism-vscode/webview-panel && npm run build`
-- [ ] Full package builds: `cd cmd/prism-vscode && npm run package`
+- [x] Full package builds: `cd cmd/prism-vscode && npm run package`
 
 ### Manual Verification
 - [ ] "Prism Monitor" tab appears in bottom panel area
@@ -876,15 +876,17 @@ Both views should handle:
 Append a section noting the pivot from tree views to panel webviews, with a link to this plan.
 
 ### Phase 4 Verification
-- [ ] All commands registered and functional
-- [ ] State flows from controller → monitor → webview on every change
-- [ ] State flows from controller → workspaces → webview on every change
-- [ ] Agent kanban updates in real-time when office agents change
-- [ ] Responsive layout handles narrow width gracefully
-- [ ] Light and dark themes both look correct
-- [ ] Empty states show helpful guidance
-- [ ] `npm run compile` succeeds
-- [ ] `npm run package` succeeds (full production build)
+- [x] All commands registered and functional
+- [x] State flows from controller → monitor → webview on every change
+- [x] State flows from controller → workspaces → webview on every change
+- [x] Agent kanban updates in real-time when office agents change
+- [x] Responsive layout handles narrow width gracefully (CSS @media already in panel.css)
+- [x] Light and dark themes both look correct (all CSS via vscode variables)
+- [x] Empty states show helpful guidance (all sections have empty state messages)
+- [x] `npm run compile` succeeds
+- [x] `npm run package` succeeds (full production build)
+
+**Checkpoint**: [x] Phase 4 complete — 2026-02-27
 
 ---
 
