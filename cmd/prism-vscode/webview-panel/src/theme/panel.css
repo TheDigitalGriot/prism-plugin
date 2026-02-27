@@ -1,0 +1,109 @@
+/* CSS Variables */
+:root {
+  --panel-bg: var(--vscode-panel-background);
+  --panel-fg: var(--vscode-foreground);
+  --panel-border: var(--vscode-panel-border);
+  --prism-blue: #3B82F6;
+  --prism-teal: #14B8A6;
+  --prism-green: #22C55E;
+  --prism-amber: #F59E0B;
+  --prism-purple: #7C3AED;
+  --prism-red: #EF4444;
+}
+* { box-sizing: border-box; }
+body { margin: 0; padding: 0; background: var(--panel-bg); color: var(--panel-fg); font-family: var(--vscode-font-family); font-size: var(--vscode-font-size); overflow: auto; }
+code { font-family: var(--vscode-editor-font-family, monospace); font-size: 0.9em; padding: 1px 4px; border-radius: 3px; }
+
+/* Panel sections */
+.panel-section { padding: 8px 12px; border: 1px solid var(--panel-border); border-radius: 4px; overflow: hidden; }
+.panel-section-title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--vscode-descriptionForeground); margin: 0 0 8px 0; }
+.panel-empty { font-size: 11px; color: var(--vscode-descriptionForeground); font-style: italic; padding: 6px 0; }
+
+/* Monitor root */
+.monitor-root { padding: 8px; height: 100%; overflow: auto; }
+.monitor-grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; gap: 8px; }
+@media (max-width: 600px) { .monitor-grid { grid-template-columns: 1fr; } }
+.monitor-section { overflow: auto; max-height: 260px; }
+
+/* Status icons */
+.status-icon { border-radius: 50%; display: inline-block; flex-shrink: 0; }
+.status-pass { background: var(--prism-green); }
+.status-fail { background: var(--prism-red); }
+.status-pending { background: var(--prism-amber); }
+.status-unknown { background: var(--vscode-descriptionForeground); opacity: 0.4; }
+.status-done { background: var(--vscode-descriptionForeground); opacity: 0.5; }
+.status-waiting { background: var(--prism-amber); opacity: 0.7; }
+.status-running { background: var(--prism-blue); animation: spin-pulse 1s linear infinite; }
+.status-active { background: var(--prism-green); animation: pulse-green 2s ease-in-out infinite; }
+.status-thinking { background: var(--prism-blue); animation: pulse-blue 1.5s ease-in-out infinite; }
+@keyframes spin-pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+@keyframes pulse-green { 0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.4); } 50% { box-shadow: 0 0 0 4px rgba(34,197,94,0); } }
+@keyframes pulse-blue { 0%, 100% { box-shadow: 0 0 0 0 rgba(59,130,246,0.4); } 50% { box-shadow: 0 0 0 4px rgba(59,130,246,0); } }
+
+/* System Health */
+.health-summary { font-size: 12px; margin-bottom: 6px; font-weight: 500; }
+.health-refresh { font-size: 10px; color: var(--vscode-descriptionForeground); margin-top: 8px; }
+.agent-list { list-style: none; margin: 0; padding: 0; }
+.agent-list-item { display: flex; align-items: center; gap: 6px; padding: 3px 0; font-size: 11px; }
+.agent-list-type { font-weight: 500; min-width: 44px; }
+.agent-list-story { color: var(--vscode-descriptionForeground); font-size: 10px; font-family: var(--vscode-editor-font-family, monospace); }
+.agent-list-status { margin-left: auto; font-size: 10px; color: var(--vscode-descriptionForeground); }
+
+/* DataTable */
+.data-table-wrap { overflow: auto; max-height: 200px; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.data-table th { text-align: left; font-size: 10px; font-weight: 600; color: var(--vscode-descriptionForeground); padding: 2px 4px 4px; white-space: nowrap; position: sticky; top: 0; background: var(--panel-bg); }
+.data-table td { padding: 3px 4px; vertical-align: middle; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 0; }
+.data-table-row-alt td { background: var(--vscode-list-inactiveSelectionBackground, rgba(128,128,128,0.05)); }
+.data-table tr:hover td { background: var(--vscode-list-hoverBackground, rgba(128,128,128,0.1)); }
+.history-story { display: flex; flex-direction: column; gap: 1px; }
+.history-story-id { font-family: var(--vscode-editor-font-family, monospace); font-size: 10px; color: var(--vscode-descriptionForeground); }
+.history-story-title { font-size: 11px; }
+.mono-dim { font-family: var(--vscode-editor-font-family, monospace); font-size: 10px; color: var(--vscode-descriptionForeground); }
+
+/* Quality Gates */
+.gate-list { list-style: none; margin: 0 0 8px; padding: 0; }
+.gate-item { border-bottom: 1px solid var(--panel-border); }
+.gate-item:last-child { border-bottom: none; }
+.gate-row { display: flex; align-items: center; gap: 6px; padding: 5px 0; }
+.gate-status-btn { background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; }
+.gate-command { font-size: 11px; font-weight: 500; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gate-last-run { font-size: 10px; color: var(--vscode-descriptionForeground); white-space: nowrap; margin-left: auto; }
+.gate-run-btn { font-size: 10px; padding: 2px 8px; background: var(--vscode-button-background, #3B82F6); color: var(--vscode-button-foreground, #fff); border: none; border-radius: 3px; cursor: pointer; }
+.gate-run-btn:hover { opacity: 0.85; }
+.gate-run-btn:disabled { opacity: 0.4; cursor: default; }
+.gate-output { font-size: 10px; font-family: var(--vscode-editor-font-family, monospace); border-left: 2px solid var(--panel-border); margin: 0 0 6px 0; padding: 6px 8px; overflow: auto; max-height: 120px; white-space: pre; }
+.gate-run-all-btn { font-size: 11px; padding: 4px 12px; border: 1px solid var(--panel-border); border-radius: 3px; cursor: pointer; width: 100%; }
+.gate-run-all-btn:hover { opacity: 0.85; }
+
+/* Kanban Board */
+.kanban-board { display: flex; gap: 6px; overflow-x: auto; min-height: 60px; }
+.kanban-column { flex: 1; min-width: 80px; max-width: 160px; }
+.kanban-column-header { display: flex; align-items: center; justify-content: space-between; padding: 4px 6px; border-top: 2px solid; margin-bottom: 4px; }
+.kanban-column-title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+.kanban-column-count { font-size: 10px; color: var(--vscode-descriptionForeground); }
+.kanban-column-items { display: flex; flex-direction: column; gap: 4px; }
+.kanban-empty { font-size: 10px; color: var(--vscode-descriptionForeground); text-align: center; padding: 4px; }
+.kanban-card { background: var(--vscode-list-inactiveSelectionBackground, rgba(128,128,128,0.08)); border: 1px solid var(--panel-border); border-radius: 4px; padding: 6px; font-size: 11px; transition: background 0.15s; }
+.kanban-card:hover { background: var(--vscode-list-hoverBackground, rgba(128,128,128,0.15)); }
+
+/* Agent Card */
+.agent-card-inner { display: flex; flex-direction: column; gap: 3px; }
+.agent-card-header { display: flex; align-items: center; justify-content: space-between; }
+.agent-type-badge { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--prism-blue); }
+.agent-card-story { display: flex; flex-direction: column; gap: 1px; }
+.agent-story-id { font-size: 9px; font-family: var(--vscode-editor-font-family, monospace); color: var(--vscode-descriptionForeground); }
+.agent-story-title { font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.agent-card-branch { font-size: 10px; font-family: var(--vscode-editor-font-family, monospace); color: var(--vscode-descriptionForeground); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Progress Bar */
+.progress-bar-wrap { display: flex; flex-direction: column; gap: 3px; }
+.progress-bar-track { width: 100%; background: var(--vscode-list-inactiveSelectionBackground, rgba(128,128,128,0.15)); border-radius: 3px; overflow: hidden; }
+.progress-bar-fill { background: var(--prism-green); border-radius: 3px; transition: width 0.3s ease; }
+.progress-bar-label { font-size: 10px; color: var(--vscode-descriptionForeground); }
+
+/* Workspaces layout */
+.workspaces-root { padding: 8px; height: 100%; overflow: auto; }
+.workspaces-top { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+@media (max-width: 600px) { .workspaces-top { grid-template-columns: 1fr; } }
+.workspaces-section { overflow: auto; max-height: 280px; }

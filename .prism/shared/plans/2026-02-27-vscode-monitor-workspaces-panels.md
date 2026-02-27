@@ -44,9 +44,9 @@ Add Monitor and Workspaces as rich React webview panels in the VSCode **bottom p
 ## Success Criteria
 
 ### Automated Verification
-- [ ] Extension compiles: `cd cmd/prism-vscode && npm run compile`
-- [ ] TypeScript checks pass: `cd cmd/prism-vscode && npx tsc --noEmit`
-- [ ] Panel webview builds: `cd cmd/prism-vscode/webview-panel && npm run build`
+- [x] Extension compiles: `cd cmd/prism-vscode && npm run compile`
+- [x] TypeScript checks pass: `cd cmd/prism-vscode && npx tsc --noEmit`
+- [x] Panel webview builds: `cd cmd/prism-vscode/webview-panel && npm run build`
 - [ ] Full package builds: `cd cmd/prism-vscode && npm run package`
 
 ### Manual Verification
@@ -300,10 +300,12 @@ cd cmd/prism-vscode && npm run compile
 ```
 
 ### Phase 1 Verification
-- [ ] `npm run compile` succeeds (extension + all 3 webviews build)
-- [ ] "Prism Monitor" and "Prism Workspaces" tabs appear in bottom panel
-- [ ] Both show placeholder content
-- [ ] Dev mode works (`npm run watch` + `.vite-panel-port` detection)
+- [x] `npm run compile` succeeds (extension + all 3 webviews build)
+- [ ] "Prism Monitor" and "Prism Workspaces" tabs appear in bottom panel (manual)
+- [ ] Both show placeholder content (manual)
+- [ ] Dev mode works (`npm run watch` + `.vite-panel-port` detection) (manual)
+
+**Checkpoint**: [x] Phase 1 complete — 2026-02-27
 
 ---
 
@@ -534,14 +536,16 @@ useEffect(() => {
 ```
 
 ### Phase 2 Verification
-- [ ] `npm run compile` succeeds
-- [ ] Monitor panel shows all 4 sections with real data
-- [ ] Quality gates load from `stories.json`
-- [ ] Running a gate shows spinner → pass/fail result
-- [ ] "Run All" executes concurrently
-- [ ] Agent kanban shows agents from Office
-- [ ] Execution history populates from completed stories
-- [ ] Responsive layout adjusts when panel resized
+- [x] `npm run compile` succeeds
+- [ ] Monitor panel shows all 4 sections with real data (manual)
+- [ ] Quality gates load from `stories.json` (manual)
+- [ ] Running a gate shows spinner → pass/fail result (manual)
+- [ ] "Run All" executes concurrently (manual)
+- [ ] Agent kanban shows agents from Office (manual)
+- [ ] Execution history populates from completed stories (manual)
+- [ ] Responsive layout adjusts when panel resized (manual)
+
+**Checkpoint**: [x] Phase 2 complete — 2026-02-27
 
 ---
 

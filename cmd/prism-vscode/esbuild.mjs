@@ -62,6 +62,13 @@ function copyOfficeAssets() {
   }
 }
 
+function copyPanelAssets() {
+  const src = join(__dirname, "dist", "webview-panel")
+  if (!existsSync(src)) {
+    console.log("webview-panel not yet built — skipping copyPanelAssets()")
+  }
+}
+
 async function main() {
   if (watch) {
     const ctx = await esbuild.context(extensionConfig)
@@ -70,6 +77,7 @@ async function main() {
   } else {
     await esbuild.build(extensionConfig)
     copyOfficeAssets()
+    copyPanelAssets()
     console.log("Build complete!")
   }
 }
