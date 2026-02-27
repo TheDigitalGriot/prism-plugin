@@ -741,7 +741,7 @@ globalWatcher.onDidChange(() => this._refreshProjects())
 ```
 
 ### Phase 3 Verification
-- [ ] `npm run compile` succeeds
+- [x] `npm run compile` succeeds — 2026-02-27
 - [ ] Workspaces panel discovers sibling `.prism/` projects
 - [ ] Current workspace is visually highlighted
 - [ ] Progress bars show correct story completion
@@ -751,6 +751,8 @@ globalWatcher.onDidChange(() => this._refreshProjects())
 - [ ] "Open Project" switches VSCode workspace folder
 - [ ] Agent kanban shows worktrees grouped by agent status
 - [ ] File watcher triggers refresh on sibling project changes
+
+**Checkpoint**: [x] Phase 3 complete — 2026-02-27
 
 ---
 

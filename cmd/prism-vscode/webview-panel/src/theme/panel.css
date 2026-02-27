@@ -107,3 +107,67 @@ code { font-family: var(--vscode-editor-font-family, monospace); font-size: 0.9e
 .workspaces-top { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
 @media (max-width: 600px) { .workspaces-top { grid-template-columns: 1fr; } }
 .workspaces-section { overflow: auto; max-height: 280px; }
+.panel-section-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.panel-section-title-row .panel-section-title { margin-bottom: 0; }
+
+/* Shared add/action buttons */
+.workspaces-add-btn { margin-top: 8px; font-size: 11px; padding: 4px 10px; border: 1px solid var(--panel-border); border-radius: 3px; cursor: pointer; width: 100%; color: var(--panel-fg); background: transparent; }
+.workspaces-add-btn:hover { background: var(--vscode-list-hoverBackground, rgba(128,128,128,0.1)); }
+.worktrees-refresh-btn { background: none; border: none; cursor: pointer; color: var(--vscode-descriptionForeground); font-size: 13px; padding: 0 4px; line-height: 1; }
+.worktrees-refresh-btn:hover { color: var(--panel-fg); }
+
+/* Project list */
+.project-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+
+/* Project Card */
+.project-card { border: 1px solid var(--panel-border); border-radius: 4px; padding: 8px; font-size: 11px; }
+.project-card--current { border-color: var(--prism-blue); }
+.project-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 4px; margin-bottom: 6px; }
+.project-card-title-row { display: flex; align-items: center; gap: 5px; flex: 1; min-width: 0; overflow: hidden; }
+.project-current-dot { color: var(--prism-blue); font-size: 9px; flex-shrink: 0; }
+.project-name { font-weight: 600; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.project-branch-badge { font-size: 9px; font-family: var(--vscode-editor-font-family, monospace); color: var(--vscode-descriptionForeground); background: var(--vscode-list-inactiveSelectionBackground, rgba(128,128,128,0.1)); padding: 1px 5px; border-radius: 8px; white-space: nowrap; flex-shrink: 0; }
+.project-card-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.project-expand-btn { font-size: 10px; padding: 2px 6px; border: 1px solid var(--panel-border); border-radius: 3px; cursor: pointer; background: transparent; color: var(--vscode-descriptionForeground); white-space: nowrap; }
+.project-expand-btn:hover { color: var(--panel-fg); }
+.project-open-btn { font-size: 10px; padding: 2px 8px; background: var(--vscode-button-background, #3B82F6); color: var(--vscode-button-foreground, #fff); border: none; border-radius: 3px; cursor: pointer; white-space: nowrap; }
+.project-open-btn:hover { opacity: 0.85; }
+.project-card-progress { margin-top: 2px; }
+.project-no-stories { font-size: 10px; color: var(--vscode-descriptionForeground); font-style: italic; }
+.project-epics { list-style: none; margin: 8px 0 0; padding: 6px 0 0; border-top: 1px solid var(--panel-border); display: flex; flex-direction: column; gap: 6px; }
+.project-epic-item { display: flex; flex-direction: column; gap: 3px; }
+.project-epic-name { font-size: 10px; color: var(--vscode-descriptionForeground); font-weight: 500; }
+
+/* Worktree list */
+.worktree-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0; }
+.worktree-list li { border-bottom: 1px solid var(--panel-border); }
+.worktree-list li:last-child { border-bottom: none; }
+
+/* Worktree Row */
+.worktree-row { display: flex; align-items: center; gap: 6px; padding: 6px 2px; font-size: 11px; }
+.worktree-type-icon { font-size: 9px; color: var(--vscode-descriptionForeground); flex-shrink: 0; width: 10px; text-align: center; }
+.worktree-type-icon--main { color: var(--prism-green); }
+.worktree-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.worktree-branch-row { display: flex; align-items: center; gap: 5px; overflow: hidden; }
+.worktree-branch { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.worktree-type-label { font-size: 9px; color: var(--vscode-descriptionForeground); flex-shrink: 0; }
+.worktree-agent-badge { display: flex; align-items: center; gap: 3px; flex-shrink: 0; }
+.worktree-agent-type { font-size: 9px; color: var(--prism-blue); font-weight: 600; }
+.worktree-head { font-size: 10px; }
+.worktree-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.worktree-open-btn { font-size: 10px; padding: 2px 8px; background: var(--vscode-button-background, #3B82F6); color: var(--vscode-button-foreground, #fff); border: none; border-radius: 3px; cursor: pointer; }
+.worktree-open-btn:hover { opacity: 0.85; }
+.worktree-delete-btn { font-size: 11px; padding: 2px 6px; background: transparent; border: 1px solid var(--panel-border); border-radius: 3px; cursor: pointer; color: var(--prism-red); line-height: 1; }
+.worktree-delete-btn:hover:not(:disabled) { background: rgba(239,68,68,0.1); }
+.worktree-delete-btn:disabled { opacity: 0.3; cursor: default; }
+
+/* New Worktree Dialog */
+.new-worktree-dialog { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; padding: 8px; background: var(--vscode-list-inactiveSelectionBackground, rgba(128,128,128,0.08)); border-radius: 4px; border: 1px solid var(--panel-border); }
+.new-worktree-input { width: 100%; font-size: 11px; font-family: var(--vscode-font-family); padding: 4px 8px; background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border, var(--panel-border)); border-radius: 3px; outline: none; }
+.new-worktree-input:focus { border-color: var(--prism-blue); }
+.new-worktree-actions { display: flex; gap: 6px; }
+.new-worktree-create-btn { flex: 1; font-size: 11px; padding: 4px 10px; background: var(--vscode-button-background, #3B82F6); color: var(--vscode-button-foreground, #fff); border: none; border-radius: 3px; cursor: pointer; }
+.new-worktree-create-btn:hover:not(:disabled) { opacity: 0.85; }
+.new-worktree-create-btn:disabled { opacity: 0.4; cursor: default; }
+.new-worktree-cancel-btn { font-size: 11px; padding: 4px 10px; background: transparent; border: 1px solid var(--panel-border); border-radius: 3px; cursor: pointer; color: var(--panel-fg); }
+.new-worktree-cancel-btn:hover:not(:disabled) { background: var(--vscode-list-hoverBackground, rgba(128,128,128,0.1)); }
