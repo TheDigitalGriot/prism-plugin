@@ -3,12 +3,26 @@
   --panel-bg: var(--vscode-panel-background);
   --panel-fg: var(--vscode-foreground);
   --panel-border: var(--vscode-panel-border);
+  /* Spectral color palette */
   --prism-blue: #3B82F6;
   --prism-teal: #14B8A6;
   --prism-green: #22C55E;
   --prism-amber: #F59E0B;
   --prism-purple: #7C3AED;
   --prism-red: #EF4444;
+  /* Spectral background & surface tokens */
+  --prism-bg: #1a1d23;
+  --prism-bg-deep: #13151a;
+  --prism-bg-panel: #1e2128;
+  --prism-bg-card: #252830;
+  --prism-bg-hover: #2a2d36;
+  /* Spectral border tokens */
+  --prism-border: #2d3039;
+  --prism-border-active: #3d4049;
+  /* Spectral text tokens */
+  --prism-text: #c8ccd4;
+  --prism-text-dim: #6b7280;
+  --prism-text-muted: #4b5260;
 }
 * { box-sizing: border-box; }
 body { margin: 0; padding: 0; background: var(--panel-bg); color: var(--panel-fg); font-family: var(--vscode-font-family); font-size: var(--vscode-font-size); overflow: auto; }
@@ -171,3 +185,12 @@ code { font-family: var(--vscode-editor-font-family, monospace); font-size: 0.9e
 .new-worktree-create-btn:disabled { opacity: 0.4; cursor: default; }
 .new-worktree-cancel-btn { font-size: 11px; padding: 4px 10px; background: transparent; border: 1px solid var(--panel-border); border-radius: 3px; cursor: pointer; color: var(--panel-fg); }
 .new-worktree-cancel-btn:hover:not(:disabled) { background: var(--vscode-list-hoverBackground, rgba(128,128,128,0.1)); }
+
+/* ── PrismPanel unified layout ─────────────────────────────────────────────── */
+.prism-panel-root { width: 100%; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+.prism-main-content { flex: 1; display: flex; overflow: hidden; }
+.prism-left-panel { display: flex; flex-direction: column; overflow: hidden; }
+.prism-right-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 200px; }
+.prism-view-content { flex: 1; overflow: auto; background: var(--prism-bg-panel); }
+.prism-workspaces-header { height: 32px; display: flex; align-items: center; padding: 0 12px; border-bottom: 1px solid var(--prism-border); background: var(--prism-bg-panel); flex-shrink: 0; }
+.prism-connection-status { margin-left: auto; font-size: 9px; color: var(--prism-text-muted); font-family: monospace; display: flex; align-items: center; gap: 4px; }

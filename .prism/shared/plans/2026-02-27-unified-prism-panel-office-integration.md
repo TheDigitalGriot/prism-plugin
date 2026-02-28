@@ -380,7 +380,19 @@ Add to `cmd/prism-vscode/webview-panel/src/theme/panel.css`:
 cd cmd/prism-vscode/webview-panel && npm run build
 ```
 
-**Checkpoint**: Build succeeds. The webview renders PrismPanel with split layout, divider, toggle, and status bar. MonitorView and OfficeApp swap correctly.
+**Checkpoint**: [x] Build succeeds. The webview renders PrismPanel with split layout, divider, toggle, and status bar. MonitorView and OfficeApp swap correctly.
+
+## Phase 2 Complete — 2026-02-27
+
+**Changes**:
+- Updated `main.tsx` — removed data-view routing, renders `<PrismPanel />` directly
+- Created `src/components/DraggableDivider.tsx` — 5px divider with grip dots and wide hit target
+- Created `src/components/ViewToggle.tsx` — 32px toggle bar with Monitor/Office buttons and agent count indicator
+- Created `src/components/StatusBar.tsx` — 22px status bar with spectral gradient "PRISM" text
+- Created `src/PrismPanel.tsx` — root component with drag state, split layout, message handling
+- Updated `src/theme/panel.css` — spectral CSS variables (:root) and layout classes
+
+**Verification**: `npm run build` → tsc -b passed, 76 modules, 331.82 kB bundle, 688ms
 
 ---
 
