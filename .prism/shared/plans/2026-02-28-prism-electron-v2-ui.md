@@ -683,12 +683,14 @@ switch (activeTab?.type) {
 ```
 
 ### Checkpoint 6
-- [ ] Clicking a story in StoriesPanel opens StoryDetailView with correct story data
-- [ ] StoryDetailView shows status, description, files, segmented progress bar
-- [ ] FileContentView renders mock code with line numbers and basic highlighting
-- [ ] GitGraphView shows mock commit graph with lanes and ref badges
-- [ ] Tab switching between all view types works
-- [ ] `npx tsc --noEmit` passes
+- [x] Clicking a story in StoriesPanel opens StoryDetailView with correct story data
+- [x] StoryDetailView shows status, description, files, segmented progress bar
+- [x] FileContentView renders mock code with line numbers and basic highlighting
+- [x] GitGraphView shows mock commit graph with lanes and ref badges
+- [x] Tab switching between all view types works
+- [x] `npx tsc --noEmit` passes
+
+**Checkpoint**: [x] Phase 6 complete
 
 ---
 
