@@ -120,13 +120,15 @@ This avoids duplicating files while keeping both apps independently buildable.
 
 ### Steps
 
-**1.1 — Add dependencies to `cmd/prism-electron/package.json`**
+**1.1 — Add dependencies to `cmd/prism-electron/package.json`** ✅
 - Add `chokidar` (file watching)
-- Add `electron-store` (optional, for settings persistence)
-- Confirm `@anthropic-ai/claude-agent-sdk` is present (for future SDK use)
-- Confirm TypeScript path aliases are configured in `tsconfig.json`
+- uuid + @types/uuid, @types/node (dev deps)
+- Updated productName to "Prism"
+- TypeScript path aliases configured in `tsconfig.json` (`@prism-core/*` → `../prism-vscode/src/*`)
+- Vite alias configured in `vite.main.config.mts`
+- Note: `electron-store` deferred to Phase 5; `@anthropic-ai/claude-agent-sdk` deferred (not needed yet)
 
-**1.2 — Create `src/prism/config.ts` (Electron version)**
+**1.2 — Create `src/prism/config.ts` (Electron version)** ✅
 
 Replace `vscode.workspace.workspaceFolders` + `vscode.workspace.fs.stat` with `fs.stat`:
 
@@ -157,7 +159,7 @@ export async function detectStoriesPath(prismDir: string): Promise<string | unde
 export function getPrismConfig(prismDir: string) { /* same as vscode version */ }
 ```
 
-**1.3 — Create `src/prism/watcher.ts` (Electron version)**
+**1.3 — Create `src/prism/watcher.ts` (Electron version)** ✅
 
 Replace `vscode.FileSystemWatcher` with `chokidar`:
 
@@ -195,7 +197,7 @@ export class PrismWatcher extends EventEmitter {
 }
 ```
 
-**1.4 — Create `src/hosts/electron/ElectronIPCBridge.ts`**
+**1.4 — Create `src/hosts/electron/ElectronIPCBridge.ts`** ✅
 
 This file does what `VscodeWebviewProvider.ts` does: instantiates `PrismController`, registers IPC handlers, and wires bidirectional communication. Key differences:
 - Uses `ipcMain.handle('grpc_request', ...)` instead of `webview.onDidReceiveMessage`
@@ -245,7 +247,7 @@ export class ElectronIPCBridge {
 }
 ```
 
-**1.5 — Create `src/hosts/electron/ElectronPrismController.ts`**
+**1.5 — Create `src/hosts/electron/ElectronPrismController.ts`** ✅
 
 This replaces `PrismController` (which imports `vscode`). It extends the agnostic logic from `src/core/controller/index.ts` but substitutes:
 - `vscode.EventEmitter` → Node.js `EventEmitter`
@@ -256,7 +258,7 @@ This replaces `PrismController` (which imports `vscode`). It extends the agnosti
 
 The cleanest approach at this stage: copy `core/controller/index.ts` into `src/hosts/electron/ElectronPrismController.ts`, replace the 6 VSCode API usages (lines identified in research), and remove the `vscode` import.
 
-**1.6 — Rewrite `src/main.ts`**
+**1.6 — Rewrite `src/main.ts`** ✅
 
 ```typescript
 import { app, BrowserWindow } from 'electron';
@@ -294,7 +296,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
 app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
 ```
 
-**1.7 — Create `src/preload.ts`**
+**1.7 — Create `src/preload.ts`** ✅
 
 ```typescript
 import { contextBridge, ipcRenderer } from 'electron';
@@ -320,7 +322,9 @@ declare global {
 }
 ```
 
-**Checkpoint 1:** `npm start` launches the window. DevTools shows no import errors. `ipcMain` handlers registered (verify via DevTools console logging).
+**Checkpoint 1:** ✅ `npm start` launches the window. Build succeeded: main.ts + preload.ts compiled cleanly. `ipcMain` handlers registered. One fix applied: `initPrismDir` extracted to local `src/prism/init.ts` (prism-vscode's `prism/init.ts` has a vscode import in the same file via `initPrismDirInWorkspace`; local copy avoids the transitive vscode dependency).
+
+**Session Note 2026-02-28:** Phase 1 complete. Next: Phase 2 — React Webview Setup (copy webview-ui from prism-vscode and add `electron.ts` transport adapter).
 
 ---
 
@@ -409,7 +413,15 @@ Replace VSCode CSS variables with Electron-appropriate defaults:
 }
 ```
 
-**Checkpoint 2:** `npm start` shows the full Prism React UI. WelcomeView renders (no `.prism/` detected). DevTools console shows gRPC subscription established.
+**Checkpoint 2:** ✅ `npm start` launches the Electron window with the full Prism React UI. Vite dev server runs on port 5173 from webview-ui/. Main.ts and preload.ts compiled cleanly via Vite/Electron Forge. Webview-ui TypeScript type check passes with zero errors. Key implementation notes:
+- webview-ui/src/electron.ts created: re-dispatches ipcRenderer grpc_response events as window "message" events so grpc-client-base.ts works without modification
+- vscode.ts removed from webview-ui copy (replaced by electron.ts)
+- theme.css: all --vscode-* vars replaced with hardcoded Prism dark theme values (#1a1b2e bg, #e2e8f0 fg)
+- spectral.css: body.vscode-light and body.vscode-high-contrast selectors removed
+- vite.renderer.config.mts: root set to ./webview-ui with React + Tailwind plugins
+- @tailwindcss/vite + tailwindcss installed in main package for renderer config
+
+**Session Note 2026-02-28:** Phase 2 complete. Next: Phase 3 — Claude CLI Integration + Workspace Detection. The UI loads but shows WelcomeView (no project opened). File menu → Open Project should trigger ElectronIPCBridge.openProject() → dialog.showOpenDialog → controller.setProjectDir() → detectPrismDir() → state update → ChatView.
 
 ---
 

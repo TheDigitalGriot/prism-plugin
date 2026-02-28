@@ -1,0 +1,96 @@
+@import "tailwindcss";
+@import "./theme/theme.css";
+@import "./theme/spectral.css";
+
+/* -------------------------------------------------------------------------
+ * Tailwind v4 theme — maps Prism tokens to Tailwind utility classes
+ * ----------------------------------------------------------------------- */
+@theme {
+  /* Colors */
+  --color-background: var(--prism-bg);
+  --color-background-panel: var(--prism-bg-panel);
+  --color-background-editor: var(--prism-bg-editor);
+  --color-background-hover: var(--prism-bg-hover);
+  --color-background-active: var(--prism-bg-active);
+  --color-background-input: var(--prism-bg-input);
+  --color-background-button: var(--prism-bg-button);
+  --color-background-button-hover: var(--prism-bg-button-hover);
+  --color-background-button-secondary: var(--prism-bg-button-secondary);
+
+  --color-foreground: var(--prism-fg);
+  --color-foreground-muted: var(--prism-fg-muted);
+  --color-foreground-disabled: var(--prism-fg-disabled);
+  --color-foreground-button: var(--prism-fg-button);
+  --color-foreground-link: var(--prism-fg-link);
+
+  --color-border: var(--prism-border);
+  --color-border-focus: var(--prism-border-focus);
+  --color-border-input: var(--prism-border-input);
+
+  --color-success: var(--prism-success);
+  --color-warning: var(--prism-warning);
+  --color-error: var(--prism-error);
+  --color-info: var(--prism-info);
+
+  /* Prism phase colors */
+  --color-prism-blue: var(--prism-blue);
+  --color-prism-teal: var(--prism-teal);
+  --color-prism-green: var(--prism-green);
+  --color-prism-amber: var(--prism-amber);
+  --color-prism-purple: var(--prism-purple);
+
+  /* Typography */
+  --font-sans: var(--prism-font-family);
+  --font-mono: var(--prism-font-mono);
+
+  --text-xs: calc(0.85 * var(--prism-font-size));
+  --text-sm: calc(0.95 * var(--prism-font-size));
+  --text-base: var(--prism-font-size);
+  --text-lg: calc(1.25 * var(--prism-font-size));
+  --text-xl: calc(1.5 * var(--prism-font-size));
+  --text-2xl: calc(2 * var(--prism-font-size));
+
+  /* Border radius */
+  --radius-sm: var(--prism-radius);
+  --radius: var(--prism-radius-md);
+  --radius-lg: var(--prism-radius-lg);
+}
+
+/* -------------------------------------------------------------------------
+ * Base styles
+ * ----------------------------------------------------------------------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+body {
+  background-color: var(--prism-bg);
+  color: var(--prism-fg);
+  font-family: var(--prism-font-family);
+  font-size: var(--prism-font-size);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Prevent text selection on UI chrome */
+button,
+[role="button"] {
+  user-select: none;
+}

@@ -1,0 +1,87 @@
+/**
+ * Prism Electron theme.
+ *
+ * Hardcoded dark theme — no VS Code CSS variable dependencies.
+ * All --prism-* tokens use Electron-appropriate defaults.
+ */
+
+:root {
+  /* -------------------------------------------------------------------------
+   * Typography
+   * ----------------------------------------------------------------------- */
+  --prism-font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --prism-font-mono: ui-monospace, 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  --prism-font-size: 13px;
+
+  /* -------------------------------------------------------------------------
+   * Backgrounds
+   * ----------------------------------------------------------------------- */
+  --prism-bg: #1a1b2e;
+  --prism-bg-panel: #16172b;
+  --prism-bg-editor: #1a1b2e;
+  --prism-bg-hover: rgb(255 255 255 / 0.05);
+  --prism-bg-active: rgb(255 255 255 / 0.10);
+  --prism-bg-input: #252640;
+  --prism-bg-dropdown: #252640;
+  --prism-bg-button: #0e639c;
+  --prism-bg-button-hover: #1177bb;
+  --prism-bg-button-secondary: #2d2e4a;
+
+  /* -------------------------------------------------------------------------
+   * Foregrounds / Text
+   * ----------------------------------------------------------------------- */
+  --prism-fg: #e2e8f0;
+  --prism-fg-muted: #94a3b8;
+  --prism-fg-disabled: #64748b;
+  --prism-fg-active: #ffffff;
+  --prism-fg-button: #ffffff;
+  --prism-fg-editor: #e2e8f0;
+  --prism-fg-link: #60a5fa;
+  --prism-fg-link-hover: #93c5fd;
+
+  /* -------------------------------------------------------------------------
+   * Borders
+   * ----------------------------------------------------------------------- */
+  --prism-border: #2d2e4a;
+  --prism-border-focus: #3b82f6;
+  --prism-border-input: transparent;
+
+  /* -------------------------------------------------------------------------
+   * Status colors
+   * ----------------------------------------------------------------------- */
+  --prism-success: #4ade80;
+  --prism-warning: #fbbf24;
+  --prism-error: #f87171;
+  --prism-info: #60a5fa;
+
+  /* -------------------------------------------------------------------------
+   * Scrollbar
+   * ----------------------------------------------------------------------- */
+  --prism-scrollbar: rgba(100, 100, 150, 0.4);
+  --prism-scrollbar-hover: rgba(100, 100, 150, 0.7);
+
+  /* -------------------------------------------------------------------------
+   * Radius / Spacing
+   * ----------------------------------------------------------------------- */
+  --prism-radius: 4px;
+  --prism-radius-md: 6px;
+  --prism-radius-lg: 8px;
+}
+
+/* -----------------------------------------------------------------------
+ * Scrollbar styling
+ * --------------------------------------------------------------------- */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--prism-scrollbar);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--prism-scrollbar-hover);
+}

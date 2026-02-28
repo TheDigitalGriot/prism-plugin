@@ -1,0 +1,148 @@
+/**
+ * Prism spectral color system.
+ * 4-stop gradient: Blue (Research) → Teal (Plan) → Green (Implement) → Amber (Validate)
+ *
+ * Dark theme (default) + light theme overrides below.
+ */
+
+:root {
+  /* Phase colors */
+  --prism-blue: #3b82f6;
+  --prism-teal: #14b8a6;
+  --prism-green: #22c55e;
+  --prism-amber: #f59e0b;
+  --prism-purple: #7c3aed;
+
+  /* Phase semantic colors */
+  --prism-phase-idle: #6b7280;
+  --prism-phase-research: var(--prism-blue);
+  --prism-phase-plan: var(--prism-teal);
+  --prism-phase-implement: var(--prism-green);
+  --prism-phase-validate: var(--prism-amber);
+
+  /* Spectral gradient */
+  --prism-gradient: linear-gradient(
+    90deg,
+    var(--prism-blue) 0%,
+    var(--prism-teal) 33%,
+    var(--prism-green) 66%,
+    var(--prism-amber) 100%
+  );
+
+  --prism-gradient-vertical: linear-gradient(
+    180deg,
+    var(--prism-blue) 0%,
+    var(--prism-teal) 33%,
+    var(--prism-green) 66%,
+    var(--prism-amber) 100%
+  );
+
+  /* Muted variants (20% opacity on dark bg) */
+  --prism-blue-muted: rgb(59 130 246 / 0.2);
+  --prism-teal-muted: rgb(20 184 166 / 0.2);
+  --prism-green-muted: rgb(34 197 94 / 0.2);
+  --prism-amber-muted: rgb(245 158 11 / 0.2);
+  --prism-purple-muted: rgb(124 58 237 / 0.2);
+
+  /* Phase transition duration */
+  --prism-phase-transition: 400ms;
+}
+
+/* -------------------------------------------------------------------------
+ * Spectral text gradient utility
+ * ---------------------------------------------------------------------- */
+.prism-text-gradient {
+  background: var(--prism-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* -------------------------------------------------------------------------
+ * Shimmer animation (loading states, progress bars)
+ * ---------------------------------------------------------------------- */
+@keyframes prism-shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.prism-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--prism-blue),
+    var(--prism-teal),
+    var(--prism-green),
+    var(--prism-amber),
+    var(--prism-blue)
+  );
+  background-size: 200% auto;
+  animation: prism-shimmer 3s linear infinite;
+}
+
+/* -------------------------------------------------------------------------
+ * Phase transition — smooth color shifts on phase-colored elements
+ * ---------------------------------------------------------------------- */
+.prism-phase-transition {
+  transition:
+    background-color var(--prism-phase-transition) ease,
+    border-color var(--prism-phase-transition) ease,
+    color var(--prism-phase-transition) ease,
+    box-shadow var(--prism-phase-transition) ease;
+}
+
+/* -------------------------------------------------------------------------
+ * Phase indicator bar — glowing border per phase
+ * ---------------------------------------------------------------------- */
+@keyframes prism-glow-pulse {
+  0%, 100% { opacity: 0.8; }
+  50%       { opacity: 1.0; }
+}
+
+.prism-phase-bar-research {
+  border-bottom: 2px solid var(--prism-blue);
+  box-shadow: 0 2px 8px rgb(59 130 246 / 0.3);
+  animation: prism-glow-pulse 2s ease-in-out infinite;
+}
+
+.prism-phase-bar-plan {
+  border-bottom: 2px solid var(--prism-teal);
+  box-shadow: 0 2px 8px rgb(20 184 166 / 0.3);
+  animation: prism-glow-pulse 2s ease-in-out infinite;
+}
+
+.prism-phase-bar-implement {
+  border-bottom: 2px solid var(--prism-green);
+  box-shadow: 0 2px 8px rgb(34 197 94 / 0.3);
+  animation: prism-glow-pulse 2s ease-in-out infinite;
+}
+
+.prism-phase-bar-validate {
+  border-bottom: 2px solid var(--prism-amber);
+  box-shadow: 0 2px 8px rgb(245 158 11 / 0.3);
+  animation: prism-glow-pulse 2s ease-in-out infinite;
+}
+
+/* -------------------------------------------------------------------------
+ * Fade-in for new messages / log entries
+ * ---------------------------------------------------------------------- */
+@keyframes prism-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.prism-fade-in {
+  animation: prism-fade-in 200ms ease-out forwards;
+}
+
+/* -------------------------------------------------------------------------
+ * Prism header accent bar (1px spectral gradient at top of sidebar)
+ * ---------------------------------------------------------------------- */
+.prism-header-accent {
+  height: 2px;
+  background: var(--prism-gradient);
+  flex-shrink: 0;
+}
