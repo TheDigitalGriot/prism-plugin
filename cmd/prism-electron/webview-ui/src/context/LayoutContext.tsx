@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer } from "react"
+import React, { createContext, useContext, useEffect, useReducer, useRef } from "react"
 
 // ---------------------------------------------------------------------------
 // Types
@@ -60,6 +60,15 @@ const DEFAULT_STATE: LayoutState = {
 // Reducer
 // ---------------------------------------------------------------------------
 
+// Fields persisted across restarts (tabs/activeTabId/bottomTab reset each session)
+interface PersistedLayoutState {
+  leftPanel: LeftPanel
+  rightPanel: RightPanel
+  leftCollapsed: boolean
+  rightCollapsed: boolean
+  bottomOpen: boolean
+}
+
 type LayoutAction =
   | { type: "SET_LEFT_PANEL"; panel: LeftPanel }
   | { type: "SET_RIGHT_PANEL"; panel: RightPanel }
@@ -70,6 +79,7 @@ type LayoutAction =
   | { type: "SET_ACTIVE_TAB"; tabId: string }
   | { type: "TOGGLE_BOTTOM" }
   | { type: "SET_BOTTOM_TAB"; tab: BottomTab }
+  | { type: "LOAD_PERSISTED_STATE"; state: Partial<PersistedLayoutState> }
 
 function layoutReducer(state: LayoutState, action: LayoutAction): LayoutState {
   switch (action.type) {
@@ -136,6 +146,16 @@ function layoutReducer(state: LayoutState, action: LayoutAction): LayoutState {
     case "SET_BOTTOM_TAB":
       return { ...state, bottomTab: action.tab }
 
+    case "LOAD_PERSISTED_STATE":
+      return {
+        ...state,
+        leftPanel: action.state.leftPanel ?? state.leftPanel,
+        rightPanel: action.state.rightPanel ?? state.rightPanel,
+        leftCollapsed: action.state.leftCollapsed ?? state.leftCollapsed,
+        rightCollapsed: action.state.rightCollapsed ?? state.rightCollapsed,
+        bottomOpen: action.state.bottomOpen ?? state.bottomOpen,
+      }
+
     default:
       return state
   }
@@ -149,6 +169,37 @@ const LayoutContext = createContext<LayoutContextValue | null>(null)
 
 export const LayoutProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(layoutReducer, DEFAULT_STATE)
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Load persisted layout state on mount
+  useEffect(() => {
+    if (window.electronAPI) {
+      void window.electronAPI.invoke("prism:loadLayoutState").then((loaded) => {
+        if (loaded) {
+          dispatch({ type: "LOAD_PERSISTED_STATE", state: loaded as Partial<PersistedLayoutState> })
+        }
+      })
+    }
+  }, [])
+
+  // Debounced save on layout state change (500ms)
+  useEffect(() => {
+    if (!window.electronAPI) return
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    saveTimerRef.current = setTimeout(() => {
+      const toSave: PersistedLayoutState = {
+        leftPanel: state.leftPanel,
+        rightPanel: state.rightPanel,
+        leftCollapsed: state.leftCollapsed,
+        rightCollapsed: state.rightCollapsed,
+        bottomOpen: state.bottomOpen,
+      }
+      void window.electronAPI!.invoke("prism:saveLayoutState", toSave)
+    }, 500)
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    }
+  }, [state.leftPanel, state.rightPanel, state.leftCollapsed, state.rightCollapsed, state.bottomOpen])
 
   const actions: LayoutActions = {
     setLeftPanel: (panel) => dispatch({ type: "SET_LEFT_PANEL", panel }),

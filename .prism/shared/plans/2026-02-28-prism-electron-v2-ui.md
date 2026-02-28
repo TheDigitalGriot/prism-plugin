@@ -1039,14 +1039,16 @@ Move the existing `App.tsx` message handler (lines 46-70) into `AppShell`. Trans
 - `spectrumPause` / `spectrumStop` → pass through to `SpectrumServiceClient` (unchanged)
 
 ### Checkpoint 9 (Final)
-- [ ] All keyboard shortcuts work (Ctrl+B, Ctrl+Shift+B, Ctrl+J, Ctrl+1/2/3, Ctrl+W, Escape)
-- [ ] Layout state persists across app restarts (collapsed rails, active panels, bottom panel)
-- [ ] HeaderBar shows project name and RPIV phase buttons
-- [ ] All animations are smooth and match spec timings
-- [ ] WelcomeView shows correctly for new users
-- [ ] Command message handler works (spectrum/phase commands from main process)
-- [ ] `npm run package` succeeds
-- [ ] `npm run make` produces working distributable
+- [x] All keyboard shortcuts work (Ctrl+B, Ctrl+Shift+B, Ctrl+J, Ctrl+1/2/3, Ctrl+W, Escape)
+- [x] Layout state persists across app restarts (collapsed rails, active panels, bottom panel)
+- [x] HeaderBar shows project name and RPIV phase buttons
+- [x] All animations are smooth and match spec timings
+- [x] WelcomeView shows correctly for new users
+- [x] Command message handler works (spectrum/phase commands from main process)
+- [x] `npm run package` succeeds
+- [x] `npm run make` produces working distributable
+
+**Checkpoint**: [x] Phase 9 complete
 
 ---
 

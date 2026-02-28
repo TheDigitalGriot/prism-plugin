@@ -7,7 +7,7 @@
 
 import * as path from 'path'
 import * as fs from 'fs'
-import { BrowserWindow, ipcMain, dialog, shell } from 'electron'
+import { BrowserWindow, app, ipcMain, dialog, shell } from 'electron'
 import { handleGrpcRequest } from '@prism-core/core/controller/grpc-handler'
 import { ElectronPrismController } from './ElectronPrismController'
 
@@ -224,6 +224,26 @@ export class ElectronIPCBridge {
         return { ok: false, error: String(err) }
       }
     })
+
+    // Persist layout state (panel positions, collapsed states)
+    const layoutStatePath = path.join(app.getPath('userData'), 'prism-layout-state.json')
+
+    ipcMain.handle('prism:saveLayoutState', async (_event, state: unknown) => {
+      try {
+        fs.writeFileSync(layoutStatePath, JSON.stringify(state, null, 2), 'utf-8')
+      } catch {
+        // Non-critical — layout persistence is best-effort
+      }
+    })
+
+    ipcMain.handle('prism:loadLayoutState', async () => {
+      try {
+        const raw = fs.readFileSync(layoutStatePath, 'utf-8')
+        return JSON.parse(raw)
+      } catch {
+        return null
+      }
+    })
   }
 
   /** Called from native menu "Open Project…" action. */
@@ -247,6 +267,8 @@ export class ElectronIPCBridge {
     ipcMain.removeHandler('prism:gitLog')
     ipcMain.removeHandler('prism:gitBranchInfo')
     ipcMain.removeHandler('prism:fileTree')
+    ipcMain.removeHandler('prism:saveLayoutState')
+    ipcMain.removeHandler('prism:loadLayoutState')
     this.controller.dispose()
   }
 }

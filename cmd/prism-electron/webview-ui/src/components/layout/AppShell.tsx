@@ -52,6 +52,38 @@ const CenterContent: React.FC = () => {
 export const AppShell: React.FC = () => {
   const layout = useLayout()
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const ctrl = e.ctrlKey || e.metaKey
+
+      if (ctrl && !e.shiftKey && e.key === "b") {
+        e.preventDefault()
+        layout.toggleLeftCollapsed()
+      }
+      if (ctrl && e.shiftKey && e.key === "B") {
+        e.preventDefault()
+        layout.toggleRightCollapsed()
+      }
+      if (ctrl && !e.shiftKey && e.key === "j") {
+        e.preventDefault()
+        layout.toggleBottom()
+      }
+      if (ctrl && e.key === "1") { e.preventDefault(); layout.setLeftPanel("files") }
+      if (ctrl && e.key === "2") { e.preventDefault(); layout.setLeftPanel("stories") }
+      if (ctrl && e.key === "3") { e.preventDefault(); layout.setLeftPanel("git") }
+      if (ctrl && e.key === "w") {
+        e.preventDefault()
+        layout.closeTab(layout.activeTabId)
+      }
+      if (e.key === "Escape") {
+        layout.setActiveTab("chat")
+      }
+    }
+    window.addEventListener("keydown", handler)
+    return () => window.removeEventListener("keydown", handler)
+  }, [layout])
+
   // Command message handler (moved from App.tsx)
   useEffect(() => {
     const handler = (event: MessageEvent) => {
