@@ -41,7 +41,7 @@ Merge the three separate VSCode webviews (Monitor bottom panel tab, Workspaces b
 ### Automated Verification
 - [ ] `cd cmd/prism-vscode/webview-panel && npm run build` — succeeds with all office code merged
 - [x] `cd cmd/prism-vscode && npm run compile` — no TypeScript errors
-- [ ] `cd cmd/prism-vscode && npx tsc --noEmit` — passes
+- [x] `cd cmd/prism-vscode && npx tsc --noEmit` — passes
 - [ ] `cd cmd/prism-vscode && npm run package` — VSIX packages successfully
 
 ### Manual Verification
@@ -708,7 +708,7 @@ vscode.commands.registerCommand("prism.workspaces.newWorktree", async () => {
 cd cmd/prism-vscode && npm run compile && npx tsc --noEmit
 ```
 
-**Checkpoint**: Extension compiles. Single "Prism" tab in bottom panel. Sidebar Office gone.
+**Checkpoint**: [x] Extension compiles. Single "Prism" tab in bottom panel. Sidebar Office gone.
 
 ---
 

@@ -63,23 +63,13 @@
           "id": "prism.stories",
           "name": "Stories",
           "when": "prism.hasStoriesJson"
-        },
-        {
-          "type": "webview",
-          "id": "prism.officeView",
-          "name": "Office"
         }
       ],
       "prism-panel": [
         {
           "type": "webview",
-          "id": "prism.monitorView",
-          "name": "Monitor"
-        },
-        {
-          "type": "webview",
-          "id": "prism.workspacesView",
-          "name": "Workspaces"
+          "id": "prism.mainView",
+          "name": "Prism"
         }
       ]
     },
@@ -237,11 +227,6 @@
         "category": "Prism"
       },
       {
-        "command": "prism.monitor.show",
-        "title": "Show Monitor",
-        "category": "Prism"
-      },
-      {
         "command": "prism.monitor.runGate",
         "title": "Run Quality Gate",
         "category": "Prism"
@@ -249,11 +234,6 @@
       {
         "command": "prism.monitor.runAllGates",
         "title": "Run All Quality Gates",
-        "category": "Prism"
-      },
-      {
-        "command": "prism.workspaces.show",
-        "title": "Show Workspaces",
         "category": "Prism"
       },
       {
@@ -471,16 +451,14 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
-    "compile": "npm run check-types && node esbuild.mjs && npm run build:office && npm run build:panel",
-    "watch": "npm-run-all -p watch:esbuild watch:webview watch:office watch:panel",
+    "compile": "npm run check-types && node esbuild.mjs && npm run build:panel",
+    "watch": "npm-run-all -p watch:esbuild watch:webview watch:panel",
     "watch:esbuild": "node esbuild.mjs --watch",
     "watch:webview": "cd webview-ui && npm run dev",
-    "watch:office": "cd webview-office && npm run dev",
     "watch:panel": "cd webview-panel && npm run dev",
     "build:webview": "cd webview-ui && npm run build",
-    "build:office": "cd webview-office && npm run build",
     "build:panel": "cd webview-panel && npm run build",
-    "package": "npm run check-types && npm run build:office && npm run build:panel && npm run build:webview && node esbuild.mjs --production",
+    "package": "npm run check-types && npm run build:panel && npm run build:webview && node esbuild.mjs --production",
     "check-types": "tsc --noEmit",
     "lint": "eslint src --ext ts",
     "test": "vscode-test",

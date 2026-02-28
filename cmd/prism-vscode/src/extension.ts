@@ -1,17 +1,13 @@
 import * as vscode from "vscode"
 import { VscodeWebviewProvider } from "./hosts/vscode/VscodeWebviewProvider"
-import { OfficeViewProvider } from "./hosts/vscode/OfficeViewProvider"
-import { MonitorViewProvider } from "./hosts/vscode/MonitorViewProvider"
-import { WorkspacesViewProvider } from "./hosts/vscode/WorkspacesViewProvider"
+import { PrismPanelProvider } from "./hosts/vscode/PrismPanelProvider"
 import { ResearchTreeDataProvider } from "./providers/research-tree"
 import { PlansTreeDataProvider } from "./providers/plans-tree"
 import { StoriesTreeDataProvider } from "./providers/stories-tree"
 import { WorkflowStatusBar } from "./providers/workflow-status"
 
 let _provider: VscodeWebviewProvider | undefined
-let _officeProvider: OfficeViewProvider | undefined
-let _monitorProvider: MonitorViewProvider | undefined
-let _workspacesProvider: WorkspacesViewProvider | undefined
+let _panelProvider: PrismPanelProvider | undefined
 
 /**
  * Extension activation.
@@ -49,7 +45,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       if (event.type === "plans") plansTree.refresh()
       if (event.type === "stories") {
         storiesTree.setStories(controller.state.stories)
-        _monitorProvider?.pushState()
+        _panelProvider?.pushMonitorState()
       }
     }),
   )
@@ -86,36 +82,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   )
 
   // ---------------------------------------------------------------------------
-  // Office view provider
+  // Unified panel webview provider (bottom panel — Monitor + Workspaces + Office)
   // ---------------------------------------------------------------------------
-  _officeProvider = new OfficeViewProvider(context, controller)
+  _panelProvider = new PrismPanelProvider(context, controller)
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(
-      OfficeViewProvider.VIEW_ID,
-      _officeProvider,
-      {
-        webviewOptions: {
-          retainContextWhenHidden: true,
-        },
-      },
-    ),
-  )
-
-  // ---------------------------------------------------------------------------
-  // Panel webview providers (bottom panel — Monitor + Workspaces)
-  // ---------------------------------------------------------------------------
-  _monitorProvider = new MonitorViewProvider(context, controller)
-  _workspacesProvider = new WorkspacesViewProvider(context, controller)
-
-  context.subscriptions.push(
-    vscode.window.registerWebviewViewProvider(
-      MonitorViewProvider.VIEW_ID,
-      _monitorProvider,
-      { webviewOptions: { retainContextWhenHidden: true } },
-    ),
-    vscode.window.registerWebviewViewProvider(
-      WorkspacesViewProvider.VIEW_ID,
-      _workspacesProvider,
+      PrismPanelProvider.VIEW_ID,
+      _panelProvider,
       { webviewOptions: { retainContextWhenHidden: true } },
     ),
   )
@@ -124,8 +97,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   context.subscriptions.push(
     controller.onDidChangeState(() => {
       const s = controller.state
-      _monitorProvider?.pushState()
-      _workspacesProvider?.updateAgentStatuses(s.office.activeAgents)
+      _panelProvider?.pushMonitorState()
+      _panelProvider?.updateAgentStatuses(s.office.activeAgents)
     }),
   )
 
@@ -210,15 +183,15 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   // ---------------------------------------------------------------------------
   context.subscriptions.push(
     vscode.commands.registerCommand("prism.office.show", async () => {
-      await vscode.commands.executeCommand("prism.officeView.focus")
+      await vscode.commands.executeCommand("prism.mainView.focus")
     }),
 
     vscode.commands.registerCommand("prism.office.launchAgent", () => {
-      _officeProvider?.launchNewTerminal()
+      _panelProvider?.launchNewTerminal()
     }),
 
     vscode.commands.registerCommand("prism.office.exportLayout", () => {
-      _officeProvider?.exportDefaultLayout()
+      _panelProvider?.exportDefaultLayout()
     }),
   )
 
@@ -226,16 +199,12 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   // Commands — Monitor panel
   // ---------------------------------------------------------------------------
   context.subscriptions.push(
-    vscode.commands.registerCommand("prism.monitor.show", async () => {
-      await vscode.commands.executeCommand("prism.monitorView.focus")
-    }),
-
     vscode.commands.registerCommand("prism.monitor.runGate", (command?: string) => {
-      if (command) void _monitorProvider?.runGate(command)
+      if (command) void _panelProvider?.runGate(command)
     }),
 
     vscode.commands.registerCommand("prism.monitor.runAllGates", () => {
-      void _monitorProvider?.runAllGates()
+      void _panelProvider?.runAllGates()
     }),
   )
 
@@ -243,10 +212,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   // Commands — Workspaces panel
   // ---------------------------------------------------------------------------
   context.subscriptions.push(
-    vscode.commands.registerCommand("prism.workspaces.show", async () => {
-      await vscode.commands.executeCommand("prism.workspacesView.focus")
-    }),
-
     vscode.commands.registerCommand("prism.workspaces.openProject", async (projectPath?: string) => {
       if (projectPath) {
         await vscode.commands.executeCommand("vscode.openFolder", vscode.Uri.file(projectPath))
@@ -258,11 +223,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         prompt: "Branch name for new worktree",
         placeHolder: "feat/my-feature",
       })
-      if (branch) await _workspacesProvider?.createWorktree(branch)
+      if (branch) await _panelProvider?.createWorktree(branch)
     }),
 
     vscode.commands.registerCommand("prism.workspaces.deleteWorktree", async (worktreePath?: string) => {
-      if (worktreePath) await _workspacesProvider?.deleteWorktree(worktreePath, false)
+      if (worktreePath) await _panelProvider?.deleteWorktree(worktreePath, false)
     }),
   )
 
@@ -376,7 +341,5 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 export async function deactivate(): Promise<void> {
   console.log("[Prism] Extension deactivated")
   _provider = undefined
-  _officeProvider = undefined
-  _monitorProvider = undefined
-  _workspacesProvider = undefined
+  _panelProvider = undefined
 }
