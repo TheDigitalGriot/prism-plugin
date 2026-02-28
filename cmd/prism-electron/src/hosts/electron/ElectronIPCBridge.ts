@@ -11,6 +11,7 @@ import { ElectronPrismController } from './ElectronPrismController'
 
 export class ElectronIPCBridge {
   private controller: ElectronPrismController
+  private _currentProjectDir: string | undefined
 
   constructor(private mainWindow: BrowserWindow) {
     this.controller = new ElectronPrismController()
@@ -18,6 +19,17 @@ export class ElectronIPCBridge {
       mainWindow.webContents.send('grpc_response', msg)
     })
     this._registerHandlers()
+  }
+
+  /** The currently open project directory (undefined if no project opened). */
+  get currentProjectDir(): string | undefined {
+    return this._currentProjectDir
+  }
+
+  /** Set project directory directly — used for CLI args and last-opened restore. */
+  async setProjectDir(dir: string): Promise<void> {
+    this._currentProjectDir = dir
+    await this.controller.setProjectDir(dir)
   }
 
   private _registerHandlers(): void {
@@ -52,7 +64,7 @@ export class ElectronIPCBridge {
         title: 'Open Prism Project',
       })
       if (!result.canceled && result.filePaths[0]) {
-        await this.controller.setProjectDir(result.filePaths[0])
+        await this.setProjectDir(result.filePaths[0])
         return { ok: true, path: result.filePaths[0] }
       }
       return { ok: false }
@@ -66,7 +78,7 @@ export class ElectronIPCBridge {
       title: 'Open Prism Project',
     })
     if (!result.canceled && result.filePaths[0]) {
-      await this.controller.setProjectDir(result.filePaths[0])
+      await this.setProjectDir(result.filePaths[0])
     }
   }
 

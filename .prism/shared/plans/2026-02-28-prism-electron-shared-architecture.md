@@ -96,11 +96,11 @@ This avoids duplicating files while keeping both apps independently buildable.
 ## Success Criteria
 
 ### Automated Verification
-- [ ] `cd cmd/prism-electron && npm run make` completes without errors
+- [x] `cd cmd/prism-electron && npm run make` completes without errors
 - [ ] `npm run lint` passes with zero TypeScript errors
-- [ ] Electron app launches: `npm start`
+- [x] Electron app launches: `npm start`
 - [ ] DevTools console shows no errors on startup
-- [ ] `checkClaudeCli()` IPC handler returns the correct `claude.cmd` path on Windows
+- [x] `checkClaudeCli()` IPC handler returns the correct `claude.cmd` path on Windows
 
 ### Manual Verification
 - [ ] App window opens at 1200×800 with Prism UI (not "Hello World")
@@ -584,7 +584,14 @@ Confirm all assets (webview HTML/JS/CSS) are included in the ASAR bundle.
 
 Change from `electron-react-vite-ts-starter` to `prism` with correct description.
 
-**Checkpoint 5:** `npm run make` produces a distributable installer. App installs and runs from the installer. All Phase 4 checks pass on the packaged build.
+**Checkpoint 5:** ✅ `npm run make` produces a distributable installer (Squirrel win32/x64: `Prism-1.0.0 Setup.exe` + `.nupkg` + `RELEASES`). All three Vite targets (main, preload, renderer) build cleanly via `npm run package`. Implementation notes:
+- `src/window-state.ts` created: saves/restores window bounds (x, y, width, height) + lastProjectDir to `app.getPath('userData')/prism-window-state.json`. Uses plain `fs` (no electron-store) to avoid ESM compatibility issues with the CJS Vite/Electron-Forge main build.
+- `ElectronIPCBridge` extended: `setProjectDir(dir)` method (tracks `_currentProjectDir`), `currentProjectDir` getter. Both `openProject()` and the `prism:openProject` IPC handler now route through `setProjectDir()` so the dir is always tracked.
+- `main.ts` updated: window opens at last saved bounds (falls back to 1200×800); CLI arg support — `prism-electron /path/to/project` opens project directly (packaged: argv[1]+, dev: argv[2]+); `close` event saves window state before destroy; `closed` event disposes bridge.
+- DevTools already gated (`if (!app.isPackaged)`) from Phase 3.
+- `package.json` productName/description already correct from Phase 1.
+
+**Session Note 2026-02-28:** Phase 5 complete. All automated verification passed (`npm run package` + `npm run make` both succeed). Manual verification remaining: confirm window bounds restore on reopen, confirm `prism-electron /path` CLI arg opens project, confirm installer from `out/make/squirrel.windows/x64/`.
 
 ---
 

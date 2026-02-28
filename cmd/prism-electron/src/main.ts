@@ -1,7 +1,9 @@
 import { app, BrowserWindow, Menu } from 'electron';
 import path from 'node:path';
+import * as fs from 'node:fs';
 import started from 'electron-squirrel-startup';
 import { ElectronIPCBridge } from './hosts/electron/ElectronIPCBridge';
+import { loadWindowState, saveWindowState } from './window-state';
 
 // Handle Squirrel install/uninstall on Windows
 if (started) app.quit();
@@ -9,9 +11,14 @@ if (started) app.quit();
 let bridge: ElectronIPCBridge | null = null;
 
 function createWindow() {
+  // Restore last window bounds (falls back to 1200×800 if no saved state)
+  const state = loadWindowState();
+
   const mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    width: state.width,
+    height: state.height,
+    x: state.x,
+    y: state.y,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -22,6 +29,16 @@ function createWindow() {
   // Wire Prism controller to this window
   bridge = new ElectronIPCBridge(mainWindow);
 
+  // Restore last project or open from CLI argument
+  // Packaged: argv[0] = exe path, user args start at 1
+  // Dev:      argv[0] = electron, argv[1] = entry script, user args start at 2
+  const userArgs = process.argv.slice(app.isPackaged ? 1 : 2);
+  const cliArg = userArgs.find(a => !a.startsWith('-') && fs.existsSync(a));
+  const initialDir = cliArg ?? state.lastProjectDir;
+  if (initialDir) {
+    void bridge.setProjectDir(initialDir);
+  }
+
   // Load the renderer
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
@@ -31,10 +48,15 @@ function createWindow() {
     );
   }
 
-  // DevTools in development
+  // DevTools in development only
   if (!app.isPackaged) {
     mainWindow.webContents.openDevTools();
   }
+
+  // Save window state before the window is destroyed
+  mainWindow.on('close', () => {
+    saveWindowState(mainWindow, bridge?.currentProjectDir);
+  });
 
   mainWindow.on('closed', () => {
     bridge?.dispose();
