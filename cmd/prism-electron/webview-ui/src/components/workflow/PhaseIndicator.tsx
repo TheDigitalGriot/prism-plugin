@@ -117,7 +117,7 @@ export const PhaseIndicator: React.FC<PhaseIndicatorProps> = ({
             {meta.label}
           </span>
         </div>
-        <span style={{ color: "var(--vscode-descriptionForeground)", fontSize: "11px" }}>
+        <span style={{ color: "var(--prism-fg-muted)", fontSize: "11px" }}>
           {meta.description}
         </span>
       </div>
@@ -138,7 +138,7 @@ export const PhaseIndicator: React.FC<PhaseIndicatorProps> = ({
                 flex: 1,
                 height: "3px",
                 borderRadius: "2px",
-                backgroundColor: isDone || isActive ? phaseMeta.color : "var(--vscode-widget-border, #444)",
+                backgroundColor: isDone || isActive ? phaseMeta.color : "var(--prism-border)",
                 opacity: isActive ? 1 : isDone ? 0.7 : 0.3,
                 transition: "all 0.2s ease",
               }}

@@ -19,7 +19,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({ progress, showLabel = 
         width: "100%",
         height: "18px",
         borderRadius: "9px",
-        backgroundColor: "var(--vscode-widget-border, #333)",
+        backgroundColor: "var(--prism-border)",
         overflow: "hidden",
       }}
     >

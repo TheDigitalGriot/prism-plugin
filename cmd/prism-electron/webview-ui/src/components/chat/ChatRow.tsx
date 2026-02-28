@@ -42,8 +42,8 @@ const UserMessageRow: React.FC<{ message: PrismChatMessage }> = ({ message }) =>
     <div
       style={{
         maxWidth: "85%",
-        backgroundColor: "var(--vscode-button-background, #0e639c)",
-        color: "var(--vscode-button-foreground, #fff)",
+        backgroundColor: "var(--prism-bg-button)",
+        color: "var(--prism-fg-button)",
         borderRadius: "12px 12px 2px 12px",
         padding: "8px 12px",
         fontSize: "13px",
@@ -109,7 +109,7 @@ const AssistantTextRow: React.FC<{ message: PrismChatMessage }> = ({ message }) 
               display: "inline-block",
               width: "2px",
               height: "14px",
-              backgroundColor: "var(--vscode-foreground)",
+              backgroundColor: "var(--prism-fg)",
               animation: "blink 1s step-end infinite",
               verticalAlign: "text-bottom",
               marginLeft: "2px",
@@ -137,7 +137,7 @@ const StreamingIndicator: React.FC = () => (
           width: "6px",
           height: "6px",
           borderRadius: "50%",
-          backgroundColor: "var(--vscode-descriptionForeground)",
+          backgroundColor: "var(--prism-fg-muted)",
           animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite`,
         }}
       />
@@ -162,7 +162,7 @@ const CompletionRow: React.FC<{ message: PrismChatMessage }> = ({ message }) => 
       borderRadius: "8px",
     }}
   >
-    <span style={{ fontSize: "16px", flexShrink: 0 }}>✅</span>
+    <span style={{ fontSize: "16px", flexShrink: 0 }}>&#x2705;</span>
     <div>
       <div
         style={{
@@ -177,7 +177,7 @@ const CompletionRow: React.FC<{ message: PrismChatMessage }> = ({ message }) => 
       <div
         style={{
           fontSize: "13px",
-          color: "var(--vscode-foreground)",
+          color: "var(--prism-fg)",
           lineHeight: 1.5,
         }}
       >
@@ -204,12 +204,12 @@ const ErrorRow: React.FC<{ message: PrismChatMessage }> = ({ message }) => (
       borderRadius: "6px",
     }}
   >
-    <span style={{ fontSize: "14px", flexShrink: 0 }}>⚠️</span>
+    <span style={{ fontSize: "14px", flexShrink: 0 }}>&#x26a0;&#xfe0f;</span>
     <div
       style={{
         fontSize: "12px",
         color: "#ef4444",
-        fontFamily: "var(--vscode-editor-font-family, monospace)",
+        fontFamily: "var(--prism-font-mono)",
       }}
     >
       {message.errorText}

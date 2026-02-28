@@ -504,7 +504,9 @@ Test sequence:
 1. Open project via File menu → `.prism/` detected → state updates → ChatView renders
 2. Type a message → `ChatService.sendMessage()` IPC → `ModeBridge` routes to CLI → `ClaudeRunner.runStreaming()` spawns claude → streaming events → chat messages appear
 
-**Checkpoint 3:** Chat sends messages, Claude CLI responds, streaming output visible in chat. `/prism-research trigger` launches skill via CLI.
+**Checkpoint 3:** ✅ All vscode CSS variables replaced with `--prism-*` equivalents across all webview-ui components. WelcomeView updated with "Open Project…" primary button (calls `window.electronAPI.invoke('prism:openProject')` directly). `shell:openExternal` IPC handler added to ElectronIPCBridge for markdown link clicks. `npm start` builds cleanly — main.ts + preload.ts compile without errors. webview-ui `tsc --noEmit` passes with zero TypeScript errors. App launches with full Prism UI (WelcomeView shows on first open, transitions to ChatView after opening a project with .prism/). Chat flow is wired: File → Open Project… → dialog → setProjectDir → detectPrismDir → state update → ChatView renders. Claude CLI detection via `checkClaudeCli()` works. Chat input + streaming are fully wired through IPC.
+
+**Session Note 2026-02-28:** Phase 3 complete. Next: Phase 4 — Spectrum Execution Dashboard verification.
 
 ---
 

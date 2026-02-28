@@ -14,8 +14,8 @@ export const MarkdownBlock: React.FC<MarkdownBlockProps> = ({ content, className
     <div
       className={`prism-markdown ${className}`}
       style={{
-        color: "var(--vscode-foreground)",
-        fontSize: "var(--vscode-font-size, 13px)",
+        color: "var(--prism-fg)",
+        fontSize: "var(--prism-font-size)",
         lineHeight: 1.6,
       }}
     >
@@ -29,13 +29,13 @@ export const MarkdownBlock: React.FC<MarkdownBlockProps> = ({ content, className
               <pre
                 {...props}
                 style={{
-                  backgroundColor: "var(--vscode-textCodeBlock-background, #1e1e1e)",
+                  backgroundColor: "var(--prism-bg-editor)",
                   borderRadius: "4px",
                   padding: "12px",
                   overflowX: "auto",
                   fontSize: "0.9em",
                   margin: "8px 0",
-                  border: "1px solid var(--vscode-widget-border, #444)",
+                  border: "1px solid var(--prism-border)",
                 }}
               >
                 {children}
@@ -44,18 +44,17 @@ export const MarkdownBlock: React.FC<MarkdownBlockProps> = ({ content, className
           },
           // Code (inline vs block detected by className)
           code({ className, children, ...props }) {
-            // Block code has a language-xxx className from rehype-highlight
             const isInline = !className
             if (isInline) {
               return (
                 <code
                   className={className}
                   style={{
-                    backgroundColor: "var(--vscode-textCodeBlock-background, #1e1e1e)",
+                    backgroundColor: "var(--prism-bg-editor)",
                     borderRadius: "3px",
                     padding: "1px 4px",
                     fontSize: "0.9em",
-                    fontFamily: "var(--vscode-editor-font-family, monospace)",
+                    fontFamily: "var(--prism-font-mono)",
                   }}
                 >
                   {children}
@@ -63,22 +62,26 @@ export const MarkdownBlock: React.FC<MarkdownBlockProps> = ({ content, className
               )
             }
             return (
-              <code className={className} {...props} style={{ fontFamily: "var(--vscode-editor-font-family, monospace)" }}>
+              <code className={className} {...props} style={{ fontFamily: "var(--prism-font-mono)" }}>
                 {children}
               </code>
             )
           },
-          // Links
+          // Links — open via shell in Electron
           a({ href, children, ...props }) {
             return (
               <a
                 {...props}
                 href={href}
-                style={{ color: "var(--vscode-textLink-foreground, #4fc3f7)" }}
+                style={{ color: "var(--prism-fg-link)" }}
                 onClick={(e) => {
                   e.preventDefault()
-                  // In webview, external links should be opened by the extension
-                  window.parent.postMessage({ type: "openLink", url: href }, "*")
+                  if (href) {
+                    // In Electron, open external links via shell
+                    window.electronAPI?.invoke("shell:openExternal", href).catch(() => {
+                      window.open(href, "_blank")
+                    })
+                  }
                 }}
               >
                 {children}
@@ -91,10 +94,10 @@ export const MarkdownBlock: React.FC<MarkdownBlockProps> = ({ content, className
               <blockquote
                 {...props}
                 style={{
-                  borderLeft: "3px solid var(--vscode-textBlockQuote-border, #4fc3f7)",
+                  borderLeft: "3px solid var(--prism-info)",
                   margin: "8px 0",
                   paddingLeft: "12px",
-                  color: "var(--vscode-descriptionForeground)",
+                  color: "var(--prism-fg-muted)",
                 }}
               >
                 {children}
@@ -123,7 +126,7 @@ export const MarkdownBlock: React.FC<MarkdownBlockProps> = ({ content, className
               <th
                 {...props}
                 style={{
-                  borderBottom: "1px solid var(--vscode-widget-border, #444)",
+                  borderBottom: "1px solid var(--prism-border)",
                   padding: "6px 12px",
                   textAlign: "left",
                   fontWeight: 600,
@@ -138,7 +141,7 @@ export const MarkdownBlock: React.FC<MarkdownBlockProps> = ({ content, className
               <td
                 {...props}
                 style={{
-                  borderBottom: "1px solid var(--vscode-widget-border, #333)",
+                  borderBottom: "1px solid var(--prism-border)",
                   padding: "6px 12px",
                 }}
               >
@@ -152,7 +155,7 @@ export const MarkdownBlock: React.FC<MarkdownBlockProps> = ({ content, className
               <hr
                 style={{
                   border: "none",
-                  borderTop: "1px solid var(--vscode-widget-border, #444)",
+                  borderTop: "1px solid var(--prism-border)",
                   margin: "12px 0",
                 }}
               />

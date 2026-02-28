@@ -6,14 +6,14 @@ import { PrismChatMessage } from "../../context/PrismStateContext"
 // ---------------------------------------------------------------------------
 
 const TOOL_ICONS: Record<string, string> = {
-  read_file: "📄",
-  write_file: "✏️",
-  edit_file: "✏️",
-  execute_command: "⚡",
-  search_files: "🔍",
-  list_files: "📁",
-  ask_followup: "❓",
-  attempt_completion: "✅",
+  read_file: "\uD83D\uDCC4",
+  write_file: "\u270F\uFE0F",
+  edit_file: "\u270F\uFE0F",
+  execute_command: "\u26A1",
+  search_files: "\uD83D\uDD0D",
+  list_files: "\uD83D\uDCC1",
+  ask_followup: "\u2753",
+  attempt_completion: "\u2705",
 }
 
 const TOOL_LABELS: Record<string, string> = {
@@ -40,7 +40,7 @@ export const ToolUseRow: React.FC<ToolUseRowProps> = ({ message, onApprove }) =>
   const [expanded, setExpanded] = useState(false)
 
   const toolName = message.toolName ?? "unknown"
-  const icon = TOOL_ICONS[toolName] ?? "🔧"
+  const icon = TOOL_ICONS[toolName] ?? "\uD83D\uDD27"
   const label = TOOL_LABELS[toolName] ?? toolName
 
   const statusColor =
@@ -64,7 +64,7 @@ export const ToolUseRow: React.FC<ToolUseRowProps> = ({ message, onApprove }) =>
   return (
     <div
       style={{
-        backgroundColor: "var(--vscode-editor-background)",
+        backgroundColor: "var(--prism-bg)",
         border: `1px solid ${statusColor}44`,
         borderLeft: `3px solid ${statusColor}`,
         borderRadius: "6px",
@@ -90,8 +90,8 @@ export const ToolUseRow: React.FC<ToolUseRowProps> = ({ message, onApprove }) =>
             flex: 1,
             fontSize: "12px",
             fontWeight: 500,
-            color: "var(--vscode-foreground)",
-            fontFamily: "var(--vscode-font-family)",
+            color: "var(--prism-fg)",
+            fontFamily: "var(--prism-font-family)",
           }}
         >
           {label}
@@ -109,10 +109,10 @@ export const ToolUseRow: React.FC<ToolUseRowProps> = ({ message, onApprove }) =>
         <span
           style={{
             fontSize: "10px",
-            color: "var(--vscode-descriptionForeground)",
+            color: "var(--prism-fg-muted)",
           }}
         >
-          {expanded ? "▼" : "▶"}
+          {expanded ? "\u25BC" : "\u25B6"}
         </span>
       </div>
 
@@ -121,15 +121,15 @@ export const ToolUseRow: React.FC<ToolUseRowProps> = ({ message, onApprove }) =>
         <div
           style={{
             padding: "0 12px 10px",
-            borderTop: "1px solid var(--vscode-widget-border, #333)",
+            borderTop: "1px solid var(--prism-border)",
           }}
         >
           <pre
             style={{
               margin: "8px 0 0",
               fontSize: "11px",
-              color: "var(--vscode-descriptionForeground)",
-              fontFamily: "var(--vscode-editor-font-family, monospace)",
+              color: "var(--prism-fg-muted)",
+              fontFamily: "var(--prism-font-mono)",
               whiteSpace: "pre-wrap",
               wordBreak: "break-all",
             }}
@@ -146,7 +146,7 @@ export const ToolUseRow: React.FC<ToolUseRowProps> = ({ message, onApprove }) =>
             display: "flex",
             gap: "8px",
             padding: "8px 12px",
-            borderTop: "1px solid var(--vscode-widget-border, #333)",
+            borderTop: "1px solid var(--prism-border)",
           }}
         >
           <button
@@ -169,9 +169,9 @@ export const ToolUseRow: React.FC<ToolUseRowProps> = ({ message, onApprove }) =>
             style={{
               padding: "4px 12px",
               borderRadius: "4px",
-              border: "1px solid var(--vscode-widget-border, #555)",
+              border: "1px solid var(--prism-border)",
               backgroundColor: "transparent",
-              color: "var(--vscode-foreground)",
+              color: "var(--prism-fg)",
               cursor: "pointer",
               fontSize: "12px",
             }}
@@ -202,8 +202,8 @@ export const ToolResultRow: React.FC<ToolResultRowProps> = ({ message }) => {
   return (
     <div
       style={{
-        backgroundColor: "var(--vscode-editor-background)",
-        border: `1px solid ${isError ? "#ef444444" : "var(--vscode-widget-border, #333)"}`,
+        backgroundColor: "var(--prism-bg)",
+        border: `1px solid ${isError ? "#ef444444" : "var(--prism-border)"}`,
         borderRadius: "6px",
         margin: "2px 0",
         overflow: "hidden",
@@ -220,24 +220,24 @@ export const ToolResultRow: React.FC<ToolResultRowProps> = ({ message }) => {
         onClick={() => result && setExpanded(!expanded)}
       >
         <span style={{ fontSize: "12px", flexShrink: 0, marginTop: "2px" }}>
-          {isError ? "❌" : "↳"}
+          {isError ? "\u274C" : "\u21B3"}
         </span>
         <span
           style={{
             flex: 1,
             fontSize: "11px",
-            color: isError ? "#ef4444" : "var(--vscode-descriptionForeground)",
-            fontFamily: "var(--vscode-editor-font-family, monospace)",
+            color: isError ? "#ef4444" : "var(--prism-fg-muted)",
+            fontFamily: "var(--prism-font-mono)",
             whiteSpace: expanded ? "pre-wrap" : "nowrap",
             overflow: expanded ? "visible" : "hidden",
             textOverflow: expanded ? "unset" : "ellipsis",
           }}
         >
-          {expanded ? result : preview + (isTruncated && !expanded ? "…" : "")}
+          {expanded ? result : preview + (isTruncated && !expanded ? "\u2026" : "")}
         </span>
         {result && (
-          <span style={{ fontSize: "10px", color: "var(--vscode-descriptionForeground)", flexShrink: 0 }}>
-            {expanded ? "▼" : "▶"}
+          <span style={{ fontSize: "10px", color: "var(--prism-fg-muted)", flexShrink: 0 }}>
+            {expanded ? "\u25BC" : "\u25B6"}
           </span>
         )}
       </div>

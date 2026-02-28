@@ -16,7 +16,7 @@ interface ActivityLogProps {
 }
 
 const LOG_COLORS: Record<string, string> = {
-  info: "var(--vscode-foreground)",
+  info: "var(--prism-fg)",
   warn: "#f59e0b",
   error: "#ef4444",
 }
@@ -50,8 +50,8 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({
     })),
     ...recentActivities.map((a) => ({
       ts: a.ts,
-      text: `⚙ ${a.description}`,
-      color: "var(--vscode-descriptionForeground)",
+      text: `\u2699 ${a.description}`,
+      color: "var(--prism-fg-muted)",
     })),
   ].sort((a, b) => a.ts - b.ts)
 
@@ -62,15 +62,15 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({
       style={{
         maxHeight,
         overflowY: "auto",
-        fontFamily: "var(--vscode-editor-font-family, monospace)",
+        fontFamily: "var(--prism-font-mono)",
         fontSize: "11px",
         lineHeight: "1.6",
         padding: "4px 0",
       }}
     >
       {visible.length === 0 ? (
-        <div style={{ color: "var(--vscode-descriptionForeground)", padding: "4px 8px" }}>
-          No activity yet…
+        <div style={{ color: "var(--prism-fg-muted)", padding: "4px 8px" }}>
+          No activity yet\u2026
         </div>
       ) : (
         visible.map((entry, idx) => (
@@ -85,7 +85,7 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({
           >
             <span
               style={{
-                color: "var(--vscode-descriptionForeground)",
+                color: "var(--prism-fg-muted)",
                 flexShrink: 0,
                 userSelect: "none",
               }}

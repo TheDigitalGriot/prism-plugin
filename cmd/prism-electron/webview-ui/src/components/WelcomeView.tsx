@@ -1,9 +1,8 @@
-import React from "react"
+import React, { useState } from "react"
 import { UiServiceClient } from "../services/grpc-client"
 
 // ---------------------------------------------------------------------------
 // WelcomeView — shown to first-time users who have no .prism/ directory
-// and no API key configured.
 // ---------------------------------------------------------------------------
 
 interface WelcomeStep {
@@ -91,14 +90,35 @@ interface WelcomeViewProps {
 }
 
 export const WelcomeView: React.FC<WelcomeViewProps> = ({ onInitPrism }) => {
-  const handleInitPrism = async () => {
+  const [initError, setInitError] = useState<string | null>(null)
+  const [isOpening, setIsOpening] = useState(false)
+
+  const handleOpenProject = async () => {
+    setIsOpening(true)
     try {
-      await UiServiceClient.initPrism()
-      onInitPrism?.()
+      await window.electronAPI?.invoke("prism:openProject")
     } catch (err) {
-      console.error("[Prism] initPrism failed:", err)
+      console.error("[Prism] openProject failed:", err)
+    } finally {
+      setIsOpening(false)
     }
   }
+
+  const handleInitPrism = async () => {
+    setInitError(null)
+    try {
+      const result = await UiServiceClient.initPrism()
+      if (!result.ok) {
+        setInitError("Open a project folder first (File \u2192 Open Project\u2026)")
+      } else {
+        onInitPrism?.()
+      }
+    } catch (err) {
+      console.error("[Prism] initPrism failed:", err)
+      setInitError(String(err))
+    }
+  }
+
   return (
     <div
       style={{
@@ -137,7 +157,7 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onInitPrism }) => {
         <div
           style={{
             fontSize: "12px",
-            color: "var(--vscode-descriptionForeground)",
+            color: "var(--prism-fg-muted)",
             textAlign: "center",
             maxWidth: "260px",
           }}
@@ -186,7 +206,7 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onInitPrism }) => {
               <div
                 style={{
                   fontSize: "11px",
-                  color: "var(--vscode-descriptionForeground)",
+                  color: "var(--prism-fg-muted)",
                   lineHeight: 1.5,
                 }}
               >
@@ -208,30 +228,76 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onInitPrism }) => {
           maxWidth: "300px",
         }}
       >
+        {/* Primary: Open Project */}
         <button
-          onClick={() => void handleInitPrism()}
+          onClick={() => void handleOpenProject()}
+          disabled={isOpening}
           style={{
             width: "100%",
-            padding: "8px 16px",
+            padding: "10px 16px",
             borderRadius: "6px",
             border: "none",
             background: "linear-gradient(90deg, #3b82f6, #14b8a6)",
             color: "#ffffff",
             fontSize: "13px",
             fontWeight: 600,
+            cursor: isOpening ? "not-allowed" : "pointer",
+            opacity: isOpening ? 0.7 : 1,
+          }}
+        >
+          {isOpening ? "Opening\u2026" : "Open Project\u2026"}
+        </button>
+        <div
+          style={{
+            fontSize: "11px",
+            color: "var(--prism-fg-muted)",
+            textAlign: "center",
+          }}
+        >
+          Select a project folder to get started
+        </div>
+
+        {/* Secondary: Initialize .prism/ */}
+        <button
+          onClick={() => void handleInitPrism()}
+          style={{
+            width: "100%",
+            padding: "8px 16px",
+            borderRadius: "6px",
+            border: "1px solid var(--prism-border)",
+            background: "transparent",
+            color: "var(--prism-fg-muted)",
+            fontSize: "12px",
+            fontWeight: 500,
             cursor: "pointer",
           }}
         >
           Initialize .prism/ Directory
         </button>
+        {initError && (
+          <div
+            style={{
+              fontSize: "11px",
+              color: "var(--prism-error)",
+              textAlign: "center",
+              padding: "4px 8px",
+              borderRadius: "4px",
+              backgroundColor: "rgba(248,113,113,0.1)",
+              border: "1px solid rgba(248,113,113,0.3)",
+              width: "100%",
+            }}
+          >
+            {initError}
+          </div>
+        )}
         <div
           style={{
             fontSize: "11px",
-            color: "var(--vscode-descriptionForeground)",
+            color: "var(--prism-fg-muted)",
             textAlign: "center",
           }}
         >
-          Creates the .prism/ folder structure in your workspace root
+          Creates the .prism/ folder structure in your project folder
         </div>
       </div>
 
@@ -239,16 +305,29 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onInitPrism }) => {
       <div
         style={{
           fontSize: "11px",
-          color: "var(--vscode-descriptionForeground)",
+          color: "var(--prism-fg-muted)",
           textAlign: "center",
           maxWidth: "280px",
           padding: "8px 12px",
           borderRadius: "4px",
-          backgroundColor: "var(--vscode-textBlockQuote-background, rgba(255,255,255,0.05))",
-          border: "1px solid var(--vscode-widget-border, #333)",
+          backgroundColor: "var(--prism-bg-hover)",
+          border: "1px solid var(--prism-border)",
         }}
       >
-        💡 Already have a <code>.prism/</code> directory? It will be detected automatically when you open this workspace.
+        Already have a{" "}
+        <code style={{ fontFamily: "var(--prism-font-mono)", fontSize: "10px" }}>.prism/</code>{" "}
+        directory? It will be detected automatically when you open the project.
+      </div>
+
+      {/* Keyboard hint */}
+      <div
+        style={{
+          fontSize: "10px",
+          color: "var(--prism-fg-disabled)",
+          textAlign: "center",
+        }}
+      >
+        File \u2192 Open Project\u2026 (Ctrl+O) to open a project at any time
       </div>
     </div>
   )

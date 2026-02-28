@@ -5,7 +5,7 @@
  * webview.postMessage, uses ipcMain.handle / mainWindow.webContents.send.
  */
 
-import { BrowserWindow, ipcMain, dialog } from 'electron'
+import { BrowserWindow, ipcMain, dialog, shell } from 'electron'
 import { handleGrpcRequest } from '@prism-core/core/controller/grpc-handler'
 import { ElectronPrismController } from './ElectronPrismController'
 
@@ -38,6 +38,13 @@ export class ElectronIPCBridge {
       this.controller.removeSubscriber(payload.request_id)
     })
 
+    // Open an external URL in the default browser
+    ipcMain.handle('shell:openExternal', async (_event, url: string) => {
+      if (typeof url === 'string' && (url.startsWith('https://') || url.startsWith('http://'))) {
+        await shell.openExternal(url)
+      }
+    })
+
     // Open a project folder via native dialog
     ipcMain.handle('prism:openProject', async () => {
       const result = await dialog.showOpenDialog(this.mainWindow, {
@@ -67,6 +74,7 @@ export class ElectronIPCBridge {
     ipcMain.removeHandler('grpc_request')
     ipcMain.removeHandler('grpc_request_cancel')
     ipcMain.removeHandler('prism:openProject')
+    ipcMain.removeHandler('shell:openExternal')
     this.controller.dispose()
   }
 }

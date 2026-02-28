@@ -13,7 +13,7 @@ export const ChatTextArea: React.FC<ChatTextAreaProps> = ({
   onChange,
   onSubmit,
   disabled = false,
-  placeholder = "Message Prism…",
+  placeholder = "Message Prism\u2026",
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -27,7 +27,6 @@ export const ChatTextArea: React.FC<ChatTextAreaProps> = ({
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      // Ctrl+Enter or Cmd+Enter to submit
       if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
         e.preventDefault()
         if (!disabled && value.trim()) {
@@ -35,8 +34,6 @@ export const ChatTextArea: React.FC<ChatTextAreaProps> = ({
         }
         return
       }
-      // Shift+Enter for newline (default behavior)
-      // Plain Enter → submit if not on mobile
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault()
         if (!disabled && value.trim()) {
@@ -54,8 +51,8 @@ export const ChatTextArea: React.FC<ChatTextAreaProps> = ({
         alignItems: "flex-end",
         gap: "8px",
         padding: "8px",
-        backgroundColor: "var(--vscode-input-background)",
-        border: "1px solid var(--vscode-input-border, #3c3c3c)",
+        backgroundColor: "var(--prism-bg-input)",
+        border: "1px solid var(--prism-border-input)",
         borderRadius: "8px",
       }}
     >
@@ -73,9 +70,9 @@ export const ChatTextArea: React.FC<ChatTextAreaProps> = ({
           border: "none",
           outline: "none",
           backgroundColor: "transparent",
-          color: "var(--vscode-input-foreground)",
-          fontSize: "var(--vscode-font-size, 13px)",
-          fontFamily: "var(--vscode-font-family, sans-serif)",
+          color: "var(--prism-fg)",
+          fontSize: "var(--prism-font-size)",
+          fontFamily: "var(--prism-font-family)",
           lineHeight: 1.5,
           minHeight: "20px",
           maxHeight: "200px",
@@ -93,11 +90,11 @@ export const ChatTextArea: React.FC<ChatTextAreaProps> = ({
           borderRadius: "6px",
           border: "none",
           backgroundColor: disabled || !value.trim()
-            ? "var(--vscode-button-secondaryBackground, #3c3c3c)"
-            : "var(--vscode-button-background, #0e639c)",
+            ? "var(--prism-bg-button-secondary)"
+            : "var(--prism-bg-button)",
           color: disabled || !value.trim()
-            ? "var(--vscode-descriptionForeground)"
-            : "var(--vscode-button-foreground, #fff)",
+            ? "var(--prism-fg-muted)"
+            : "var(--prism-fg-button)",
           cursor: disabled || !value.trim() ? "not-allowed" : "pointer",
           display: "flex",
           alignItems: "center",
@@ -106,7 +103,7 @@ export const ChatTextArea: React.FC<ChatTextAreaProps> = ({
           transition: "background-color 0.1s",
         }}
       >
-        ↑
+        &#x2191;
       </button>
     </div>
   )

@@ -61,14 +61,14 @@ const SectionHeader: React.FC<{ title: string; badge?: string }> = ({ title, bad
       alignItems: "center",
       gap: "6px",
       padding: "6px 12px 4px",
-      borderTop: "1px solid var(--vscode-widget-border, #333)",
+      borderTop: "1px solid var(--prism-border)",
     }}
   >
     <span
       style={{
         fontSize: "10px",
         fontWeight: 700,
-        color: "var(--vscode-descriptionForeground)",
+        color: "var(--prism-fg-muted)",
         textTransform: "uppercase",
         letterSpacing: "0.08em",
       }}
@@ -79,8 +79,8 @@ const SectionHeader: React.FC<{ title: string; badge?: string }> = ({ title, bad
       <span
         style={{
           fontSize: "10px",
-          color: "var(--vscode-descriptionForeground)",
-          backgroundColor: "var(--vscode-badge-background, #333)",
+          color: "var(--prism-fg-muted)",
+          backgroundColor: "var(--prism-bg-button-secondary)",
           borderRadius: "9999px",
           padding: "0 5px",
         }}
@@ -113,10 +113,10 @@ export const SpectrumView: React.FC<SpectrumViewProps> = ({ onBack }) => {
         flexDirection: "column",
         height: "100%",
         overflow: "hidden",
-        backgroundColor: "var(--vscode-sideBar-background)",
-        color: "var(--vscode-foreground)",
-        fontFamily: "var(--vscode-font-family)",
-        fontSize: "var(--vscode-font-size, 13px)",
+        backgroundColor: "var(--prism-bg-panel)",
+        color: "var(--prism-fg)",
+        fontFamily: "var(--prism-font-family)",
+        fontSize: "var(--prism-font-size)",
       }}
     >
       {/* ------------------------------------------------------------------ */}
@@ -140,13 +140,13 @@ export const SpectrumView: React.FC<SpectrumViewProps> = ({ onBack }) => {
               background: "none",
               border: "none",
               cursor: "pointer",
-              color: "var(--vscode-descriptionForeground)",
+              color: "var(--prism-fg-muted)",
               fontSize: "14px",
               padding: "0 4px",
               lineHeight: 1,
             }}
           >
-            ←
+            &#x2190;
           </button>
           <span
             style={{
@@ -184,7 +184,7 @@ export const SpectrumView: React.FC<SpectrumViewProps> = ({ onBack }) => {
             alignItems: "center",
             gap: "10px",
             fontSize: "11px",
-            color: "var(--vscode-descriptionForeground)",
+            color: "var(--prism-fg-muted)",
           }}
         >
           {spectrum.executionState !== "idle" && (
@@ -219,7 +219,7 @@ export const SpectrumView: React.FC<SpectrumViewProps> = ({ onBack }) => {
                 display: "flex",
                 justifyContent: "space-between",
                 fontSize: "11px",
-                color: "var(--vscode-descriptionForeground)",
+                color: "var(--prism-fg-muted)",
                 marginBottom: "4px",
               }}
             >

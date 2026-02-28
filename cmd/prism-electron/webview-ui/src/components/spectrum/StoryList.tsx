@@ -10,10 +10,10 @@ interface StoryListProps {
 }
 
 const STATUS_ICON: Record<string, { icon: string; color: string }> = {
-  pending: { icon: "○", color: "#6b7280" },
-  in_progress: { icon: "◉", color: "#3b82f6" },
-  complete: { icon: "●", color: "#22c55e" },
-  blocked: { icon: "⊘", color: "#f59e0b" },
+  pending: { icon: "\u25CB", color: "#6b7280" },
+  in_progress: { icon: "\u25C9", color: "#3b82f6" },
+  complete: { icon: "\u25CF", color: "#22c55e" },
+  blocked: { icon: "\u2298", color: "#f59e0b" },
 }
 
 export const StoryList: React.FC<StoryListProps> = ({ stories, currentStoryId }) => {
@@ -22,7 +22,7 @@ export const StoryList: React.FC<StoryListProps> = ({ stories, currentStoryId })
       <div
         style={{
           padding: "16px",
-          color: "var(--vscode-descriptionForeground)",
+          color: "var(--prism-fg-muted)",
           fontSize: "12px",
           textAlign: "center",
         }}
@@ -51,9 +51,7 @@ export const StoryList: React.FC<StoryListProps> = ({ stories, currentStoryId })
               gap: "8px",
               padding: "5px 8px",
               borderRadius: "4px",
-              backgroundColor: isActive
-                ? "var(--vscode-list-activeSelectionBackground, #1e3a5f)"
-                : "transparent",
+              backgroundColor: isActive ? "var(--prism-bg-active)" : "transparent",
               border: isActive ? "1px solid #3b82f655" : "1px solid transparent",
               transition: "background-color 0.2s",
             }}
@@ -75,9 +73,9 @@ export const StoryList: React.FC<StoryListProps> = ({ stories, currentStoryId })
               <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                 <span
                   style={{
-                    color: "var(--vscode-descriptionForeground)",
+                    color: "var(--prism-fg-muted)",
                     fontSize: "10px",
-                    fontFamily: "var(--vscode-editor-font-family, monospace)",
+                    fontFamily: "var(--prism-font-mono)",
                     flexShrink: 0,
                   }}
                 >
@@ -85,9 +83,7 @@ export const StoryList: React.FC<StoryListProps> = ({ stories, currentStoryId })
                 </span>
                 <span
                   style={{
-                    color: isActive
-                      ? "var(--vscode-list-activeSelectionForeground, white)"
-                      : "var(--vscode-foreground)",
+                    color: isActive ? "var(--prism-fg-active)" : "var(--prism-fg)",
                     fontSize: "12px",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
@@ -102,7 +98,7 @@ export const StoryList: React.FC<StoryListProps> = ({ stories, currentStoryId })
             {/* Priority badge */}
             <span
               style={{
-                color: "var(--vscode-descriptionForeground)",
+                color: "var(--prism-fg-muted)",
                 fontSize: "10px",
                 flexShrink: 0,
               }}
@@ -117,7 +113,7 @@ export const StoryList: React.FC<StoryListProps> = ({ stories, currentStoryId })
         <div
           style={{
             padding: "4px 8px",
-            color: "var(--vscode-descriptionForeground)",
+            color: "var(--prism-fg-muted)",
             fontSize: "11px",
             textAlign: "center",
           }}

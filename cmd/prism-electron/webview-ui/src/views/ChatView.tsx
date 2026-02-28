@@ -25,25 +25,25 @@ const CliNotFound: React.FC = () => (
   >
     <div style={{ fontSize: "24px" }}>&#x2699;</div>
     <div style={{ fontWeight: 600, fontSize: "14px" }}>Claude CLI Not Found</div>
-    <div style={{ color: "var(--vscode-descriptionForeground)", fontSize: "12px", maxWidth: "300px" }}>
+    <div style={{ color: "var(--prism-fg-muted)", fontSize: "12px", maxWidth: "300px" }}>
       Prism uses your Claude Max subscription via the Claude CLI. Install it and log in to get started.
     </div>
     <div style={{ display: "flex", flexDirection: "column", gap: "8px", width: "100%", maxWidth: "320px", fontSize: "12px" }}>
       <div style={{
         padding: "8px 12px",
         borderRadius: "6px",
-        backgroundColor: "var(--vscode-textBlockQuote-background)",
-        fontFamily: "var(--vscode-editor-font-family, monospace)",
+        backgroundColor: "var(--prism-bg-hover)",
+        fontFamily: "var(--prism-font-mono)",
         textAlign: "left",
       }}>
-        <div style={{ color: "var(--vscode-descriptionForeground)", marginBottom: "4px" }}>1. Install Claude Code:</div>
+        <div style={{ color: "var(--prism-fg-muted)", marginBottom: "4px" }}>1. Install Claude Code:</div>
         <div>npm install -g @anthropic-ai/claude-code</div>
-        <div style={{ color: "var(--vscode-descriptionForeground)", marginTop: "8px", marginBottom: "4px" }}>2. Log in with your Max subscription:</div>
+        <div style={{ color: "var(--prism-fg-muted)", marginTop: "8px", marginBottom: "4px" }}>2. Log in with your Max subscription:</div>
         <div>claude login</div>
       </div>
     </div>
-    <div style={{ color: "var(--vscode-descriptionForeground)", fontSize: "11px", maxWidth: "300px" }}>
-      After installing and logging in, reload VS Code to detect the CLI.
+    <div style={{ color: "var(--prism-fg-muted)", fontSize: "11px", maxWidth: "300px" }}>
+      After installing and logging in, restart Prism to detect the CLI.
     </div>
   </div>
 )
@@ -109,7 +109,7 @@ const EmptyChat: React.FC<{ phase: string }> = ({ phase }) => {
       </div>
       <div
         style={{
-          color: "var(--vscode-descriptionForeground)",
+          color: "var(--prism-fg-muted)",
           fontSize: "12px",
           textAlign: "center",
         }}
@@ -123,9 +123,9 @@ const EmptyChat: React.FC<{ phase: string }> = ({ phase }) => {
             style={{
               padding: "8px 12px",
               borderRadius: "6px",
-              border: "1px solid var(--vscode-widget-border, #3c3c3c)",
-              backgroundColor: "var(--vscode-editor-background)",
-              color: "var(--vscode-foreground)",
+              border: "1px solid var(--prism-border)",
+              backgroundColor: "var(--prism-bg)",
+              color: "var(--prism-fg)",
               cursor: "pointer",
               fontSize: "12px",
               textAlign: "left",
@@ -245,7 +245,7 @@ export const ChatView: React.FC = () => {
             justifyContent: "flex-end",
             padding: "4px 12px",
             gap: "8px",
-            borderBottom: "1px solid var(--vscode-widget-border, #333)",
+            borderBottom: "1px solid var(--prism-border)",
           }}
         >
           <button
@@ -253,9 +253,9 @@ export const ChatView: React.FC = () => {
             style={{
               padding: "2px 8px",
               borderRadius: "4px",
-              border: "1px solid var(--vscode-widget-border, #555)",
+              border: "1px solid var(--prism-border)",
               backgroundColor: "transparent",
-              color: "var(--vscode-descriptionForeground)",
+              color: "var(--prism-fg-muted)",
               cursor: "pointer",
               fontSize: "11px",
             }}
@@ -296,8 +296,8 @@ export const ChatView: React.FC = () => {
       <div
         style={{
           padding: "8px",
-          borderTop: "1px solid var(--vscode-widget-border, #333)",
-          backgroundColor: "var(--vscode-sideBar-background)",
+          borderTop: "1px solid var(--prism-border)",
+          backgroundColor: "var(--prism-bg-panel)",
         }}
       >
         {isStreaming ? (
@@ -307,10 +307,10 @@ export const ChatView: React.FC = () => {
                 flex: 1,
                 padding: "8px 12px",
                 borderRadius: "8px",
-                backgroundColor: "var(--vscode-input-background)",
-                color: "var(--vscode-descriptionForeground)",
+                backgroundColor: "var(--prism-bg-input)",
+                color: "var(--prism-fg-muted)",
                 fontSize: "12px",
-                border: "1px solid var(--vscode-input-border, #3c3c3c)",
+                border: "1px solid var(--prism-border)",
               }}
             >
               Claude is thinking…
@@ -345,7 +345,7 @@ export const ChatView: React.FC = () => {
         <div
           style={{
             fontSize: "10px",
-            color: "var(--vscode-descriptionForeground)",
+            color: "var(--prism-fg-muted)",
             marginTop: "4px",
             textAlign: "right",
           }}

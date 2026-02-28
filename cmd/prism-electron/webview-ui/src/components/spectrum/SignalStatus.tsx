@@ -48,7 +48,7 @@ export const SignalStatus: React.FC<SignalStatusProps> = ({
       {signalContent && (
         <span
           style={{
-            color: "var(--vscode-descriptionForeground)",
+            color: "var(--prism-fg-muted)",
             fontSize: "11px",
             overflow: "hidden",
             textOverflow: "ellipsis",
