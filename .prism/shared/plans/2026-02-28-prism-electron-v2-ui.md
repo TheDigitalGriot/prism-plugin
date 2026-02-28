@@ -773,14 +773,16 @@ Add new keyframes and classes:
 ```
 
 ### Checkpoint 7
-- [ ] BottomStatusBar shows at bottom of window with Office toggle
-- [ ] Clicking "Office" opens the bottom panel
-- [ ] Pixel agents render as CSS divs (head + body + desk + monitor)
-- [ ] "Thinking" agent bobs and shows cycling dots
-- [ ] Monitor screens glow when agent is thinking
-- [ ] Terminal tab shows mock output with blinking cursor
-- [ ] FloatingChatPill shifts up when bottom panel opens
-- [ ] `npx tsc --noEmit` passes
+- [x] BottomStatusBar shows at bottom of window with Office toggle
+- [x] Clicking "Office" opens the bottom panel
+- [x] Pixel agents render as CSS divs (head + body + desk + monitor)
+- [x] "Thinking" agent bobs and shows cycling dots
+- [x] Monitor screens glow when agent is thinking
+- [x] Terminal tab shows mock output with blinking cursor
+- [x] FloatingChatPill shifts up when bottom panel opens
+- [x] `npx tsc --noEmit` passes
+
+**Checkpoint**: [x] Phase 7 complete
 
 ---
 

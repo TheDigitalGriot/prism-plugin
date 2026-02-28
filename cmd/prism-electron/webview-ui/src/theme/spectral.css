@@ -174,3 +174,23 @@
   transition: width 0.2s ease, min-width 0.2s ease;
   overflow: hidden;
 }
+
+/* -------------------------------------------------------------------------
+ * V2 — Chat pill glow pulse
+ * ---------------------------------------------------------------------- */
+@keyframes prism-pill-glow {
+  0%, 100% { box-shadow: 0 0 15px rgba(59,130,246,0.25); }
+  50%      { box-shadow: 0 0 25px rgba(59,130,246,0.40); }
+}
+
+/* -------------------------------------------------------------------------
+ * V2 — Status dot pulse (connected indicator, in_progress states)
+ * ---------------------------------------------------------------------- */
+@keyframes prism-dot-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+
+.prism-dot-pulse {
+  animation: prism-dot-pulse 2s ease-in-out infinite;
+}
