@@ -89,6 +89,10 @@ export class ElectronPrismController {
   dispose(): void {
     this._watcher.off('change', this._fileChangeListener)
     this._watcher.dispose()
+    if (this._chatRunner) {
+      this._chatRunner.terminate()
+      this._chatRunner = null
+    }
     if (this._modeBridge) {
       this._modeBridge.terminate()
     }

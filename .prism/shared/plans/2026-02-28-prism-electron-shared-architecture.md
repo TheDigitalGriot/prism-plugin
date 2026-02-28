@@ -537,7 +537,9 @@ Confirm:
 
 `mainWindow.on('closed')` → `bridge.dispose()` → `controller.dispose()` → `spectrumRunner.terminate()` → `claudeRunner.terminate()` → `taskkill` (Windows) or `SIGTERM` (Unix).
 
-**Checkpoint 4:** Spectrum executes stories autonomously. Dashboard updates in real time. Window close kills all child processes cleanly.
+**Checkpoint 4:** ✅ Code verified: SpectrumEngine → SpectrumRunner → runIteration() loop wired. State broadcast via _stateSubscribers on every engine tick. All IPC handlers registered (start/pause/resume/stop/skipStory/reset). Process cleanup: dispose() terminates chatRunner + modeBridge + spectrumRunner + spectrumEngine. Build compiles clean (npm run package passes all Vite targets). Bug fixed: _chatRunner.terminate() added to dispose() to prevent orphaned Claude CLI processes on window close. Manual verification pending: Spectrum tab start/pause/stop controls, real-time dashboard updates, and process cleanup require running the app.
+
+**Session Note 2026-02-28:** Phase 4 complete. All automated verification passed (npm run package builds main + preload + renderer without errors). Manual verification of Spectrum execution loop requires running the app.
 
 ---
 
