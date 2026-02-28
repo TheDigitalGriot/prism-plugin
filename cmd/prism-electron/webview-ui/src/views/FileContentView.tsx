@@ -1,45 +1,4 @@
-import React from "react"
-
-// ---------------------------------------------------------------------------
-// Mock file content (replaced by IPC in Phase 8)
-// ---------------------------------------------------------------------------
-
-const MOCK_LINES = [
-  `import { BrowserWindow, ipcMain, dialog } from 'electron';`,
-  `import { handleGrpcRequest } from '@prism-core/core/controller/grpc-handler';`,
-  `import { ElectronPrismController } from './ElectronPrismController';`,
-  ``,
-  `export class ElectronIPCBridge {`,
-  `  private controller: ElectronPrismController;`,
-  `  private _currentProjectDir: string | undefined;`,
-  ``,
-  `  constructor(private mainWindow: BrowserWindow) {`,
-  `    this.controller = new ElectronPrismController();`,
-  `    this.controller.setPostMessageFn(async (msg) => {`,
-  `      mainWindow.webContents.send('grpc_response', msg);`,
-  `    });`,
-  `    this._registerHandlers();`,
-  `  }`,
-  ``,
-  `  async setProjectDir(dir: string): Promise<void> {`,
-  `    this._currentProjectDir = dir;`,
-  `    await this.controller.setProjectDir(dir);`,
-  `  }`,
-  ``,
-  `  private _registerHandlers(): void {`,
-  `    ipcMain.handle('grpc_request', async (_, request) => {`,
-  `      await handleGrpcRequest(`,
-  `        async (msg) => this.mainWindow.webContents.send('grpc_response', msg),`,
-  `        request`,
-  `      );`,
-  `    });`,
-  `  }`,
-  ``,
-  `  dispose(): void {`,
-  `    this.controller.dispose();`,
-  `  }`,
-  `}`,
-]
+import React, { useState, useEffect } from "react"
 
 // ---------------------------------------------------------------------------
 // Basic keyword syntax highlighting
@@ -95,7 +54,6 @@ function highlightKeywords(text: string, baseKey: number): React.ReactNode[] {
   let lastIndex = 0
   let key = baseKey
 
-  // Combine both patterns by scanning manually
   const tokens: Array<{ index: number; length: number; color: string }> = []
 
   let m: RegExpExecArray | null
@@ -143,9 +101,24 @@ function highlightKeywords(text: string, baseKey: number): React.ReactNode[] {
 // ---------------------------------------------------------------------------
 
 export const FileContentView: React.FC<{ filePath: string }> = ({ filePath }) => {
-  // Phase 8 replaces mock with IPC data
-  const lines = MOCK_LINES
+  const [lines, setLines] = useState<string[]>([])
+  const [error, setError] = useState<string | null>(null)
   const fileName = filePath.split("/").pop() ?? filePath
+
+  useEffect(() => {
+    const api = window.electronAPI
+    if (!api) return
+    setLines([])
+    setError(null)
+    api.invoke('prism:readFile', filePath).then((result) => {
+      const res = result as { ok: boolean; content?: string; error?: string }
+      if (res.ok && res.content != null) {
+        setLines(res.content.split("\n"))
+      } else {
+        setError(res.error ?? "Failed to read file")
+      }
+    })
+  }, [filePath])
 
   return (
     <div
@@ -187,40 +160,56 @@ export const FileContentView: React.FC<{ filePath: string }> = ({ filePath }) =>
         </span>
       </div>
 
+      {/* Error state */}
+      {error && (
+        <div style={{ padding: "16px", fontSize: 12, color: "var(--prism-red)" }}>
+          {error}
+        </div>
+      )}
+
+      {/* Loading state */}
+      {!error && lines.length === 0 && (
+        <div style={{ padding: "16px", fontSize: 12, color: "var(--prism-fg-disabled)" }}>
+          Loading…
+        </div>
+      )}
+
       {/* Code lines */}
-      <div style={{ padding: "12px 0" }}>
-        {lines.map((line, i) => (
-          <div
-            key={i}
-            style={{
-              display: "flex",
-              paddingRight: 16,
-              transition: "background 0.1s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "var(--prism-bg-hover)"
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "transparent"
-            }}
-          >
-            <span
+      {lines.length > 0 && (
+        <div style={{ padding: "12px 0" }}>
+          {lines.map((line, i) => (
+            <div
+              key={i}
               style={{
-                width: 48,
-                minWidth: 48,
-                textAlign: "right",
+                display: "flex",
                 paddingRight: 16,
-                color: "var(--prism-text-dim)",
-                userSelect: "none",
-                fontSize: 11.5,
+                transition: "background 0.1s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "var(--prism-bg-hover)"
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "transparent"
               }}
             >
-              {i + 1}
-            </span>
-            <span style={{ whiteSpace: "pre" }}>{highlightLine(line)}</span>
-          </div>
-        ))}
-      </div>
+              <span
+                style={{
+                  width: 48,
+                  minWidth: 48,
+                  textAlign: "right",
+                  paddingRight: 16,
+                  color: "var(--prism-text-dim)",
+                  userSelect: "none",
+                  fontSize: 11.5,
+                }}
+              >
+                {i + 1}
+              </span>
+              <span style={{ whiteSpace: "pre" }}>{highlightLine(line)}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

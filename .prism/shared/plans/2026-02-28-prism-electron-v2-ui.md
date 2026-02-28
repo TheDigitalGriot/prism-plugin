@@ -935,13 +935,15 @@ useEffect(() => {
 ```
 
 ### Checkpoint 8
-- [ ] FilesPanel shows real project file tree
-- [ ] GitPanel shows real staged/unstaged changes
-- [ ] GitGraphView shows real commit history
-- [ ] FileContentView displays real file content with syntax highlighting
-- [ ] Opening a file from FilesPanel shows its real content
-- [ ] No path traversal possible via prism:readFile (security check)
-- [ ] `npx tsc --noEmit` passes
+- [x] FilesPanel shows real project file tree
+- [x] GitPanel shows real staged/unstaged changes
+- [x] GitGraphView shows real commit history
+- [x] FileContentView displays real file content with syntax highlighting
+- [x] Opening a file from FilesPanel shows its real content
+- [x] No path traversal possible via prism:readFile (security check)
+- [x] `npx tsc --noEmit` passes (no source errors; pre-existing @types/node issues unrelated to Phase 8)
+
+**Checkpoint**: [x] Phase 8 complete
 
 ---
 

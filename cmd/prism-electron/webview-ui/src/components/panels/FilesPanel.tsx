@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { useLayout } from "../../context/LayoutContext"
 
 // ---------------------------------------------------------------------------
@@ -11,59 +11,6 @@ interface FileNode {
   children?: FileNode[]
   language?: string
 }
-
-// ---------------------------------------------------------------------------
-// Mock data (Phase 4 — replaced with IPC in Phase 8)
-// ---------------------------------------------------------------------------
-
-const MOCK_FILES: FileNode[] = [
-  {
-    name: "src",
-    type: "dir",
-    children: [
-      { name: "main.ts", type: "file", language: "ts" },
-      { name: "preload.ts", type: "file", language: "ts" },
-      {
-        name: "hosts",
-        type: "dir",
-        children: [
-          {
-            name: "electron",
-            type: "dir",
-            children: [
-              { name: "ElectronIPCBridge.ts", type: "file", language: "ts" },
-              { name: "ElectronPrismController.ts", type: "file", language: "ts" },
-            ],
-          },
-        ],
-      },
-      {
-        name: "prism",
-        type: "dir",
-        children: [
-          { name: "config.ts", type: "file", language: "ts" },
-          { name: "watcher.ts", type: "file", language: "ts" },
-        ],
-      },
-    ],
-  },
-  {
-    name: "webview-ui",
-    type: "dir",
-    children: [
-      {
-        name: "src",
-        type: "dir",
-        children: [
-          { name: "App.tsx", type: "file", language: "tsx" },
-          { name: "electron.ts", type: "file", language: "ts" },
-        ],
-      },
-    ],
-  },
-  { name: "package.json", type: "file", language: "json" },
-  { name: "tsconfig.json", type: "file", language: "json" },
-]
 
 // ---------------------------------------------------------------------------
 // FileTree sub-component
@@ -183,9 +130,15 @@ const FileTree: React.FC<FileTreeProps> = ({
 
 export const FilesPanel: React.FC = () => {
   const layout = useLayout()
-  const [expandedMap, setExpandedMap] = useState<Record<string, boolean>>({
-    src: true,
-  })
+  const [fileTree, setFileTree] = useState<FileNode[]>([])
+  const [expandedMap, setExpandedMap] = useState<Record<string, boolean>>({})
+
+  useEffect(() => {
+    window.electronAPI?.invoke('prism:fileTree', { depth: 4 }).then((result) => {
+      const res = result as { ok: boolean; tree?: FileNode[] }
+      if (res.ok && res.tree) setFileTree(res.tree)
+    })
+  }, [])
 
   const handleToggleDir = (path: string) => {
     setExpandedMap((prev) => ({ ...prev, [path]: !prev[path] }))
@@ -207,12 +160,18 @@ export const FilesPanel: React.FC = () => {
         padding: "4px 0",
       }}
     >
-      <FileTree
-        items={MOCK_FILES}
-        expandedMap={expandedMap}
-        onToggleDir={handleToggleDir}
-        onFileClick={handleFileClick}
-      />
+      {fileTree.length === 0 ? (
+        <div style={{ padding: "12px", fontSize: 11, color: "var(--prism-fg-disabled)" }}>
+          {window.electronAPI ? "Loading…" : "No project open"}
+        </div>
+      ) : (
+        <FileTree
+          items={fileTree}
+          expandedMap={expandedMap}
+          onToggleDir={handleToggleDir}
+          onFileClick={handleFileClick}
+        />
+      )}
     </div>
   )
 }

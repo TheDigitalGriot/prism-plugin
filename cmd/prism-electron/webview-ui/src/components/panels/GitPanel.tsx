@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useState, useEffect } from "react"
 import { useLayout } from "../../context/LayoutContext"
 import { CollapsibleSection } from "../common/CollapsibleSection"
 
@@ -12,22 +12,11 @@ interface GitChange {
   staged: boolean
 }
 
-// ---------------------------------------------------------------------------
-// Mock data (Phase 4 — replaced with IPC in Phase 8)
-// ---------------------------------------------------------------------------
-
-const MOCK_CHANGES: GitChange[] = [
-  { file: "src/App.tsx", status: "M", staged: true },
-  { file: "src/views/SettingsView.tsx", status: "A", staged: true },
-  { file: "src/components/sidebar.tsx", status: "M", staged: false },
-  { file: "webview-ui/src/theme.css", status: "M", staged: false },
-  { file: "package.json", status: "M", staged: false },
-]
-
-const MOCK_BRANCH = "electron-ready"
-const MOCK_AHEAD = 3
-const MOCK_BEHIND = 0
-const MOCK_COMMIT_COUNT = 11
+interface BranchInfo {
+  branch: string
+  ahead: number
+  behind: number
+}
 
 // ---------------------------------------------------------------------------
 // Status badge
@@ -106,10 +95,45 @@ const ChangeItem: React.FC<{ change: GitChange }> = ({ change }) => {
 
 export const GitPanel: React.FC = () => {
   const layout = useLayout()
+  const [staged, setStaged] = useState<GitChange[]>([])
+  const [unstaged, setUnstaged] = useState<GitChange[]>([])
+  const [branchInfo, setBranchInfo] = useState<BranchInfo | null>(null)
+  const [commitCount, setCommitCount] = useState<number>(0)
 
-  const staged = MOCK_CHANGES.filter((c) => c.staged)
-  const unstaged = MOCK_CHANGES.filter((c) => !c.staged)
-  const totalChanges = MOCK_CHANGES.length
+  const fetchGitData = () => {
+    const api = window.electronAPI
+    if (!api) return
+
+    api.invoke('prism:gitStatus').then((result) => {
+      const res = result as {
+        ok: boolean
+        staged?: Array<{ path: string; status: string }>
+        unstaged?: Array<{ path: string; status: string }>
+      }
+      if (res.ok) {
+        setStaged((res.staged ?? []).map((c) => ({ file: c.path, status: c.status, staged: true })))
+        setUnstaged((res.unstaged ?? []).map((c) => ({ file: c.path, status: c.status, staged: false })))
+      }
+    })
+
+    api.invoke('prism:gitBranchInfo').then((result) => {
+      const res = result as { ok: boolean; branch?: string; ahead?: number; behind?: number }
+      if (res.ok && res.branch) {
+        setBranchInfo({ branch: res.branch, ahead: res.ahead ?? 0, behind: res.behind ?? 0 })
+      }
+    })
+
+    api.invoke('prism:gitLog', { limit: 50 }).then((result) => {
+      const res = result as { ok: boolean; commits?: unknown[] }
+      if (res.ok && res.commits) setCommitCount(res.commits.length)
+    })
+  }
+
+  useEffect(() => {
+    fetchGitData()
+  }, [])
+
+  const totalChanges = staged.length + unstaged.length
 
   return (
     <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column" }}>
@@ -191,49 +215,53 @@ export const GitPanel: React.FC = () => {
           <span style={{ flex: 1, fontSize: 12, color: "var(--prism-teal)", textAlign: "left" }}>
             View Git Graph
           </span>
-          <span
-            style={{
-              fontSize: 10,
-              color: "var(--prism-teal)",
-              background: "var(--prism-teal)20",
-              padding: "1px 6px",
-              borderRadius: 8,
-            }}
-          >
-            {MOCK_COMMIT_COUNT}
-          </span>
+          {commitCount > 0 && (
+            <span
+              style={{
+                fontSize: 10,
+                color: "var(--prism-teal)",
+                background: "var(--prism-teal)20",
+                padding: "1px 6px",
+                borderRadius: 8,
+              }}
+            >
+              {commitCount}
+            </span>
+          )}
         </button>
 
         {/* Branch name */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            fontSize: 11,
-            color: "var(--prism-fg-muted)",
-          }}
-        >
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
+        {branchInfo && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              fontSize: 11,
+              color: "var(--prism-fg-muted)",
+            }}
           >
-            <circle cx="6" cy="6" r="2" />
-            <circle cx="6" cy="18" r="2" />
-            <path d="M6 8v8" />
-            <path d="M18 8a4 4 0 01-4 4H6" />
-          </svg>
-          <span>{MOCK_BRANCH}</span>
-          {(MOCK_AHEAD > 0 || MOCK_BEHIND > 0) && (
-            <span style={{ color: "var(--prism-fg-disabled)", fontSize: 10 }}>
-              ↑{MOCK_AHEAD} ↓{MOCK_BEHIND}
-            </span>
-          )}
-        </div>
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            >
+              <circle cx="6" cy="6" r="2" />
+              <circle cx="6" cy="18" r="2" />
+              <path d="M6 8v8" />
+              <path d="M18 8a4 4 0 01-4 4H6" />
+            </svg>
+            <span>{branchInfo.branch}</span>
+            {(branchInfo.ahead > 0 || branchInfo.behind > 0) && (
+              <span style={{ color: "var(--prism-fg-disabled)", fontSize: 10 }}>
+                ↑{branchInfo.ahead} ↓{branchInfo.behind}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Staged Changes */}
