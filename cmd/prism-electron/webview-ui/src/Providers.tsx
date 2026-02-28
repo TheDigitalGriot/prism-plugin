@@ -1,5 +1,6 @@
 import React from "react"
 import { PrismStateContextProvider } from "./context/PrismStateContext"
+import { LayoutProvider } from "./context/LayoutContext"
 
 /**
  * Root provider hierarchy for the Prism webview.
@@ -8,5 +9,9 @@ import { PrismStateContextProvider } from "./context/PrismStateContext"
  * Order matters — outer providers are available to inner providers.
  */
 export const PrismProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  return <PrismStateContextProvider>{children}</PrismStateContextProvider>
+  return (
+    <PrismStateContextProvider>
+      <LayoutProvider>{children}</LayoutProvider>
+    </PrismStateContextProvider>
+  )
 }

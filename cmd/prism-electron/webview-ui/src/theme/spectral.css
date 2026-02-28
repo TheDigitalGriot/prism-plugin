@@ -146,3 +146,31 @@
   background: var(--prism-gradient);
   flex-shrink: 0;
 }
+
+/* -------------------------------------------------------------------------
+ * V2 — Status dot pulse (in_progress / running states)
+ * ---------------------------------------------------------------------- */
+@keyframes statusDotPulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+/* -------------------------------------------------------------------------
+ * V2 — Chat pill glow (floating return-to-chat pill)
+ * ---------------------------------------------------------------------- */
+@keyframes chatPillGlow {
+  0%, 100% { box-shadow: 0 0 6px 0 rgba(59,130,246,0.4); }
+  50%       { box-shadow: 0 0 12px 2px rgba(59,130,246,0.6); }
+}
+
+.prism-chat-pill-glow {
+  animation: chatPillGlow 3s ease-in-out infinite;
+}
+
+/* -------------------------------------------------------------------------
+ * V2 — Rail collapse transition
+ * ---------------------------------------------------------------------- */
+.prism-rail-collapse {
+  transition: width 0.2s ease, min-width 0.2s ease;
+  overflow: hidden;
+}

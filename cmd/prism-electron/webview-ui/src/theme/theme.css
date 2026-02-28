@@ -16,13 +16,13 @@
   /* -------------------------------------------------------------------------
    * Backgrounds
    * ----------------------------------------------------------------------- */
-  --prism-bg: #1a1b2e;
-  --prism-bg-panel: #16172b;
-  --prism-bg-editor: #12131f;
-  --prism-bg-hover: rgb(255 255 255 / 0.05);
-  --prism-bg-active: rgb(255 255 255 / 0.10);
-  --prism-bg-input: #252640;
-  --prism-bg-dropdown: #252640;
+  --prism-bg: #0f1419;
+  --prism-bg-panel: #0d1117;
+  --prism-bg-editor: #111920;
+  --prism-bg-hover: rgba(255,255,255,0.04);
+  --prism-bg-active: rgba(255,255,255,0.08);
+  --prism-bg-input: #1a2332;
+  --prism-bg-dropdown: #1a2332;
   --prism-bg-button: #0e639c;
   --prism-bg-button-hover: #1177bb;
   --prism-bg-button-secondary: #2d2e4a;
@@ -30,9 +30,9 @@
   /* -------------------------------------------------------------------------
    * Foregrounds / Text
    * ----------------------------------------------------------------------- */
-  --prism-fg: #e2e8f0;
-  --prism-fg-muted: #94a3b8;
-  --prism-fg-disabled: #64748b;
+  --prism-fg: #c9d1d9;
+  --prism-fg-muted: #6e7a87;
+  --prism-fg-disabled: #4a5568;
   --prism-fg-active: #ffffff;
   --prism-fg-button: #ffffff;
   --prism-fg-editor: #e2e8f0;
@@ -42,7 +42,7 @@
   /* -------------------------------------------------------------------------
    * Borders
    * ----------------------------------------------------------------------- */
-  --prism-border: #2d2e4a;
+  --prism-border: #1e2d3d;
   --prism-border-focus: #3b82f6;
   --prism-border-input: transparent;
 
@@ -57,8 +57,17 @@
   /* -------------------------------------------------------------------------
    * Scrollbar
    * ----------------------------------------------------------------------- */
-  --prism-scrollbar: rgba(100, 100, 150, 0.4);
-  --prism-scrollbar-hover: rgba(100, 100, 150, 0.7);
+  --prism-scrollbar: rgba(110,122,135,0.4);
+  --prism-scrollbar-hover: rgba(110,122,135,0.7);
+
+  /* -------------------------------------------------------------------------
+   * V2 layout tokens
+   * ----------------------------------------------------------------------- */
+  --prism-bg-surface: #141b22;        /* Elevated surfaces, status bar */
+  --prism-bg-rail: #111920;           /* Left/right rail backgrounds */
+  --prism-border-active: #2a3f54;     /* Focused/active borders */
+  --prism-text-dim: #4a5568;          /* Timestamps, line numbers */
+  --prism-font-code: 'JetBrains Mono', 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
 
   /* -------------------------------------------------------------------------
    * Radius / Spacing
