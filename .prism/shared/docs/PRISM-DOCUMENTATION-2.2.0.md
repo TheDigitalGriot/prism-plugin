@@ -1,11 +1,13 @@
-# Prism CLI - Complete Documentation
+# Prism - Complete Documentation
 
-> A Charmbracelet ecosystem terminal application for autonomous development workflow execution.
-> Built with Bubble Tea, Lipgloss, Harmonica, FauxGL, and a plugin architecture.
+> A multi-platform development workflow suite for autonomous AI-driven development.
+> Includes a Charmbracelet TUI dashboard (Go) and a VS Code extension (TypeScript/React).
 
 ---
 
 ## Table of Contents
+
+### Part I — CLI Dashboard (Go/Bubble Tea)
 
 1. [Overview](#overview)
 2. [Architecture](#architecture)
@@ -42,13 +44,44 @@
 19. [Vertical Layout & Height Budget](#vertical-layout--height-budget)
 20. [Configuration](#configuration)
 
+### Part II — VS Code Extension (TypeScript/React)
+
+21. [VS Code Extension Overview](#vs-code-extension-overview)
+22. [Extension Architecture](#extension-architecture)
+23. [Extension Source Structure](#extension-source-structure)
+24. [Core Orchestrator — PrismController](#core-orchestrator--prismcontroller)
+25. [IPC Architecture — gRPC-over-postMessage](#ipc-architecture--grpc-over-postmessage)
+26. [Sidebar Webview](#sidebar-webview)
+27. [Bottom Panel Webview](#bottom-panel-webview)
+28. [Native Tree Views & Status Bar](#native-tree-views--status-bar)
+29. [Commands & Keybindings](#commands--keybindings)
+30. [Extension Settings](#extension-settings)
+31. [Workflow State Machine (VS Code)](#workflow-state-machine-vs-code)
+32. [Spectrum Execution (VS Code)](#spectrum-execution-vs-code)
+33. [Plugin Skill Integration](#plugin-skill-integration)
+34. [Office Visualization](#office-visualization)
+35. [Extension Technology Stack](#extension-technology-stack)
+
 ---
 
 ## Overview
 
+Prism ships as two complementary interfaces for the same 4-phase workflow (Research → Plan → Implement → Validate):
+
+| Interface | Location | Tech Stack | Best For |
+|-----------|----------|------------|----------|
+| **CLI Dashboard** | `cmd/prism-cli/` | Go 1.23, Bubble Tea, FauxGL | Terminal-native, full-screen TUI, Spectrum execution |
+| **VS Code Extension** | `cmd/prism-vscode/` | TypeScript, React 18, Vite | IDE-integrated, chat-driven, visual office & monitor |
+
+Both share the same `.prism/` directory structure, `stories.json` schema, signal protocol, and Claude CLI integration. They can be used independently or side-by-side.
+
+---
+
+# Part I — CLI Dashboard
+
 Prism CLI is a Go 1.23 terminal user interface that provides real-time monitoring and control of the Spectrum autonomous development workflow. It spawns Claude Code CLI sessions to execute stories from a `stories.json` file, displays streaming tool activity, tracks progress with spring-animated UI elements, and renders a procedural 3D splash screen using software rasterization.
 
-### Key Features
+### Key Features (CLI)
 
 - **12 views**: Splash, Onboarding, Home menu, Research browser, Plans browser, Spectrum execution dashboard, Files browser, Git integration, Agent chat, Monitor dashboard, Workspaces manager
 - **Plugin architecture**: 10 composable plugins with shared context, event bus, and lifecycle management
@@ -2504,3 +2537,680 @@ LDFLAGS := -X main.version=$(VERSION)
 8. `github.com/spf13/cobra v1.8.1` — CLI framework
 
 **Notable indirect:** Chroma (syntax highlighting), bubblezone (mouse zones), clipboard, colorprofile, cellbuf
+
+---
+---
+
+# Part II — VS Code Extension
+
+## VS Code Extension Overview
+
+The Prism VS Code Extension (`cmd/prism-vscode/`) brings the full 4-phase workflow directly into the IDE. It provides a sidebar chat interface, tree views for research/plans/stories, Spectrum autonomous execution, an Office pixel-art visualization, a Monitor dashboard, and Workspaces management — all without leaving VS Code.
+
+### Key Features (VS Code)
+
+- **Sidebar chat**: Interactive Claude chat with streaming tool visualization, phase-aware system prompts
+- **Spectrum execution**: Autonomous story execution with real-time progress, logs, and signal handling
+- **Native tree views**: Research, Plans, and Stories tree providers in the activity bar with context menus
+- **Bottom panel**: Three-view system (Monitor, Office, Workspaces) in a unified panel
+- **Office visualization**: Pixel-art office with animated agent characters, furniture placement editor
+- **Plugin skill routing**: Seamless bridging between SDK chat and CLI plugin skills (`/prism-research`, `/prism-plan`, etc.)
+- **Workflow state machine**: Validated phase transitions (Idle → Research → Plan → Implement → Validate)
+- **Status bar integration**: Workflow phase, story progress, and Spectrum status indicators
+- **24 commands**: Workflow phases, Spectrum control, tree operations, Office/Monitor actions
+- **7 configurable settings**: Model selection, Spectrum parameters, auto-approval options
+
+### Extension Metadata
+
+| Field | Value |
+|-------|-------|
+| Name | Prism |
+| Version | 2.1.8 |
+| Publisher | prism |
+| Categories | AI, Programming Languages, Other |
+| Min VS Code | 1.84.0 |
+| Activation | `onView:prism.sidebar`, `onStartupFinished` |
+| Entry Point | `./dist/extension.js` |
+
+---
+
+## Extension Architecture
+
+### High-Level Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                        VS Code Extension Host                       │
+│                                                                     │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │                    PrismController                          │   │
+│  │  (Central orchestrator — state, workflow, chat, spectrum)   │   │
+│  │                                                             │   │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌────────────────┐   │   │
+│  │  │ Workflow      │  │ Spectrum     │  │ Plugin/Mode    │   │   │
+│  │  │ StateMachine  │  │ Engine       │  │ Bridge         │   │   │
+│  │  └──────────────┘  └──────────────┘  └────────────────┘   │   │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌────────────────┐   │   │
+│  │  │ Stories      │  │ Claude       │  │ Agent          │   │   │
+│  │  │ Manager      │  │ Runner       │  │ Bridge         │   │   │
+│  │  └──────────────┘  └──────────────┘  └────────────────┘   │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│                          │                                         │
+│          gRPC-over-postMessage (bidirectional IPC)                  │
+│                          │                                         │
+│    ┌─────────────────────┴─────────────────────┐                   │
+│    │                     │                     │                   │
+│    ▼                     ▼                     ▼                   │
+│  ┌───────────┐   ┌─────────────┐   ┌──────────────────┐          │
+│  │ Sidebar   │   │ Bottom      │   │ Native Tree      │          │
+│  │ Webview   │   │ Panel       │   │ Views + Status   │          │
+│  │ (React)   │   │ (React)     │   │ Bar              │          │
+│  │           │   │             │   │                  │          │
+│  │ • Chat    │   │ • Monitor   │   │ • Research tree  │          │
+│  │ • Spectrum│   │ • Office    │   │ • Plans tree     │          │
+│  │ • Welcome │   │ • Workspaces│   │ • Stories tree   │          │
+│  └───────────┘   └─────────────┘   └──────────────────┘          │
+│                                                                     │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │                    .prism/ Directory                         │   │
+│  │  (shared with CLI — research, plans, stories, spectrum)     │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Data Flow
+
+```
+User Input (chat, commands, tree clicks)
+    │
+    ▼
+┌──────────────────────────────────────────────────────────────┐
+│  PrismController                                              │
+│                                                                │
+│  Message Router:                                               │
+│    ChatService.sendMessage ──▶ ClaudeRunner / PluginBridge    │
+│    WorkflowService.transition ──▶ WorkflowStateMachine        │
+│    SpectrumService.start ──▶ SpectrumEngine                   │
+│    PluginService.executeSkill ──▶ PluginBridge                │
+│                                                                │
+│  State Broadcast:                                              │
+│    updateState() ──▶ all subscribers via gRPC streams          │
+│                                                                │
+│  Events:                                                       │
+│    onDidChangeFile ──▶ Tree providers refresh                  │
+│    onDidChangeState ──▶ Status bar update                      │
+│    onDidStartSession ──▶ AgentBridge                           │
+│    onDidUpdateStory ──▶ Stories tree refresh                   │
+│    onDidEndSpectrumStory ──▶ Monitor history                   │
+└──────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Extension Source Structure
+
+```
+cmd/prism-vscode/
+├── package.json                          # Extension manifest, commands, views, settings
+├── tsconfig.json                         # TypeScript configuration
+├── esbuild.js                            # Build script
+├── dist/                                 # Compiled extension bundle
+├── media/                                # Icons and assets
+├── assets/                               # Additional resources
+│
+├── src/
+│   ├── extension.ts                      # Main entry point — activation, registration
+│   │
+│   ├── hosts/vscode/                     # VS Code integration layer
+│   │   ├── VscodeWebviewProvider.ts      # Sidebar webview provider
+│   │   ├── PrismPanelProvider.ts         # Bottom panel provider (Monitor/Office/Workspaces)
+│   │   └── OfficeViewProvider.ts         # Office-specific logic
+│   │
+│   ├── providers/                        # Native tree view providers
+│   │   ├── research-tree.ts             # Research documents tree
+│   │   ├── plans-tree.ts                # Plans tree with context menus
+│   │   ├── stories-tree.ts              # Stories tree with color-coded status
+│   │   └── workflow-status.ts           # Status bar items
+│   │
+│   ├── core/                             # Core business logic
+│   │   ├── controller/
+│   │   │   ├── index.ts                 # PrismController (central orchestrator)
+│   │   │   └── prism/
+│   │   │       ├── workflow.ts          # 4-phase state machine
+│   │   │       ├── spectrum.ts          # Spectrum execution engine
+│   │   │       ├── spectrum-runner.ts   # Per-iteration CLI runner
+│   │   │       ├── stories.ts          # stories.json management
+│   │   │       ├── plugin-bridge.ts    # Plugin skill routing
+│   │   │       └── mode-bridge.ts      # SDK ↔ CLI mode switching
+│   │   ├── api/                         # API types and Claude SDK
+│   │   ├── prompts/                     # Phase-specific system prompts
+│   │   ├── task/                        # Task execution with tool handlers
+│   │   └── webview/                     # Webview provider base class
+│   │
+│   ├── claude/                           # Claude CLI integration
+│   │   ├── runner.ts                    # CLI subprocess spawning
+│   │   ├── parser.ts                    # Output parsing (tools, signals)
+│   │   └── events.ts                    # Event type definitions
+│   │
+│   ├── office/                           # Office agent management
+│   │   ├── agentManager.ts             # Agent lifecycle
+│   │   ├── agentBridge.ts              # Session routing
+│   │   ├── assetLoader.ts             # Sprite/furniture loading
+│   │   └── layoutPersistence.ts       # Layout serialization
+│   │
+│   ├── prism/                            # .prism/ directory handling
+│   │   ├── config.ts                    # Directory detection
+│   │   ├── init.ts                      # Directory initialization
+│   │   ├── watcher.ts                   # FileSystemWatcher
+│   │   └── stories.ts                   # Story model
+│   │
+│   └── shared/                           # Shared types (extension ↔ webview)
+│       ├── PrismState.ts                # Full extension state type
+│       ├── types.ts                     # Workflow phases, colors
+│       └── PrismMessage.ts             # IPC message types
+│
+├── webview-ui/                           # Sidebar React webview
+│   ├── src/
+│   │   ├── App.tsx                      # Routes between Chat/Spectrum views
+│   │   ├── ChatView.tsx                 # Streaming chat with phase awareness
+│   │   ├── SpectrumView.tsx             # Real-time Spectrum dashboard
+│   │   ├── WelcomeView.tsx              # Onboarding screen
+│   │   ├── PhaseIndicator.tsx           # Visual workflow phase indicator
+│   │   ├── ChatRow.tsx / ToolRow.tsx    # Message rendering
+│   │   ├── MarkdownBlock.tsx            # Syntax-highlighted markdown
+│   │   ├── SpectrumControls.tsx         # Spectrum control buttons
+│   │   ├── StoryList.tsx                # Story list with status badges
+│   │   ├── PrismStateContext.tsx        # Global state context
+│   │   └── services/
+│   │       ├── grpc-client.ts           # gRPC client
+│   │       └── grpc-client-base.ts      # gRPC client base
+│   └── vite.config.ts                   # Vite configuration
+│
+└── webview-panel/                        # Bottom panel React webview
+    ├── src/
+    │   ├── MonitorView.tsx              # Quality gates, execution history
+    │   ├── WorkspacesView.tsx           # Project browser, worktrees
+    │   ├── OfficeApp.tsx                # Pixel-art office main view
+    │   ├── OfficeCanvas.tsx             # Canvas renderer
+    │   ├── engine/                      # Game loop, character animation
+    │   ├── office/editor/              # Layout editor for furniture
+    │   ├── sprites/                    # Character sprite management
+    │   └── layout/                     # Furniture catalog, tile mapping
+    └── vite.config.ts
+```
+
+---
+
+## Core Orchestrator — PrismController
+
+The `PrismController` is the central hub that ties together all extension functionality.
+
+### Responsibilities
+
+| Area | Components | Description |
+|------|-----------|-------------|
+| **State** | `updateState()`, `PrismExtensionState` | Atomic state updates, broadcast to all webview subscribers via gRPC streams |
+| **Workflow** | `WorkflowStateMachine` | Phase transitions with validation (Idle → Research → Plan → Implement → Validate) |
+| **Stories** | `StoriesManager` | Load/save `stories.json`, resolve dependencies, track progress |
+| **Chat** | `ClaudeRunner`, tool handlers | Spawn Claude CLI with `--output-format stream-json`, handle tool use recursively |
+| **Spectrum** | `SpectrumEngine`, `SpectrumRunner` | Execution loop state machine, per-iteration CLI subprocess management |
+| **Skills** | `ModeBridge`, `PluginBridge` | Switch between SDK chat and CLI plugin mode, route skill invocations |
+| **Files** | `PrismWatcher` | Monitor `.prism/` directory for changes, fire `onDidChangeFile` events |
+| **Office** | `AgentBridge` | Connect Spectrum sessions to Office agent characters |
+
+### Extension State Model (`PrismExtensionState`)
+
+The full state is broadcast to all webview subscribers on every update:
+
+| Category | Fields | Description |
+|----------|--------|-------------|
+| **Workspace** | `hasPrismDir`, `hasStoriesJson`, `prismDir`, `storiesPath` | `.prism/` detection |
+| **Workflow** | `workflowPhase`, `workflowContext` | Current phase + active document/story |
+| **Stories** | `stories[]`, `plan`, `completedCount`, `remainingCount` | Story data + progress |
+| **Chat** | `chatMessages[]`, `isChatStreaming`, `hasActiveTask`, `pendingApprovalToolUseId` | Conversation state |
+| **CLI** | `chatMode` (`sdk`/`plugin`), `activePluginSkill`, `hasClaudeCli` | CLI bridge state |
+| **Spectrum** | `executionState`, `currentIteration`, `currentStoryId`, `progress`, `elapsedMs`, `consecutiveErrors`, `lastSignalType`, `recentActivities[]`, `logs[]` | Full execution state |
+| **Office** | `office.enabled`, `office.agentCount`, `office.activeAgents[]` | Agent tracking |
+| **Config** | `defaultModel`, `planningModel` | Model selections |
+
+### Events
+
+| Event | Trigger | Consumers |
+|-------|---------|-----------|
+| `onDidChangeFile` | `.prism/` file added/changed/deleted | Tree providers |
+| `onDidChangeState` | Any state update | Status bar, webviews |
+| `onDidStartSession` | Claude session begins | AgentBridge |
+| `onDidUpdateStory` | Story status changes | Stories tree |
+| `onDidEndSpectrumStory` | Story iteration completes | Monitor history |
+
+---
+
+## IPC Architecture — gRPC-over-postMessage
+
+Communication between the extension host and webviews uses a gRPC-inspired protocol over VS Code's `postMessage` API.
+
+### Pattern
+
+1. Extension host defines gRPC service interfaces
+2. Webview sends binary-like requests via `postMessage`
+3. Host responds with serialized state objects
+4. Streaming RPCs push state updates on every `updateState()` call
+
+### Services
+
+| Service | Methods | Type | Description |
+|---------|---------|------|-------------|
+| **StateService** | `subscribeToState()` | Streaming | Push state on init + every update |
+| | `getState()` | Unary | Get current state once |
+| **UiService** | `initializeWebview()` | Unary | Called on webview mount |
+| | `initPrism()` | Unary | Initialize `.prism/` from UI |
+| **WorkflowService** | `transition()` | Unary | Attempt phase change |
+| | `getAvailableTransitions()` | Unary | List allowed next phases |
+| **ChatService** | `sendMessage()` | Unary | Send user text, start streaming |
+| | `abortTask()` | Unary | Stop active chat/plugin |
+| | `clearMessages()` | Unary | Reset chat history |
+| | `approveToolUse()` | Unary | Approve pending tool use |
+| | `setApiKey()` | Unary | No-op (using CLI) |
+| **PluginService** | `executeSkill()` | Unary | Run Prism plugin skill via CLI |
+| **SpectrumService** | `start()` | Unary | Begin autonomous execution |
+| | `pause()` / `resume()` | Unary | Pause/resume loop |
+| | `stop()` | Unary | Halt execution |
+| | `skipStory()` | Unary | Skip current story |
+| | `reset()` | Unary | Reset Spectrum state |
+| **TaskService** | `readFile()`, `writeFile()`, `editFile()` | Unary | File operations during chat |
+| | `executeCommand()`, `searchFiles()`, `listFiles()` | Unary | Tool operations |
+| | `askFollowup()`, `attemptCompletion()` | Unary | Task lifecycle |
+
+---
+
+## Sidebar Webview
+
+Built with React 18 + Vite + Tailwind CSS. Provides the primary interaction surface in the activity bar.
+
+### Views
+
+| View | Component | Description |
+|------|-----------|-------------|
+| **Chat** | `ChatView.tsx` | Streaming Claude chat with phase-aware system prompts, tool visualization, markdown rendering |
+| **Spectrum** | `SpectrumView.tsx` | Real-time dashboard with story progress, activity feed, logs, start/pause/stop controls |
+| **Welcome** | `WelcomeView.tsx` | First-time onboarding when `.prism/` is not detected |
+
+### Chat View Features
+
+- Streaming assistant responses with typing indicator
+- Tool call visualization (Read, Edit, Write, Bash, Glob, Grep, etc.)
+- Phase indicator with spectral glow effect
+- Markdown rendering with syntax highlighting
+- Tool approval flow for pending permissions
+- Automatic skill detection in user messages (routes to CLI)
+
+### Spectrum View Features
+
+- Story list with color-coded status badges (complete/active/pending/blocked)
+- Progress bar with percentage
+- Real-time activity feed (last 50 tool calls)
+- Log output (last 200 entries)
+- Start/Pause/Resume/Stop controls
+- Iteration counter and elapsed time
+
+---
+
+## Bottom Panel Webview
+
+A unified React webview hosting three views in the bottom panel area.
+
+### Monitor View (`MonitorView.tsx`)
+
+| Feature | Description |
+|---------|-------------|
+| Quality Gates | Display gate status (pass/fail/pending/running), run individual or all gates |
+| Execution History | Chronological list of story executions with duration, result, timestamp |
+| Gate Results | Detailed output for each quality gate run |
+
+### Office View (`OfficeApp.tsx`)
+
+A pixel-art office visualization showing AI agent characters at work:
+
+| Feature | Description |
+|---------|-------------|
+| Canvas rendering | 2D Canvas with game loop for smooth animation |
+| Agent characters | Animated sprites representing active Claude sessions |
+| Furniture placement | Editable layout with desk, chair, and equipment tiles |
+| Agent status | Status icons (active, thinking, waiting, paused) synced with Spectrum |
+| Layout persistence | Serialized to disk for cross-session consistency |
+
+### Workspaces View (`WorkspacesView.tsx`)
+
+| Feature | Description |
+|---------|-------------|
+| Project browser | Scan for `.prism/` directories in sibling folders |
+| Branch detection | Show current git branch per project |
+| Worktree management | Create/delete git worktrees |
+| Epic tracking | Stories grouped by epic folder |
+
+---
+
+## Native Tree Views & Status Bar
+
+### Research Tree (`research-tree.ts`)
+
+- Lists `.prism/shared/research/` markdown files
+- Shows date, topic name parsed from filename
+- Context menu: Open, Delete, Refresh
+- Auto-refreshes on `onDidChangeFile` events
+
+### Plans Tree (`plans-tree.ts`)
+
+- Lists `.prism/shared/plans/` markdown files
+- Context menu: Open, Decompose to stories, Implement, Delete, Refresh
+- Decompose action generates `.prism/stories/<name>/stories.json`
+
+### Stories Tree (`stories-tree.ts`)
+
+- Displays `stories.json` entries with color-coded status icons
+- Expandable items show individual steps with done/pending markers
+- Context menu: Execute story, Mark complete, Refresh
+- Status colors match CLI conventions (green=complete, purple=active, gray=pending, amber=blocked)
+
+### Status Bar Items
+
+| Item | Position | Content |
+|------|----------|---------|
+| Workflow Phase | Left | Current phase with color-coded icon |
+| Story Progress | Left | `N/M stories` completion counter |
+| Spectrum Status | Right | Running/Paused/Complete indicator |
+
+---
+
+## Commands & Keybindings
+
+### Workflow Phase Commands
+
+| Command | Keybinding | Description |
+|---------|------------|-------------|
+| `prism.research` | `Ctrl+Shift+R` | Start Research phase |
+| `prism.plan` | `Ctrl+Shift+Alt+P` | Start Plan phase |
+| `prism.implement` | `Ctrl+Shift+I` | Start Implement phase |
+| `prism.validate` | `Ctrl+Shift+V` | Start Validate phase |
+
+### Spectrum Execution Commands
+
+| Command | Keybinding | Description |
+|---------|------------|-------------|
+| `prism.spectrum.start` | `Ctrl+Shift+S` | Begin autonomous execution |
+| `prism.spectrum.pause` | — | Pause execution |
+| `prism.spectrum.stop` | — | Stop execution |
+
+### Initialization & Navigation
+
+| Command | Description |
+|---------|-------------|
+| `prism.openSidebar` | Focus Prism sidebar |
+| `prism.initPrism` | Initialize `.prism/` directory structure |
+
+### Plugin Skill Commands
+
+| Command | Skill | Description |
+|---------|-------|-------------|
+| `prism.commit` | `/commit` | Create a Prism commit |
+| `prism.decompose` | `/decompose_plan` | Convert plan to stories.json |
+| `prism.handoff` | `/create_handoff` | Create session handoff document |
+| `prism.describePR` | `/describe_pr` | Generate PR description |
+
+### Research Tree Commands
+
+| Command | Description |
+|---------|-------------|
+| `prism.research.open` | Open research document |
+| `prism.research.delete` | Delete research document |
+| `prism.research.refresh` | Refresh research list |
+
+### Plans Tree Commands
+
+| Command | Description |
+|---------|-------------|
+| `prism.plans.open` | Open plan document |
+| `prism.plans.decompose` | Decompose plan to stories |
+| `prism.plans.implement` | Implement from plan |
+| `prism.plans.delete` | Delete plan |
+| `prism.plans.refresh` | Refresh plans list |
+
+### Stories Tree Commands
+
+| Command | Description |
+|---------|-------------|
+| `prism.stories.execute` | Run specific story |
+| `prism.stories.markComplete` | Mark story as complete |
+| `prism.stories.refresh` | Refresh stories list |
+
+### Office & Monitor Commands
+
+| Command | Description |
+|---------|-------------|
+| `prism.office.show` | Show Office view |
+| `prism.office.launchAgent` | Launch new agent terminal |
+| `prism.office.exportLayout` | Export office layout |
+| `prism.monitor.runGate` | Run single quality gate |
+| `prism.monitor.runAllGates` | Run all quality gates |
+
+### Workspaces Commands
+
+| Command | Description |
+|---------|-------------|
+| `prism.workspaces.openProject` | Open project folder |
+| `prism.workspaces.newWorktree` | Create git worktree |
+| `prism.workspaces.deleteWorktree` | Delete worktree |
+
+---
+
+## Extension Settings
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `prism.defaultModel` | enum | `"sonnet"` | Claude model for implementation work |
+| `prism.planningModel` | enum | `"opus"` | Claude model for research/planning |
+| `prism.spectrum.maxIterations` | number | `50` | Max iterations before stopping |
+| `prism.spectrum.pauseSeconds` | number | `2` | Pause between iterations (seconds) |
+| `prism.autoApprove.readFile` | boolean | `true` | Auto-approve file reads |
+| `prism.autoApprove.listFiles` | boolean | `true` | Auto-approve directory listing |
+| `prism.autoApprove.searchFiles` | boolean | `true` | Auto-approve file searches |
+
+---
+
+## Workflow State Machine (VS Code)
+
+The extension implements the same 4-phase workflow as the CLI, with validated transitions:
+
+```
+              ┌──────────────────────────────────────┐
+              │                                      │
+              │    ┌──────┐                          │
+              │    │ IDLE │                          │
+              │    └──┬───┘                          │
+              │       │                              │
+              │  ┌────┴─────┬──────────┬──────────┐  │
+              │  ▼          ▼          ▼          ▼  │
+              │ Research → Plan → Implement → Validate
+              │  │          │          │          │  │
+              │  └──────────┴──────────┴──────────┘  │
+              │       (any phase can return to Idle)  │
+              └──────────────────────────────────────┘
+```
+
+Each phase transition is validated by the `WorkflowStateMachine`. The active phase determines:
+- System prompts sent to Claude
+- Status bar indicator color
+- Available actions in the sidebar
+
+---
+
+## Spectrum Execution (VS Code)
+
+The VS Code extension runs Spectrum through the same signal protocol as the CLI.
+
+### Execution States
+
+| State | Description |
+|-------|-------------|
+| `idle` | Waiting to start |
+| `running` | Claude CLI active, processing stories |
+| `paused` | Execution paused by user |
+| `complete` | All stories finished |
+| `maxIterations` | Iteration limit reached |
+| `error` | Fatal error, cannot continue |
+
+### SpectrumEngine
+
+Manages the execution loop state machine. On each iteration:
+
+1. Check max iterations — exceeded? → `maxIterations` state
+2. Select next story via `StoriesManager.getNextStory()`
+3. Spawn Claude CLI via `SpectrumRunner`
+4. Stream output, parse tools and signals
+5. Handle signal: Continue → pause, then next iteration; Complete → check remaining; Error → stop
+6. Update stories.json on disk
+
+### SpectrumRunner
+
+Per-iteration CLI subprocess manager:
+- Spawns `claude` with `--dangerously-skip-permissions --print --output-format stream-json`
+- Streams stdout/stderr through output parser
+- Detects signals (`<spectrum-continue>`, `<spectrum-retry>`, `<spectrum-blocked>`, `<spectrum-error>`, `<promise>COMPLETE</promise>`)
+- Fires events: `recentActivities[]`, `logs[]`, signal detection
+
+---
+
+## Plugin Skill Integration
+
+### ModeBridge
+
+Detects when user messages reference Prism plugin skills and switches from SDK chat mode to CLI plugin mode:
+
+| Chat Mode | Description |
+|-----------|-------------|
+| `sdk` | Direct Claude Agent SDK chat (default) |
+| `plugin` | CLI-based skill execution (auto-detected or manual) |
+
+### PluginBridge
+
+Routes skill invocations to the Claude CLI:
+
+| Skill Name | CLI Command |
+|------------|-------------|
+| `prism-research` | `/prism-research` |
+| `prism-plan` | `/prism-plan` |
+| `prism-implement` | `/prism-implement` |
+| `prism-validate` | `/prism-validate` |
+| `commit` | `/commit` |
+| `decompose_plan` | `/decompose_plan` |
+| `create_handoff` | `/create_handoff` |
+| `describe_pr` | `/describe_pr` |
+
+### Skill Detection Flow
+
+```
+User types message in chat
+    │
+    ▼
+ModeBridge.detectSkillTrigger(message)
+    │
+    ├── No match → SDK chat mode (Claude Agent SDK)
+    │
+    └── Match found → Switch to plugin mode
+        │
+        ▼
+    PluginBridge.executeSkill(skillName)
+        │
+        ▼
+    ClaudeRunner.spawn("claude ... /skill-name")
+        │
+        ▼
+    OutputParser → stream tools + signals to UI
+```
+
+---
+
+## Office Visualization
+
+The Office view provides a pixel-art visualization of AI agents working in a virtual office.
+
+### Components
+
+| Component | File | Description |
+|-----------|------|-------------|
+| Office Canvas | `OfficeCanvas.tsx` | Main 2D Canvas renderer with game loop |
+| Engine | `engine/` | Game loop tick, character animation, matrix effects |
+| Sprites | `sprites/` | Character sprite sheets, PNG decoding, animation frames |
+| Layout | `layout/` | Furniture catalog, tile mapping, serialization |
+| Editor | `office/editor/` | Interactive furniture placement editor |
+
+### Agent States
+
+| State | Icon | Description |
+|-------|------|-------------|
+| Active | `●` | Currently executing tool calls |
+| Thinking | `◉` | Claude is generating response |
+| Waiting | `○` | Idle, waiting for next task |
+| Paused | `⏸` | Execution paused |
+
+### Agent Lifecycle
+
+1. Spectrum starts a story iteration → `AgentBridge` creates agent
+2. Agent character appears in Office at assigned desk
+3. Agent status updates in real-time as tools execute
+4. Story completes → agent transitions to "done" state
+5. Next iteration → new agent or reuse existing
+
+---
+
+## Extension Technology Stack
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                     Prism VS Code Extension v2.1.8                  │
+├──────────────┬──────────────┬──────────────┬────────────────────────┤
+│  Extension   │  Sidebar     │  Bottom      │  Build                 │
+│  Host        │  Webview     │  Panel       │  Tools                 │
+├──────────────┼──────────────┼──────────────┼────────────────────────┤
+│ TypeScript   │ React 18     │ React 18     │ esbuild                │
+│ VS Code API  │ Vite         │ Vite         │ TypeScript             │
+│ Node.js      │ Tailwind v4  │ Tailwind v4  │ Jest                   │
+│ Anthropic SDK│ React        │ Canvas 2D    │ VS Code Test CLI       │
+│              │  Virtuoso    │ PNG.js       │                        │
+│              │ React        │              │                        │
+│              │  Markdown    │              │                        │
+├──────────────┴──────────────┴──────────────┴────────────────────────┤
+│  Claude CLI (child process — shared with Prism CLI)                 │
+├─────────────────────────────────────────────────────────────────────┤
+│  .prism/ Directory (shared — research, plans, stories, spectrum)    │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Activation Flow (`extension.ts`)
+
+1. Create `VscodeWebviewProvider` → instantiates `PrismController`
+2. Register tree view providers (Research, Plans, Stories)
+3. Register status bar items
+4. Register sidebar webview provider
+5. Create `PrismPanelProvider` → register bottom panel webview
+6. Register 40+ commands with handlers
+7. Subscribe to file watcher changes → refresh trees
+8. Subscribe to state changes → update UI
+
+### CLI ↔ Extension Feature Parity
+
+| Feature | CLI Dashboard | VS Code Extension |
+|---------|--------------|-------------------|
+| 4-Phase Workflow | Tab-based navigation | Commands + sidebar chat |
+| Research Browser | Two-mode file viewer | Native tree view + markdown preview |
+| Plans Browser | Two-mode file viewer + decompose | Native tree view + context menu |
+| Stories View | Paginated list in Spectrum | Native tree view with expandable steps |
+| Spectrum Execution | Full-screen dashboard | Sidebar + bottom panel |
+| Chat / Agent | Compact TUI chat | Full chat with streaming markdown |
+| Git Integration | Two-pane staging + diff | Delegates to VS Code's built-in git |
+| File Browser | Two-pane with tabs + edit + blame | Delegates to VS Code's file explorer |
+| Monitor | Three-panel health dashboard | Bottom panel quality gates + history |
+| Workspaces | Projects + worktrees + kanban | Bottom panel project browser |
+| Office | — | Pixel-art agent visualization |
+| Splash / 3D | Procedural 3D animation | — |
+| Spring Animations | Harmonica physics | CSS transitions |
