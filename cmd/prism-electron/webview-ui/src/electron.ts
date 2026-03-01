@@ -19,6 +19,10 @@ declare global {
       send: (channel: string, data: unknown) => void
       on: (channel: string, cb: (data: unknown) => void) => () => void
       invoke: (channel: string, data?: unknown) => Promise<unknown>
+      /** Subscribe to office messages pushed from the main process. Returns an unsubscribe fn. */
+      officeMessage: (callback: (msg: unknown) => void) => () => void
+      /** Send an office action to the main process (fire-and-forget). */
+      officeAction: (msg: unknown) => void
     }
   }
 }

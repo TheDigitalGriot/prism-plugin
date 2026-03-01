@@ -1090,14 +1090,30 @@ From `cmd/prism-vscode/webview-office/src/components/`:
 
 ### Verification
 #### Automated
-- [ ] `cd cmd/prism-electron && npm run make` succeeds
-- [ ] `PixelOffice.tsx` no longer exists
+- [x] `cd cmd/prism-electron && npm run make` succeeds
+- [x] `PixelOffice.tsx` no longer exists
 
 #### Manual
 - [ ] Electron: bottom panel "Office" tab shows the canvas office with tiles, furniture, walls
 - [ ] Electron: furniture editor opens and allows painting/placing
 - [ ] Electron: zoom controls work
 - [ ] Electron: pan via middle mouse / scroll works
+
+**Checkpoint**: [x] Phase 13 complete
+
+### Phase 13 Session Notes — 2026-03-01
+- Created `cmd/prism-electron/webview-ui/src/office/electronOfficeTransport.ts`:
+  - Implements `OfficeTransport` interface from `@prism-ui/office/transport`
+  - `postMessage(msg)` → `window.electronAPI.officeAction(msg)` (fire-and-forget to main process)
+  - `onMessage(handler)` → `window.electronAPI.officeMessage(handler)` (returns unsubscribe fn)
+  - Dev fallback with console.log when running outside Electron
+- Updated `electron.ts`: added `officeMessage` and `officeAction` to Window.electronAPI type declaration
+- Updated `main.tsx`: imports `setOfficeTransport` + `electronOfficeTransport`; calls `setOfficeTransport(electronOfficeTransport)` before render alongside existing gRPC transport setup
+- Updated `BottomPanel.tsx`: replaced `import { PixelOffice } from "../office/PixelOffice"` → `import { OfficeApp } from "@prism-ui/office/OfficeApp"`; replaced `<PixelOffice />` → `<OfficeApp />`
+- Deleted `cmd/prism-electron/webview-ui/src/components/office/PixelOffice.tsx` (331-line CSS mockup)
+- `@prism-ui` alias already present from Phase 8 in both tsconfig.json and vite.config.ts
+- `pngjs` already available via npm workspaces hoisting from packages/prism-core
+- `npm run make` passes cleanly (Squirrel distributable for win32/x64)
 
 ---
 

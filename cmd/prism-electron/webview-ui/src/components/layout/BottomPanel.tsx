@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react"
 import { useLayout } from "../../context/LayoutContext"
-import { PixelOffice } from "../office/PixelOffice"
+import { OfficeApp } from "@prism-ui/office/OfficeApp"
 
 // ---------------------------------------------------------------------------
 // Chevron icon
@@ -196,7 +196,7 @@ export const BottomPanel: React.FC = () => {
 
       {/* Content area */}
       <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
-        {bottomTab === "office" ? <PixelOffice /> : <TerminalOutput />}
+        {bottomTab === "office" ? <OfficeApp /> : <TerminalOutput />}
       </div>
     </div>
   )
