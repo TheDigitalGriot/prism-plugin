@@ -17,6 +17,7 @@ interface GateResult {
   success: boolean
   output: string
   duration: number
+  cancelled?: boolean
 }
 
 // ---------------------------------------------------------------------------
@@ -41,6 +42,10 @@ export const MonitorPanel: React.FC = () => {
     setGateStates((prev) => ({ ...prev, [command]: { status: "running" } }))
     try {
       const result = await window.electronAPI.invoke("prism:executeGate", command) as GateResult
+      if (result.cancelled) {
+        setGateStates((prev) => ({ ...prev, [command]: { status: "idle" } }))
+        return
+      }
       setGateStates((prev) => ({
         ...prev,
         [command]: {
@@ -62,10 +67,14 @@ export const MonitorPanel: React.FC = () => {
     }
   }
 
+  const cancelGate = async (command: string) => {
+    await window.electronAPI.invoke("prism:cancelGate", command)
+  }
+
   const runAllGates = () => {
     if (!plan?.qualityGates) return
     for (const gate of plan.qualityGates) {
-      runGate(gate)
+      void runGate(gate)
     }
   }
 
@@ -261,29 +270,44 @@ export const MonitorPanel: React.FC = () => {
                       </button>
                     )}
 
-                    {/* Run button */}
-                    <button
-                      onClick={() => runGate(gate)}
-                      disabled={gs?.status === "running"}
-                      style={{
-                        fontSize: 9.5,
-                        padding: "1px 6px",
-                        borderRadius: 3,
-                        border: "1px solid var(--prism-border)",
-                        background:
-                          gs?.status === "running"
-                            ? "rgba(255,255,255,0.03)"
-                            : "rgba(255,255,255,0.06)",
-                        color:
-                          gs?.status === "running"
-                            ? "var(--prism-fg-disabled)"
-                            : "var(--prism-fg-muted)",
-                        cursor: gs?.status === "running" ? "not-allowed" : "pointer",
-                        flexShrink: 0,
-                      }}
-                    >
-                      Run
-                    </button>
+                    {/* Cancel button (only while running) */}
+                    {gs?.status === "running" && (
+                      <button
+                        onClick={() => void cancelGate(gate)}
+                        title="Cancel this gate"
+                        style={{
+                          fontSize: 9.5,
+                          padding: "1px 6px",
+                          borderRadius: 3,
+                          border: "1px solid var(--prism-border)",
+                          background: "rgba(248,81,73,0.12)",
+                          color: "#f85149",
+                          cursor: "pointer",
+                          flexShrink: 0,
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    )}
+
+                    {/* Run button (hidden while running) */}
+                    {gs?.status !== "running" && (
+                      <button
+                        onClick={() => void runGate(gate)}
+                        style={{
+                          fontSize: 9.5,
+                          padding: "1px 6px",
+                          borderRadius: 3,
+                          border: "1px solid var(--prism-border)",
+                          background: "rgba(255,255,255,0.06)",
+                          color: "var(--prism-fg-muted)",
+                          cursor: "pointer",
+                          flexShrink: 0,
+                        }}
+                      >
+                        Run
+                      </button>
+                    )}
                   </div>
 
                   {/* Output panel */}

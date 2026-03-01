@@ -15,7 +15,10 @@ export interface ElectronTransportApi {
 
 declare global {
   interface Window {
-    electronAPI?: {
+    // electronAPI is always injected by the preload script when running in Electron.
+    // In a plain browser (dev server without Electron), it may be absent; the
+    // createElectronApi() guard handles that case.
+    electronAPI: {
       send: (channel: string, data: unknown) => void
       on: (channel: string, cb: (data: unknown) => void) => () => void
       invoke: (channel: string, data?: unknown) => Promise<unknown>
@@ -28,7 +31,7 @@ declare global {
 }
 
 function createElectronApi(): ElectronTransportApi {
-  if (typeof window !== "undefined" && window.electronAPI) {
+  if (typeof window !== "undefined" && (window as { electronAPI?: unknown }).electronAPI) {
     // Subscribe to gRPC responses from the main process and re-dispatch
     // as standard window "message" events so grpc-client-base.ts works unchanged.
     window.electronAPI.on("grpc_response", (data) => {

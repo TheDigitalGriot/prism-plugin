@@ -70,6 +70,8 @@ export class ElectronIPCBridge {
   private _officeProvider: ElectronOfficeProvider
   private _secretStorage: ElectronSecretStorage
   private _currentProjectDir: string | undefined
+  /** AbortControllers for in-flight quality gate executions, keyed by command string. */
+  private _gateAbortControllers: Map<string, AbortController> = new Map()
 
   constructor(private mainWindow: BrowserWindow) {
     this.controller = new ElectronPrismController()
@@ -353,12 +355,14 @@ export class ElectronIPCBridge {
       }
     })
 
-    // Delete a git worktree (and optionally its branch)
+    // Delete a git worktree (and optionally its branch).
+    // Args are packed into an array by the renderer: [worktreePath, deleteBranch, branchName]
     ipcMain.handle(
       'prism:deleteWorktree',
-      async (_event, worktreePath: string, deleteBranch: boolean, branchName: string) => {
+      async (_event, args: [string, boolean, string]) => {
         const projectDir = this._currentProjectDir
         if (!projectDir) return { ok: false, error: 'No project open' }
+        const [worktreePath, deleteBranch, branchName] = args
         try {
           await deleteWorktree(projectDir, worktreePath, deleteBranch, branchName)
           return { ok: true }
@@ -382,7 +386,25 @@ export class ElectronIPCBridge {
     ipcMain.handle('prism:executeGate', async (_event, command: string) => {
       const projectDir = this._currentProjectDir
       if (!projectDir) return { success: false, output: 'No project open', duration: 0 }
-      return executeGate(command, projectDir)
+      // Create an AbortController so the renderer can cancel this gate
+      const ac = new AbortController()
+      this._gateAbortControllers.set(command, ac)
+      try {
+        return await executeGate(command, projectDir, ac.signal)
+      } finally {
+        this._gateAbortControllers.delete(command)
+      }
+    })
+
+    // Cancel a running quality gate by command string
+    ipcMain.handle('prism:cancelGate', (_event, command: string) => {
+      const ac = this._gateAbortControllers.get(command)
+      if (ac) {
+        ac.abort()
+        this._gateAbortControllers.delete(command)
+        return { ok: true }
+      }
+      return { ok: false, reason: 'Gate not running' }
     })
 
     // Research file discovery
@@ -473,6 +495,10 @@ export class ElectronIPCBridge {
     ipcMain.removeHandler('prism:deleteWorktree')
     ipcMain.removeHandler('prism:switchProject')
     ipcMain.removeHandler('prism:executeGate')
+    ipcMain.removeHandler('prism:cancelGate')
+    // Abort any in-flight gate executions
+    for (const ac of this._gateAbortControllers.values()) { ac.abort() }
+    this._gateAbortControllers.clear()
     ipcMain.removeHandler('prism:getResearch')
     ipcMain.removeHandler('prism:getPlans')
     ipcMain.removeHandler('prism:getApiKey')

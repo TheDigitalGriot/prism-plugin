@@ -17,9 +17,24 @@ export function readLayoutFromFile(): Record<string, unknown> | null {
 	try {
 		if (!fs.existsSync(filePath)) return null;
 		const raw = fs.readFileSync(filePath, 'utf-8');
-		return JSON.parse(raw) as Record<string, unknown>;
+		if (!raw || !raw.trim()) {
+			console.warn('[Prism Office] Layout file is empty — ignoring');
+			return null;
+		}
+		const parsed = JSON.parse(raw) as unknown;
+		if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+			console.warn('[Prism Office] Layout file contains invalid data (not an object) — ignoring');
+			return null;
+		}
+		return parsed as Record<string, unknown>;
 	} catch (err) {
-		console.error('[Prism Office] Failed to read layout file:', err);
+		console.error('[Prism Office] Failed to read layout file (corrupted?) — using defaults:', err);
+		// Rename the corrupted file so it doesn't block future writes
+		try {
+			const backupPath = filePath + '.corrupted.' + Date.now();
+			fs.renameSync(filePath, backupPath);
+			console.warn('[Prism Office] Moved corrupted layout file to:', backupPath);
+		} catch { /* best-effort */ }
 		return null;
 	}
 }
@@ -103,7 +118,10 @@ export function watchLayoutFile(
 			}
 
 			const raw = fs.readFileSync(filePath, 'utf-8');
-			const layout = JSON.parse(raw) as Record<string, unknown>;
+			if (!raw || !raw.trim()) return;
+			const parsed = JSON.parse(raw) as unknown;
+			if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return;
+			const layout = parsed as Record<string, unknown>;
 			console.log('[Prism Office] External layout change detected');
 			onExternalChange(layout);
 		} catch (err) {

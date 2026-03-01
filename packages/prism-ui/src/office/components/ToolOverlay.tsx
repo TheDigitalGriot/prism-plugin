@@ -62,7 +62,7 @@ export function ToolOverlay({
   }, [])
 
   const el = containerRef.current
-  if (!el) return null
+  if (!el || !panRef.current) return null
   const rect = el.getBoundingClientRect()
   const dpr = window.devicePixelRatio || 1
   const canvasW = Math.round(rect.width * dpr)
@@ -70,8 +70,9 @@ export function ToolOverlay({
   const layout = officeState.getLayout()
   const mapW = layout.cols * TILE_SIZE * zoom
   const mapH = layout.rows * TILE_SIZE * zoom
-  const deviceOffsetX = Math.floor((canvasW - mapW) / 2) + Math.round(panRef.current.x)
-  const deviceOffsetY = Math.floor((canvasH - mapH) / 2) + Math.round(panRef.current.y)
+  const pan = panRef.current
+  const deviceOffsetX = Math.floor((canvasW - mapW) / 2) + Math.round(pan.x)
+  const deviceOffsetY = Math.floor((canvasH - mapH) / 2) + Math.round(pan.y)
 
   const selectedId = officeState.selectedAgentId
   const hoveredId = officeState.hoveredAgentId

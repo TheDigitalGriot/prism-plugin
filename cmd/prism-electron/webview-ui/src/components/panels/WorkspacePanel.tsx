@@ -190,9 +190,7 @@ export const WorkspacePanel: React.FC = () => {
       try {
         const result = (await window.electronAPI.invoke(
           "prism:deleteWorktree",
-          wt.path,
-          false, // deleteBranch — keep branch by default
-          wt.branch,
+          [wt.path, false, wt.branch],
         )) as { ok: boolean; error?: string }
         if (result.ok) {
           setConfirmDeletePath(null)

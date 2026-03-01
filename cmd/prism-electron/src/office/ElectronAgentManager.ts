@@ -29,6 +29,9 @@ import {
   FILE_WATCHER_POLL_INTERVAL_MS,
 } from '@prism-core/office/constants'
 
+/** Milliseconds before we warn that no JSONL file appeared for a spawned agent. */
+const JSONL_DETECTION_TIMEOUT_MS = 10_000
+
 export class ElectronAgentManager {
   private _win: BrowserWindow
   private _postMessage: PostMessageFn
@@ -40,6 +43,8 @@ export class ElectronAgentManager {
   private _waitingTimers: Map<number, ReturnType<typeof setTimeout>> = new Map()
   private _permissionTimers: Map<number, ReturnType<typeof setTimeout>> = new Map()
   private _jsonlPollTimers: Map<number, ReturnType<typeof setInterval>> = new Map()
+  /** Timeout handles for JSONL detection — fire if file never appears. */
+  private _jsonlDetectionTimeouts: Map<number, ReturnType<typeof setTimeout>> = new Map()
   private _knownJsonlFiles: Set<string> = new Set()
   private _nextAgentId = 0
 
@@ -95,11 +100,25 @@ export class ElectronAgentManager {
     proc.on('exit', (code) => {
       this._processes.delete(id)
       console.log(`[Prism Office] Agent ${id}: process exited (code ${code ?? 'null'})`)
+      // If the agent was still in JSONL poll phase (no file appeared), clean it up
+      if (this._jsonlPollTimers.has(id)) {
+        this._cleanupJsonlDetection(id)
+        this._postMessage({ type: 'agentError', id, message: `Claude exited before producing output (code ${code ?? 'null'})` })
+        this.removeAgent(id)
+      }
     })
 
-    proc.on('error', (err) => {
+    proc.on('error', (err: NodeJS.ErrnoException) => {
       this._processes.delete(id)
-      console.error(`[Prism Office] Agent ${id}: process error: ${err.message}`)
+      this._cleanupJsonlDetection(id)
+      if (err.code === 'ENOENT') {
+        console.error(`[Prism Office] Agent ${id}: 'claude' CLI not found. Install Claude CLI and ensure it is in PATH.`)
+        this._postMessage({ type: 'agentError', id, message: "Claude CLI not found. Install it with: npm install -g @anthropic-ai/claude-code" })
+      } else {
+        console.error(`[Prism Office] Agent ${id}: process error: ${err.message}`)
+        this._postMessage({ type: 'agentError', id, message: `Failed to start Claude: ${err.message}` })
+      }
+      this.removeAgent(id)
     })
 
     const agent: AgentState = {
@@ -183,10 +202,8 @@ export class ElectronAgentManager {
       this._processes.delete(agentId)
     }
 
-    // Stop JSONL poll timer
-    const jpTimer = this._jsonlPollTimers.get(agentId)
-    if (jpTimer) { clearInterval(jpTimer) }
-    this._jsonlPollTimers.delete(agentId)
+    // Stop JSONL poll timer and detection timeout
+    this._cleanupJsonlDetection(agentId)
 
     // Stop file watching
     this._fileWatchers.get(agentId)?.close()
@@ -230,6 +247,9 @@ export class ElectronAgentManager {
     for (const timer of this._jsonlPollTimers.values()) { clearInterval(timer) }
     this._jsonlPollTimers.clear()
 
+    for (const timer of this._jsonlDetectionTimeouts.values()) { clearTimeout(timer) }
+    this._jsonlDetectionTimeouts.clear()
+
     for (const watcher of this._fileWatchers.values()) { watcher.close() }
     this._fileWatchers.clear()
 
@@ -256,14 +276,43 @@ export class ElectronAgentManager {
           console.log(
             `[Prism Office] Agent ${id}: found JSONL file ${path.basename(agent.jsonlFile)}`,
           )
-          clearInterval(pollTimer)
-          this._jsonlPollTimers.delete(id)
+          this._cleanupJsonlDetection(id)
           this._startFileWatching(id, agent.jsonlFile)
           this._readNewLines(id)
         }
       } catch { /* file may not exist yet */ }
     }, JSONL_POLL_INTERVAL_MS)
     this._jsonlPollTimers.set(id, pollTimer)
+
+    // Warn if the JSONL file never appears — could indicate the session ended
+    // without writing output (e.g. permission denied, CLI crash before first turn)
+    const detectionTimeout = setTimeout(() => {
+      this._jsonlDetectionTimeouts.delete(id)
+      if (this._jsonlPollTimers.has(id)) {
+        console.warn(
+          `[Prism Office] Agent ${id}: JSONL file not found after ${JSONL_DETECTION_TIMEOUT_MS}ms — ` +
+          `session may have ended silently or written to an unexpected path`,
+        )
+        this._postMessage({
+          type: 'agentStatus',
+          id,
+          status: 'waiting',
+          message: 'Waiting for Claude output…',
+        })
+      }
+    }, JSONL_DETECTION_TIMEOUT_MS)
+    this._jsonlDetectionTimeouts.set(id, detectionTimeout)
+  }
+
+  /** Clear JSONL poll timer and detection timeout for an agent. */
+  private _cleanupJsonlDetection(id: number): void {
+    const pollTimer = this._jsonlPollTimers.get(id)
+    if (pollTimer) { clearInterval(pollTimer) }
+    this._jsonlPollTimers.delete(id)
+
+    const detectionTimeout = this._jsonlDetectionTimeouts.get(id)
+    if (detectionTimeout) { clearTimeout(detectionTimeout) }
+    this._jsonlDetectionTimeouts.delete(id)
   }
 
   private _startFileWatching(agentId: number, filePath: string): void {

@@ -1661,7 +1661,7 @@ From `cmd/prism-vscode/webview-office/src/components/`:
 
 ### Verification
 #### Automated
-- [ ] All 7 builds pass (prism-core, prism-ui, vscode extension, 3 webviews, electron)
+- [x] All 7 builds pass (prism-core, prism-ui, vscode extension, 3 webviews, electron)
 - [ ] `vsce package` produces a valid `.vsix` file
 - [ ] `npm run make` in electron produces platform distributables
 
