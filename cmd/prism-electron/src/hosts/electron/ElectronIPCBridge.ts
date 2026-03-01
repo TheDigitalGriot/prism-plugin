@@ -66,12 +66,45 @@ export class ElectronIPCBridge {
     this.controller.setPostMessageFn(async (msg) => {
       mainWindow.webContents.send('grpc_response', msg)
     })
+
+    // Subscribe to controller events and forward to renderer
+    this.controller.on('stateChange', () => {
+      if (!mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('prism:stateChange', this.controller.state)
+      }
+    })
+    this.controller.on('sessionStart', (data) => {
+      if (!mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('prism:sessionStart', data)
+      }
+    })
+    this.controller.on('storyUpdate', (data) => {
+      if (!mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('prism:storyUpdate', data)
+      }
+    })
+    this.controller.on('spectrumStoryEnd', (data) => {
+      if (!mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('prism:spectrumStoryEnd', data)
+      }
+    })
+    this.controller.on('fileChange', (data) => {
+      if (!mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('prism:fileChange', data)
+      }
+    })
+
     this._registerHandlers()
   }
 
   /** The currently open project directory (undefined if no project opened). */
   get currentProjectDir(): string | undefined {
     return this._currentProjectDir
+  }
+
+  /** The AgentBridge instance — needed by Phase 12 ElectronOfficeProvider. */
+  get agentBridge() {
+    return this.controller.agentBridge
   }
 
   /** Set project directory directly — used for CLI args and last-opened restore. */

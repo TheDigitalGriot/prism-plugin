@@ -510,7 +510,7 @@ Phases within a group are sequential. Groups 2-3 (UI Package) can start after Ph
 
 ### Verification
 #### Automated
-- [ ] `cd cmd/prism-electron && npm run make` succeeds
+- [x] `cd cmd/prism-electron && npm run make` succeeds
 
 #### Manual
 - [ ] Electron: start a Spectrum run, verify `sessionStart` and `spectrumStoryEnd` events fire (add console.log temporarily)
