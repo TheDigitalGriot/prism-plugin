@@ -1384,13 +1384,30 @@ From `cmd/prism-vscode/webview-office/src/components/`:
 
 ### Verification
 #### Automated
-- [ ] `cd cmd/prism-electron && npm run make` succeeds
+- [x] `cd packages/prism-core && npm run typecheck` passes
+- [x] `cd cmd/prism-electron && npm run make` succeeds
 
 #### Manual
 - [ ] Electron: research section shows real `.md` files from `.prism/shared/research/`
 - [ ] Electron: plans section shows real `.md` files from `.prism/shared/plans/`
 - [ ] Electron: clicking opens the file in center pane
 - [ ] Electron: stories show expandable steps
+
+**Checkpoint**: [x] Phase 17 complete
+
+### Phase 17 Session Notes — 2026-03-01
+- Created `packages/prism-core/src/workspace/research.ts`: pure Node.js `discoverResearch(prismDir)` — reads `.prism/shared/research/*.md`, parses frontmatter (date, topic, tags, status), derives topic from filename if missing, returns newest-first
+- Created `packages/prism-core/src/workspace/plans.ts`: pure Node.js `discoverPlans(prismDir)` — reads `.prism/shared/plans/*.md`, parses frontmatter (date, feature, status, phases), returns newest-first
+- Updated `ElectronIPCBridge.ts`: added `prism:getResearch` and `prism:getPlans` handlers importing from `@prism-core/workspace/research` and `@prism-core/workspace/plans`; both added to `dispose()` cleanup
+- Rewrote `StoriesPanel.tsx`:
+  - Added `useState` for `research: ResearchItem[]`, `plans: PlanItem[]`, and `expandedStories: Set<string>`
+  - `loadResearchAndPlans()` calls both IPC handlers in parallel on mount
+  - Subscribes to `prism:fileChange` events to refresh when `.prism/` changes
+  - Stories section: stories with steps are now expandable (click toggles steps list) with ✓/○ per step and strikethrough for done steps
+  - Research section: real items with topic, date, tag chips; clicking opens FileContentView tab via `layout.openTab({ id: "file:" + filePath, type: "file" })`
+  - Plans section: real items with status icon (✓/◐/✔/○), colored by status, date, status label, phases count
+- VSCode tree providers not modified (plan notes this as optional)
+- `prism-core typecheck` and `npm run make` both pass cleanly
 
 ---
 

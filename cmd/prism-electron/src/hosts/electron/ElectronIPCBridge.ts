@@ -11,6 +11,8 @@ import { BrowserWindow, app, ipcMain, dialog, shell } from 'electron'
 import { handleGrpcRequest } from '@prism-core/core/controller/grpc-handler'
 import { discoverProjects, addToGlobalWorkspaces, listWorktrees } from '@prism-core/workspace/discovery'
 import { executeGate } from '@prism-core/workspace/qualityGates'
+import { discoverResearch } from '@prism-core/workspace/research'
+import { discoverPlans } from '@prism-core/workspace/plans'
 import { ElectronPrismController } from './ElectronPrismController'
 import { ElectronOfficeProvider } from '../../office/ElectronOfficeProvider'
 
@@ -340,6 +342,30 @@ export class ElectronIPCBridge {
       if (!projectDir) return { success: false, output: 'No project open', duration: 0 }
       return executeGate(command, projectDir)
     })
+
+    // Research file discovery
+    ipcMain.handle('prism:getResearch', async () => {
+      const projectDir = this._currentProjectDir
+      if (!projectDir) return []
+      const prismDir = path.join(projectDir, '.prism')
+      try {
+        return await discoverResearch(prismDir)
+      } catch {
+        return []
+      }
+    })
+
+    // Plans file discovery
+    ipcMain.handle('prism:getPlans', async () => {
+      const projectDir = this._currentProjectDir
+      if (!projectDir) return []
+      const prismDir = path.join(projectDir, '.prism')
+      try {
+        return await discoverPlans(prismDir)
+      } catch {
+        return []
+      }
+    })
   }
 
   /** Called from native menu "Open Project…" action. */
@@ -370,6 +396,8 @@ export class ElectronIPCBridge {
     ipcMain.removeHandler('prism:browseAndAddWorkspace')
     ipcMain.removeHandler('prism:listWorktrees')
     ipcMain.removeHandler('prism:executeGate')
+    ipcMain.removeHandler('prism:getResearch')
+    ipcMain.removeHandler('prism:getPlans')
     this._officeProvider.dispose()
     this.controller.dispose()
   }
