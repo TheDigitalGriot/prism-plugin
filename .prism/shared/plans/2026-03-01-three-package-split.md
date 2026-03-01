@@ -1305,12 +1305,31 @@ From `cmd/prism-vscode/webview-office/src/components/`:
 
 ### Verification
 #### Automated
-- [ ] `cd cmd/prism-electron && npm run make` succeeds
+- [x] `cd cmd/prism-electron && npm run make` succeeds
 
 #### Manual
 - [ ] Electron: quality gate "Run" button appears
 - [ ] Electron: running `npm test` or similar gate shows real output
 - [ ] Electron: pass/fail status and duration display correctly
+
+**Checkpoint**: [x] Phase 16 complete
+
+### Phase 16 Session Notes — 2026-03-01
+- Created `packages/prism-core/src/workspace/qualityGates.ts`:
+  - `executeGate(command, cwd)` — runs via `child_process.exec` with 60s timeout; returns `{ success, output, duration }`
+  - `gateLabel(command)` — derives human-readable name from command string
+  - `truncateOutput()` — keeps last 50 lines (same as PrismPanelProvider logic)
+- Updated `ElectronIPCBridge.ts`: added `prism:executeGate` handler importing from `@prism-core/workspace/qualityGates`; added to `dispose()` cleanup
+- Rewrote `MonitorPanel.tsx`:
+  - Per-gate local state: `idle | running | pass | fail` with output and duration
+  - "Run" button per gate + "Run All" button
+  - Braille spinner animation (10-frame, 80ms) while gate executes
+  - ✓ (green) / ✗ (red) status indicators
+  - Duration display in seconds
+  - Expand/collapse output panel with ▼/▲ toggle
+  - Auto-expands output on failure
+  - Quality Gates section badge shows `passed/total` count
+- `prism-core typecheck` and `npm run make` both pass cleanly
 
 ---
 

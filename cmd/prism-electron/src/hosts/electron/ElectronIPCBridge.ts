@@ -10,6 +10,7 @@ import * as fs from 'fs'
 import { BrowserWindow, app, ipcMain, dialog, shell } from 'electron'
 import { handleGrpcRequest } from '@prism-core/core/controller/grpc-handler'
 import { discoverProjects, addToGlobalWorkspaces, listWorktrees } from '@prism-core/workspace/discovery'
+import { executeGate } from '@prism-core/workspace/qualityGates'
 import { ElectronPrismController } from './ElectronPrismController'
 import { ElectronOfficeProvider } from '../../office/ElectronOfficeProvider'
 
@@ -332,6 +333,13 @@ export class ElectronIPCBridge {
         return []
       }
     })
+
+    // Execute a quality gate command in the current project directory
+    ipcMain.handle('prism:executeGate', async (_event, command: string) => {
+      const projectDir = this._currentProjectDir
+      if (!projectDir) return { success: false, output: 'No project open', duration: 0 }
+      return executeGate(command, projectDir)
+    })
   }
 
   /** Called from native menu "Open Project…" action. */
@@ -361,6 +369,7 @@ export class ElectronIPCBridge {
     ipcMain.removeHandler('prism:addWorkspace')
     ipcMain.removeHandler('prism:browseAndAddWorkspace')
     ipcMain.removeHandler('prism:listWorktrees')
+    ipcMain.removeHandler('prism:executeGate')
     this._officeProvider.dispose()
     this.controller.dispose()
   }
