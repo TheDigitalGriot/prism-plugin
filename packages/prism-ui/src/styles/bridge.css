@@ -1,0 +1,341 @@
+/**
+ * @prism/ui — CSS variable bridge.
+ *
+ * Maps --prism-* semantic tokens to platform-specific values.
+ * Consumers must set `data-platform="vscode"` or `data-platform="electron"` on
+ * the root element. Shared components reference only --prism-* variables.
+ *
+ * Usage:
+ *   import '@prism-ui/styles/bridge.css';
+ *   <div data-platform="vscode">  or  <div data-platform="electron">
+ *
+ * Sections:
+ *   1. Shared spectral colors  (identical on both platforms)
+ *   2. VS Code platform tokens (map --prism-* → var(--vscode-*))
+ *   3. Electron platform tokens (hardcoded dark theme hex values)
+ *   4. Shared scrollbar styling
+ *   5. Spectral gradient utilities
+ */
+
+/* =========================================================================
+ * 1. Shared spectral color system (platform-independent)
+ *    Phase gradient: Blue (Research) → Teal (Plan) → Green (Implement) → Amber (Validate)
+ * ========================================================================= */
+:root {
+  /* Phase colors */
+  --prism-blue: #3b82f6;
+  --prism-teal: #14b8a6;
+  --prism-green: #22c55e;
+  --prism-amber: #f59e0b;
+  --prism-purple: #7c3aed;
+  --prism-red: #ef4444;
+
+  /* Phase semantic colors */
+  --prism-phase-idle: #6b7280;
+  --prism-phase-research: var(--prism-blue);
+  --prism-phase-plan: var(--prism-teal);
+  --prism-phase-implement: var(--prism-green);
+  --prism-phase-validate: var(--prism-amber);
+
+  /* Spectral gradients */
+  --prism-gradient: linear-gradient(
+    90deg,
+    var(--prism-blue) 0%,
+    var(--prism-teal) 33%,
+    var(--prism-green) 66%,
+    var(--prism-amber) 100%
+  );
+
+  --prism-gradient-vertical: linear-gradient(
+    180deg,
+    var(--prism-blue) 0%,
+    var(--prism-teal) 33%,
+    var(--prism-green) 66%,
+    var(--prism-amber) 100%
+  );
+
+  /* Muted variants (20% opacity) */
+  --prism-blue-muted: rgb(59 130 246 / 0.2);
+  --prism-teal-muted: rgb(20 184 166 / 0.2);
+  --prism-green-muted: rgb(34 197 94 / 0.2);
+  --prism-amber-muted: rgb(245 158 11 / 0.2);
+  --prism-purple-muted: rgb(124 58 237 / 0.2);
+
+  /* Phase transition duration */
+  --prism-phase-transition: 400ms;
+
+  /* Radius / Spacing (platform-independent) */
+  --prism-radius: 4px;
+  --prism-radius-md: 6px;
+  --prism-radius-lg: 8px;
+}
+
+/* =========================================================================
+ * 2. VS Code platform tokens
+ *    Maps --prism-* → var(--vscode-*) with sensible dark-theme fallbacks.
+ *    Applied when the root element has data-platform="vscode".
+ * ========================================================================= */
+[data-platform="vscode"] {
+  /* Typography */
+  --prism-font-family: var(--vscode-font-family, system-ui, -apple-system, sans-serif);
+  --prism-font-mono: var(
+    --vscode-editor-font-family,
+    ui-monospace,
+    "Cascadia Code",
+    "Fira Code",
+    monospace
+  );
+  --prism-font-size: var(--vscode-font-size, 13px);
+  --prism-font-code: var(
+    --vscode-editor-font-family,
+    'JetBrains Mono',
+    'SF Mono',
+    'Fira Code',
+    monospace
+  );
+
+  /* Backgrounds */
+  --prism-bg: var(--vscode-sideBar-background, #1e1e1e);
+  --prism-bg-panel: var(--vscode-panel-background, #252526);
+  --prism-bg-editor: var(--vscode-editor-background, #1e1e1e);
+  --prism-bg-hover: var(--vscode-list-hoverBackground, rgb(255 255 255 / 0.05));
+  --prism-bg-active: var(--vscode-list-activeSelectionBackground, rgb(255 255 255 / 0.1));
+  --prism-bg-input: var(--vscode-input-background, #3c3c3c);
+  --prism-bg-dropdown: var(--vscode-dropdown-background, #3c3c3c);
+  --prism-bg-button: var(--vscode-button-background, #0e639c);
+  --prism-bg-button-hover: var(--vscode-button-hoverBackground, #1177bb);
+  --prism-bg-button-secondary: var(--vscode-button-secondaryBackground, #3a3d41);
+  --prism-bg-surface: var(--vscode-sideBar-background, #1e1e1e);
+  --prism-bg-rail: var(--vscode-editor-background, #1e1e1e);
+
+  /* Foregrounds / Text */
+  --prism-fg: var(--vscode-foreground, #cccccc);
+  --prism-fg-muted: var(--vscode-descriptionForeground, #9d9d9d);
+  --prism-fg-disabled: var(--vscode-disabledForeground, #6e6e6e);
+  --prism-fg-active: var(--vscode-list-activeSelectionForeground, #ffffff);
+  --prism-fg-button: var(--vscode-button-foreground, #ffffff);
+  --prism-fg-editor: var(--vscode-editor-foreground, #d4d4d4);
+  --prism-fg-link: var(--vscode-textLink-foreground, #4daafc);
+  --prism-fg-link-hover: var(--vscode-textLink-activeForeground, #4daafc);
+  --prism-text-dim: var(--vscode-disabledForeground, #6e6e6e);
+
+  /* Borders */
+  --prism-border: var(--vscode-panel-border, #454545);
+  --prism-border-focus: var(--vscode-focusBorder, #007fd4);
+  --prism-border-input: var(--vscode-input-border, transparent);
+  --prism-border-active: var(--vscode-focusBorder, #007fd4);
+  --prism-widget-border: var(--vscode-widget-border, #454545);
+
+  /* Status colors */
+  --prism-success: var(--vscode-testing-iconPassed, #4ec9b0);
+  --prism-warning: var(--vscode-list-warningForeground, #cca700);
+  --prism-error: var(--vscode-list-errorForeground, #f14c4c);
+  --prism-info: var(--vscode-notificationsInfoIcon-foreground, #75beff);
+
+  /* Scrollbar */
+  --prism-scrollbar: var(--vscode-scrollbarSlider-background, rgba(121, 121, 121, 0.4));
+  --prism-scrollbar-hover: var(
+    --vscode-scrollbarSlider-hoverBackground,
+    rgba(100, 100, 100, 0.7)
+  );
+
+  /* Code block backgrounds */
+  --prism-bg-code: var(--vscode-textCodeBlock-background, #1e1e1e);
+  --prism-bg-blockquote: var(--vscode-textBlockQuote-background, #222222);
+  --prism-border-blockquote: var(--vscode-textBlockQuote-border, #007acc);
+
+  /* Badge */
+  --prism-bg-badge: var(--vscode-badge-background, #4d4d4d);
+}
+
+/* VS Code light theme overrides */
+[data-platform="vscode"] body.vscode-light,
+body.vscode-light [data-platform="vscode"] {
+  --prism-blue: #2563eb;
+  --prism-teal: #0d9488;
+  --prism-green: #16a34a;
+  --prism-amber: #d97706;
+  --prism-purple: #6d28d9;
+
+  --prism-blue-muted: rgb(37 99 235 / 0.12);
+  --prism-teal-muted: rgb(13 148 136 / 0.12);
+  --prism-green-muted: rgb(22 163 74 / 0.12);
+  --prism-amber-muted: rgb(217 119 6 / 0.12);
+}
+
+/* VS Code high-contrast theme overrides */
+[data-platform="vscode"] body.vscode-high-contrast,
+body.vscode-high-contrast [data-platform="vscode"] {
+  --prism-blue: #60a5fa;
+  --prism-teal: #2dd4bf;
+  --prism-green: #4ade80;
+  --prism-amber: #fbbf24;
+}
+
+/* =========================================================================
+ * 3. Electron platform tokens
+ *    Hardcoded dark theme — no VS Code CSS variable dependencies.
+ *    Applied when the root element has data-platform="electron".
+ * ========================================================================= */
+[data-platform="electron"] {
+  /* Typography */
+  --prism-font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --prism-font-mono: ui-monospace, 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  --prism-font-size: 13px;
+  --prism-font-code: 'JetBrains Mono', 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+
+  /* Backgrounds */
+  --prism-bg: #0f1419;
+  --prism-bg-panel: #0d1117;
+  --prism-bg-editor: #111920;
+  --prism-bg-hover: rgba(255, 255, 255, 0.04);
+  --prism-bg-active: rgba(255, 255, 255, 0.08);
+  --prism-bg-input: #1a2332;
+  --prism-bg-dropdown: #1a2332;
+  --prism-bg-button: #0e639c;
+  --prism-bg-button-hover: #1177bb;
+  --prism-bg-button-secondary: #2d2e4a;
+  --prism-bg-surface: #141b22;
+  --prism-bg-rail: #111920;
+
+  /* Foregrounds / Text */
+  --prism-fg: #c9d1d9;
+  --prism-fg-muted: #6e7a87;
+  --prism-fg-disabled: #4a5568;
+  --prism-fg-active: #ffffff;
+  --prism-fg-button: #ffffff;
+  --prism-fg-editor: #e2e8f0;
+  --prism-fg-link: #60a5fa;
+  --prism-fg-link-hover: #93c5fd;
+  --prism-text-dim: #4a5568;
+
+  /* Borders */
+  --prism-border: #1e2d3d;
+  --prism-border-focus: #3b82f6;
+  --prism-border-input: transparent;
+  --prism-border-active: #2a3f54;
+  --prism-widget-border: #1e2d3d;
+
+  /* Status colors */
+  --prism-success: #4ade80;
+  --prism-warning: #fbbf24;
+  --prism-error: #f87171;
+  --prism-info: #60a5fa;
+
+  /* Scrollbar */
+  --prism-scrollbar: rgba(110, 122, 135, 0.4);
+  --prism-scrollbar-hover: rgba(110, 122, 135, 0.7);
+
+  /* Code block backgrounds */
+  --prism-bg-code: #0d1117;
+  --prism-bg-blockquote: #111920;
+  --prism-border-blockquote: #3b82f6;
+
+  /* Badge */
+  --prism-bg-badge: #1e2d3d;
+}
+
+/* =========================================================================
+ * 4. Shared scrollbar styling
+ * ========================================================================= */
+[data-platform="vscode"] ::-webkit-scrollbar,
+[data-platform="electron"] ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+[data-platform="vscode"] ::-webkit-scrollbar-track,
+[data-platform="electron"] ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+[data-platform="vscode"] ::-webkit-scrollbar-thumb,
+[data-platform="electron"] ::-webkit-scrollbar-thumb {
+  background: var(--prism-scrollbar);
+  border-radius: 3px;
+}
+
+[data-platform="vscode"] ::-webkit-scrollbar-thumb:hover,
+[data-platform="electron"] ::-webkit-scrollbar-thumb:hover {
+  background: var(--prism-scrollbar-hover);
+}
+
+/* =========================================================================
+ * 5. Spectral gradient utilities (shared between both platforms)
+ * ========================================================================= */
+.prism-text-gradient {
+  background: var(--prism-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@keyframes prism-shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.prism-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--prism-blue),
+    var(--prism-teal),
+    var(--prism-green),
+    var(--prism-amber),
+    var(--prism-blue)
+  );
+  background-size: 200% auto;
+  animation: prism-shimmer 3s linear infinite;
+}
+
+.prism-phase-transition {
+  transition:
+    background-color var(--prism-phase-transition) ease,
+    border-color var(--prism-phase-transition) ease,
+    color var(--prism-phase-transition) ease,
+    box-shadow var(--prism-phase-transition) ease;
+}
+
+@keyframes prism-glow-pulse {
+  0%, 100% { opacity: 0.8; }
+  50%       { opacity: 1.0; }
+}
+
+.prism-phase-bar-research {
+  border-bottom: 2px solid var(--prism-blue);
+  box-shadow: 0 2px 8px rgb(59 130 246 / 0.3);
+  animation: prism-glow-pulse 2s ease-in-out infinite;
+}
+
+.prism-phase-bar-plan {
+  border-bottom: 2px solid var(--prism-teal);
+  box-shadow: 0 2px 8px rgb(20 184 166 / 0.3);
+  animation: prism-glow-pulse 2s ease-in-out infinite;
+}
+
+.prism-phase-bar-implement {
+  border-bottom: 2px solid var(--prism-green);
+  box-shadow: 0 2px 8px rgb(34 197 94 / 0.3);
+  animation: prism-glow-pulse 2s ease-in-out infinite;
+}
+
+.prism-phase-bar-validate {
+  border-bottom: 2px solid var(--prism-amber);
+  box-shadow: 0 2px 8px rgb(245 158 11 / 0.3);
+  animation: prism-glow-pulse 2s ease-in-out infinite;
+}
+
+@keyframes prism-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.prism-fade-in {
+  animation: prism-fade-in 200ms ease-out forwards;
+}
+
+.prism-header-accent {
+  height: 2px;
+  background: var(--prism-gradient);
+  flex-shrink: 0;
+}

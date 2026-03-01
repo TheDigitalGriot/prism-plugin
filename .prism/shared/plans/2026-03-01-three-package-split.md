@@ -604,8 +604,8 @@ Phases within a group are sequential. Groups 2-3 (UI Package) can start after Ph
 
 ### Verification
 #### Automated
-- [ ] `cd packages/prism-ui && npm run typecheck` passes
-- [ ] CSS bridge file contains all variable mappings
+- [x] `cd packages/prism-ui && npm run typecheck` passes
+- [x] CSS bridge file contains all variable mappings
 
 ---
 
