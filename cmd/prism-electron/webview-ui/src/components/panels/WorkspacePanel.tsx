@@ -1,7 +1,6 @@
-import React, { useCallback, useEffect, useState } from "react"
+import React, { useCallback, useEffect, useRef, useState } from "react"
 import { usePrismState } from "@prism-ui/context/PrismStateContext"
 import { CollapsibleSection } from "../common/CollapsibleSection"
-import { StatusDot } from "../common/StatusDot"
 
 // ---------------------------------------------------------------------------
 // Types (mirrors packages/prism-core/src/workspace/types.ts)
@@ -80,6 +79,19 @@ export const WorkspacePanel: React.FC = () => {
   const [loadingWorktrees, setLoadingWorktrees] = useState(false)
   const [addingWorkspace, setAddingWorkspace] = useState(false)
 
+  // New worktree form
+  const [showNewWorktreeForm, setShowNewWorktreeForm] = useState(false)
+  const [newBranchInput, setNewBranchInput] = useState("")
+  const [creatingWorktree, setCreatingWorktree] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
+
+  // Delete confirmation
+  const [confirmDeletePath, setConfirmDeletePath] = useState<string | null>(null)
+  const [deletingWorktree, setDeletingWorktree] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  const newBranchRef = useRef<HTMLInputElement>(null)
+
   const loadProjects = useCallback(async () => {
     setLoadingProjects(true)
     try {
@@ -118,6 +130,13 @@ export const WorkspacePanel: React.FC = () => {
     return unsub
   }, [loadProjects])
 
+  // Focus input when new worktree form opens
+  useEffect(() => {
+    if (showNewWorktreeForm) {
+      setTimeout(() => newBranchRef.current?.focus(), 50)
+    }
+  }, [showNewWorktreeForm])
+
   const handleAddWorkspace = useCallback(async () => {
     setAddingWorkspace(true)
     try {
@@ -133,12 +152,83 @@ export const WorkspacePanel: React.FC = () => {
     }
   }, [loadProjects])
 
-  const handleOpenProject = useCallback(async (projectPath: string) => {
-    await window.electronAPI.invoke("prism:openProject")
-    // Note: openProject shows a dialog; direct path opening can be added when needed
-    void loadProjects()
-    void loadWorktrees()
-  }, [loadProjects, loadWorktrees])
+  const handleCreateWorktree = useCallback(async () => {
+    const branch = newBranchInput.trim()
+    if (!branch) return
+    setCreatingWorktree(true)
+    setCreateError(null)
+    try {
+      const result = (await window.electronAPI.invoke("prism:createWorktree", branch)) as {
+        ok: boolean
+        error?: string
+      }
+      if (result.ok) {
+        setShowNewWorktreeForm(false)
+        setNewBranchInput("")
+        void loadWorktrees()
+      } else {
+        setCreateError(result.error ?? "Failed to create worktree")
+      }
+    } catch (err) {
+      setCreateError(String(err))
+    } finally {
+      setCreatingWorktree(false)
+    }
+  }, [newBranchInput, loadWorktrees])
+
+  const handleDeleteWorktree = useCallback(
+    async (wt: WorktreeInfo) => {
+      if (confirmDeletePath !== wt.path) {
+        // First click: show confirmation
+        setConfirmDeletePath(wt.path)
+        setDeleteError(null)
+        return
+      }
+      // Second click (confirmed): delete
+      setDeletingWorktree(true)
+      setDeleteError(null)
+      try {
+        const result = (await window.electronAPI.invoke(
+          "prism:deleteWorktree",
+          wt.path,
+          false, // deleteBranch — keep branch by default
+          wt.branch,
+        )) as { ok: boolean; error?: string }
+        if (result.ok) {
+          setConfirmDeletePath(null)
+          void loadWorktrees()
+        } else {
+          setDeleteError(result.error ?? "Failed to delete worktree")
+        }
+      } catch (err) {
+        setDeleteError(String(err))
+      } finally {
+        setDeletingWorktree(false)
+      }
+    },
+    [confirmDeletePath, loadWorktrees],
+  )
+
+  const handleOpenWorktree = useCallback(
+    async (wtPath: string) => {
+      await window.electronAPI.invoke("prism:switchProject", wtPath)
+      void loadProjects()
+      void loadWorktrees()
+    },
+    [loadProjects, loadWorktrees],
+  )
+
+  const handleNewBranchKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") void handleCreateWorktree()
+      if (e.key === "Escape") {
+        setShowNewWorktreeForm(false)
+        setNewBranchInput("")
+        setCreateError(null)
+      }
+    },
+    [handleCreateWorktree],
+  )
 
   return (
     <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column" }}>
@@ -350,6 +440,7 @@ export const WorkspacePanel: React.FC = () => {
                   marginBottom: 5,
                 }}
               >
+                {/* Branch + badges + actions */}
                 <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
                   <span
                     style={{
@@ -357,6 +448,10 @@ export const WorkspacePanel: React.FC = () => {
                       fontFamily: "monospace",
                       color: wt.isMain ? "var(--prism-teal)" : "var(--prism-fg)",
                       fontWeight: wt.isMain ? 600 : 400,
+                      flex: 1,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
                     }}
                   >
                     {wt.branch}
@@ -369,6 +464,7 @@ export const WorkspacePanel: React.FC = () => {
                       background: "rgba(255,255,255,0.05)",
                       padding: "1px 4px",
                       borderRadius: 2,
+                      flexShrink: 0,
                     }}
                   >
                     {wt.head}
@@ -383,6 +479,7 @@ export const WorkspacePanel: React.FC = () => {
                         padding: "1px 5px",
                         borderRadius: 3,
                         letterSpacing: "0.04em",
+                        flexShrink: 0,
                       }}
                     >
                       MAIN
@@ -398,12 +495,15 @@ export const WorkspacePanel: React.FC = () => {
                         padding: "1px 5px",
                         borderRadius: 3,
                         letterSpacing: "0.04em",
+                        flexShrink: 0,
                       }}
                     >
                       PRUNABLE
                     </span>
                   )}
                 </div>
+
+                {/* Path */}
                 <div
                   style={{
                     fontSize: 9,
@@ -412,12 +512,220 @@ export const WorkspacePanel: React.FC = () => {
                     textOverflow: "ellipsis",
                     whiteSpace: "nowrap",
                     fontFamily: "monospace",
+                    marginBottom: 6,
                   }}
                 >
                   {wt.path}
                 </div>
+
+                {/* Action buttons */}
+                <div style={{ display: "flex", gap: 5 }}>
+                  {/* Open / Switch project */}
+                  <button
+                    onClick={() => void handleOpenWorktree(wt.path)}
+                    title="Switch project to this worktree"
+                    style={{
+                      flex: 1,
+                      padding: "3px 8px",
+                      borderRadius: 4,
+                      border: "1px solid var(--prism-border)",
+                      background: "transparent",
+                      color: "var(--prism-fg-muted)",
+                      fontSize: 10,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Open
+                  </button>
+
+                  {/* Delete (only for non-main worktrees) */}
+                  {!wt.isMain && (
+                    <>
+                      {confirmDeletePath === wt.path ? (
+                        <>
+                          <button
+                            onClick={() => void handleDeleteWorktree(wt)}
+                            disabled={deletingWorktree}
+                            title="Confirm delete"
+                            style={{
+                              flex: 1,
+                              padding: "3px 8px",
+                              borderRadius: 4,
+                              border: "1px solid var(--prism-red, #f87171)",
+                              background: "var(--prism-red, #f87171)20",
+                              color: "var(--prism-red, #f87171)",
+                              fontSize: 10,
+                              cursor: deletingWorktree ? "not-allowed" : "pointer",
+                              fontWeight: 600,
+                            }}
+                          >
+                            {deletingWorktree ? "Deleting…" : "Confirm"}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setConfirmDeletePath(null)
+                              setDeleteError(null)
+                            }}
+                            style={{
+                              padding: "3px 8px",
+                              borderRadius: 4,
+                              border: "1px solid var(--prism-border)",
+                              background: "transparent",
+                              color: "var(--prism-fg-muted)",
+                              fontSize: 10,
+                              cursor: "pointer",
+                            }}
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => void handleDeleteWorktree(wt)}
+                          title="Delete this worktree"
+                          style={{
+                            padding: "3px 8px",
+                            borderRadius: 4,
+                            border: "1px solid var(--prism-border)",
+                            background: "transparent",
+                            color: "var(--prism-fg-muted)",
+                            fontSize: 10,
+                            cursor: "pointer",
+                          }}
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+
+                {/* Delete error */}
+                {confirmDeletePath === wt.path && deleteError && (
+                  <div
+                    style={{
+                      marginTop: 4,
+                      fontSize: 9,
+                      color: "var(--prism-red, #f87171)",
+                      fontFamily: "monospace",
+                    }}
+                  >
+                    {deleteError}
+                  </div>
+                )}
               </div>
             ))
+          )}
+
+          {/* New Worktree form */}
+          {showNewWorktreeForm ? (
+            <div
+              style={{
+                marginTop: 6,
+                padding: "8px 10px",
+                borderRadius: 6,
+                border: "1px solid var(--prism-border)",
+                background: "rgba(255,255,255,0.02)",
+              }}
+            >
+              <div style={{ fontSize: 10, color: "var(--prism-fg-muted)", marginBottom: 6 }}>
+                Branch name for new worktree:
+              </div>
+              <input
+                ref={newBranchRef}
+                value={newBranchInput}
+                onChange={(e) => setNewBranchInput(e.target.value)}
+                onKeyDown={handleNewBranchKeyDown}
+                placeholder="feature/my-branch"
+                style={{
+                  width: "100%",
+                  padding: "4px 8px",
+                  borderRadius: 4,
+                  border: "1px solid var(--prism-border)",
+                  background: "var(--prism-bg-input, rgba(255,255,255,0.06))",
+                  color: "var(--prism-fg)",
+                  fontSize: 11,
+                  fontFamily: "monospace",
+                  boxSizing: "border-box",
+                  marginBottom: 6,
+                  outline: "none",
+                }}
+              />
+              {createError && (
+                <div
+                  style={{
+                    fontSize: 9,
+                    color: "var(--prism-red, #f87171)",
+                    fontFamily: "monospace",
+                    marginBottom: 6,
+                  }}
+                >
+                  {createError}
+                </div>
+              )}
+              <div style={{ display: "flex", gap: 5 }}>
+                <button
+                  onClick={() => void handleCreateWorktree()}
+                  disabled={creatingWorktree || !newBranchInput.trim()}
+                  style={{
+                    flex: 1,
+                    padding: "4px 10px",
+                    borderRadius: 4,
+                    border: "1px solid var(--prism-teal)",
+                    background: "var(--prism-teal)20",
+                    color: "var(--prism-teal)",
+                    fontSize: 11,
+                    cursor: creatingWorktree || !newBranchInput.trim() ? "not-allowed" : "pointer",
+                    fontWeight: 600,
+                  }}
+                >
+                  {creatingWorktree ? "Creating…" : "Create"}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowNewWorktreeForm(false)
+                    setNewBranchInput("")
+                    setCreateError(null)
+                  }}
+                  style={{
+                    padding: "4px 10px",
+                    borderRadius: 4,
+                    border: "1px solid var(--prism-border)",
+                    background: "transparent",
+                    color: "var(--prism-fg-muted)",
+                    fontSize: 11,
+                    cursor: "pointer",
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => {
+                setShowNewWorktreeForm(true)
+                setCreateError(null)
+              }}
+              style={{
+                width: "100%",
+                marginTop: 6,
+                padding: "6px 10px",
+                borderRadius: 5,
+                border: "1px dashed var(--prism-border)",
+                background: "transparent",
+                color: "var(--prism-fg-muted)",
+                fontSize: 11,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 6,
+              }}
+            >
+              <span style={{ fontSize: 14, lineHeight: 1 }}>+</span>
+              New Worktree
+            </button>
           )}
 
           <button

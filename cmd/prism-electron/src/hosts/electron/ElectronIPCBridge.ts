@@ -10,6 +10,7 @@ import * as fs from 'fs'
 import { BrowserWindow, app, ipcMain, dialog, shell } from 'electron'
 import { handleGrpcRequest } from '@prism-core/core/controller/grpc-handler'
 import { discoverProjects, addToGlobalWorkspaces, listWorktrees } from '@prism-core/workspace/discovery'
+import { createWorktree, deleteWorktree } from '@prism-core/workspace/worktrees'
 import { executeGate } from '@prism-core/workspace/qualityGates'
 import { discoverResearch } from '@prism-core/workspace/research'
 import { discoverPlans } from '@prism-core/workspace/plans'
@@ -336,6 +337,43 @@ export class ElectronIPCBridge {
       }
     })
 
+    // Create a new git worktree for the given branch name
+    ipcMain.handle('prism:createWorktree', async (_event, branchName: string) => {
+      const projectDir = this._currentProjectDir
+      if (!projectDir) return { ok: false, error: 'No project open' }
+      try {
+        await createWorktree(projectDir, branchName)
+        return { ok: true }
+      } catch (err) {
+        return { ok: false, error: String(err) }
+      }
+    })
+
+    // Delete a git worktree (and optionally its branch)
+    ipcMain.handle(
+      'prism:deleteWorktree',
+      async (_event, worktreePath: string, deleteBranch: boolean, branchName: string) => {
+        const projectDir = this._currentProjectDir
+        if (!projectDir) return { ok: false, error: 'No project open' }
+        try {
+          await deleteWorktree(projectDir, worktreePath, deleteBranch, branchName)
+          return { ok: true }
+        } catch (err) {
+          return { ok: false, error: String(err) }
+        }
+      },
+    )
+
+    // Switch the active project to the given directory (e.g. opening a worktree)
+    ipcMain.handle('prism:switchProject', async (_event, dir: string) => {
+      try {
+        await this.setProjectDir(dir)
+        return { ok: true }
+      } catch (err) {
+        return { ok: false, error: String(err) }
+      }
+    })
+
     // Execute a quality gate command in the current project directory
     ipcMain.handle('prism:executeGate', async (_event, command: string) => {
       const projectDir = this._currentProjectDir
@@ -395,6 +433,9 @@ export class ElectronIPCBridge {
     ipcMain.removeHandler('prism:addWorkspace')
     ipcMain.removeHandler('prism:browseAndAddWorkspace')
     ipcMain.removeHandler('prism:listWorktrees')
+    ipcMain.removeHandler('prism:createWorktree')
+    ipcMain.removeHandler('prism:deleteWorktree')
+    ipcMain.removeHandler('prism:switchProject')
     ipcMain.removeHandler('prism:executeGate')
     ipcMain.removeHandler('prism:getResearch')
     ipcMain.removeHandler('prism:getPlans')

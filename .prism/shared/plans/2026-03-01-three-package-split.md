@@ -1460,14 +1460,35 @@ From `cmd/prism-vscode/webview-office/src/components/`:
 
 ### Verification
 #### Automated
-- [ ] `cd packages/prism-core && npm run typecheck` passes
-- [ ] `cd cmd/prism-electron && npm run make` succeeds
+- [x] `cd packages/prism-core && npm run typecheck` passes
+- [x] `cd cmd/prism-electron && npm run make` succeeds
 
 #### Manual
 - [ ] Electron: worktree list shows real git worktrees
 - [ ] Electron: creating a worktree creates the directory and branch
 - [ ] Electron: deleting a worktree removes it
 - [ ] Electron: "Open" button opens worktree in new Electron window
+
+**Checkpoint**: [x] Phase 18 complete
+
+### Phase 18 Session Notes — 2026-03-01
+- Created `packages/prism-core/src/workspace/worktrees.ts`:
+  - `createWorktree(workspaceRoot, branchName)` — resolves git root, builds worktree path (`<repoParent>/<repoName>-<safeBranch>`), checks if branch exists, uses `worktree add <path> <branch>` (existing) or `worktree add -b <branch> <path>` (new)
+  - `deleteWorktree(workspaceRoot, worktreePath, deleteBranch, branchName)` — `worktree remove` + optional `branch -D` (best-effort)
+  - `listWorktrees` and `parsePorcelainWorktrees` remain in `discovery.ts` (already existed from Phase 15)
+- Updated `ElectronIPCBridge.ts`: added import for `createWorktree`/`deleteWorktree` from `@prism-core/workspace/worktrees`; added 3 new handlers:
+  - `prism:createWorktree` → `createWorktree(projectDir, branchName)` → `{ ok, error? }`
+  - `prism:deleteWorktree` → `deleteWorktree(projectDir, path, deleteBranch, branch)` → `{ ok, error? }`
+  - `prism:switchProject` → `setProjectDir(dir)` → switch active project to any directory (e.g. opening a worktree)
+  - All 3 added to `dispose()` cleanup
+- Rewrote `WorkspacePanel.tsx`:
+  - Added state: `showNewWorktreeForm`, `newBranchInput`, `creatingWorktree`, `createError`, `confirmDeletePath`, `deletingWorktree`, `deleteError`
+  - "New Worktree" button → inline form with branch name input (Enter to submit, Escape to cancel); auto-focuses input; shows creation errors inline
+  - Each non-main worktree row has Open + Delete buttons
+  - Delete flow: first click → show Confirm/Cancel; second click → calls `prism:deleteWorktree`; errors shown inline below the row
+  - Open button calls `prism:switchProject` with the worktree path
+  - Removed unused `StatusDot` import (was unused in original)
+- `prism-core typecheck` and `npm run make` both pass cleanly (Squirrel distributable for win32/x64)
 
 ---
 
