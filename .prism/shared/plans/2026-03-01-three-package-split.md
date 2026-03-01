@@ -1012,11 +1012,29 @@ From `cmd/prism-vscode/webview-office/src/components/`:
 
 ### Verification
 #### Automated
-- [ ] `cd cmd/prism-electron && npm run make` succeeds
+- [x] `cd cmd/prism-electron && npm run make` succeeds
 
 #### Manual
 - [ ] Electron: assets load on startup (console.log confirms sprite data)
 - [ ] Electron: IPC channels respond to office:action messages
+
+**Checkpoint**: [x] Phase 12 complete
+
+### Phase 12 Session Notes — 2026-03-01
+- Created `cmd/prism-electron/src/office/ElectronOfficeProvider.ts`:
+  - Holds `BrowserWindow`, `ElectronPrismController`, and `ElectronAgentManager` references
+  - `PostMessageFn` wraps `win.webContents.send('office:message', msg)`
+  - Subscribes to controller events: `sessionStart` → creates headless agent for Spectrum; `spectrumStoryEnd` → removes agent by sessionId; `storyUpdate` → forwards story context to all active Spectrum agents
+  - `_spectrumAgents: Map<string, number>` tracks sessionId → agentId for clean lifecycle management
+  - On `webviewReady`: loads all assets in parallel (characters, floors, walls, furniture), loads layout (file or default), sends existing agents
+  - `_getAssetsRoot()`: dev = `app.getAppPath()/../prism-vscode`; packaged = `process.resourcesPath`
+  - Saves agent seats to `~/.prism/office-agent-seats.json`
+  - Watches `~/.prism/office-layout.json` for external changes
+  - `_officeActionHandler` stored as bound reference for precise removal in `dispose()`
+- Updated `ElectronIPCBridge.ts`: imports and instantiates `ElectronOfficeProvider` after controller creation; calls `_officeProvider.dispose()` in `dispose()`
+- Updated `preload.ts`: added `officeMessage(callback) → unsubscribe` and `officeAction(msg)` to contextBridge; updated Window TypeScript declaration
+- Updated `forge.config.ts`: added `extraResource: ['../prism-vscode/assets']` so assets are bundled into `resources/assets/` in packaged builds
+- `npm run make` passes cleanly (Squirrel distributable for win32/x64)
 
 ---
 

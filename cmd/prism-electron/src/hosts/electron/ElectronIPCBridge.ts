@@ -10,6 +10,7 @@ import * as fs from 'fs'
 import { BrowserWindow, app, ipcMain, dialog, shell } from 'electron'
 import { handleGrpcRequest } from '@prism-core/core/controller/grpc-handler'
 import { ElectronPrismController } from './ElectronPrismController'
+import { ElectronOfficeProvider } from '../../office/ElectronOfficeProvider'
 
 // ---------------------------------------------------------------------------
 // File tree helper
@@ -59,6 +60,7 @@ async function buildFileTree(
 
 export class ElectronIPCBridge {
   private controller: ElectronPrismController
+  private _officeProvider: ElectronOfficeProvider
   private _currentProjectDir: string | undefined
 
   constructor(private mainWindow: BrowserWindow) {
@@ -66,6 +68,9 @@ export class ElectronIPCBridge {
     this.controller.setPostMessageFn(async (msg) => {
       mainWindow.webContents.send('grpc_response', msg)
     })
+
+    // Wire up office provider — subscribes to controller events for Spectrum→Office pipeline
+    this._officeProvider = new ElectronOfficeProvider(mainWindow, this.controller)
 
     // Subscribe to controller events and forward to renderer
     this.controller.on('stateChange', () => {
@@ -302,6 +307,7 @@ export class ElectronIPCBridge {
     ipcMain.removeHandler('prism:fileTree')
     ipcMain.removeHandler('prism:saveLayoutState')
     ipcMain.removeHandler('prism:loadLayoutState')
+    this._officeProvider.dispose()
     this.controller.dispose()
   }
 }

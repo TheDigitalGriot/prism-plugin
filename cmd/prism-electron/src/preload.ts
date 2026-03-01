@@ -26,6 +26,25 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   /** Invoke a main-process handler and await the result. */
   invoke: (channel: string, data?: unknown) => ipcRenderer.invoke(channel, data),
+
+  // ── Office-specific convenience methods ──────────────────────────────────
+
+  /**
+   * Subscribe to office messages pushed from the main process.
+   * Returns an unsubscribe function.
+   */
+  officeMessage: (callback: (msg: unknown) => void) => {
+    const wrapped = (_: Electron.IpcRendererEvent, msg: unknown) => callback(msg);
+    ipcRenderer.on('office:message', wrapped);
+    return () => ipcRenderer.removeListener('office:message', wrapped);
+  },
+
+  /**
+   * Send an office action to the main process (fire-and-forget).
+   */
+  officeAction: (msg: unknown) => {
+    ipcRenderer.send('office:action', msg);
+  },
 });
 
 // Extend Window type for TypeScript
@@ -35,6 +54,8 @@ declare global {
       send: (channel: string, data: unknown) => void;
       on: (channel: string, cb: (data: unknown) => void) => () => void;
       invoke: (channel: string, data?: unknown) => Promise<unknown>;
+      officeMessage: (callback: (msg: unknown) => void) => () => void;
+      officeAction: (msg: unknown) => void;
     };
   }
 }
