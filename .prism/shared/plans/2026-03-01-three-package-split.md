@@ -383,9 +383,9 @@ Phases within a group are sequential. Groups 2-3 (UI Package) can start after Ph
 
 ### Verification
 #### Automated
-- [ ] `cd packages/prism-core && npm run typecheck` passes
-- [ ] `cd cmd/prism-vscode && npm run compile` succeeds
-- [ ] `cd cmd/prism-electron && npm run make` succeeds
+- [x] `cd packages/prism-core && npm run typecheck` passes
+- [x] `cd cmd/prism-vscode && npm run compile` succeeds
+- [x] `cd cmd/prism-electron && npm run make` succeeds
 
 #### Manual
 - [ ] VSCode: file watcher detects `.prism/` changes correctly
@@ -463,9 +463,9 @@ Phases within a group are sequential. Groups 2-3 (UI Package) can start after Ph
 
 ### Verification
 #### Automated
-- [ ] `cd packages/prism-core && npm run typecheck` passes
-- [ ] `cd cmd/prism-vscode && npm run compile` succeeds
-- [ ] `cd cmd/prism-electron && npm run make` succeeds
+- [x] `cd packages/prism-core && npm run typecheck` passes
+- [x] `cd cmd/prism-vscode && npm run compile` succeeds
+- [x] `cd cmd/prism-electron && npm run make` succeeds
 
 #### Manual
 - [ ] VSCode: tree views still refresh on file changes
