@@ -89,6 +89,7 @@ export abstract class BasePrismController extends EventEmitter {
   emit(event: "fileChange", data: { type: string }): boolean
   emit(event: "stateChange"): boolean
   emit(event: "sessionStart", data: AgentSessionData): boolean
+  emit(event: "sessionEnd", data: { sessionId: string }): boolean
   emit(event: "storyUpdate", data: UpdatedStoryData): boolean
   emit(event: "spectrumStoryEnd", data: { sessionId: string }): boolean
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -99,6 +100,7 @@ export abstract class BasePrismController extends EventEmitter {
   on(event: "fileChange", listener: (data: { type: string }) => void): this
   on(event: "stateChange", listener: () => void): this
   on(event: "sessionStart", listener: (data: AgentSessionData) => void): this
+  on(event: "sessionEnd", listener: (data: { sessionId: string }) => void): this
   on(event: "storyUpdate", listener: (data: UpdatedStoryData) => void): this
   on(event: "spectrumStoryEnd", listener: (data: { sessionId: string }) => void): this
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -331,9 +333,13 @@ export abstract class BasePrismController extends EventEmitter {
           this.agentBridge.registerSession(skillSessionId, {})
           this.emit("sessionStart", { sessionId: skillSessionId })
 
-          void bridge.runPluginSkill(text).catch((err: Error) => {
-            console.error("[Prism] Plugin skill error:", err)
-          })
+          void bridge.runPluginSkill(text)
+            .catch((err: Error) => {
+              console.error("[Prism] Plugin skill error:", err)
+            })
+            .finally(() => {
+              this.emit("sessionEnd", { sessionId: skillSessionId })
+            })
           return { ok: true }
         }
 
@@ -373,7 +379,7 @@ export abstract class BasePrismController extends EventEmitter {
         this.agentBridge.registerSession(chatSessionId, {})
         this.emit("sessionStart", { sessionId: chatSessionId })
 
-        void this._runChatSession(prompt, workspaceRoot, assistantMsg).catch((err: Error) => {
+        void this._runChatSession(prompt, workspaceRoot, assistantMsg, chatSessionId).catch((err: Error) => {
           console.error("[Prism] Chat session error:", err)
         })
 
@@ -446,9 +452,13 @@ export abstract class BasePrismController extends EventEmitter {
         this.agentBridge.registerSession(skillSessionId, {})
         this.emit("sessionStart", { sessionId: skillSessionId })
 
-        void bridge.runPluginSkill(`/${skillName}${args ? ` ${args}` : ""}`).catch((err: Error) => {
-          console.error("[Prism] Plugin skill error:", err)
-        })
+        void bridge.runPluginSkill(`/${skillName}${args ? ` ${args}` : ""}`)
+          .catch((err: Error) => {
+            console.error("[Prism] Plugin skill error:", err)
+          })
+          .finally(() => {
+            this.emit("sessionEnd", { sessionId: skillSessionId })
+          })
 
         return { ok: true }
       },
@@ -630,6 +640,7 @@ export abstract class BasePrismController extends EventEmitter {
     prompt: string,
     workspaceRoot: string,
     assistantMsg: PrismChatMessage,
+    sessionId?: string,
   ): Promise<void> {
     if (this._chatRunner) {
       this._chatRunner.terminate()
@@ -685,6 +696,9 @@ export abstract class BasePrismController extends EventEmitter {
         chatMessages: [...this._chatMessages],
         isChatStreaming: false,
       })
+      if (sessionId) {
+        this.emit("sessionEnd", { sessionId })
+      }
     }
   }
 

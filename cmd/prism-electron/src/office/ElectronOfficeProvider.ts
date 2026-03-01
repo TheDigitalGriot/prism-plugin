@@ -48,6 +48,9 @@ export class ElectronOfficeProvider {
   /** sessionId → agentId for active Spectrum runs */
   private _spectrumAgents: Map<string, number> = new Map()
 
+  /** sessionId → agentId for active chat / skill sessions */
+  private _chatSkillAgents: Map<string, number> = new Map()
+
   /** Bound handler stored so we can remove it precisely in dispose() */
   private _officeActionHandler: (event: Electron.IpcMainEvent, msg: unknown) => void
 
@@ -65,6 +68,9 @@ export class ElectronOfficeProvider {
     // Subscribe to controller events for Spectrum / Chat integration
     this._controller.on('sessionStart', (data: AgentSessionData) => {
       this._onSessionStart(data)
+    })
+    this._controller.on('sessionEnd', (data: { sessionId: string }) => {
+      this._onSessionEnd(data.sessionId)
     })
     this._controller.on('spectrumStoryEnd', (data: { sessionId: string }) => {
       this._onSpectrumStoryEnd(data.sessionId)
@@ -90,8 +96,6 @@ export class ElectronOfficeProvider {
   // ---------------------------------------------------------------------------
 
   private _onSessionStart(data: AgentSessionData): void {
-    if (!data.isSpectrum) return
-
     const projectRoot = this._controller._projectDir
     if (!projectRoot) {
       console.warn('[Prism Office] sessionStart: no project directory set, cannot create agent')
@@ -99,22 +103,35 @@ export class ElectronOfficeProvider {
     }
 
     const projectDirPath = this._agentManager.getProjectDirPath(projectRoot)
-    const agentId = this._agentManager.createHeadlessAgent(data.sessionId, projectDirPath)
-    this._spectrumAgents.set(data.sessionId, agentId)
 
-    // Forward story context immediately if available
-    if (data.storyId && data.storyTitle) {
-      this._postMessage({
-        type: 'agentStoryContext',
-        agentId,
-        storyId: data.storyId,
-        storyTitle: data.storyTitle,
-      })
+    if (data.isSpectrum) {
+      // Spectrum session: create headless agent and track JSONL for the story
+      const agentId = this._agentManager.createHeadlessAgent(data.sessionId, projectDirPath)
+      this._spectrumAgents.set(data.sessionId, agentId)
+
+      // Forward story context immediately if available
+      if (data.storyId && data.storyTitle) {
+        this._postMessage({
+          type: 'agentStoryContext',
+          agentId,
+          storyId: data.storyId,
+          storyTitle: data.storyTitle,
+        })
+      }
+
+      console.log(
+        `[Prism Office] Spectrum agent created: id=${agentId} sessionId=${data.sessionId}`,
+      )
+    } else {
+      // Chat or skill session: create a headless agent that shows activity in the office.
+      // JSONL polling will start — for SDK-based chat no file will appear (graceful no-op),
+      // for CLI skill sessions (ModeBridge) the transcript will be tracked if the file appears.
+      const agentId = this._agentManager.createHeadlessAgent(data.sessionId, projectDirPath)
+      this._chatSkillAgents.set(data.sessionId, agentId)
+      console.log(
+        `[Prism Office] Chat/skill agent created: id=${agentId} sessionId=${data.sessionId}`,
+      )
     }
-
-    console.log(
-      `[Prism Office] Spectrum agent created: id=${agentId} sessionId=${data.sessionId}`,
-    )
   }
 
   private _onSpectrumStoryEnd(sessionId: string): void {
@@ -126,6 +143,17 @@ export class ElectronOfficeProvider {
     this._agentManager.removeAgent(agentId)
     this._spectrumAgents.delete(sessionId)
     console.log(`[Prism Office] Spectrum agent removed: id=${agentId} sessionId=${sessionId}`)
+  }
+
+  private _onSessionEnd(sessionId: string): void {
+    const agentId = this._chatSkillAgents.get(sessionId)
+    if (agentId === undefined) {
+      // Not a chat/skill session we're tracking — expected for Spectrum sessions
+      return
+    }
+    this._agentManager.removeAgent(agentId)
+    this._chatSkillAgents.delete(sessionId)
+    console.log(`[Prism Office] Chat/skill agent removed: id=${agentId} sessionId=${sessionId}`)
   }
 
   private _onStoryUpdate(data: UpdatedStoryData): void {
@@ -272,6 +300,7 @@ export class ElectronOfficeProvider {
     this._layoutWatcher?.dispose()
     this._agentManager.dispose()
     this._spectrumAgents.clear()
+    this._chatSkillAgents.clear()
     console.log('[Prism Office] ElectronOfficeProvider disposed')
   }
 }

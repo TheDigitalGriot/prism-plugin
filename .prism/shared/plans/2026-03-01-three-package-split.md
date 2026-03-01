@@ -1153,7 +1153,7 @@ From `cmd/prism-vscode/webview-office/src/components/`:
 
 ### Verification
 #### Automated
-- [ ] `cd cmd/prism-electron && npm run make` succeeds
+- [x] `cd cmd/prism-electron && npm run make` succeeds
 
 #### Manual
 - [ ] Electron: start Spectrum → agent character appears in office, walks to desk
@@ -1161,6 +1161,22 @@ From `cmd/prism-vscode/webview-office/src/components/`:
 - [ ] Electron: when story completes, agent does matrix despawn effect
 - [ ] Electron: click "Launch Claude" → new agent appears in office
 - [ ] Electron: agent tracks real tool activity from Claude CLI
+
+**Checkpoint**: [x] Phase 14 complete
+
+### Phase 14 Session Notes — 2026-03-01
+- Added `sessionEnd` typed event overloads to `BasePrismController` (`emit` + `on`)
+- Added `sessionId?: string` parameter to `_runChatSession` — emits `sessionEnd` in the `finally` block
+- In `sendMessage` skill path: chained `.finally(() => emit('sessionEnd', ...))` on `runPluginSkill` promise
+- In `executeSkill` handler: same `.finally()` pattern
+- Passed `chatSessionId` through to `_runChatSession` call
+- **`ElectronOfficeProvider`**: added `_chatSkillAgents: Map<string, number>` field
+- Extended `_onSessionStart` to handle non-Spectrum sessions: creates headless agent, stores in `_chatSkillAgents`
+  - JSONL poll starts immediately; graceful no-op for SDK chat (file never appears); works for CLI skill sessions
+- Added `_onSessionEnd(sessionId)` — looks up agent in `_chatSkillAgents`, removes it, sends `agentClosed` to renderer
+- Added `controller.on('sessionEnd', ...)` subscription in constructor
+- Updated `dispose()` to clear `_chatSkillAgents`
+- `prism-core typecheck` and `npm run make` both pass cleanly (Squirrel distributable for win32/x64)
 
 ---
 
