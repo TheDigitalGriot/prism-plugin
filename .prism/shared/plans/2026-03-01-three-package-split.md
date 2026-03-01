@@ -932,12 +932,24 @@ From `cmd/prism-vscode/webview-office/src/components/`:
 
 ### Verification
 #### Automated
-- [ ] `cd cmd/prism-electron && npm run make` succeeds
-- [ ] TypeScript compiles without errors
+- [x] `cd cmd/prism-electron && npm run make` succeeds
+- [x] TypeScript compiles without errors
 
 #### Manual
 - [ ] Electron: can spawn a Claude CLI process (temporarily test with a button)
 - [ ] Electron: JSONL file is detected and first lines parsed
+
+**Checkpoint**: [x] Phase 11 complete
+
+### Phase 11 Session Notes — 2026-03-01
+- Created `cmd/prism-electron/src/office/ElectronAgentManager.ts` as a class (holds BrowserWindow reference)
+- `PostMessageFn` wraps `win.webContents.send('office:message', msg)`
+- Uses `child_process.spawn('claude', ['--session-id', sessionId], { cwd, stdio: 'ignore' })` instead of VSCode terminals
+- Dual JSONL watching: `fs.watch` (primary) + polling every 2s (backup), identical to VSCode's fileWatcher.ts
+- All transcript parsing via `processTranscriptLine` from `@prism-core/office/transcriptParser`
+- `createHeadlessAgent(sessionId, projectDir)` for Spectrum — no process spawning, watches JSONL only
+- `getProjectDirPath(cwd)` uses same encoding as VSCode: `cwd.replace(/[:\\/]/g, '-')`
+- TypeScript passes cleanly; `npm run make` succeeds
 
 ---
 
