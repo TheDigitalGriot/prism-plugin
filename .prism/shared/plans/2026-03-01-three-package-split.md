@@ -4,7 +4,7 @@ planner: Claude
 repository: prism-plugin
 branch: main
 feature: "Option B — Three-Package Split: Shared Code + Full Feature Parity"
-status: draft
+status: in_progress
 phases: 20
 estimated_files_changed: 120+
 tags: [plan, architecture, monorepo, electron, vscode, office, spectrum]
@@ -147,11 +147,11 @@ Phases within a group are sequential. Groups 2-3 (UI Package) can start after Ph
 
 ### Verification
 #### Automated
-- [ ] `npm install` from root completes without errors
-- [ ] `cd cmd/prism-vscode && npm run compile` succeeds
-- [ ] `cd cmd/prism-vscode/webview-ui && npm run build` succeeds
-- [ ] `cd cmd/prism-electron && npm run make` succeeds
-- [ ] `cd cmd/prism-electron/webview-ui && npm run build` succeeds
+- [x] `npm install` from root completes without errors
+- [x] `cd cmd/prism-vscode && npm run compile` succeeds
+- [x] `cd cmd/prism-vscode/webview-ui && npm run build` succeeds
+- [x] `cd cmd/prism-electron && npm run make` succeeds
+- [x] `cd cmd/prism-electron/webview-ui && npm run build` succeeds
 
 #### Manual
 - [ ] VSCode extension loads and chat works

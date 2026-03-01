@@ -1,0 +1,13 @@
+{
+  "name": "prism-plugin",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "cmd/prism-vscode",
+    "cmd/prism-vscode/webview-ui",
+    "cmd/prism-vscode/webview-office",
+    "cmd/prism-vscode/webview-panel",
+    "cmd/prism-electron",
+    "cmd/prism-electron/webview-ui"
+  ]
+}

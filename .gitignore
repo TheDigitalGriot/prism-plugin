@@ -1,3 +1,6 @@
+# Dependencies
+node_modules/
+
 # Reference files
 .prism/shared/ref/
 
