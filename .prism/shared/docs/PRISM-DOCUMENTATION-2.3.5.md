@@ -8,92 +8,102 @@
 
 ## Table of Contents
 
-### Part I — CLI Dashboard (Go/Bubble Tea)
+### Part I — Claude Plugin Architecture (Prompt Engineering)
 
-1. [Overview](#overview)
-2. [Architecture](#architecture)
-3. [Getting Started](#getting-started)
-4. [Plugin System](#plugin-system)
-5. [Screen Reference](#screen-reference)
-   - [Splash Screen](#1-splash-screen)
-   - [Onboarding Screen](#2-onboarding-screen)
-   - [Home Screen](#3-home-screen)
-   - [Research Screen](#4-research-screen)
-   - [Plans Screen](#5-plans-screen)
-   - [Spectrum Dashboard](#6-spectrum-execution-dashboard)
-   - [Files Screen](#7-files-screen)
-   - [Git Screen](#8-git-screen)
-   - [Agent Screen](#9-agent-screen)
-   - [Monitor Screen](#10-monitor-screen)
-   - [Workspaces Screen](#11-workspaces-screen)
-6. [App Shell](#app-shell)
-   - [Tab Bar](#tab-bar)
-   - [Sidebar](#sidebar)
-   - [Footer](#footer)
-7. [Modal & Dialog Systems](#modal--dialog-systems)
-8. [User Flow Diagrams](#user-flow-diagrams)
-9. [Execution State Machine](#execution-state-machine)
-10. [Animation System](#animation-system)
-11. [3D Prism Rendering Pipeline](#3d-prism-rendering-pipeline)
-12. [Splash Screen Rendering Pipeline](#splash-screen-rendering-pipeline)
-13. [Domain Models](#domain-models)
-14. [Claude CLI Integration](#claude-cli-integration)
-15. [Terminal Detection](#terminal-detection)
-16. [Diff System](#diff-system)
-17. [Keyboard Reference](#keyboard-reference)
-18. [Styling Reference](#styling-reference)
-19. [Vertical Layout & Height Budget](#vertical-layout--height-budget)
-20. [Configuration](#configuration)
+1. [Plugin Overview](#plugin-overview)
+2. [Plugin Manifest & Distribution](#plugin-manifest--distribution)
+3. [Three-Layer Architecture](#three-layer-architecture)
+4. [Commands Reference](#commands-reference)
+5. [Agents Reference](#agents-reference)
+6. [Skills Reference](#skills-reference)
+7. [Scripts & Automation](#scripts--automation)
+8. [Model Assignment Convention](#model-assignment-convention)
+9. [Component Invocation Graph](#component-invocation-graph)
+10. [Data Flow Through .prism/](#data-flow-through-prism)
+11. [Behavioral Principles](#behavioral-principles)
+12. [Plugin Directory Structure](#plugin-directory-structure)
+13. [Plugin Statistics](#plugin-statistics)
 
-### Part II — VS Code Extension (TypeScript/React)
+### Part II — CLI Dashboard (Go/Bubble Tea)
 
-21. [VS Code Extension Overview](#vs-code-extension-overview)
-22. [Extension Architecture](#extension-architecture)
-23. [Extension Source Structure](#extension-source-structure)
-24. [Core Orchestrator — PrismController](#core-orchestrator--prismcontroller)
-25. [IPC Architecture — gRPC-over-postMessage](#ipc-architecture--grpc-over-postmessage)
-26. [Sidebar Webview](#sidebar-webview)
-27. [Bottom Panel Webview](#bottom-panel-webview)
-28. [Native Tree Views & Status Bar](#native-tree-views--status-bar)
-29. [Commands & Keybindings](#commands--keybindings)
-30. [Extension Settings](#extension-settings)
-31. [Workflow State Machine (VS Code)](#workflow-state-machine-vs-code)
-32. [Spectrum Execution (VS Code)](#spectrum-execution-vs-code)
-33. [Plugin Skill Integration](#plugin-skill-integration)
-34. [Office Visualization](#office-visualization)
-35. [Extension Technology Stack](#extension-technology-stack)
+14. [Overview](#overview)
+15. [Architecture](#architecture)
+16. [Getting Started](#getting-started)
+17. [Plugin System](#plugin-system)
+18. [Screen Reference](#screen-reference)
+    - [Splash Screen](#1-splash-screen)
+    - [Onboarding Screen](#2-onboarding-screen)
+    - [Home Screen](#3-home-screen)
+    - [Research Screen](#4-research-screen)
+    - [Plans Screen](#5-plans-screen)
+    - [Spectrum Dashboard](#6-spectrum-execution-dashboard)
+    - [Files Screen](#7-files-screen)
+    - [Git Screen](#8-git-screen)
+    - [Agent Screen](#9-agent-screen)
+    - [Monitor Screen](#10-monitor-screen)
+    - [Workspaces Screen](#11-workspaces-screen)
+19. [App Shell](#app-shell)
+    - [Tab Bar](#tab-bar)
+    - [Sidebar](#sidebar)
+    - [Footer](#footer)
+20. [Modal & Dialog Systems](#modal--dialog-systems)
+21. [User Flow Diagrams](#user-flow-diagrams)
+22. [Execution State Machine](#execution-state-machine)
+23. [Animation System](#animation-system)
+24. [3D Prism Rendering Pipeline](#3d-prism-rendering-pipeline)
+25. [Splash Screen Rendering Pipeline](#splash-screen-rendering-pipeline)
+26. [Domain Models](#domain-models)
+27. [Claude CLI Integration](#claude-cli-integration)
+28. [Terminal Detection](#terminal-detection)
+29. [Diff System](#diff-system)
+30. [Keyboard Reference](#keyboard-reference)
+31. [Styling Reference](#styling-reference)
+32. [Vertical Layout & Height Budget](#vertical-layout--height-budget)
+33. [Configuration](#configuration)
 
-### Part III — Electron Desktop App (TypeScript/React)
+### Part III — VS Code Extension (TypeScript/React)
 
-36. [Electron App Overview](#electron-app-overview)
-37. [Electron Architecture](#electron-architecture)
-38. [Electron Source Structure](#electron-source-structure)
-39. [Main Process & Window Management](#main-process--window-management)
-40. [Preload & Context Bridge](#preload--context-bridge)
-41. [IPC Bridge — Electron Transport](#ipc-bridge--electron-transport)
-42. [ElectronPrismController](#electronprismcontroller)
-43. [Platform Modules (Electron)](#platform-modules-electron)
-44. [Webview UI — React SPA](#webview-ui--react-spa)
-45. [State Management (Electron)](#state-management-electron)
-46. [Build & Packaging](#build--packaging)
-47. [Security Hardening](#security-hardening)
-48. [Three-Platform Feature Parity](#three-platform-feature-parity)
+34. [VS Code Extension Overview](#vs-code-extension-overview)
+35. [Extension Architecture](#extension-architecture)
+36. [Extension Source Structure](#extension-source-structure)
+37. [Core Orchestrator — PrismController](#core-orchestrator--prismcontroller)
+38. [IPC Architecture — gRPC-over-postMessage](#ipc-architecture--grpc-over-postmessage)
+39. [Sidebar Webview](#sidebar-webview)
+40. [Bottom Panel Webview](#bottom-panel-webview)
+41. [Native Tree Views & Status Bar](#native-tree-views--status-bar)
+42. [Commands & Keybindings](#commands--keybindings)
+43. [Extension Settings](#extension-settings)
+44. [Workflow State Machine (VS Code)](#workflow-state-machine-vs-code)
+45. [Spectrum Execution (VS Code)](#spectrum-execution-vs-code)
+46. [Plugin Skill Integration](#plugin-skill-integration)
+47. [Office Visualization](#office-visualization)
+48. [Extension Technology Stack](#extension-technology-stack)
 
-### Part V — Claude Plugin Architecture (Prompt Engineering)
+### Part IV — Electron Desktop App (TypeScript/React)
 
-49. [Plugin Overview](#plugin-overview)
-50. [Plugin Manifest & Distribution](#plugin-manifest--distribution)
-51. [Three-Layer Architecture](#three-layer-architecture)
-52. [Commands Reference](#commands-reference)
-53. [Agents Reference](#agents-reference)
-54. [Skills Reference](#skills-reference)
-55. [Scripts & Automation](#scripts--automation)
-56. [Model Assignment Convention](#model-assignment-convention)
-57. [Component Invocation Graph](#component-invocation-graph)
-58. [Data Flow Through .prism/](#data-flow-through-prism)
-59. [Behavioral Principles](#behavioral-principles)
-60. [Plugin Directory Structure](#plugin-directory-structure)
-61. [Plugin Statistics](#plugin-statistics)
+49. [Electron App Overview](#electron-app-overview)
+50. [Electron Architecture](#electron-architecture)
+51. [Electron Source Structure](#electron-source-structure)
+52. [Main Process & Window Management](#main-process--window-management)
+53. [Preload & Context Bridge](#preload--context-bridge)
+54. [IPC Bridge — Electron Transport](#ipc-bridge--electron-transport)
+55. [ElectronPrismController](#electronprismcontroller)
+56. [Platform Modules (Electron)](#platform-modules-electron)
+57. [Webview UI — React SPA](#webview-ui--react-spa)
+58. [State Management (Electron)](#state-management-electron)
+59. [Build & Packaging](#build--packaging)
+60. [Security Hardening](#security-hardening)
+61. [Three-Platform Feature Parity](#three-platform-feature-parity)
+
+### Part V — Monorepo Architecture (v2.3.5)
+
+62. [Repository Structure](#repository-structure)
+63. [npm Workspaces](#npm-workspaces)
+64. [packages/prism-core](#packagesprism-core)
+65. [packages/prism-ui](#packagesprism-ui)
+66. [Platform Shell Responsibilities](#platform-shell-responsibilities)
+67. [Development Workflow](#development-workflow)
+68. [Production Hardening (v2.4.0)](#production-hardening-v240)
 
 ---
 
@@ -111,7 +121,876 @@ All three share the same `.prism/` directory structure, `stories.json` schema, s
 
 ---
 
-# Part I — CLI Dashboard
+# Part I — Claude Plugin Architecture (Prompt Engineering)
+
+The Prism Claude Code plugin is the foundation that underpins every platform — the CLI dashboard, VS Code extension, and Electron app all exist to visualize and control workflows that the plugin defines. The plugin itself is **pure markdown-based prompt engineering** with zero build step. It extends Claude Code with structured workflows, specialized agents, and orchestration skills that transform raw AI capability into a disciplined development methodology.
+
+## Plugin Overview
+
+The Prism plugin registers with Claude Code through a conventional directory layout that is automatically discovered at startup. It provides:
+
+- **25 commands** — User-invocable operations via `/command-name` (3,729 lines)
+- **10 agents** — Specialized subprocesses spawned via `Task(subagent_type="agent-name")` (1,365 lines)
+- **11 skills** — Auto-activating workflow orchestrators with trigger patterns (1,823 lines)
+- **4 scripts** — Shell and Python automation (947 lines)
+- **No hooks or MCP servers** — The plugin relies entirely on prompt engineering, not runtime hooks
+
+### What Makes It Different
+
+Unlike traditional software plugins that extend functionality through code, Prism extends Claude Code's behavior through carefully structured natural language instructions. Each `.md` file is a prompt that shapes how Claude approaches a task — what agents to spawn, what questions to ask, what output format to use, and what behavioral constraints to follow. The prompt engineering is the product.
+
+---
+
+## Plugin Manifest & Distribution
+
+### `.claude-plugin/plugin.json`
+
+```json
+{
+  "name": "prism",
+  "description": "Structured 4-phase development workflow (Research -> Plan -> Implement -> Validate) with Spectrum-style iterative execution with TUI",
+  "version": "2.3.0",
+  "author": { "name": "Prism Team" }
+}
+```
+
+### `.claude-plugin/marketplace.json`
+
+```json
+{
+  "name": "prism-marketplace",
+  "owner": { "name": "Prism Team" },
+  "plugins": [{
+    "name": "prism",
+    "source": { "source": "github", "repo": "TheDigitalGriot/prism-plugin" },
+    "description": "Structured 4-phase development workflow (Research -> Plan -> Implement -> Validate)",
+    "version": "2.3.0"
+  }]
+}
+```
+
+| Field | Value |
+|-------|-------|
+| Plugin Name | `prism` |
+| Version | 2.3.0 |
+| Distribution | GitHub: `TheDigitalGriot/prism-plugin` |
+| Build Step | None — pure markdown prompt engineering |
+| Auto-Discovery | Claude Code scans `commands/`, `agents/`, `skills/*/SKILL.md` on enable |
+
+---
+
+## Three-Layer Architecture
+
+The plugin follows a strict three-layer architecture where each layer has a distinct responsibility:
+
+```
++---------------------------------------------------------------------+
+|                      USER / CLAUDE CODE                             |
+|  Types "/prism-research" or Claude auto-detects task context        |
++----------------------------+----------------------------------------+
+                             |
+                             v
++---------------------------------------------------------------------+
+|  Layer 1: SKILLS  (skills/*/SKILL.md)                               |
+|                                                                     |
+|  Workflow orchestrators with YAML frontmatter.                      |
+|  Auto-activated by trigger patterns or invoked via /skill-name.     |
+|  They decide WHAT to do: which commands to invoke, which agents     |
+|  to spawn, and in what order.                                       |
+|                                                                     |
+|  Examples: prism, prism-research, prism-plan, prism-spectrum        |
++----------------------------+----------------------------------------+
+                             |
+              +--------------+--------------+
+              |                             |
+              v                             v
++------------------------------+  +----------------------------------+
+|  Layer 2: COMMANDS           |  |  Layer 3: AGENTS                 |
+|  (commands/*.md)             |  |  (agents/*.md)                   |
+|                              |  |                                  |
+|  Single-purpose operations.  |  |  Parallel specialists.           |
+|  User-invocable via          |  |  Spawned via Task() with         |
+|  /command-name.              |  |  subagent_type="agent-name".     |
+|  They know HOW to do one     |  |  Run concurrently to maximize    |
+|  thing well.                 |  |  throughput. Each has a model     |
+|                              |  |  assignment and tool set.         |
+|  Examples:                   |  |                                  |
+|  /create_plan                |  |  Examples:                       |
+|  /commit                     |  |  codebase-locator (haiku)        |
+|  /generate_prd               |  |  codebase-analyzer (opus)        |
+|  /decompose_plan             |  |  web-search-researcher (sonnet)  |
++------------------------------+  +----------------------------------+
+```
+
+**Key principle**: Skills orchestrate, commands operate, agents specialize. A skill never does the work itself — it delegates to commands and agents. Commands may also spawn agents for parallel research.
+
+---
+
+## Commands Reference
+
+Commands live at `commands/` and are user-invocable via `/command-name`. Each is a markdown file with YAML frontmatter specifying `description` and `model`.
+
+### Core Workflow Commands
+
+| # | Command | File | Lines | Model | Description |
+|---|---------|------|-------|-------|-------------|
+| 1 | `/create_plan` | `create_plan.md` | 442 | **opus** | Interactive plan creation with parallel research agents, phased output, two-category success criteria |
+| 2 | `/research_codebase` | `research_codebase.md` | 179 | **opus** | Spawns 5+ parallel agents to document the codebase |
+| 3 | `/implement_plan` | `implement_plan.md` | 85 | **sonnet** | Executes approved plans phase by phase with verification checkpoints |
+| 4 | `/validate_plan` | `validate_plan.md` | 167 | **sonnet** | Validates implementation against plan, runs automated checks, generates report |
+| 5 | `/iterate_plan` | `iterate_plan.md` | 249 | **opus** | Updates existing plans surgically based on feedback |
+| 6 | `/decompose_plan` | `decompose_plan.md` | 256 | **opus** | Converts plans into `stories.json` for Spectrum autonomous execution |
+
+### Session Management Commands
+
+| # | Command | File | Lines | Model | Description |
+|---|---------|------|-------|-------|-------------|
+| 7 | `/create_handoff` | `create_handoff.md` | 78 | **sonnet** | Creates handoff documents at `.prism/shared/handoffs/` for session transfer |
+| 8 | `/resume_handoff` | `resume_handoff.md` | 219 | **sonnet** | Resumes work from handoff documents, validates current state |
+| 9 | `/commit` | `commit.md` | 44 | **haiku** | Git commits with user approval, explicitly no Claude attribution |
+| 10 | `/describe_pr` | `describe_pr.md` | 91 | **sonnet** | Generates PR descriptions from diff, updates PR via `gh` |
+| 11 | `/retroactive` | `retroactive.md` | 80 | **sonnet** | Creates ticket/issue and PR retroactively after experimental work |
+
+### Document Generation Commands
+
+| # | Command | File | Lines | Model | Description |
+|---|---------|------|-------|-------|-------------|
+| 12 | `/generate_prd` | `generate_prd.md` | 196 | **opus** | Product Requirements Document with 9-section template |
+| 13 | `/generate_pricing` | `generate_pricing.md` | 228 | **opus** | Professional pricing proposals with Gantt charts and T-shirt sizing |
+| 14 | `/generate_tech_spec` | `generate_tech_spec.md` | 252 | **opus** | Technical specs: architecture, data models, API contracts |
+| 15 | `/generate_user_flows` | `generate_user_flows.md` | 230 | **opus** | User flows, wireframes (ASCII), screen inventories, responsive design |
+
+### Debug & Verification Commands
+
+| # | Command | File | Lines | Model | Description |
+|---|---------|------|-------|-------|-------------|
+| 16 | `/prism-debug` | `prism-debug.md` | 184 | **sonnet** | Spawns parallel debug investigation agents (log, state, git) |
+| 17 | `/prism-verify` | `prism-verify.md` | 142 | **sonnet** | Browser UI verification via playwright-cli with structured results |
+| 18 | `/prism-screenshot` | `prism-screenshot.md` | 54 | **haiku** | Captures browser screenshot of a URL |
+| 19 | `/prism-browse` | `prism-browse.md` | 82 | **sonnet** | Opens interactive headed browser session for exploration |
+
+### Infrastructure Commands
+
+| # | Command | File | Lines | Model | Description |
+|---|---------|------|-------|-------|-------------|
+| 20 | `/prism_dir_update` | `prism_dir_update.md` | 145 | **sonnet** | Migrates projects from legacy `thoughts/` to `.prism/` structure |
+| 21 | `/prism_cli` | `prism_cli.md` | 93 | — | Launches Prism CLI TUI dashboard |
+| 22 | `/cli-install` | `cli-install.md` | 132 | **sonnet** | Installs prism-cli binary from GitHub releases, configures PATH |
+| 23 | `/cli-uninstall` | `cli-uninstall.md` | 150 | **sonnet** | Removes prism-cli binary, PATH entries, optionally `~/.prism/` |
+| 24 | `/worktree` | `worktree.md` | 90 | **haiku** | Creates git worktrees for parallel development |
+| 25 | `/review-setup` | `review-setup.md` | 91 | **haiku** | Sets up local environment to review a colleague's branch or PR |
+
+### Command Frontmatter Format
+
+```markdown
+---
+description: What this command does (shown in Claude Code's command palette)
+model: opus|sonnet|haiku
+---
+
+# Command Title
+
+Detailed prompt instructions that shape Claude's behavior when this command is invoked...
+```
+
+---
+
+## Agents Reference
+
+Agents live at `agents/` and are spawned via `Task(subagent_type="agent-name")`. They run as parallel subprocesses, each with a designated model and restricted tool set.
+
+### Research Agents
+
+| # | Agent | File | Lines | Model | Tools | Role |
+|---|-------|------|-------|-------|-------|------|
+| 1 | `codebase-locator` | `codebase-locator.md` | 122 | **haiku** | Read, Glob, Grep, Bash | Find WHERE code lives — file locations by feature. Does NOT analyze contents. |
+| 2 | `codebase-analyzer` | `codebase-analyzer.md` | 143 | **opus** | Read, Glob, Grep, Bash | Understand HOW code works — traces data flow, explains logic with file:line refs. |
+| 3 | `codebase-pattern-finder` | `codebase-pattern-finder.md` | 227 | **sonnet** | Read, Glob, Grep, Bash | Finds similar implementations, returns concrete code examples to model after. |
+| 4 | `prism-locator` | `prism-locator.md` | 134 | **haiku** | Read, Glob, Grep | Discovers documents in `.prism/` directory, categorizes by type. |
+| 5 | `prism-analyzer` | `prism-analyzer.md` | 172 | **opus** | Read, Glob, Grep | Deep-dives on `.prism/` documents, extracts decisions and actionable items. |
+| 6 | `web-search-researcher` | `web-search-researcher.md` | 108 | **sonnet** | WebSearch, WebFetch, Read | Researches current information from the web with source links. |
+
+### Debug Agents
+
+| # | Agent | File | Lines | Model | Tools | Role |
+|---|-------|------|-------|-------|-------|------|
+| 7 | `log-investigator` | `log-investigator.md` | 106 | **haiku** | Bash | Analyzes log files for errors, warnings, and patterns. |
+| 8 | `state-investigator` | `state-investigator.md` | 121 | **haiku** | Bash | Examines application state: databases, config files, environment. |
+| 9 | `git-investigator` | `git-investigator.md` | 140 | **haiku** | Bash | Analyzes git history to find changes related to a reported issue. |
+
+### Verification Agent
+
+| # | Agent | File | Lines | Model | Tools | Role |
+|---|-------|------|-------|-------|-------|------|
+| 10 | `browser-verifier` | `browser-verifier.md` | 92 | **haiku** | Bash | Executes playwright-cli commands, returns structured JSON verification results. |
+
+### Agent Frontmatter Format
+
+```markdown
+---
+name: agent-name
+description: Description shown in Claude Code's agent registry
+tools: Read, Glob, Grep, Bash
+model: opus|sonnet|haiku
+---
+
+You are a specialist at [specific capability]. Your job is to [specific task]...
+```
+
+### Agent Design Principles
+
+1. **Single responsibility** — Each agent does one thing well (locate, analyze, find patterns, etc.)
+2. **Restricted tools** — Agents only receive the tools they need; `codebase-locator` gets Glob/Grep but NOT Edit
+3. **Model-appropriate** — Fast lookup tasks use Haiku, deep analysis uses Opus, general work uses Sonnet
+4. **Parallel by default** — Skills spawn 3–6 agents concurrently; agents never depend on each other's output
+
+---
+
+## Skills Reference
+
+Skills live at `skills/*/SKILL.md` and are auto-discovered workflow orchestrators. They activate automatically based on trigger patterns in user messages or are invoked explicitly via `/skill-name`.
+
+### Core Workflow Skills
+
+| # | Skill | Lines | Model | Trigger Patterns |
+|---|-------|-------|-------|-----------------|
+| 1 | `prism` | 275 | **sonnet** | "help me build", "implement this feature", "fix this bug", "prism", "structured workflow" |
+| 2 | `prism-research` | 113 | **sonnet** | "research this", "understand how X works", "map out the system", "explore the codebase" |
+| 3 | `prism-plan` | 126 | **opus** | "create a plan", "plan the implementation", "design how to build" |
+| 4 | `prism-implement` | 122 | **sonnet** | "implement the plan", "start building", "execute phase 1" |
+| 5 | `prism-validate` | 94 | **sonnet** | "validate the plan", "verify implementation", "check if complete" |
+| 6 | `prism-iterate` | 103 | **opus** | "iterate on plan", "update and continue", "adjust the approach" |
+
+### Specialized Skills
+
+| # | Skill | Lines | Model | Trigger Patterns |
+|---|-------|-------|-------|-----------------|
+| 7 | `prism-debug` | 221 | **sonnet** | "debug this", "why is this failing", "investigate the error" |
+| 8 | `prism-spectrum` | 376 | **sonnet** | "spectrum", "execute story", "run spectrum" |
+| 9 | `prism-verify` | 125 | **sonnet** | "verify the UI", "check the browser", "visual verification" |
+| 10 | `prism-prd` | 122 | **opus** | "create a PRD", "write product requirements", "document this product" |
+| 11 | `prism-visual-docs` | 146 | **opus** | "create user flows", "design the screens", "create wireframes" |
+
+### Skill Subdirectory Contents
+
+Each skill directory may contain supporting files:
+
+```
+skills/
+├── prism/
+│   ├── SKILL.md                         # 275 lines — master orchestrator
+│   ├── references/
+│   │   └── workflow-patterns.md         # Reusable workflow pattern library
+│   └── scripts/
+│       └── init_prism.py                # 174 lines — .prism/ directory initializer
+├── prism-research/
+│   ├── SKILL.md                         # 113 lines
+│   └── references/
+│       ├── exploration-patterns.md      # Agent spawning patterns
+│       └── research-template.md         # Output document template
+├── prism-plan/
+│   ├── SKILL.md                         # 126 lines
+│   └── references/
+│       └── plan-template.md             # Plan document structure
+├── prism-validate/
+│   ├── SKILL.md                         # 94 lines
+│   └── references/
+│       └── validation-template.md       # Validation report template
+├── prism-verify/
+│   ├── SKILL.md                         # 125 lines
+│   └── references/
+│       ├── verification-template.md     # Browser verification template
+│       └── verification-patterns.md     # Playwright-cli patterns
+├── prism-spectrum/SKILL.md              # 376 lines — largest skill
+├── prism-debug/SKILL.md                 # 221 lines
+├── prism-implement/SKILL.md             # 122 lines
+├── prism-iterate/SKILL.md               # 103 lines
+├── prism-prd/SKILL.md                   # 122 lines
+└── prism-visual-docs/SKILL.md           # 146 lines
+```
+
+### Skill Frontmatter Format
+
+```markdown
+---
+name: skill-name
+description: When to use this skill and trigger patterns
+model: opus|sonnet|haiku
+---
+
+# Skill Title
+
+Orchestration instructions: which agents to spawn, which commands to invoke,
+what order to execute, how to present results to the user...
+```
+
+### Master Orchestrator: `prism`
+
+The `prism` skill (275 lines) is the master orchestrator — it routes to all other skills:
+
+```
+User: "help me build a login form"
+    │
+    ▼
+prism skill activates (trigger: "help me build")
+    │
+    ├── Detects task type → routes to appropriate phase
+    │
+    ├── If unfamiliar codebase → /prism-research
+    ├── If needs planning      → /prism-plan
+    ├── If plan exists         → /prism-implement
+    ├── If needs validation    → /prism-validate
+    └── If needs iteration     → /prism-iterate
+```
+
+---
+
+## Scripts & Automation
+
+### `scripts/spectrum.sh` (312 lines)
+
+The Spectrum iterative executor — the main autonomous execution loop that spawns fresh Claude Code sessions per story.
+
+```
+┌─────────────────────────────────────────────────────┐
+│  spectrum.sh Loop                                    │
+│                                                      │
+│  1. Load stories.json                                │
+│  2. Count remaining stories                          │
+│  3. If 0 remaining → EXIT SUCCESS                    │
+│  4. If max iterations → EXIT LIMIT                   │
+│  5. Spawn: claude --dangerously-skip-permissions     │
+│            --print "/prism-spectrum"                  │
+│  6. Parse signal from output:                        │
+│     • <promise>COMPLETE</promise> → check remaining  │
+│     • <spectrum-continue> → pause, next iteration    │
+│     • <spectrum-retry reason="..."> → increment err  │
+│     • <spectrum-blocked reason="..."> → skip story   │
+│     • <spectrum-error reason="..."> → stop           │
+│  7. If 3+ consecutive errors → EXIT ERROR            │
+│  8. Sleep $SPECTRUM_PAUSE seconds                     │
+│  9. → Loop to step 2                                 │
+└─────────────────────────────────────────────────────┘
+```
+
+**Environment variables:**
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SPECTRUM_MAX_ITERATIONS` | 50 | Maximum iterations before stopping |
+| `SPECTRUM_VERBOSE` | (unset) | Enable verbose output |
+| `SPECTRUM_PAUSE` | 2 | Seconds between iterations |
+
+**Prerequisites:** `claude` CLI and `jq` must be installed.
+
+### `scripts/prism-cli-install.sh` (280 lines)
+
+Cross-platform bash installer for the prism-cli binary:
+- Detects platform (darwin/linux/windows) and architecture (amd64/arm64)
+- Three methods: `auto` (try download, fall back to source), `download`, `source`
+- Downloads from `github.com/TheDigitalGriot/prism-plugin/releases`
+- Configures PATH in `~/.zshrc`, `~/.bashrc`, `~/.bash_profile`, and PowerShell `$PROFILE`
+- Initializes `~/.prism/workspaces.json` registry
+
+### `scripts/prism-cli-install.ps1` (181 lines)
+
+Native PowerShell installer for Windows:
+- Downloads `prism-cli-windows-amd64.exe` from GitHub releases
+- Configures PATH in PowerShell `$PROFILE`
+- Same auto/source/download method pattern as bash version
+
+### `skills/prism/scripts/init_prism.py` (174 lines)
+
+Initializes the `.prism/` directory structure in any project:
+- Creates 11 directories: `stories/`, `shared/{research,plans,validation,handoffs,prs,spectrum,ref,docs}`, `local/{ref,docs}`
+- Adds `.prism/local/` to `.gitignore`
+- Creates `README.md` in `.prism/shared/`
+- Optionally adds Prism section to `CLAUDE.md`
+
+---
+
+## Model Assignment Convention
+
+The plugin follows a strict three-tier model assignment convention. Each component is assigned the cheapest model that can reliably handle its task.
+
+### Opus — Deep Analysis & Creative Synthesis
+
+Used when the task requires understanding complex relationships, generating structured documents, or making architectural decisions.
+
+| Component | Type | Why Opus |
+|-----------|------|----------|
+| `codebase-analyzer` | Agent | Traces multi-file data flow, explains complex logic |
+| `prism-analyzer` | Agent | Extracts nuanced insights from research documents |
+| `create_plan` | Command | Generates phased plans with success criteria |
+| `iterate_plan` | Command | Surgical plan updates requiring architectural judgment |
+| `decompose_plan` | Command | Converts plans to dependency-ordered stories |
+| `research_codebase` | Command | Coordinates multi-agent research campaigns |
+| `generate_prd` | Command | Creates comprehensive product requirements |
+| `generate_pricing` | Command | Professional pricing proposals with Gantt charts |
+| `generate_tech_spec` | Command | API contracts, data models, architecture diagrams |
+| `generate_user_flows` | Command | UX documentation with wireframes |
+| `prism-plan` | Skill | Interactive planning with user feedback loops |
+| `prism-iterate` | Skill | Plan adjustment requiring deep understanding |
+| `prism-prd` | Skill | PRD orchestration with context awareness |
+| `prism-visual-docs` | Skill | Visual documentation orchestration |
+
+### Sonnet — General Implementation Work
+
+Used for straightforward execution, routing, and integration tasks that don't require deep synthesis.
+
+| Component | Type | Why Sonnet |
+|-----------|------|------------|
+| `codebase-pattern-finder` | Agent | Pattern matching is systematic, not creative |
+| `web-search-researcher` | Agent | Web research follows clear procedures |
+| `implement_plan` | Command | Follows an existing plan — execution not design |
+| `validate_plan` | Command | Comparison against criteria — checklist work |
+| `describe_pr` | Command | Summarizes known diffs |
+| `create_handoff` | Command | Structured document generation |
+| `resume_handoff` | Command | Context reconstruction from artifacts |
+| `retroactive` | Command | Post-hoc documentation |
+| `prism-debug` | Command | Parallel agent coordination |
+| `prism-verify` | Command | Browser verification coordination |
+| `prism-browse` | Command | Interactive browser session |
+| Infrastructure cmds | Commands | CLI install/uninstall, dir migration |
+| `prism` | Skill | Master router — routes, doesn't synthesize |
+| `prism-research` | Skill | Agent spawning coordination |
+| `prism-implement` | Skill | Phase-by-phase execution coordination |
+| `prism-validate` | Skill | Verification coordination |
+| `prism-debug` | Skill | Debug agent coordination |
+| `prism-spectrum` | Skill | Single-story execution with signal protocol |
+| `prism-verify` | Skill | Browser verification orchestration |
+
+### Haiku — Fast Lookups & Simple Operations
+
+Used for tasks that are fast, focused, and don't require nuanced judgment.
+
+| Component | Type | Why Haiku |
+|-----------|------|-----------|
+| `codebase-locator` | Agent | File location via Glob/Grep — no analysis needed |
+| `prism-locator` | Agent | Directory scanning — mechanical task |
+| `log-investigator` | Agent | Log file parsing — pattern matching |
+| `state-investigator` | Agent | Environment checks — straightforward |
+| `git-investigator` | Agent | Git log analysis — structured data |
+| `browser-verifier` | Agent | Playwright command execution — procedural |
+| `commit` | Command | Git commit — minimal judgment needed |
+| `worktree` | Command | Git worktree creation — procedural |
+| `review-setup` | Command | Branch checkout — procedural |
+| `prism-screenshot` | Command | Single browser screenshot — trivial |
+
+---
+
+## Component Invocation Graph
+
+### Skills → Commands
+
+```
+prism (master orchestrator)
+  ├── /prism-research
+  ├── /prism-plan
+  ├── /prism-implement
+  ├── /prism-validate
+  ├── /prism-iterate
+  ├── /prism-spectrum
+  ├── /prism-debug
+  ├── /prism-verify
+  ├── /prism-prd
+  └── /prism-visual-docs
+
+prism-prd
+  ├── /generate_prd
+  ├── /generate_user_flows (offered as companion)
+  ├── /generate_tech_spec (offered as companion)
+  └── /generate_pricing (offered as companion)
+
+prism-visual-docs
+  ├── /generate_user_flows
+  └── /generate_tech_spec (optional)
+
+prism-implement
+  ├── /commit (after each phase)
+  ├── /validate_plan (after completion)
+  └── /describe_pr (for PR creation)
+
+prism-spectrum
+  └── /prism-debug (on quality gate failure — auto-retry)
+```
+
+### Skills → Agents (Parallel Spawning)
+
+```
+prism-research ───────────────────────────────┐
+  ├── codebase-locator        (haiku)   ────┐ │
+  ├── codebase-analyzer       (opus)    ────┤ │
+  ├── codebase-pattern-finder (sonnet)  ────┤ ├── All 6 in parallel
+  ├── prism-locator           (haiku)   ────┤ │
+  ├── prism-analyzer          (opus)    ────┤ │
+  └── web-search-researcher   (sonnet)  ────┘ │
+                                               │
+prism-plan ────────────────────────────────────┤
+  ├── codebase-analyzer       (opus)    ────┐  │
+  ├── codebase-pattern-finder (sonnet)  ────┤  ├── 3 in parallel
+  └── prism-analyzer          (opus)    ────┘  │
+                                               │
+prism-iterate ─────────────────────────────────┤
+  ├── codebase-locator        (haiku)   ────┐  │
+  ├── codebase-analyzer       (opus)    ────┤  ├── 3 in parallel
+  └── codebase-pattern-finder (sonnet)  ────┘  │
+                                               │
+prism-debug ───────────────────────────────────┤
+  ├── log-investigator        (haiku)   ────┐  │
+  ├── state-investigator      (haiku)   ────┤  ├── 3 in parallel
+  └── git-investigator        (haiku)   ────┘  │
+                                               │
+prism-verify ──────────────────────────────────┤
+  └── browser-verifier        (haiku)          │
+                                               │
+prism-prd ─────────────────────────────────────┤
+  └── prism-locator           (haiku)          │
+                                               │
+prism-visual-docs ─────────────────────────────┘
+  └── prism-locator           (haiku)
+```
+
+### Commands → Agents
+
+```
+/create_plan
+  ├── codebase-locator        (haiku)
+  ├── codebase-analyzer       (opus)
+  ├── codebase-pattern-finder (sonnet)
+  ├── prism-locator           (haiku)
+  └── prism-analyzer          (opus)
+
+/research_codebase
+  ├── codebase-locator        (haiku)
+  ├── codebase-analyzer       (opus)
+  ├── codebase-pattern-finder (sonnet)
+  ├── prism-locator           (haiku)
+  ├── prism-analyzer          (opus)
+  └── web-search-researcher   (sonnet)
+
+/iterate_plan
+  ├── codebase-locator        (haiku)
+  ├── codebase-analyzer       (opus)
+  ├── codebase-pattern-finder (sonnet)
+  ├── prism-locator           (haiku)
+  └── prism-analyzer          (opus)
+
+/prism-debug
+  ├── log-investigator        (haiku)
+  ├── state-investigator      (haiku)
+  └── git-investigator        (haiku)
+```
+
+---
+
+## Data Flow Through .prism/
+
+The plugin's workflow produces artifacts that flow through the `.prism/` directory:
+
+```
+User request / ticket
+    │
+    ▼
+┌──────────────────────────────────────────────────────────────┐
+│  /prism-research                                              │
+│  Spawns 6 agents → aggregates findings                        │
+│  Output: .prism/shared/research/YYYY-MM-DD-topic.md           │
+└──────────────────────────────┬───────────────────────────────┘
+                               │
+                               ▼
+┌──────────────────────────────────────────────────────────────┐
+│  /prism-plan                                                  │
+│  Interactive planning → user approval at each step            │
+│  Output: .prism/shared/plans/YYYY-MM-DD-feature.md            │
+└──────────────────────────────┬───────────────────────────────┘
+                               │
+                               ▼
+┌──────────────────────────────────────────────────────────────┐
+│  /decompose_plan                                              │
+│  Converts plan phases into executable stories                 │
+│  Output: .prism/stories/stories.json                          │
+│          (or .prism/stories/<epic>/stories.json)              │
+└──────────────────────────────┬───────────────────────────────┘
+                               │
+                ┌──────────────┴──────────────┐
+                │                             │
+    Manual execution                 Autonomous execution
+                │                             │
+                ▼                             ▼
+┌──────────────────────┐    ┌──────────────────────────────────┐
+│  /prism-implement     │    │  spectrum.sh + /prism-spectrum    │
+│  Phase by phase       │    │  Fresh Claude session per story   │
+│  with checkpoints     │    │  Signal protocol for flow control │
+│                       │    │                                    │
+│                       │    │  Progress:                         │
+│                       │    │  .prism/shared/spectrum/progress.md│
+└──────────┬────────────┘    └──────────────┬───────────────────┘
+           │                                │
+           └────────────┬───────────────────┘
+                        │
+                        ▼
+┌──────────────────────────────────────────────────────────────┐
+│  /prism-validate                                              │
+│  Runs automated checks, compares against plan                 │
+│  Output: .prism/shared/validation/YYYY-MM-DD-report.md        │
+└──────────────────────────────┬───────────────────────────────┘
+                               │
+              ┌────────────────┴────────────────┐
+              │                                 │
+         All passed                       Issues found
+              │                                 │
+              ▼                                 ▼
+┌──────────────────────┐          ┌──────────────────────────┐
+│  /describe_pr         │          │  /prism-iterate           │
+│  Output:              │          │  Update plan + continue   │
+│  .prism/shared/prs/   │          │  → loops back to plan     │
+└──────────────────────┘          └──────────────────────────┘
+```
+
+### Session Handoffs
+
+When context window limits are reached:
+
+```
+/create_handoff  → .prism/shared/handoffs/YYYY-MM-DD_HH-MM-SS_topic.md
+                          │
+                    (new Claude session)
+                          │
+/resume_handoff  ← reads handoff + validates current state → continues work
+```
+
+---
+
+## Behavioral Principles
+
+The plugin enforces several key behavioral constraints through its prompt engineering:
+
+### 1. "Documentarian, Not Critic"
+
+All research agents are instructed to **only describe what exists**. They do NOT:
+- Suggest improvements
+- Critique implementation choices
+- Perform root cause analysis (unless explicitly asked)
+- Recommend refactoring
+
+This prevents research from becoming opinionated, ensuring clean separation between observation (research phase) and decision-making (plan phase).
+
+### 2. Interactive Planning
+
+Plans are contracts, not suggestions. The planning process:
+1. Present understanding of the codebase first
+2. Get user buy-in before proceeding
+3. Iterate on each section with feedback
+4. Never write a full plan in one shot
+5. Resolve all unknowns before finalizing
+6. Always separate "Automated Verification" (runnable commands) from "Manual Verification" (human testing)
+
+### 3. Fresh Context Per Iteration
+
+Spectrum gives each story a fresh Claude session via `spectrum.sh`. Memory persists through:
+- `stories.json` (status, steps, commit hashes)
+- `progress.md` (accumulated learnings)
+- Git commits (the actual work)
+
+This prevents context window degradation across long-running autonomous execution.
+
+### 4. Two-Category Success Criteria
+
+Every plan separates verification into:
+
+| Category | Examples | Runner |
+|----------|----------|--------|
+| **Automated Verification** | `npm test`, `npm run typecheck`, `npm run lint` | Claude / Spectrum |
+| **Manual Verification** | "Click the login button and verify redirect" | Human tester |
+
+### 5. Signal Protocol
+
+Autonomous execution uses XML-like signals for flow control:
+
+| Signal | Tag | Meaning |
+|--------|-----|---------|
+| Complete | `<promise>COMPLETE</promise>` | Story finished successfully |
+| Continue | `<spectrum-continue>` | Success, schedule next iteration |
+| Retry | `<spectrum-retry reason="...">` | Transient failure, retry |
+| Blocked | `<spectrum-blocked reason="...">` | Cannot proceed, skip |
+| Error | `<spectrum-error reason="...">` | Fatal error, stop |
+
+---
+
+## Plugin Directory Structure
+
+The complete plugin tree:
+
+```
+prism-plugin/                              # Repository root
+├── .claude-plugin/
+│   ├── plugin.json                        # Plugin manifest (8 lines)
+│   └── marketplace.json                   # Distribution config (20 lines)
+│
+├── commands/                              # 25 slash commands (3,729 lines total)
+│   ├── create_plan.md                     # 442 lines — opus
+│   ├── research_codebase.md               # 179 lines — opus
+│   ├── implement_plan.md                  #  85 lines — sonnet
+│   ├── validate_plan.md                   # 167 lines — sonnet
+│   ├── iterate_plan.md                    # 249 lines — opus
+│   ├── decompose_plan.md                  # 256 lines — opus
+│   ├── create_handoff.md                  #  78 lines — sonnet
+│   ├── resume_handoff.md                  # 219 lines — sonnet
+│   ├── commit.md                          #  44 lines — haiku
+│   ├── describe_pr.md                     #  91 lines — sonnet
+│   ├── retroactive.md                     #  80 lines — sonnet
+│   ├── generate_prd.md                    # 196 lines — opus
+│   ├── generate_pricing.md                # 228 lines — opus
+│   ├── generate_tech_spec.md              # 252 lines — opus
+│   ├── generate_user_flows.md             # 230 lines — opus
+│   ├── prism-debug.md                     # 184 lines — sonnet
+│   ├── prism-verify.md                    # 142 lines — sonnet
+│   ├── prism-screenshot.md                #  54 lines — haiku
+│   ├── prism-browse.md                    #  82 lines — sonnet
+│   ├── prism_dir_update.md                # 145 lines — sonnet
+│   ├── prism_cli.md                       #  93 lines — (none)
+│   ├── cli-install.md                     # 132 lines — sonnet
+│   ├── cli-uninstall.md                   # 150 lines — sonnet
+│   ├── worktree.md                        #  90 lines — haiku
+│   └── review-setup.md                    #  91 lines — haiku
+│
+├── agents/                                # 10 subagents (1,365 lines total)
+│   ├── codebase-locator.md                # 122 lines — haiku
+│   ├── codebase-analyzer.md               # 143 lines — opus
+│   ├── codebase-pattern-finder.md         # 227 lines — sonnet
+│   ├── prism-locator.md                   # 134 lines — haiku
+│   ├── prism-analyzer.md                  # 172 lines — opus
+│   ├── web-search-researcher.md           # 108 lines — sonnet
+│   ├── log-investigator.md                # 106 lines — haiku
+│   ├── state-investigator.md              # 121 lines — haiku
+│   ├── git-investigator.md                # 140 lines — haiku
+│   └── browser-verifier.md               #  92 lines — haiku
+│
+├── skills/                                # 11 auto-discovered skills (1,823 lines total)
+│   ├── prism/
+│   │   ├── SKILL.md                       # 275 lines — sonnet (master orchestrator)
+│   │   ├── references/workflow-patterns.md
+│   │   └── scripts/init_prism.py          # 174 lines
+│   ├── prism-research/
+│   │   ├── SKILL.md                       # 113 lines — sonnet
+│   │   └── references/{exploration-patterns,research-template}.md
+│   ├── prism-plan/
+│   │   ├── SKILL.md                       # 126 lines — opus
+│   │   └── references/plan-template.md
+│   ├── prism-implement/SKILL.md           # 122 lines — sonnet
+│   ├── prism-validate/
+│   │   ├── SKILL.md                       #  94 lines — sonnet
+│   │   └── references/validation-template.md
+│   ├── prism-iterate/SKILL.md             # 103 lines — opus
+│   ├── prism-spectrum/SKILL.md            # 376 lines — sonnet
+│   ├── prism-debug/SKILL.md               # 221 lines — sonnet
+│   ├── prism-verify/
+│   │   ├── SKILL.md                       # 125 lines — sonnet
+│   │   └── references/{verification-template,verification-patterns}.md
+│   ├── prism-prd/SKILL.md                 # 122 lines — opus
+│   └── prism-visual-docs/SKILL.md         # 146 lines — opus
+│
+├── scripts/                               # Automation scripts (773 lines total)
+│   ├── spectrum.sh                        # 312 lines — autonomous execution loop
+│   ├── prism-cli-install.sh               # 280 lines — cross-platform installer
+│   └── prism-cli-install.ps1              # 181 lines — PowerShell installer
+│
+├── CLAUDE.md                              # 115 lines — architectural guidance
+│
+├── cmd/                                   # Platform implementations (Parts I–IV)
+│   ├── prism-cli/                         # Go TUI dashboard
+│   ├── prism-vscode/                      # VS Code extension
+│   └── prism-electron/                    # Electron desktop app
+│
+├── packages/                              # Shared packages (Part IV)
+│   ├── prism-core/                        # Platform-agnostic business logic
+│   └── prism-ui/                          # Shared React components
+│
+└── .prism/                                # Workflow artifacts directory
+    ├── stories/                           # stories.json files
+    ├── shared/                            # Committed: research, plans, validation
+    └── local/                             # Gitignored: per-developer artifacts
+```
+
+---
+
+## Plugin Statistics
+
+### Component Counts
+
+| Category | Files | Total Lines |
+|----------|-------|-------------|
+| Plugin manifests | 2 | 28 |
+| Commands | 25 | 3,729 |
+| Agents | 10 | 1,365 |
+| Skills (SKILL.md) | 11 | 1,823 |
+| Skill references | 7 | ~350 |
+| Scripts | 3 (+ 1 Python) | 947 |
+| CLAUDE.md | 1 | 115 |
+| Hooks | 0 | 0 |
+| MCP servers | 0 | 0 |
+| **Plugin total** | **~60** | **~8,357** |
+
+### Model Assignment Distribution
+
+| Model | Components | Typical Cost | Use Case |
+|-------|------------|-------------|----------|
+| **Opus** | 14 assignments | Highest | Deep analysis, planning, document generation |
+| **Sonnet** | 21 assignments | Medium | General execution, routing, coordination |
+| **Haiku** | 10 assignments | Lowest | Fast lookups, simple operations, file scanning |
+
+### Largest Components
+
+| Component | Type | Lines | Purpose |
+|-----------|------|-------|---------|
+| `create_plan.md` | Command | 442 | Interactive plan creation — most complex single prompt |
+| `prism-spectrum` | Skill | 376 | Autonomous story execution with signal protocol |
+| `spectrum.sh` | Script | 312 | Shell loop for autonomous execution |
+| `prism` | Skill | 275 | Master orchestrator routing all workflows |
+| `decompose_plan.md` | Command | 256 | Plan-to-stories conversion |
+| `generate_tech_spec.md` | Command | 252 | Technical specification generation |
+| `iterate_plan.md` | Command | 249 | Plan iteration with surgical edits |
+
+### How the Plugin Connects to Platforms
+
+The Claude plugin is the **brain** — the three platform implementations (CLI, VS Code, Electron) are the **body**:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    Claude Plugin (Part V)                         │
+│   25 commands, 10 agents, 11 skills, 4 scripts                  │
+│   Pure prompt engineering — defines workflows and behavior       │
+│                                                                   │
+│   Invoked by: claude CLI process                                 │
+│   Output to:  .prism/shared/ directory                           │
+│   Control:    XML signal protocol                                │
+└──────────┬────────────────┬────────────────┬────────────────────┘
+           │                │                │
+           ▼                ▼                ▼
+┌──────────────┐  ┌──────────────┐  ┌──────────────────┐
+│  CLI (Part I) │  │ VS Code      │  │ Electron         │
+│  Go TUI       │  │ (Part II)    │  │ (Part III)       │
+│               │  │ TypeScript   │  │ TypeScript       │
+│  Spawns       │  │              │  │                  │
+│  claude CLI   │  │  Spawns      │  │  Spawns          │
+│  with signal  │  │  claude CLI  │  │  claude CLI      │
+│  parsing      │  │  with signal │  │  with signal     │
+│               │  │  parsing     │  │  parsing         │
+│  Renders:     │  │              │  │                  │
+│  Stories,     │  │  Renders:    │  │  Renders:        │
+│  Progress,    │  │  Stories,    │  │  Stories,        │
+│  Logs,        │  │  Chat,       │  │  Chat,           │
+│  Spring       │  │  Trees,      │  │  Spectrum,       │
+│  animations   │  │  Office,     │  │  Welcome         │
+│               │  │  Monitor     │  │                  │
+└──────────────┘  └──────────────┘  └──────────────────┘
+
+All read/write .prism/ — All parse signal protocol — All spawn claude CLI
+```
+
+The plugin's markdown files are loaded by the `claude` CLI process at session start. Every platform spawns `claude` as a child process, and the plugin's skills, commands, and agents shape how that `claude` session behaves. The platforms only provide visualization, user interaction, and process management — the actual workflow intelligence lives in the plugin's prompt engineering.
+# Part II — CLI Dashboard
 
 Prism CLI is a Go 1.23 terminal user interface that provides real-time monitoring and control of the Spectrum autonomous development workflow. It spawns Claude Code CLI sessions to execute stories from a `stories.json` file, displays streaming tool activity, tracks progress with spring-animated UI elements, and renders a procedural 3D splash screen using software rasterization.
 
@@ -2575,7 +3454,7 @@ LDFLAGS := -X main.version=$(VERSION)
 ---
 ---
 
-# Part II — VS Code Extension
+# Part III — VS Code Extension
 
 ## VS Code Extension Overview
 
@@ -3254,7 +4133,7 @@ The Office view provides a pixel-art visualization of AI agents working in a vir
 
 ---
 
-# Part III — Electron Desktop App
+# Part IV — Electron Desktop App
 
 The Prism Electron app is a standalone desktop application that runs the same React UI and business logic as the VS Code extension, but independent of any IDE. It uses Electron's IPC model as the transport layer instead of VS Code's `postMessage`, and replaces all VS Code API dependencies with pure Node.js equivalents.
 
@@ -4190,7 +5069,7 @@ The Electron app shares approximately 90% of its codebase with the VS Code exten
 
 ---
 
-# Part IV — Monorepo Architecture (v2.3.5)
+# Part V — Monorepo Architecture (v2.3.5)
 
 The repository was restructured from two independent applications with fragile path aliases into a proper npm workspaces monorepo in v2.4.0.
 
@@ -4374,872 +5253,3 @@ cd cmd/prism-electron && npm run make
 
 ---
 
-# Part V — Claude Plugin Architecture (Prompt Engineering)
-
-The Prism Claude Code plugin is the foundation that underpins every platform — the CLI dashboard, VS Code extension, and Electron app all exist to visualize and control workflows that the plugin defines. The plugin itself is **pure markdown-based prompt engineering** with zero build step. It extends Claude Code with structured workflows, specialized agents, and orchestration skills that transform raw AI capability into a disciplined development methodology.
-
-## Plugin Overview
-
-The Prism plugin registers with Claude Code through a conventional directory layout that is automatically discovered at startup. It provides:
-
-- **25 commands** — User-invocable operations via `/command-name` (3,729 lines)
-- **10 agents** — Specialized subprocesses spawned via `Task(subagent_type="agent-name")` (1,365 lines)
-- **11 skills** — Auto-activating workflow orchestrators with trigger patterns (1,823 lines)
-- **4 scripts** — Shell and Python automation (947 lines)
-- **No hooks or MCP servers** — The plugin relies entirely on prompt engineering, not runtime hooks
-
-### What Makes It Different
-
-Unlike traditional software plugins that extend functionality through code, Prism extends Claude Code's behavior through carefully structured natural language instructions. Each `.md` file is a prompt that shapes how Claude approaches a task — what agents to spawn, what questions to ask, what output format to use, and what behavioral constraints to follow. The prompt engineering is the product.
-
----
-
-## Plugin Manifest & Distribution
-
-### `.claude-plugin/plugin.json`
-
-```json
-{
-  "name": "prism",
-  "description": "Structured 4-phase development workflow (Research -> Plan -> Implement -> Validate) with Spectrum-style iterative execution with TUI",
-  "version": "2.3.0",
-  "author": { "name": "Prism Team" }
-}
-```
-
-### `.claude-plugin/marketplace.json`
-
-```json
-{
-  "name": "prism-marketplace",
-  "owner": { "name": "Prism Team" },
-  "plugins": [{
-    "name": "prism",
-    "source": { "source": "github", "repo": "TheDigitalGriot/prism-plugin" },
-    "description": "Structured 4-phase development workflow (Research -> Plan -> Implement -> Validate)",
-    "version": "2.3.0"
-  }]
-}
-```
-
-| Field | Value |
-|-------|-------|
-| Plugin Name | `prism` |
-| Version | 2.3.0 |
-| Distribution | GitHub: `TheDigitalGriot/prism-plugin` |
-| Build Step | None — pure markdown prompt engineering |
-| Auto-Discovery | Claude Code scans `commands/`, `agents/`, `skills/*/SKILL.md` on enable |
-
----
-
-## Three-Layer Architecture
-
-The plugin follows a strict three-layer architecture where each layer has a distinct responsibility:
-
-```
-+---------------------------------------------------------------------+
-|                      USER / CLAUDE CODE                             |
-|  Types "/prism-research" or Claude auto-detects task context        |
-+----------------------------+----------------------------------------+
-                             |
-                             v
-+---------------------------------------------------------------------+
-|  Layer 1: SKILLS  (skills/*/SKILL.md)                               |
-|                                                                     |
-|  Workflow orchestrators with YAML frontmatter.                      |
-|  Auto-activated by trigger patterns or invoked via /skill-name.     |
-|  They decide WHAT to do: which commands to invoke, which agents     |
-|  to spawn, and in what order.                                       |
-|                                                                     |
-|  Examples: prism, prism-research, prism-plan, prism-spectrum        |
-+----------------------------+----------------------------------------+
-                             |
-              +--------------+--------------+
-              |                             |
-              v                             v
-+------------------------------+  +----------------------------------+
-|  Layer 2: COMMANDS           |  |  Layer 3: AGENTS                 |
-|  (commands/*.md)             |  |  (agents/*.md)                   |
-|                              |  |                                  |
-|  Single-purpose operations.  |  |  Parallel specialists.           |
-|  User-invocable via          |  |  Spawned via Task() with         |
-|  /command-name.              |  |  subagent_type="agent-name".     |
-|  They know HOW to do one     |  |  Run concurrently to maximize    |
-|  thing well.                 |  |  throughput. Each has a model     |
-|                              |  |  assignment and tool set.         |
-|  Examples:                   |  |                                  |
-|  /create_plan                |  |  Examples:                       |
-|  /commit                     |  |  codebase-locator (haiku)        |
-|  /generate_prd               |  |  codebase-analyzer (opus)        |
-|  /decompose_plan             |  |  web-search-researcher (sonnet)  |
-+------------------------------+  +----------------------------------+
-```
-
-**Key principle**: Skills orchestrate, commands operate, agents specialize. A skill never does the work itself — it delegates to commands and agents. Commands may also spawn agents for parallel research.
-
----
-
-## Commands Reference
-
-Commands live at `commands/` and are user-invocable via `/command-name`. Each is a markdown file with YAML frontmatter specifying `description` and `model`.
-
-### Core Workflow Commands
-
-| # | Command | File | Lines | Model | Description |
-|---|---------|------|-------|-------|-------------|
-| 1 | `/create_plan` | `create_plan.md` | 442 | **opus** | Interactive plan creation with parallel research agents, phased output, two-category success criteria |
-| 2 | `/research_codebase` | `research_codebase.md` | 179 | **opus** | Spawns 5+ parallel agents to document the codebase |
-| 3 | `/implement_plan` | `implement_plan.md` | 85 | **sonnet** | Executes approved plans phase by phase with verification checkpoints |
-| 4 | `/validate_plan` | `validate_plan.md` | 167 | **sonnet** | Validates implementation against plan, runs automated checks, generates report |
-| 5 | `/iterate_plan` | `iterate_plan.md` | 249 | **opus** | Updates existing plans surgically based on feedback |
-| 6 | `/decompose_plan` | `decompose_plan.md` | 256 | **opus** | Converts plans into `stories.json` for Spectrum autonomous execution |
-
-### Session Management Commands
-
-| # | Command | File | Lines | Model | Description |
-|---|---------|------|-------|-------|-------------|
-| 7 | `/create_handoff` | `create_handoff.md` | 78 | **sonnet** | Creates handoff documents at `.prism/shared/handoffs/` for session transfer |
-| 8 | `/resume_handoff` | `resume_handoff.md` | 219 | **sonnet** | Resumes work from handoff documents, validates current state |
-| 9 | `/commit` | `commit.md` | 44 | **haiku** | Git commits with user approval, explicitly no Claude attribution |
-| 10 | `/describe_pr` | `describe_pr.md` | 91 | **sonnet** | Generates PR descriptions from diff, updates PR via `gh` |
-| 11 | `/retroactive` | `retroactive.md` | 80 | **sonnet** | Creates ticket/issue and PR retroactively after experimental work |
-
-### Document Generation Commands
-
-| # | Command | File | Lines | Model | Description |
-|---|---------|------|-------|-------|-------------|
-| 12 | `/generate_prd` | `generate_prd.md` | 196 | **opus** | Product Requirements Document with 9-section template |
-| 13 | `/generate_pricing` | `generate_pricing.md` | 228 | **opus** | Professional pricing proposals with Gantt charts and T-shirt sizing |
-| 14 | `/generate_tech_spec` | `generate_tech_spec.md` | 252 | **opus** | Technical specs: architecture, data models, API contracts |
-| 15 | `/generate_user_flows` | `generate_user_flows.md` | 230 | **opus** | User flows, wireframes (ASCII), screen inventories, responsive design |
-
-### Debug & Verification Commands
-
-| # | Command | File | Lines | Model | Description |
-|---|---------|------|-------|-------|-------------|
-| 16 | `/prism-debug` | `prism-debug.md` | 184 | **sonnet** | Spawns parallel debug investigation agents (log, state, git) |
-| 17 | `/prism-verify` | `prism-verify.md` | 142 | **sonnet** | Browser UI verification via playwright-cli with structured results |
-| 18 | `/prism-screenshot` | `prism-screenshot.md` | 54 | **haiku** | Captures browser screenshot of a URL |
-| 19 | `/prism-browse` | `prism-browse.md` | 82 | **sonnet** | Opens interactive headed browser session for exploration |
-
-### Infrastructure Commands
-
-| # | Command | File | Lines | Model | Description |
-|---|---------|------|-------|-------|-------------|
-| 20 | `/prism_dir_update` | `prism_dir_update.md` | 145 | **sonnet** | Migrates projects from legacy `thoughts/` to `.prism/` structure |
-| 21 | `/prism_cli` | `prism_cli.md` | 93 | — | Launches Prism CLI TUI dashboard |
-| 22 | `/cli-install` | `cli-install.md` | 132 | **sonnet** | Installs prism-cli binary from GitHub releases, configures PATH |
-| 23 | `/cli-uninstall` | `cli-uninstall.md` | 150 | **sonnet** | Removes prism-cli binary, PATH entries, optionally `~/.prism/` |
-| 24 | `/worktree` | `worktree.md` | 90 | **haiku** | Creates git worktrees for parallel development |
-| 25 | `/review-setup` | `review-setup.md` | 91 | **haiku** | Sets up local environment to review a colleague's branch or PR |
-
-### Command Frontmatter Format
-
-```markdown
----
-description: What this command does (shown in Claude Code's command palette)
-model: opus|sonnet|haiku
----
-
-# Command Title
-
-Detailed prompt instructions that shape Claude's behavior when this command is invoked...
-```
-
----
-
-## Agents Reference
-
-Agents live at `agents/` and are spawned via `Task(subagent_type="agent-name")`. They run as parallel subprocesses, each with a designated model and restricted tool set.
-
-### Research Agents
-
-| # | Agent | File | Lines | Model | Tools | Role |
-|---|-------|------|-------|-------|-------|------|
-| 1 | `codebase-locator` | `codebase-locator.md` | 122 | **haiku** | Read, Glob, Grep, Bash | Find WHERE code lives — file locations by feature. Does NOT analyze contents. |
-| 2 | `codebase-analyzer` | `codebase-analyzer.md` | 143 | **opus** | Read, Glob, Grep, Bash | Understand HOW code works — traces data flow, explains logic with file:line refs. |
-| 3 | `codebase-pattern-finder` | `codebase-pattern-finder.md` | 227 | **sonnet** | Read, Glob, Grep, Bash | Finds similar implementations, returns concrete code examples to model after. |
-| 4 | `prism-locator` | `prism-locator.md` | 134 | **haiku** | Read, Glob, Grep | Discovers documents in `.prism/` directory, categorizes by type. |
-| 5 | `prism-analyzer` | `prism-analyzer.md` | 172 | **opus** | Read, Glob, Grep | Deep-dives on `.prism/` documents, extracts decisions and actionable items. |
-| 6 | `web-search-researcher` | `web-search-researcher.md` | 108 | **sonnet** | WebSearch, WebFetch, Read | Researches current information from the web with source links. |
-
-### Debug Agents
-
-| # | Agent | File | Lines | Model | Tools | Role |
-|---|-------|------|-------|-------|-------|------|
-| 7 | `log-investigator` | `log-investigator.md` | 106 | **haiku** | Bash | Analyzes log files for errors, warnings, and patterns. |
-| 8 | `state-investigator` | `state-investigator.md` | 121 | **haiku** | Bash | Examines application state: databases, config files, environment. |
-| 9 | `git-investigator` | `git-investigator.md` | 140 | **haiku** | Bash | Analyzes git history to find changes related to a reported issue. |
-
-### Verification Agent
-
-| # | Agent | File | Lines | Model | Tools | Role |
-|---|-------|------|-------|-------|-------|------|
-| 10 | `browser-verifier` | `browser-verifier.md` | 92 | **haiku** | Bash | Executes playwright-cli commands, returns structured JSON verification results. |
-
-### Agent Frontmatter Format
-
-```markdown
----
-name: agent-name
-description: Description shown in Claude Code's agent registry
-tools: Read, Glob, Grep, Bash
-model: opus|sonnet|haiku
----
-
-You are a specialist at [specific capability]. Your job is to [specific task]...
-```
-
-### Agent Design Principles
-
-1. **Single responsibility** — Each agent does one thing well (locate, analyze, find patterns, etc.)
-2. **Restricted tools** — Agents only receive the tools they need; `codebase-locator` gets Glob/Grep but NOT Edit
-3. **Model-appropriate** — Fast lookup tasks use Haiku, deep analysis uses Opus, general work uses Sonnet
-4. **Parallel by default** — Skills spawn 3–6 agents concurrently; agents never depend on each other's output
-
----
-
-## Skills Reference
-
-Skills live at `skills/*/SKILL.md` and are auto-discovered workflow orchestrators. They activate automatically based on trigger patterns in user messages or are invoked explicitly via `/skill-name`.
-
-### Core Workflow Skills
-
-| # | Skill | Lines | Model | Trigger Patterns |
-|---|-------|-------|-------|-----------------|
-| 1 | `prism` | 275 | **sonnet** | "help me build", "implement this feature", "fix this bug", "prism", "structured workflow" |
-| 2 | `prism-research` | 113 | **sonnet** | "research this", "understand how X works", "map out the system", "explore the codebase" |
-| 3 | `prism-plan` | 126 | **opus** | "create a plan", "plan the implementation", "design how to build" |
-| 4 | `prism-implement` | 122 | **sonnet** | "implement the plan", "start building", "execute phase 1" |
-| 5 | `prism-validate` | 94 | **sonnet** | "validate the plan", "verify implementation", "check if complete" |
-| 6 | `prism-iterate` | 103 | **opus** | "iterate on plan", "update and continue", "adjust the approach" |
-
-### Specialized Skills
-
-| # | Skill | Lines | Model | Trigger Patterns |
-|---|-------|-------|-------|-----------------|
-| 7 | `prism-debug` | 221 | **sonnet** | "debug this", "why is this failing", "investigate the error" |
-| 8 | `prism-spectrum` | 376 | **sonnet** | "spectrum", "execute story", "run spectrum" |
-| 9 | `prism-verify` | 125 | **sonnet** | "verify the UI", "check the browser", "visual verification" |
-| 10 | `prism-prd` | 122 | **opus** | "create a PRD", "write product requirements", "document this product" |
-| 11 | `prism-visual-docs` | 146 | **opus** | "create user flows", "design the screens", "create wireframes" |
-
-### Skill Subdirectory Contents
-
-Each skill directory may contain supporting files:
-
-```
-skills/
-├── prism/
-│   ├── SKILL.md                         # 275 lines — master orchestrator
-│   ├── references/
-│   │   └── workflow-patterns.md         # Reusable workflow pattern library
-│   └── scripts/
-│       └── init_prism.py                # 174 lines — .prism/ directory initializer
-├── prism-research/
-│   ├── SKILL.md                         # 113 lines
-│   └── references/
-│       ├── exploration-patterns.md      # Agent spawning patterns
-│       └── research-template.md         # Output document template
-├── prism-plan/
-│   ├── SKILL.md                         # 126 lines
-│   └── references/
-│       └── plan-template.md             # Plan document structure
-├── prism-validate/
-│   ├── SKILL.md                         # 94 lines
-│   └── references/
-│       └── validation-template.md       # Validation report template
-├── prism-verify/
-│   ├── SKILL.md                         # 125 lines
-│   └── references/
-│       ├── verification-template.md     # Browser verification template
-│       └── verification-patterns.md     # Playwright-cli patterns
-├── prism-spectrum/SKILL.md              # 376 lines — largest skill
-├── prism-debug/SKILL.md                 # 221 lines
-├── prism-implement/SKILL.md             # 122 lines
-├── prism-iterate/SKILL.md               # 103 lines
-├── prism-prd/SKILL.md                   # 122 lines
-└── prism-visual-docs/SKILL.md           # 146 lines
-```
-
-### Skill Frontmatter Format
-
-```markdown
----
-name: skill-name
-description: When to use this skill and trigger patterns
-model: opus|sonnet|haiku
----
-
-# Skill Title
-
-Orchestration instructions: which agents to spawn, which commands to invoke,
-what order to execute, how to present results to the user...
-```
-
-### Master Orchestrator: `prism`
-
-The `prism` skill (275 lines) is the master orchestrator — it routes to all other skills:
-
-```
-User: "help me build a login form"
-    │
-    ▼
-prism skill activates (trigger: "help me build")
-    │
-    ├── Detects task type → routes to appropriate phase
-    │
-    ├── If unfamiliar codebase → /prism-research
-    ├── If needs planning      → /prism-plan
-    ├── If plan exists         → /prism-implement
-    ├── If needs validation    → /prism-validate
-    └── If needs iteration     → /prism-iterate
-```
-
----
-
-## Scripts & Automation
-
-### `scripts/spectrum.sh` (312 lines)
-
-The Spectrum iterative executor — the main autonomous execution loop that spawns fresh Claude Code sessions per story.
-
-```
-┌─────────────────────────────────────────────────────┐
-│  spectrum.sh Loop                                    │
-│                                                      │
-│  1. Load stories.json                                │
-│  2. Count remaining stories                          │
-│  3. If 0 remaining → EXIT SUCCESS                    │
-│  4. If max iterations → EXIT LIMIT                   │
-│  5. Spawn: claude --dangerously-skip-permissions     │
-│            --print "/prism-spectrum"                  │
-│  6. Parse signal from output:                        │
-│     • <promise>COMPLETE</promise> → check remaining  │
-│     • <spectrum-continue> → pause, next iteration    │
-│     • <spectrum-retry reason="..."> → increment err  │
-│     • <spectrum-blocked reason="..."> → skip story   │
-│     • <spectrum-error reason="..."> → stop           │
-│  7. If 3+ consecutive errors → EXIT ERROR            │
-│  8. Sleep $SPECTRUM_PAUSE seconds                     │
-│  9. → Loop to step 2                                 │
-└─────────────────────────────────────────────────────┘
-```
-
-**Environment variables:**
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `SPECTRUM_MAX_ITERATIONS` | 50 | Maximum iterations before stopping |
-| `SPECTRUM_VERBOSE` | (unset) | Enable verbose output |
-| `SPECTRUM_PAUSE` | 2 | Seconds between iterations |
-
-**Prerequisites:** `claude` CLI and `jq` must be installed.
-
-### `scripts/prism-cli-install.sh` (280 lines)
-
-Cross-platform bash installer for the prism-cli binary:
-- Detects platform (darwin/linux/windows) and architecture (amd64/arm64)
-- Three methods: `auto` (try download, fall back to source), `download`, `source`
-- Downloads from `github.com/TheDigitalGriot/prism-plugin/releases`
-- Configures PATH in `~/.zshrc`, `~/.bashrc`, `~/.bash_profile`, and PowerShell `$PROFILE`
-- Initializes `~/.prism/workspaces.json` registry
-
-### `scripts/prism-cli-install.ps1` (181 lines)
-
-Native PowerShell installer for Windows:
-- Downloads `prism-cli-windows-amd64.exe` from GitHub releases
-- Configures PATH in PowerShell `$PROFILE`
-- Same auto/source/download method pattern as bash version
-
-### `skills/prism/scripts/init_prism.py` (174 lines)
-
-Initializes the `.prism/` directory structure in any project:
-- Creates 11 directories: `stories/`, `shared/{research,plans,validation,handoffs,prs,spectrum,ref,docs}`, `local/{ref,docs}`
-- Adds `.prism/local/` to `.gitignore`
-- Creates `README.md` in `.prism/shared/`
-- Optionally adds Prism section to `CLAUDE.md`
-
----
-
-## Model Assignment Convention
-
-The plugin follows a strict three-tier model assignment convention. Each component is assigned the cheapest model that can reliably handle its task.
-
-### Opus — Deep Analysis & Creative Synthesis
-
-Used when the task requires understanding complex relationships, generating structured documents, or making architectural decisions.
-
-| Component | Type | Why Opus |
-|-----------|------|----------|
-| `codebase-analyzer` | Agent | Traces multi-file data flow, explains complex logic |
-| `prism-analyzer` | Agent | Extracts nuanced insights from research documents |
-| `create_plan` | Command | Generates phased plans with success criteria |
-| `iterate_plan` | Command | Surgical plan updates requiring architectural judgment |
-| `decompose_plan` | Command | Converts plans to dependency-ordered stories |
-| `research_codebase` | Command | Coordinates multi-agent research campaigns |
-| `generate_prd` | Command | Creates comprehensive product requirements |
-| `generate_pricing` | Command | Professional pricing proposals with Gantt charts |
-| `generate_tech_spec` | Command | API contracts, data models, architecture diagrams |
-| `generate_user_flows` | Command | UX documentation with wireframes |
-| `prism-plan` | Skill | Interactive planning with user feedback loops |
-| `prism-iterate` | Skill | Plan adjustment requiring deep understanding |
-| `prism-prd` | Skill | PRD orchestration with context awareness |
-| `prism-visual-docs` | Skill | Visual documentation orchestration |
-
-### Sonnet — General Implementation Work
-
-Used for straightforward execution, routing, and integration tasks that don't require deep synthesis.
-
-| Component | Type | Why Sonnet |
-|-----------|------|------------|
-| `codebase-pattern-finder` | Agent | Pattern matching is systematic, not creative |
-| `web-search-researcher` | Agent | Web research follows clear procedures |
-| `implement_plan` | Command | Follows an existing plan — execution not design |
-| `validate_plan` | Command | Comparison against criteria — checklist work |
-| `describe_pr` | Command | Summarizes known diffs |
-| `create_handoff` | Command | Structured document generation |
-| `resume_handoff` | Command | Context reconstruction from artifacts |
-| `retroactive` | Command | Post-hoc documentation |
-| `prism-debug` | Command | Parallel agent coordination |
-| `prism-verify` | Command | Browser verification coordination |
-| `prism-browse` | Command | Interactive browser session |
-| Infrastructure cmds | Commands | CLI install/uninstall, dir migration |
-| `prism` | Skill | Master router — routes, doesn't synthesize |
-| `prism-research` | Skill | Agent spawning coordination |
-| `prism-implement` | Skill | Phase-by-phase execution coordination |
-| `prism-validate` | Skill | Verification coordination |
-| `prism-debug` | Skill | Debug agent coordination |
-| `prism-spectrum` | Skill | Single-story execution with signal protocol |
-| `prism-verify` | Skill | Browser verification orchestration |
-
-### Haiku — Fast Lookups & Simple Operations
-
-Used for tasks that are fast, focused, and don't require nuanced judgment.
-
-| Component | Type | Why Haiku |
-|-----------|------|-----------|
-| `codebase-locator` | Agent | File location via Glob/Grep — no analysis needed |
-| `prism-locator` | Agent | Directory scanning — mechanical task |
-| `log-investigator` | Agent | Log file parsing — pattern matching |
-| `state-investigator` | Agent | Environment checks — straightforward |
-| `git-investigator` | Agent | Git log analysis — structured data |
-| `browser-verifier` | Agent | Playwright command execution — procedural |
-| `commit` | Command | Git commit — minimal judgment needed |
-| `worktree` | Command | Git worktree creation — procedural |
-| `review-setup` | Command | Branch checkout — procedural |
-| `prism-screenshot` | Command | Single browser screenshot — trivial |
-
----
-
-## Component Invocation Graph
-
-### Skills → Commands
-
-```
-prism (master orchestrator)
-  ├── /prism-research
-  ├── /prism-plan
-  ├── /prism-implement
-  ├── /prism-validate
-  ├── /prism-iterate
-  ├── /prism-spectrum
-  ├── /prism-debug
-  ├── /prism-verify
-  ├── /prism-prd
-  └── /prism-visual-docs
-
-prism-prd
-  ├── /generate_prd
-  ├── /generate_user_flows (offered as companion)
-  ├── /generate_tech_spec (offered as companion)
-  └── /generate_pricing (offered as companion)
-
-prism-visual-docs
-  ├── /generate_user_flows
-  └── /generate_tech_spec (optional)
-
-prism-implement
-  ├── /commit (after each phase)
-  ├── /validate_plan (after completion)
-  └── /describe_pr (for PR creation)
-
-prism-spectrum
-  └── /prism-debug (on quality gate failure — auto-retry)
-```
-
-### Skills → Agents (Parallel Spawning)
-
-```
-prism-research ───────────────────────────────┐
-  ├── codebase-locator        (haiku)   ────┐ │
-  ├── codebase-analyzer       (opus)    ────┤ │
-  ├── codebase-pattern-finder (sonnet)  ────┤ ├── All 6 in parallel
-  ├── prism-locator           (haiku)   ────┤ │
-  ├── prism-analyzer          (opus)    ────┤ │
-  └── web-search-researcher   (sonnet)  ────┘ │
-                                               │
-prism-plan ────────────────────────────────────┤
-  ├── codebase-analyzer       (opus)    ────┐  │
-  ├── codebase-pattern-finder (sonnet)  ────┤  ├── 3 in parallel
-  └── prism-analyzer          (opus)    ────┘  │
-                                               │
-prism-iterate ─────────────────────────────────┤
-  ├── codebase-locator        (haiku)   ────┐  │
-  ├── codebase-analyzer       (opus)    ────┤  ├── 3 in parallel
-  └── codebase-pattern-finder (sonnet)  ────┘  │
-                                               │
-prism-debug ───────────────────────────────────┤
-  ├── log-investigator        (haiku)   ────┐  │
-  ├── state-investigator      (haiku)   ────┤  ├── 3 in parallel
-  └── git-investigator        (haiku)   ────┘  │
-                                               │
-prism-verify ──────────────────────────────────┤
-  └── browser-verifier        (haiku)          │
-                                               │
-prism-prd ─────────────────────────────────────┤
-  └── prism-locator           (haiku)          │
-                                               │
-prism-visual-docs ─────────────────────────────┘
-  └── prism-locator           (haiku)
-```
-
-### Commands → Agents
-
-```
-/create_plan
-  ├── codebase-locator        (haiku)
-  ├── codebase-analyzer       (opus)
-  ├── codebase-pattern-finder (sonnet)
-  ├── prism-locator           (haiku)
-  └── prism-analyzer          (opus)
-
-/research_codebase
-  ├── codebase-locator        (haiku)
-  ├── codebase-analyzer       (opus)
-  ├── codebase-pattern-finder (sonnet)
-  ├── prism-locator           (haiku)
-  ├── prism-analyzer          (opus)
-  └── web-search-researcher   (sonnet)
-
-/iterate_plan
-  ├── codebase-locator        (haiku)
-  ├── codebase-analyzer       (opus)
-  ├── codebase-pattern-finder (sonnet)
-  ├── prism-locator           (haiku)
-  └── prism-analyzer          (opus)
-
-/prism-debug
-  ├── log-investigator        (haiku)
-  ├── state-investigator      (haiku)
-  └── git-investigator        (haiku)
-```
-
----
-
-## Data Flow Through .prism/
-
-The plugin's workflow produces artifacts that flow through the `.prism/` directory:
-
-```
-User request / ticket
-    │
-    ▼
-┌──────────────────────────────────────────────────────────────┐
-│  /prism-research                                              │
-│  Spawns 6 agents → aggregates findings                        │
-│  Output: .prism/shared/research/YYYY-MM-DD-topic.md           │
-└──────────────────────────────┬───────────────────────────────┘
-                               │
-                               ▼
-┌──────────────────────────────────────────────────────────────┐
-│  /prism-plan                                                  │
-│  Interactive planning → user approval at each step            │
-│  Output: .prism/shared/plans/YYYY-MM-DD-feature.md            │
-└──────────────────────────────┬───────────────────────────────┘
-                               │
-                               ▼
-┌──────────────────────────────────────────────────────────────┐
-│  /decompose_plan                                              │
-│  Converts plan phases into executable stories                 │
-│  Output: .prism/stories/stories.json                          │
-│          (or .prism/stories/<epic>/stories.json)              │
-└──────────────────────────────┬───────────────────────────────┘
-                               │
-                ┌──────────────┴──────────────┐
-                │                             │
-    Manual execution                 Autonomous execution
-                │                             │
-                ▼                             ▼
-┌──────────────────────┐    ┌──────────────────────────────────┐
-│  /prism-implement     │    │  spectrum.sh + /prism-spectrum    │
-│  Phase by phase       │    │  Fresh Claude session per story   │
-│  with checkpoints     │    │  Signal protocol for flow control │
-│                       │    │                                    │
-│                       │    │  Progress:                         │
-│                       │    │  .prism/shared/spectrum/progress.md│
-└──────────┬────────────┘    └──────────────┬───────────────────┘
-           │                                │
-           └────────────┬───────────────────┘
-                        │
-                        ▼
-┌──────────────────────────────────────────────────────────────┐
-│  /prism-validate                                              │
-│  Runs automated checks, compares against plan                 │
-│  Output: .prism/shared/validation/YYYY-MM-DD-report.md        │
-└──────────────────────────────┬───────────────────────────────┘
-                               │
-              ┌────────────────┴────────────────┐
-              │                                 │
-         All passed                       Issues found
-              │                                 │
-              ▼                                 ▼
-┌──────────────────────┐          ┌──────────────────────────┐
-│  /describe_pr         │          │  /prism-iterate           │
-│  Output:              │          │  Update plan + continue   │
-│  .prism/shared/prs/   │          │  → loops back to plan     │
-└──────────────────────┘          └──────────────────────────┘
-```
-
-### Session Handoffs
-
-When context window limits are reached:
-
-```
-/create_handoff  → .prism/shared/handoffs/YYYY-MM-DD_HH-MM-SS_topic.md
-                          │
-                    (new Claude session)
-                          │
-/resume_handoff  ← reads handoff + validates current state → continues work
-```
-
----
-
-## Behavioral Principles
-
-The plugin enforces several key behavioral constraints through its prompt engineering:
-
-### 1. "Documentarian, Not Critic"
-
-All research agents are instructed to **only describe what exists**. They do NOT:
-- Suggest improvements
-- Critique implementation choices
-- Perform root cause analysis (unless explicitly asked)
-- Recommend refactoring
-
-This prevents research from becoming opinionated, ensuring clean separation between observation (research phase) and decision-making (plan phase).
-
-### 2. Interactive Planning
-
-Plans are contracts, not suggestions. The planning process:
-1. Present understanding of the codebase first
-2. Get user buy-in before proceeding
-3. Iterate on each section with feedback
-4. Never write a full plan in one shot
-5. Resolve all unknowns before finalizing
-6. Always separate "Automated Verification" (runnable commands) from "Manual Verification" (human testing)
-
-### 3. Fresh Context Per Iteration
-
-Spectrum gives each story a fresh Claude session via `spectrum.sh`. Memory persists through:
-- `stories.json` (status, steps, commit hashes)
-- `progress.md` (accumulated learnings)
-- Git commits (the actual work)
-
-This prevents context window degradation across long-running autonomous execution.
-
-### 4. Two-Category Success Criteria
-
-Every plan separates verification into:
-
-| Category | Examples | Runner |
-|----------|----------|--------|
-| **Automated Verification** | `npm test`, `npm run typecheck`, `npm run lint` | Claude / Spectrum |
-| **Manual Verification** | "Click the login button and verify redirect" | Human tester |
-
-### 5. Signal Protocol
-
-Autonomous execution uses XML-like signals for flow control:
-
-| Signal | Tag | Meaning |
-|--------|-----|---------|
-| Complete | `<promise>COMPLETE</promise>` | Story finished successfully |
-| Continue | `<spectrum-continue>` | Success, schedule next iteration |
-| Retry | `<spectrum-retry reason="...">` | Transient failure, retry |
-| Blocked | `<spectrum-blocked reason="...">` | Cannot proceed, skip |
-| Error | `<spectrum-error reason="...">` | Fatal error, stop |
-
----
-
-## Plugin Directory Structure
-
-The complete plugin tree:
-
-```
-prism-plugin/                              # Repository root
-├── .claude-plugin/
-│   ├── plugin.json                        # Plugin manifest (8 lines)
-│   └── marketplace.json                   # Distribution config (20 lines)
-│
-├── commands/                              # 25 slash commands (3,729 lines total)
-│   ├── create_plan.md                     # 442 lines — opus
-│   ├── research_codebase.md               # 179 lines — opus
-│   ├── implement_plan.md                  #  85 lines — sonnet
-│   ├── validate_plan.md                   # 167 lines — sonnet
-│   ├── iterate_plan.md                    # 249 lines — opus
-│   ├── decompose_plan.md                  # 256 lines — opus
-│   ├── create_handoff.md                  #  78 lines — sonnet
-│   ├── resume_handoff.md                  # 219 lines — sonnet
-│   ├── commit.md                          #  44 lines — haiku
-│   ├── describe_pr.md                     #  91 lines — sonnet
-│   ├── retroactive.md                     #  80 lines — sonnet
-│   ├── generate_prd.md                    # 196 lines — opus
-│   ├── generate_pricing.md                # 228 lines — opus
-│   ├── generate_tech_spec.md              # 252 lines — opus
-│   ├── generate_user_flows.md             # 230 lines — opus
-│   ├── prism-debug.md                     # 184 lines — sonnet
-│   ├── prism-verify.md                    # 142 lines — sonnet
-│   ├── prism-screenshot.md                #  54 lines — haiku
-│   ├── prism-browse.md                    #  82 lines — sonnet
-│   ├── prism_dir_update.md                # 145 lines — sonnet
-│   ├── prism_cli.md                       #  93 lines — (none)
-│   ├── cli-install.md                     # 132 lines — sonnet
-│   ├── cli-uninstall.md                   # 150 lines — sonnet
-│   ├── worktree.md                        #  90 lines — haiku
-│   └── review-setup.md                    #  91 lines — haiku
-│
-├── agents/                                # 10 subagents (1,365 lines total)
-│   ├── codebase-locator.md                # 122 lines — haiku
-│   ├── codebase-analyzer.md               # 143 lines — opus
-│   ├── codebase-pattern-finder.md         # 227 lines — sonnet
-│   ├── prism-locator.md                   # 134 lines — haiku
-│   ├── prism-analyzer.md                  # 172 lines — opus
-│   ├── web-search-researcher.md           # 108 lines — sonnet
-│   ├── log-investigator.md                # 106 lines — haiku
-│   ├── state-investigator.md              # 121 lines — haiku
-│   ├── git-investigator.md                # 140 lines — haiku
-│   └── browser-verifier.md               #  92 lines — haiku
-│
-├── skills/                                # 11 auto-discovered skills (1,823 lines total)
-│   ├── prism/
-│   │   ├── SKILL.md                       # 275 lines — sonnet (master orchestrator)
-│   │   ├── references/workflow-patterns.md
-│   │   └── scripts/init_prism.py          # 174 lines
-│   ├── prism-research/
-│   │   ├── SKILL.md                       # 113 lines — sonnet
-│   │   └── references/{exploration-patterns,research-template}.md
-│   ├── prism-plan/
-│   │   ├── SKILL.md                       # 126 lines — opus
-│   │   └── references/plan-template.md
-│   ├── prism-implement/SKILL.md           # 122 lines — sonnet
-│   ├── prism-validate/
-│   │   ├── SKILL.md                       #  94 lines — sonnet
-│   │   └── references/validation-template.md
-│   ├── prism-iterate/SKILL.md             # 103 lines — opus
-│   ├── prism-spectrum/SKILL.md            # 376 lines — sonnet
-│   ├── prism-debug/SKILL.md               # 221 lines — sonnet
-│   ├── prism-verify/
-│   │   ├── SKILL.md                       # 125 lines — sonnet
-│   │   └── references/{verification-template,verification-patterns}.md
-│   ├── prism-prd/SKILL.md                 # 122 lines — opus
-│   └── prism-visual-docs/SKILL.md         # 146 lines — opus
-│
-├── scripts/                               # Automation scripts (773 lines total)
-│   ├── spectrum.sh                        # 312 lines — autonomous execution loop
-│   ├── prism-cli-install.sh               # 280 lines — cross-platform installer
-│   └── prism-cli-install.ps1              # 181 lines — PowerShell installer
-│
-├── CLAUDE.md                              # 115 lines — architectural guidance
-│
-├── cmd/                                   # Platform implementations (Parts I–IV)
-│   ├── prism-cli/                         # Go TUI dashboard
-│   ├── prism-vscode/                      # VS Code extension
-│   └── prism-electron/                    # Electron desktop app
-│
-├── packages/                              # Shared packages (Part IV)
-│   ├── prism-core/                        # Platform-agnostic business logic
-│   └── prism-ui/                          # Shared React components
-│
-└── .prism/                                # Workflow artifacts directory
-    ├── stories/                           # stories.json files
-    ├── shared/                            # Committed: research, plans, validation
-    └── local/                             # Gitignored: per-developer artifacts
-```
-
----
-
-## Plugin Statistics
-
-### Component Counts
-
-| Category | Files | Total Lines |
-|----------|-------|-------------|
-| Plugin manifests | 2 | 28 |
-| Commands | 25 | 3,729 |
-| Agents | 10 | 1,365 |
-| Skills (SKILL.md) | 11 | 1,823 |
-| Skill references | 7 | ~350 |
-| Scripts | 3 (+ 1 Python) | 947 |
-| CLAUDE.md | 1 | 115 |
-| Hooks | 0 | 0 |
-| MCP servers | 0 | 0 |
-| **Plugin total** | **~60** | **~8,357** |
-
-### Model Assignment Distribution
-
-| Model | Components | Typical Cost | Use Case |
-|-------|------------|-------------|----------|
-| **Opus** | 14 assignments | Highest | Deep analysis, planning, document generation |
-| **Sonnet** | 21 assignments | Medium | General execution, routing, coordination |
-| **Haiku** | 10 assignments | Lowest | Fast lookups, simple operations, file scanning |
-
-### Largest Components
-
-| Component | Type | Lines | Purpose |
-|-----------|------|-------|---------|
-| `create_plan.md` | Command | 442 | Interactive plan creation — most complex single prompt |
-| `prism-spectrum` | Skill | 376 | Autonomous story execution with signal protocol |
-| `spectrum.sh` | Script | 312 | Shell loop for autonomous execution |
-| `prism` | Skill | 275 | Master orchestrator routing all workflows |
-| `decompose_plan.md` | Command | 256 | Plan-to-stories conversion |
-| `generate_tech_spec.md` | Command | 252 | Technical specification generation |
-| `iterate_plan.md` | Command | 249 | Plan iteration with surgical edits |
-
-### How the Plugin Connects to Platforms
-
-The Claude plugin is the **brain** — the three platform implementations (CLI, VS Code, Electron) are the **body**:
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    Claude Plugin (Part V)                         │
-│   25 commands, 10 agents, 11 skills, 4 scripts                  │
-│   Pure prompt engineering — defines workflows and behavior       │
-│                                                                   │
-│   Invoked by: claude CLI process                                 │
-│   Output to:  .prism/shared/ directory                           │
-│   Control:    XML signal protocol                                │
-└──────────┬────────────────┬────────────────┬────────────────────┘
-           │                │                │
-           ▼                ▼                ▼
-┌──────────────┐  ┌──────────────┐  ┌──────────────────┐
-│  CLI (Part I) │  │ VS Code      │  │ Electron         │
-│  Go TUI       │  │ (Part II)    │  │ (Part III)       │
-│               │  │ TypeScript   │  │ TypeScript       │
-│  Spawns       │  │              │  │                  │
-│  claude CLI   │  │  Spawns      │  │  Spawns          │
-│  with signal  │  │  claude CLI  │  │  claude CLI      │
-│  parsing      │  │  with signal │  │  with signal     │
-│               │  │  parsing     │  │  parsing         │
-│  Renders:     │  │              │  │                  │
-│  Stories,     │  │  Renders:    │  │  Renders:        │
-│  Progress,    │  │  Stories,    │  │  Stories,        │
-│  Logs,        │  │  Chat,       │  │  Chat,           │
-│  Spring       │  │  Trees,      │  │  Spectrum,       │
-│  animations   │  │  Office,     │  │  Welcome         │
-│               │  │  Monitor     │  │                  │
-└──────────────┘  └──────────────┘  └──────────────────┘
-
-All read/write .prism/ — All parse signal protocol — All spawn claude CLI
-```
-
-The plugin's markdown files are loaded by the `claude` CLI process at session start. Every platform spawns `claude` as a child process, and the plugin's skills, commands, and agents shape how that `claude` session behaves. The platforms only provide visualization, user interaction, and process management — the actual workflow intelligence lives in the plugin's prompt engineering.
