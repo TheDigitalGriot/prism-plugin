@@ -990,6 +990,7 @@ All read/write .prism/ — All parse signal protocol — All spawn claude CLI
 ```
 
 The plugin's markdown files are loaded by the `claude` CLI process at session start. Every platform spawns `claude` as a child process, and the plugin's skills, commands, and agents shape how that `claude` session behaves. The platforms only provide visualization, user interaction, and process management — the actual workflow intelligence lives in the plugin's prompt engineering.
+
 # Part II — CLI Dashboard
 
 Prism CLI is a Go 1.23 terminal user interface that provides real-time monitoring and control of the Spectrum autonomous development workflow. It spawns Claude Code CLI sessions to execute stories from a `stories.json` file, displays streaming tool activity, tracks progress with spring-animated UI elements, and renders a procedural 3D splash screen using software rasterization.
