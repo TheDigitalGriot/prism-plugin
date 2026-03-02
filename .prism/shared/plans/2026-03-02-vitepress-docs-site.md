@@ -16,9 +16,9 @@ Split the 5,726-line `PRISM-DOCUMENTATION-2.3.5.md` into ~60 individual VitePres
 ## Success Criteria
 
 #### Automated Verification
-- [ ] `cd prism-docs && npm run docs:build` completes without errors
-- [ ] All sidebar links resolve (no 404s during dev server)
-- [ ] Code blocks have syntax highlighting
+- [x] `cd prism-docs && npm run docs:build` completes without errors
+- [x] All sidebar links resolve (no 404s during dev server)
+- [x] Code blocks have syntax highlighting
 
 #### Manual Verification
 - [ ] Spectral theme renders in dark mode (dark bg, gradient bar, brand colors)

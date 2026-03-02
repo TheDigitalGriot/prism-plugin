@@ -1,0 +1,55 @@
+---
+layout: home
+
+hero:
+  name: "Prism"
+  text: "AI-Driven Development Workflow Suite"
+  tagline: "Research → Plan → Implement → Validate. Autonomous AI development across CLI, VS Code, and Electron."
+  actions:
+    - theme: brand
+      text: Get Started
+      link: /overview
+    - theme: alt
+      text: CLI Dashboard
+      link: /cli/
+    - theme: alt
+      text: VS Code Extension
+      link: /vscode/
+
+features:
+  - icon: 🔬
+    title: Claude Plugin Architecture
+    details: Pure markdown-based prompt engineering. 25 commands, 10 agents, 11 skills — zero build step. Extends Claude Code with the 4-phase workflow methodology.
+    link: /plugin/
+    linkText: Explore Plugin →
+
+  - icon: 🖥️
+    title: CLI Dashboard (Go/Bubble Tea)
+    details: Full-screen TUI with 11 interactive screens, 3D prism renderer, spring animations, real-time Spectrum execution monitoring, and multi-workspace management.
+    link: /cli/
+    linkText: Explore CLI →
+
+  - icon: 🧩
+    title: VS Code Extension
+    details: IDE-integrated chat, visual office game, monitor panel, and workspaces. Shares all business logic with the Electron app via npm monorepo.
+    link: /vscode/
+    linkText: Explore VS Code →
+
+  - icon: ⚡
+    title: Electron Desktop App
+    details: Standalone desktop app with IDE-independent operation, native menus, tray icon, and full feature parity with the VS Code extension.
+    link: /electron/
+    linkText: Explore Electron →
+
+  - icon: 🔄
+    title: Spectrum Autonomous Execution
+    details: Fresh Claude sessions per story, no context degradation. State persists through stories.json and .prism/shared/ files across sessions.
+    link: /cli/state-machine
+    linkText: Learn Spectrum →
+
+  - icon: 📦
+    title: Monorepo Architecture
+    details: packages/prism-core and packages/prism-ui shared packages. npm workspaces. TypeScript path aliases. Zero code duplication between platforms.
+    link: /monorepo/
+    linkText: Explore Monorepo →
+---

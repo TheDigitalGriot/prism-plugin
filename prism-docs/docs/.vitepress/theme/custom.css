@@ -1,0 +1,190 @@
+/**
+ * Prism Spectral Theme
+ * Four workflow phases mapped to spectral colors:
+ *   Research  → Blue   #6366f1 (indigo-500)
+ *   Plan      → Teal   #14b8a6 (teal-500)
+ *   Implement → Green  #22c55e (green-500)
+ *   Validate  → Amber  #f59e0b (amber-500)
+ */
+
+/* ─── Brand Colors (Light + Dark) ─────────────────────────────────────────── */
+
+:root {
+  --vp-c-brand-1: #6366f1;
+  --vp-c-brand-2: #818cf8;
+  --vp-c-brand-3: #4f46e5;
+  --vp-c-brand-soft: rgba(99, 102, 241, 0.14);
+
+  /* Hero name gradient */
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: linear-gradient(
+    135deg,
+    #6366f1 0%,
+    #14b8a6 40%,
+    #22c55e 70%,
+    #f59e0b 100%
+  );
+
+  /* Hero image glow */
+  --vp-home-hero-image-background-image: linear-gradient(
+    135deg,
+    rgba(99, 102, 241, 0.3) 0%,
+    rgba(20, 184, 166, 0.3) 50%,
+    rgba(245, 158, 11, 0.3) 100%
+  );
+  --vp-home-hero-image-filter: blur(72px);
+}
+
+/* ─── Dark Mode Overrides ──────────────────────────────────────────────────── */
+
+.dark {
+  --vp-c-bg: #0a0a0f;
+  --vp-c-bg-soft: #12121a;
+  --vp-c-bg-mute: #1a1a25;
+  --vp-c-bg-elv: #1a1a25;
+
+  --vp-sidebar-bg-color: #0f0f18;
+  --vp-code-block-bg: #0f0f18;
+
+  --vp-c-text-1: #e2e8f0;
+  --vp-c-text-2: #94a3b8;
+  --vp-c-text-3: #64748b;
+
+  --vp-c-divider: rgba(99, 102, 241, 0.12);
+  --vp-c-gutter: rgba(99, 102, 241, 0.08);
+  --vp-c-border: rgba(99, 102, 241, 0.15);
+
+  /* Nav */
+  --vp-nav-bg-color: rgba(10, 10, 15, 0.85);
+
+  /* Code */
+  --vp-c-code-block-bg: #0f0f18;
+}
+
+/* ─── Top Spectral Gradient Bar ───────────────────────────────────────────── */
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #6366f1, #14b8a6, #22c55e, #f59e0b);
+  z-index: 9999;
+  pointer-events: none;
+}
+
+/* ─── Nav adjustments for spectral bar ───────────────────────────────────── */
+
+.VPNav {
+  top: 3px !important;
+}
+
+/* ─── Hero Landing Page ───────────────────────────────────────────────────── */
+
+.VPHero .name {
+  background: var(--vp-home-hero-name-background);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.VPHero .tagline {
+  font-size: 1.1rem;
+  opacity: 0.85;
+}
+
+/* ─── Sidebar Active Link ─────────────────────────────────────────────────── */
+
+.dark .VPSidebarItem.is-active > .item > .link > .text {
+  color: var(--vp-c-brand-1);
+}
+
+.dark .VPSidebarItem.is-active > .item {
+  border-left: 2px solid var(--vp-c-brand-1);
+  padding-left: calc(var(--vp-sidebar-item-padding-left) - 2px);
+}
+
+/* ─── Code Blocks ─────────────────────────────────────────────────────────── */
+
+.dark div[class*='language-'] {
+  background-color: #0f0f18 !important;
+  border: 1px solid rgba(99, 102, 241, 0.12);
+  border-radius: 8px;
+}
+
+.dark div[class*='language-'] code {
+  color: #e2e8f0;
+}
+
+/* Line numbers */
+.dark div[class*='language-'].line-numbers-mode .line-numbers {
+  background-color: #0c0c15;
+  border-right: 1px solid rgba(99, 102, 241, 0.12);
+  color: #4a5568;
+}
+
+/* ─── Custom Containers ───────────────────────────────────────────────────── */
+
+.dark .custom-block.tip {
+  background-color: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.35);
+}
+
+.dark .custom-block.warning {
+  background-color: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.dark .custom-block.danger {
+  background-color: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+/* ─── Phase Badge Colors ──────────────────────────────────────────────────── */
+
+.badge-research  { background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); padding: 2px 8px; border-radius: 4px; font-size: 0.8em; }
+.badge-plan      { background: rgba(20, 184, 166, 0.15); color: #2dd4bf; border: 1px solid rgba(20, 184, 166, 0.3); padding: 2px 8px; border-radius: 4px; font-size: 0.8em; }
+.badge-implement { background: rgba(34, 197, 94, 0.15);  color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3);  padding: 2px 8px; border-radius: 4px; font-size: 0.8em; }
+.badge-validate  { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); padding: 2px 8px; border-radius: 4px; font-size: 0.8em; }
+
+/* ─── Tables ──────────────────────────────────────────────────────────────── */
+
+.dark .vp-doc table {
+  border-collapse: collapse;
+}
+
+.dark .vp-doc table th {
+  background-color: rgba(99, 102, 241, 0.1);
+  border-color: rgba(99, 102, 241, 0.2);
+}
+
+.dark .vp-doc table td {
+  border-color: rgba(99, 102, 241, 0.1);
+}
+
+.dark .vp-doc table tr:nth-child(even) {
+  background-color: rgba(99, 102, 241, 0.03);
+}
+
+/* ─── Feature Cards on Hero ──────────────────────────────────────────────── */
+
+.dark .VPFeature {
+  background-color: #12121a;
+  border-color: rgba(99, 102, 241, 0.15);
+  transition: border-color 0.2s;
+}
+
+.dark .VPFeature:hover {
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+/* ─── Light Mode Brand Colors ─────────────────────────────────────────────── */
+
+:root:not(.dark) {
+  --vp-c-brand-1: #4f46e5;
+  --vp-c-brand-2: #6366f1;
+  --vp-c-brand-3: #3730a3;
+  --vp-c-brand-soft: rgba(99, 102, 241, 0.1);
+}
