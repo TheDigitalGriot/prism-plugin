@@ -38,6 +38,20 @@ Evaluated React vs Svelte vs Solid for frontend framework...           │ (scro
   esc back   j/k scroll
 ```
 
+## UI Layout — Empty State
+
+When no research documents exist in `.prism/shared/research/`:
+
+```
+ PRISM  > Research                                                    ← Breadcrumb
+────────────────────────────────────────────────────────────────────────
+
+  No research files found.
+  Add .md files to .prism/shared/research/
+
+  j/k navigate   enter view   esc home
+```
+
 ## Key Bindings — List Mode
 
 | Key | Action |

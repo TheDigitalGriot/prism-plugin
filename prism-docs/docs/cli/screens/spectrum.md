@@ -131,6 +131,168 @@ Three columns: State icon + name | Elapsed time | Control hints
 | Error | `▸` | Red `#EF4444` |
 | Idle | `▸` | Gray `#6B7280` |
 
+## UI Layout — Idle State
+
+```
+╭──────────────────────────────────────────────────────────────────────────────╮
+│  user-auth (0/12)   dashboard (0/36)   notifications (0/9)   [tab] switch   │
+╰──────────────────────────────────────────────────────────────────────────────╯
+ PRISM TUI                                          Iteration: 0/50  [?] help
+╭──────────────────────────────────────────────────────────────────────────────╮
+│                                                                              │
+│  ▀▀▄▄▀▀▄▄▀▀    '||''|.  '||''|.   '||'  .|'''.|  '||    ||'               │
+│  ▄▄▀▀▄▄▀▀▄▄     ||   ||  ||   ||   ||   ||..  '   |||  |||                │
+│  ▀▀▄▄▀▀▄▄▀▀     ||...|'  ||''|'    ||    ''|||.   |'|..'||                │
+│  ▄▄▀▀▄▄▀▀▄▄     ||       ||   |.   ||  .     '||  | '|' ||               │
+│  ▀▀▄▄▀▀▄▄▀▀    .||.     .||.  '|' .||. |'....|'  .|. | .||.              │
+│                                                                              │
+│  Plan: Feature Implementation  ░░░░░░░░░░░░░░░░░░░░░░░░░░  0/36 (0%)       │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭────────────── 40% ──────────────╮╭───────────────── 60% ────────────────────╮
+│ STORIES                         ││ CURRENT ACTIVITY                         │
+│ ────────────────────────────    ││ ─────────────────────────────────────    │
+│ ○ DEMO-001 Initialize spri...  ││                                          │
+│ ○ DEMO-002 Implement progr...  ││ Press Enter to start execution           │
+│ ○ DEMO-003 Add story compl...  ││                                          │
+│ ○ DEMO-004 Create active s...  ││                                          │
+│ ○ DEMO-005 Implement log e...  ││                                          │
+│ ○ DEMO-006 Add prism logo ...  ││                                          │
+│ ○ DEMO-007 Optimize animat...  ││                                          │
+│ ○ DEMO-008 Test all animat...  ││                                          │
+│ ○ DEMO-009 Create TipTap R...  ││                                          │
+│ ○ DEMO-010 Build FormatToo...  ││                                          │
+│ ○ DEMO-011 Implement markd...  ││                                          │
+│ ○ DEMO-012 Create NoteCard...  ││                                          │
+│   ● ○ ○ [a/s]                  ││                                          │
+╰─────────────────────────────────╯╰──────────────────────────────────────────╯
+╭──────────────────────────────────────────────────────────────────────────────╮
+│ LOG OUTPUT                                                    [z/x scroll]  │
+│ ─────────────────────────────────────────────────────────────────────────── │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+ ▸ IDLE                                                    [enter] start [q]uit
+```
+
+## UI Layout — Paused State
+
+```
+╭────────────── 40% ──────────────╮╭───────────────── 60% ────────────────────╮
+│ STORIES                         ││ CURRENT ACTIVITY                         │
+│ ────────────────────────────    ││ ─────────────────────────────────────    │
+│ ✓ DEMO-001 Initialize spri...  ││ ▸ DEMO-005: Implement log entry...      │
+│ ✓ DEMO-002 Implement progr...  ││                                          │
+│ ✓ DEMO-003 Add story compl...  ││ Status: ⣾ Paused                        │
+│ ✓ DEMO-004 Create active s...  ││                                          │
+│ ▸ DEMO-005 Implement log e...  ││                                          │
+│ ○ DEMO-006 Add prism logo ...  ││ Recent:                                  │
+│ ○ DEMO-007 Optimize animat...  ││   Reading: .../services/auth.ts          │
+│ ○ DEMO-008 Test all animat...  ││   Bash: npm run typecheck                │
+│   ● ○ ○ [a/s]                  ││                                          │
+╰─────────────────────────────────╯╰──────────────────────────────────────────╯
+╭──────────────────────────────────────────────────────────────────────────────╮
+│ LOG OUTPUT                                                    [z/x scroll]  │
+│ ─────────────────────────────────────────────────────────────────────────── │
+│ [14:32:05] INFO  Prism CLI v2.3.0                                          │
+│ [14:32:15] OK    DEMO-004 completed (commit: abc123)                       │
+│ [14:32:20] INFO  Starting iteration 5                                      │
+│   ● ○                                                                       │
+╰──────────────────────────────────────────────────────────────────────────────╯
+ ⏸ PAUSED                  Elapsed: 1m 45s                    [enter] resume
+```
+
+Note: Progress bar and header panels are identical to Running state but omitted for brevity. Status bar shows `⏸ PAUSED` in amber (`#F59E0B`) with frozen elapsed time.
+
+## UI Layout — Complete State
+
+```
+╭────────────── 40% ──────────────╮╭───────────────── 60% ────────────────────╮
+│ STORIES                         ││ CURRENT ACTIVITY                         │
+│ ────────────────────────────    ││ ─────────────────────────────────────    │
+│ ✓ DEMO-001 Initialize spri...  ││                                          │
+│ ✓ DEMO-002 Implement progr...  ││ All stories complete!                    │
+│ ✓ DEMO-003 Add story compl...  ││                                          │
+│ ✓ DEMO-004 Create active s...  ││                                          │
+│ ✓ DEMO-005 Implement log e...  ││                                          │
+│ ✓ DEMO-006 Add prism logo ...  ││                                          │
+│ ✓ DEMO-007 Optimize animat...  ││                                          │
+│ ✓ DEMO-008 Test all animat...  ││                                          │
+│ ✓ DEMO-009 Create TipTap R...  ││                                          │
+│ ✓ DEMO-010 Build FormatToo...  ││                                          │
+│ ✓ DEMO-011 Implement markd...  ││                                          │
+│ ✓ DEMO-012 Create NoteCard...  ││                                          │
+│   ● ○ ○ [a/s]                  ││                                          │
+╰─────────────────────────────────╯╰──────────────────────────────────────────╯
+╭──────────────────────────────────────────────────────────────────────────────╮
+│ LOG OUTPUT                                                    [z/x scroll]  │
+│ ─────────────────────────────────────────────────────────────────────────── │
+│ [14:35:10] OK    DEMO-012 completed (commit: xyz789)                       │
+│ [14:35:12] OK    All stories complete                                      │
+│   ●                                                                         │
+╰──────────────────────────────────────────────────────────────────────────────╯
+ ✓ COMPLETE                 Elapsed: 5m 30s                       [enter] quit
+```
+
+Note: Progress bar shows 100% filled with spectrum gradient. "All stories complete!" renders in green (`#10B981`). Status bar shows `▸ COMPLETE` in green.
+
+## UI Layout — Error State
+
+```
+╭────────────── 40% ──────────────╮╭───────────────── 60% ────────────────────╮
+│ STORIES                         ││ CURRENT ACTIVITY                         │
+│ ────────────────────────────    ││ ─────────────────────────────────────    │
+│ ✓ DEMO-001 Initialize spri...  ││                                          │
+│ ✓ DEMO-002 Implement progr...  ││ Error occurred                           │
+│ ✓ DEMO-003 Add story compl...  ││ 3 consecutive errors on DEMO-004        │
+│ ✓ DEMO-004 Create active s...  ││                                          │
+│ ▸ DEMO-005 Implement log e...  ││                                          │
+│ ○ DEMO-006 Add prism logo ...  ││                                          │
+│   ● ○ ○ [a/s]                  ││                                          │
+╰─────────────────────────────────╯╰──────────────────────────────────────────╯
+╭──────────────────────────────────────────────────────────────────────────────╮
+│ LOG OUTPUT                                                    [z/x scroll]  │
+│ ─────────────────────────────────────────────────────────────────────────── │
+│ [14:33:10] ERROR DEMO-005 failed: exit code 1                              │
+│ [14:33:15] INFO  Retry 2/3 (backoff: 4s)                                   │
+│ [14:33:20] ERROR DEMO-005 failed: exit code 1                              │
+│ [14:33:25] ERROR Max consecutive errors reached (3)                        │
+│   ●                                                                         │
+╰──────────────────────────────────────────────────────────────────────────────╯
+ ▸ ERROR                    Elapsed: 3m 10s                       [enter] quit
+```
+
+Note: "Error occurred" renders in red (`#EF4444`). Error detail message shown in dim text below. Status bar icon `▸` in red.
+
+## UI Layout — Max Iterations State
+
+```
+╭────────────── 40% ──────────────╮╭───────────────── 60% ────────────────────╮
+│ STORIES                         ││ CURRENT ACTIVITY                         │
+│ ────────────────────────────    ││ ─────────────────────────────────────    │
+│ ✓ DEMO-001 Initialize spri...  ││                                          │
+│ ✓ DEMO-002 Implement progr...  ││ Iteration limit reached                  │
+│ ✓ DEMO-003 Add story compl...  ││                                          │
+│ ✓ DEMO-004 Create active s...  ││                                          │
+│ ✓ DEMO-005 Implement log e...  ││                                          │
+│ ○ DEMO-006 Add prism logo ...  ││                                          │
+│ ○ DEMO-007 Optimize animat...  ││                                          │
+│   ● ○ ○ [a/s]                  ││                                          │
+╰─────────────────────────────────╯╰──────────────────────────────────────────╯
+╭──────────────────────────────────────────────────────────────────────────────╮
+│ LOG OUTPUT                                                    [z/x scroll]  │
+│ ─────────────────────────────────────────────────────────────────────────── │
+│ [15:02:00] INFO  Starting iteration 50                                     │
+│ [15:02:30] OK    DEMO-005 completed (commit: mno345)                       │
+│ [15:02:32] WARN  Max iterations reached (50/50)                            │
+│   ●                                                                         │
+╰──────────────────────────────────────────────────────────────────────────────╯
+ ⏸ PAUSED                  Elapsed: 30m 00s                       [enter] quit
+```
+
+Note: "Iteration limit reached" renders in amber (`#F59E0B`). Some stories remain pending. MaxIterations state uses the same `String()` as Paused, hence `⏸ PAUSED` in the status bar.
+
 ## Key Bindings
 
 | Key | Action | State Required |

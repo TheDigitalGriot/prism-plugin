@@ -49,7 +49,7 @@ export default defineConfig({
       },
       {
         text: 'Part I — Claude Plugin',
-        collapsed: false,
+        collapsed: true,
         items: [
           { text: 'Plugin Overview', link: '/plugin/' },
           { text: 'Plugin Manifest & Distribution', link: '/plugin/manifest' },
@@ -68,7 +68,7 @@ export default defineConfig({
       },
       {
         text: 'Part II — CLI Dashboard',
-        collapsed: false,
+        collapsed: true,
         items: [
           { text: 'CLI Overview', link: '/cli/' },
           { text: 'Architecture', link: '/cli/architecture' },
@@ -111,7 +111,7 @@ export default defineConfig({
       },
       {
         text: 'Part III — VS Code Extension',
-        collapsed: false,
+        collapsed: true,
         items: [
           { text: 'VS Code Overview', link: '/vscode/' },
           { text: 'Extension Architecture', link: '/vscode/architecture' },
@@ -132,7 +132,7 @@ export default defineConfig({
       },
       {
         text: 'Part IV — Electron Desktop App',
-        collapsed: false,
+        collapsed: true,
         items: [
           { text: 'Electron Overview', link: '/electron/' },
           { text: 'Architecture', link: '/electron/architecture' },
@@ -151,7 +151,7 @@ export default defineConfig({
       },
       {
         text: 'Part V — Monorepo Architecture',
-        collapsed: false,
+        collapsed: true,
         items: [
           { text: 'Repository Structure', link: '/monorepo/' },
           { text: 'npm Workspaces', link: '/monorepo/workspaces' },

@@ -52,6 +52,69 @@ A full-featured two-pane git integration view with staging, commit, push/pull, b
 
 Sidebar sections appear in order: Conflicts (if any), Staged, Modified, Untracked, Recent Commits. The diff pane shows unified or side-by-side diffs with syntax highlighting, word-level change detection, and dual-gutter line numbers.
 
+## UI Layout — Commit Detail View
+
+When `Enter` is pressed on a commit in the Recent Commits section, the right pane switches from diff to commit detail:
+
+```
+╭───────────── 30% ───────────────╮╭──────────────── 70% ──────────────────────╮
+│ GIT                              ││ COMMIT DETAIL                             │
+│ ──────────────────────────────  ││ ──────────────────────────────────────    │
+│  main ↑0 ↓0                    ││ Commit: dff2646a3b1c9e7f2d8a4b6e         │
+│                                  ││ Author: John Doe <john@example.com>      │
+│ ── Staged ──────────────────    ││ Date:   2026-02-28 14:32:05              │
+│   ● model.go                    ││                                            │
+│                                  ││ minor TUI fixes                           │
+│ ── Modified ────────────────    ││                                            │
+│   ● sidebar.go                  ││ ── Changed Files ─────────────────────    │
+│                                  ││  M model.go          +12 -4              │
+│ ── Recent Commits ──────────    ││  M view.go            +3  -1              │
+│ > dff2646 minor TUI fixes       ││  A sidebar_test.go    +45 -0              │
+│   66277bc continue sidecar...   ││                                            │
+╰──────────────────────────────────╯╰──────────────────────────────────────────╯
+```
+
+## UI Layout — Side-by-Side Diff
+
+Toggled with `v` from the diff pane. The right pane splits into old (left) and new (right) columns:
+
+```
+╭───────────── 30% ───────────────╮╭──────────────── 70% ──────────────────────╮
+│ GIT                              ││ model.go — SIDE BY SIDE                   │
+│ ──────────────────────────────  ││ ──────────────────────────────────────    │
+│  main ↑0 ↓0                    ││ OLD                  │ NEW                 │
+│                                  ││ ─────────────────── │ ──────────────────  │
+│ ── Staged ──────────────────    ││ 25  type Model st…  │ 25  type Model st…  │
+│   ● model.go                    ││ 26    Width  int     │ 26    Width  int    │
+│                                  ││                      │+27    Height int    │
+│ ── Modified ────────────────    ││                      │+28    Ready  bool   │
+│   ● sidebar.go                  ││ 27  }                │ 29  }               │
+│                                  ││                      │                     │
+│ ── Recent Commits ──────────    ││                      │                     │
+│   dff2646 minor TUI fixes       ││                      │                     │
+│   66277bc continue sidecar...   ││                      │                     │
+╰──────────────────────────────────╯╰──────────────────────────────────────────╯
+```
+
+## UI Layout — Full-Width Diff (Sidebar Hidden)
+
+When sidebar is toggled off, the diff pane uses the full terminal width:
+
+```
+╭──────────────────────────────────────────────────────────────────────────────╮
+│ model.go                                                                     │
+│ ──────────────────────────────────────────────────────────────────────────── │
+│ diff --git a/model.go b/model.go                                            │
+│ @@ -25,6 +25,8 @@                                                           │
+│  25  type Model struct {                                                     │
+│  26    Width  int                                                            │
+│+ 27    Height int                                                            │
+│+ 28    Ready  bool                                                           │
+│  29  }                                                                       │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
 ## Key Bindings
 
 **Sidebar (left pane):**

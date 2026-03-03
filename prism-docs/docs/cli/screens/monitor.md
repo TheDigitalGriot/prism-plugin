@@ -42,6 +42,38 @@ Three-panel system health dashboard with multi-panel focus navigation, quality g
 
 Auto-refreshes every 5 seconds. Subscribes to `"story.completed"`, `"agent.status"`, and `"browser.verification"` EventBus events. When terminal width is narrow, panels stack vertically instead of side-by-side.
 
+## UI Layout — Stacked Mode (< 85 cols)
+
+```
+╭──────────────────────────────────────────────────────────╮
+│ SYSTEM HEALTH                                            │
+│ ─────────────────────────────────────────────────────── │
+│ Goroutines: 12     Memory: 24MB / 48MB                  │
+│ GC Count: 8        GC Pause: 1.2ms                      │
+│ Status: ● Healthy                                        │
+│ ── Agents ────                                           │
+│ ● implement (feat…)   ◉ research (fix…)                 │
+╰──────────────────────────────────────────────────────────╯
+╭──────────────────────────────────────────────────────────╮
+│ EXECUTION HISTORY                                        │
+│ ─────────────────────────────────────────────────────── │
+│ ✓ STORY-001  15s  2m ago                                │
+│ ✓ STORY-002  22s  5m ago                                │
+│ ✗ STORY-003  10s  8m ago                                │
+╰──────────────────────────────────────────────────────────╯
+╭──────────────────────────────────────────────────────────╮
+│ QUALITY GATES                                            │
+│ ─────────────────────────────────────────────────────── │
+│ ● Lint       pass                                        │
+│ ● Tests      pass                                        │
+│ ● Build      pass                                        │
+╰──────────────────────────────────────────────────────────╯
+
+  Last refresh: 14:32:05 │ Panel: Health │ Tab to switch panels
+```
+
+Each panel takes full terminal width. Panel height = `(contentHeight - 2) / 3`. Focused panel has purple border (`#7C3AED`).
+
 ## Key Bindings
 
 | Key | Panel | Action |

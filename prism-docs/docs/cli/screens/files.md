@@ -45,6 +45,50 @@ Blame mode (`b` in preview pane):
 ╰───────────────────────────────────────────────────────────╯
 ```
 
+## UI Layout — Filter Mode
+
+Activated with `/` in the tree pane. The tree header is replaced with a search input and the tree is filtered to matching files:
+
+```
+╭───────────── 30% ───────────────╮╭──────────────── 70% ──────────────────────╮
+│ [Filter: mod                   ]││ [main.go] [view.go] [model.go]            │
+│ ──────────────────────────────  ││ model.go [go]                             │
+│   > model.go                M   ││ ──────────────────────────────────────    │
+│   > go.mod                  M   ││   1 │ package main                        │
+│                                  ││   2 │                                      │
+│                                  ││   3 │ type Model struct {                 │
+│                                  ││   4 │   Width  int                        │
+│                                  ││   5 │   Height int                        │
+│                                  ││   6 │ }                                   │
+│                                  ││                                            │
+╰──────────────────────────────────╯╰──────────────────────────────────────────╯
+```
+
+Footer hints change to: `esc cancel search • enter apply filter`
+
+## UI Layout — Edit Mode
+
+Activated with `e` in the preview pane. The preview content is replaced with an editable textarea:
+
+```
+╭───────────── 30% ───────────────╮╭──────────────── 70% ──────────────────────╮
+│ FILES                            ││ [main.go] [view.go] [model.go]            │
+│ ──────────────────────────────  ││ model.go [go] — EDITING                   │
+│ ▼ prism-plugin/                 ││ ──────────────────────────────────────    │
+│   ▼ cmd/                        ││ package main                              │
+│     ▼ prism-cli/                ││                                            │
+│       ▶ app/                    ││ type Model struct {                        │
+│       ▶ claude/                 ││   Width  int                               │
+│     > README.md             M   ││   Height int█                              │
+│   ▶ .prism/                     ││   Ready  bool                              │
+│   > go.mod                  M   ││ }                                          │
+│                                  ││                                            │
+╰──────────────────────────────────╯╰──────────────────────────────────────────╯
+  ctrl+s save • esc cancel edit
+```
+
+The tree pane is dimmed (inactive border). Cursor (`█`) visible in textarea. Tab bar remains at top of preview pane.
+
 ## Key Bindings
 
 **Tree Pane (left):**

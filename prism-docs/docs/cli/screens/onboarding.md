@@ -44,4 +44,48 @@ A full-screen setup wizard displayed after the splash when `.prism/` directory o
 | `j` / `↓` | Next step |
 | `k` / `↑` | Previous step |
 
+## UI Layout — Migration Flow
+
+When `HasLegacyDir == true` (legacy `thoughts/` directory detected), the welcome text and step descriptions change:
+
+```
+  ██▀▀█▄ ██▀▀█▄ ▀██▀ ▄██▀▀ ██▄▀▄██
+  ██▄▄█▀ ██▄▄█▀  ██  ▀██▄  ██ ▀ ██
+  ██     ██  ██ ▄██▄ ▄▄██▀ ██   ██
+
+  Legacy Project Detected
+  Found thoughts/ directory — let's migrate to .prism/
+
+  ▶  Project Directory     Detected: /Users/demo/project
+  ○  .prism/ Directory     Migrate thoughts/ → .prism/
+  ○  Claude CLI            Verify claude CLI is installed
+  ○  Stories File          Verify stories.json exists
+
+  Step 1 of 4
+
+  enter execute   j/k navigate
+```
+
+## UI Layout — Completed State
+
+After all 4 steps finish successfully:
+
+```
+  ██▀▀█▄ ██▀▀█▄ ▀██▀ ▄██▀▀ ██▄▀▄██
+  ██▄▄█▀ ██▄▄█▀  ██  ▀██▄  ██ ▀ ██
+  ██     ██  ██ ▄██▄ ▄▄██▀ ██   ██
+
+  ✓ Setup Complete!
+  Navigating to Home...
+
+  ✓  Project Directory     Detected: /Users/demo/project
+  ✓  .prism/ Directory     Created .prism/ structure
+  ✓  Claude CLI            Found: /usr/local/bin/claude
+  ✓  Stories File          Found stories.json
+
+  Progress: 4/4 steps complete
+```
+
+Automatically transitions to Home screen after a short delay.
+
 Steps auto-advance when already satisfied. On completion, emits `OnboardingCompleteMsg` to transition to Home.

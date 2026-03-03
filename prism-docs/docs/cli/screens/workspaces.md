@@ -76,6 +76,67 @@ A multi-project workspace manager with three view modes: **Projects** (`.prism/`
 
 Cards show status icon (● active, ◉ thinking, ○ waiting, ✓ done, ⏸ paused), branch name, and agent type. Columns are rendered vertically with h/l navigation between columns and j/k within.
 
+## UI Layout — Epics View
+
+When `Enter` is pressed on a project, the sidebar switches to show that project's epics:
+
+```
+╭───────────── 40% ───────────────╮╭──────────────── 60% ──────────────────────╮
+│ WORKSPACES › prism-plugin        ││  [Info]  Stories  Progress                 │
+│ ──────────────────────────────  ││ ──────────────────────────────────────    │
+│ > user-auth              8/12   ││ Epic: user-auth                            │
+│   dashboard             12/36   ││ Stories: 8 complete / 12 total             │
+│   notifications          0/9    ││                                            │
+│                                  ││ Path: .prism/stories/user-auth/            │
+│                                  ││                                            │
+│                                  ││                                            │
+│                                  ││                                            │
+╰──────────────────────────────────╯╰──────────────────────────────────────────╯
+```
+
+Project name shown in sidebar header. `Esc` returns to the projects list.
+
+## UI Layout — Preview: Stories Tab
+
+When the `[Stories]` tab is active in the preview pane:
+
+```
+╭──────────────── 60% ──────────────────────╮
+│  Info  [Stories]  Progress                 │
+│ ──────────────────────────────────────    │
+│ ✓ STORY-001  Setup database schema        │
+│ ✓ STORY-002  Implement user model         │
+│ ✓ STORY-003  Add authentication API       │
+│ ✓ STORY-004  Build login page             │
+│ ● STORY-005  Create session middleware     │
+│ ○ STORY-006  Add password reset           │
+│ ○ STORY-007  Implement OAuth2             │
+│ ○ STORY-008  Add rate limiting            │
+│                                            │
+│ 4/8 complete                               │
+╰──────────────────────────────────────────╯
+```
+
+## UI Layout — Preview: Progress Tab
+
+When the `[Progress]` tab is active in the preview pane:
+
+```
+╭──────────────── 60% ──────────────────────╮
+│  Info  Stories  [Progress]                 │
+│ ──────────────────────────────────────    │
+│ Overall: ████████████░░░░  50%            │
+│                                            │
+│ Last Updated: 2026-02-28 14:32            │
+│ Iterations Used: 12                        │
+│                                            │
+│ Recent Completions:                        │
+│   STORY-004  Build login page    (2m ago) │
+│   STORY-003  Add authentication  (8m ago) │
+│                                            │
+╰──────────────────────────────────────────╯
+```
+
 ## Key Bindings
 
 **Projects View** (left pane):
