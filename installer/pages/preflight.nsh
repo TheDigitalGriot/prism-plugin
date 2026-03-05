@@ -23,32 +23,23 @@ Function PreflightPageCreate
     "The following tools were detected on your system:"
   Pop $0
 
-  ; --- Editor detection ---
+  ; --- Editor detection (check known install paths) ---
   StrCpy $PreflightEditorStatus "Not found"
-  nsExec::ExecToStack 'where.exe code'
-  Pop $0
-  Pop $1
-  ${If} $0 == 0
+
+  IfFileExists "$LOCALAPPDATA\Programs\Microsoft VS Code\bin\code.cmd" 0 pf_check_cursor
     StrCpy $PreflightEditorStatus "VS Code found"
-  ${EndIf}
+    Goto pf_editor_done
 
-  ${If} $PreflightEditorStatus == "Not found"
-    nsExec::ExecToStack 'where.exe cursor'
-    Pop $0
-    Pop $1
-    ${If} $0 == 0
-      StrCpy $PreflightEditorStatus "Cursor found"
-    ${EndIf}
-  ${EndIf}
+  pf_check_cursor:
+  IfFileExists "$LOCALAPPDATA\Programs\cursor\resources\app\bin\cursor.cmd" 0 pf_check_windsurf
+    StrCpy $PreflightEditorStatus "Cursor found"
+    Goto pf_editor_done
 
-  ${If} $PreflightEditorStatus == "Not found"
-    nsExec::ExecToStack 'where.exe windsurf'
-    Pop $0
-    Pop $1
-    ${If} $0 == 0
-      StrCpy $PreflightEditorStatus "Windsurf found"
-    ${EndIf}
-  ${EndIf}
+  pf_check_windsurf:
+  IfFileExists "$LOCALAPPDATA\Programs\windsurf\resources\app\bin\windsurf.cmd" 0 pf_editor_done
+    StrCpy $PreflightEditorStatus "Windsurf found"
+
+  pf_editor_done:
 
   ${NSD_CreateLabel} 0 24u 35% 12u "Code Editor:"
   Pop $0
@@ -57,12 +48,9 @@ Function PreflightPageCreate
 
   ; --- Claude CLI detection ---
   StrCpy $PreflightClaudeStatus "Not found (will use file copy fallback)"
-  nsExec::ExecToStack 'where.exe claude'
-  Pop $0
-  Pop $1
-  ${If} $0 == 0
+  IfFileExists "$LOCALAPPDATA\Programs\claude\resources\app\bin\claude.cmd" 0 pf_claude_done
     StrCpy $PreflightClaudeStatus "Claude CLI found"
-  ${EndIf}
+  pf_claude_done:
 
   ${NSD_CreateLabel} 0 42u 35% 12u "Claude CLI:"
   Pop $0
@@ -71,12 +59,9 @@ Function PreflightPageCreate
 
   ; --- Existing prism-cli detection ---
   StrCpy $PreflightPrismStatus "Not installed"
-  nsExec::ExecToStack 'where.exe prism-cli'
-  Pop $0
-  Pop $1
-  ${If} $0 == 0
+  IfFileExists "$INSTDIR\bin\prism-cli.exe" 0 pf_prism_done
     StrCpy $PreflightPrismStatus "Already installed (will be updated)"
-  ${EndIf}
+  pf_prism_done:
 
   ${NSD_CreateLabel} 0 60u 35% 12u "Prism CLI:"
   Pop $0

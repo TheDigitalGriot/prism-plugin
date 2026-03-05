@@ -6,15 +6,20 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// The renderer SPA lives in webview-ui/. Setting root here makes Vite serve
-// webview-ui/index.html and resolve imports relative to that directory.
+// The renderer SPA lives in webview-ui/. We keep the default root (project dir)
+// so the Forge Vite plugin outputs to .vite/renderer/ at project root, which
+// gets packaged into the ASAR correctly.
 export default defineConfig({
-  root: path.resolve(__dirname, 'webview-ui'),
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'webview-ui/src'),
       '@prism-ui': path.resolve(__dirname, '../../packages/prism-ui/src'),
+    },
+  },
+  build: {
+    rollupOptions: {
+      input: path.resolve(__dirname, 'webview-ui/index.html'),
     },
   },
   define: {

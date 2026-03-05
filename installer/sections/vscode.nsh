@@ -10,19 +10,17 @@ Section "VSCode Extension" SEC_VSCODE
   SetOutPath "$INSTDIR\extensions"
   File "${RESOURCES_DIR}\extensions\prism.vsix"
 
-  ; --- Detect editors and try to install into each one found ---
-  ; We try all detected editors, not just the first, so the extension
-  ; gets installed into VS Code AND Cursor AND Windsurf if present.
+  ; --- Detect editors by checking known install paths ---
+  ; nsExec doesn't inherit the user's full PATH, so where.exe won't find
+  ; editors. Instead we check the standard install locations directly.
 
   StrCpy $R1 "0"  ; count of successful installs
 
   ; --- Try VS Code ---
-  nsExec::ExecToStack 'where.exe code'
-  Pop $0
-  Pop $1
-  ${If} $0 == 0
+  StrCpy $R0 "$LOCALAPPDATA\Programs\Microsoft VS Code\bin\code.cmd"
+  IfFileExists "$R0" 0 try_cursor
     DetailPrint "Found VS Code, installing extension..."
-    nsExec::ExecToStack 'cmd.exe /c code --install-extension "$INSTDIR\extensions\prism.vsix" --force'
+    nsExec::ExecToStack 'cmd.exe /c "$R0" --install-extension "$INSTDIR\extensions\prism.vsix" --force'
     Pop $0
     Pop $1
     ${If} $0 == 0
@@ -31,15 +29,13 @@ Section "VSCode Extension" SEC_VSCODE
     ${Else}
       DetailPrint "VS Code install returned exit code $0: $1"
     ${EndIf}
-  ${EndIf}
 
+  try_cursor:
   ; --- Try Cursor ---
-  nsExec::ExecToStack 'where.exe cursor'
-  Pop $0
-  Pop $1
-  ${If} $0 == 0
+  StrCpy $R0 "$LOCALAPPDATA\Programs\cursor\resources\app\bin\cursor.cmd"
+  IfFileExists "$R0" 0 try_windsurf
     DetailPrint "Found Cursor, installing extension..."
-    nsExec::ExecToStack 'cmd.exe /c cursor --install-extension "$INSTDIR\extensions\prism.vsix" --force'
+    nsExec::ExecToStack 'cmd.exe /c "$R0" --install-extension "$INSTDIR\extensions\prism.vsix" --force'
     Pop $0
     Pop $1
     ${If} $0 == 0
@@ -48,15 +44,13 @@ Section "VSCode Extension" SEC_VSCODE
     ${Else}
       DetailPrint "Cursor install returned exit code $0: $1"
     ${EndIf}
-  ${EndIf}
 
+  try_windsurf:
   ; --- Try Windsurf ---
-  nsExec::ExecToStack 'where.exe windsurf'
-  Pop $0
-  Pop $1
-  ${If} $0 == 0
+  StrCpy $R0 "$LOCALAPPDATA\Programs\windsurf\resources\app\bin\windsurf.cmd"
+  IfFileExists "$R0" 0 vscode_done
     DetailPrint "Found Windsurf, installing extension..."
-    nsExec::ExecToStack 'cmd.exe /c windsurf --install-extension "$INSTDIR\extensions\prism.vsix" --force'
+    nsExec::ExecToStack 'cmd.exe /c "$R0" --install-extension "$INSTDIR\extensions\prism.vsix" --force'
     Pop $0
     Pop $1
     ${If} $0 == 0
@@ -65,8 +59,8 @@ Section "VSCode Extension" SEC_VSCODE
     ${Else}
       DetailPrint "Windsurf install returned exit code $0: $1"
     ${EndIf}
-  ${EndIf}
 
+  vscode_done:
   ; --- Final result ---
   ${If} $R1 == 0
     DetailPrint "No editor successfully installed the extension."
