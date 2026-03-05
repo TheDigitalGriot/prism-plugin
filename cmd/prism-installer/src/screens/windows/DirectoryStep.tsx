@@ -136,7 +136,7 @@ export function DirectoryStep({
           {(
             [
               [installDir + "\\bin\\prism-cli.exe", "CLI binary"],
-              [installDir + "\\extensions\\prism-2.5.0.vsix", "Extension archive"],
+              [installDir + "\\extensions\\prism.vsix", "Extension archive"],
               [installDir + "\\plugin\\", "Claude plugin files"],
             ] as [string, string][]
           ).map(([p, desc]) => (
