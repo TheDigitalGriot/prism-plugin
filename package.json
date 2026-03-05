@@ -8,6 +8,7 @@
     "cmd/prism-vscode/webview-office",
     "cmd/prism-vscode/webview-panel",
     "cmd/prism-electron",
-    "cmd/prism-electron/webview-ui"
+    "cmd/prism-electron/webview-ui",
+    "cmd/prism-installer"
   ]
 }

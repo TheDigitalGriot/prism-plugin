@@ -51,7 +51,7 @@ export function WelcomeScreen({ onSelectMode }: Props) {
       </div>
 
       {/* Version */}
-      <p className="text-[10px] text-[var(--prism-fg-disabled)]">v2.4.5</p>
+      <p className="text-[10px] text-[var(--prism-fg-disabled)]">v2.4.6</p>
     </div>
   );
 }

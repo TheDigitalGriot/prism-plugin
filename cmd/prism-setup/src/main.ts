@@ -75,7 +75,7 @@ ipcMain.handle('setup:getLatestVersion', async () => {
     return await getLatestRelease();
   } catch (err) {
     console.warn('Failed to fetch latest version:', err);
-    return { version: '2.4.5', assets: [] };
+    return { version: '2.4.6', assets: [] };
   }
 });
 

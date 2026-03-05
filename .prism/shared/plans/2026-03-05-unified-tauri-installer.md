@@ -633,9 +633,9 @@ If critical issues arise:
 
 | Phase | Status | Started | Completed | Notes |
 |-------|--------|---------|-----------|-------|
-| Phase 1: Scaffold | ⬜ Not started | | | |
-| Phase 2: Detection | ⬜ Not started | | | |
-| Phase 3: CLI Install | ⬜ Not started | | | |
+| Phase 1: Scaffold | ✅ Complete | 2026-03-05 | 2026-03-05 | React 19 + Vite 6 + Tauri v2 + Tailwind 4. cargo check + npm build pass. |
+| Phase 2: Detection | ✅ Complete | 2026-03-05 | 2026-03-05 | detect.rs: editors, claude CLI, existing prism, OS info, disk space. 4 tests, 0 clippy warnings. |
+| Phase 3: CLI Install | ✅ Complete | 2026-03-05 | 2026-03-05 | install_cli.rs: binary copy, PATH config (registry/zshrc), .prism init, install registration. 4 tests, 0 clippy. |
 | Phase 4: Extension/Plugin | ⬜ Not started | | | |
 | Phase 5: Download | ⬜ Not started | | | |
 | Phase 6: UI Foundation | ⬜ Not started | | | |
