@@ -18,7 +18,7 @@ export async function getLatestRelease(): Promise<{ version: string; assets: Rel
   return new Promise((resolve, reject) => {
     const req = https.get(API_URL, {
       headers: {
-        'User-Agent': 'prism-setup/2.4.4',
+        'User-Agent': 'prism-setup/2.4.5',
         'Accept': 'application/vnd.github.v3+json',
       },
       timeout: 10000,
@@ -28,7 +28,7 @@ export async function getLatestRelease(): Promise<{ version: string; assets: Rel
         const location = res.headers.location;
         if (location) {
           https.get(location, {
-            headers: { 'User-Agent': 'prism-setup/2.4.4', 'Accept': 'application/vnd.github.v3+json' },
+            headers: { 'User-Agent': 'prism-setup/2.4.5', 'Accept': 'application/vnd.github.v3+json' },
           }, handleResponse).on('error', reject);
           return;
         }
