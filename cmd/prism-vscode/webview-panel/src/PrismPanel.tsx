@@ -14,6 +14,7 @@ export function PrismPanel(): React.ReactElement {
   const [storyTotal, setStoryTotal] = useState(0)
   const [projectName, setProjectName] = useState('')
   const [activeAgentCount, setActiveAgentCount] = useState(0)
+  const [version, setVersion] = useState('')
 
   const containerRef = useRef<HTMLDivElement>(null)
   const isDraggingRef = useRef(false)
@@ -76,6 +77,7 @@ export function PrismPanel(): React.ReactElement {
         if (typeof msg.storyTotal === 'number') setStoryTotal(msg.storyTotal)
         if (typeof msg.projectName === 'string') setProjectName(msg.projectName)
         if (typeof msg.activeAgentCount === 'number') setActiveAgentCount(msg.activeAgentCount)
+        if (typeof msg.version === 'string') setVersion(msg.version)
       }
     }
     window.addEventListener('message', handler)
@@ -136,7 +138,7 @@ export function PrismPanel(): React.ReactElement {
         </div>
       </div>
 
-      <StatusBar storyCount={storyCount} storyTotal={storyTotal} projectName={projectName} />
+      <StatusBar storyCount={storyCount} storyTotal={storyTotal} projectName={projectName} version={version} />
     </div>
   )
 }

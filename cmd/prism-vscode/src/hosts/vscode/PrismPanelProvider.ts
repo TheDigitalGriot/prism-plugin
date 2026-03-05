@@ -573,11 +573,12 @@ export class PrismPanelProvider implements vscode.WebviewViewProvider {
   private async _sendInitialState(): Promise<void> {
     if (!this._webview) return;
 
-    // 1. Push panel state (divider pos, active view)
+    // 1. Push panel state (divider pos, active view, version)
     this._webview.postMessage({
       type: 'initialState',
       dividerPos: this._dividerPos,
       activeView: this._activeView,
+      version: this._controller?.state?.version ?? '',
     });
 
     // 2. Push monitor state

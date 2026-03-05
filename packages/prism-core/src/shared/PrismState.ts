@@ -82,7 +82,7 @@ export interface PrismExtensionState {
 }
 
 export const DEFAULT_PRISM_STATE: PrismExtensionState = {
-  version: "2.1.8",
+  version: "2.4.1",
   didHydrateState: false,
   hasPrismDir: false,
   hasStoriesJson: false,

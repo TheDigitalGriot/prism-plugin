@@ -5,9 +5,10 @@ interface StatusBarProps {
   storyTotal: number
   projectName: string
   status?: string
+  version?: string
 }
 
-export function StatusBar({ storyCount, storyTotal, projectName, status = 'Idle' }: StatusBarProps): React.ReactElement {
+export function StatusBar({ storyCount, storyTotal, projectName, status = 'Idle', version }: StatusBarProps): React.ReactElement {
   const pct = storyTotal > 0 ? Math.round((storyCount / storyTotal) * 100) : 0
 
   return (
@@ -49,6 +50,9 @@ export function StatusBar({ storyCount, storyTotal, projectName, status = 'Idle'
         <span style={{ fontSize: 9, color: 'var(--prism-text-muted)', fontFamily: 'monospace' }}>{projectName}</span>
       )}
       <div style={{ flex: 1 }} />
+      {version && (
+        <span style={{ fontSize: 9, color: 'var(--prism-text-muted)', fontFamily: 'monospace' }}>v{version}</span>
+      )}
     </div>
   )
 }

@@ -4,6 +4,17 @@ All notable changes to Prism Plugin will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.4.1] - 2026-03-05
+
+### Added
+- Chat agent working
+- Version display in VSCode panel StatusBar and Electron BottomStatusBar
+- `prism-release` skill for automated version bumping across all version files
+
+### Fixed
+- Stale hardcoded version in CLI TUI footer (was v1.9.8)
+- Stale version defaults in prism-core/prism-ui state (was 2.1.8)
+
 ## [2.0.0] - 2026-02-10
 
 ### Changed

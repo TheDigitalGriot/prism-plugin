@@ -2,6 +2,16 @@
 
 All notable changes to the Prism VS Code extension are documented here.
 
+## [2.4.1] — 2026-03-05
+
+### Added
+- Chat agent working
+- Version display in panel StatusBar (right side, 9px monospace)
+- Version passed from controller state via `initialState` message
+
+### Fixed
+- Stale version defaults in prism-core DEFAULT_PRISM_STATE and prism-ui DEFAULT_STATE
+
 ## [2.1.8] — 2026-02-26
 
 ### Added — Phase 7: Polish & Integration
