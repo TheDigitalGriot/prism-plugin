@@ -1,16 +1,22 @@
 package app
 
 import (
+	"context"
 	"fmt"
+	"io"
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/prism-plugin/prism-cli/agentbus"
 	"github.com/prism-plugin/prism-cli/app/adapter"
 	"github.com/prism-plugin/prism-cli/app/chat"
+	"github.com/prism-plugin/prism-cli/claude"
+	"github.com/prism-plugin/prism-cli/dialog"
 	"github.com/prism-plugin/prism-cli/markdown"
 	"github.com/prism-plugin/prism-cli/plugin"
 	"github.com/prism-plugin/prism-cli/styles"
@@ -29,29 +35,61 @@ type SessionGroup struct {
 	Sessions []adapter.Session
 }
 
+// AgentTracker tracks a running subagent spawned via the Task tool.
+type AgentTracker struct {
+	ID          string
+	Name        string
+	Type        string
+	ParentID    string
+	Status      string // "running", "complete", "error"
+	NestedParts []chat.ContentPart
+	StartTime   time.Time
+}
+
 // AgentState holds state for the agent chat interface
 type AgentState struct {
 	Messages         []chat.Message
 	MessageViewport  viewport.Model
 	SidebarViewport  viewport.Model
-	Input            textinput.Model
+	Input            textarea.Model
 	InputFocused     bool
 	ToolsCollapsed   map[int]bool
 	WideMode         bool // true = sidebar + chat, false = chat only
 	MarkdownMode     bool // true = render markdown via Glamour (A-6)
 
 	// Session list (A-2)
-	Sessions     []adapter.Session // All sessions from adapters
-	Groups       []SessionGroup    // Date-grouped sessions for sidebar display
-	SelectedConv int               // Global index across flattened session list
-	SessionsLoaded bool            // True once initial scan has completed
+	Sessions       []adapter.Session // All sessions from adapters
+	Groups         []SessionGroup    // Date-grouped sessions for sidebar display
+	SelectedConv   int               // Global index across flattened session list
+	SessionsLoaded bool              // True once initial scan has completed
 
 	// Analytics view (A-5)
 	AnalyticsMode   bool // true = show analytics instead of chat
 	AnalyticsScroll int  // scroll offset for analytics content
 
+	// Parallel agent tracking (Phase 9)
+	ActiveAgents   map[string]*AgentTracker // toolID → tracker
+	AgentCollapsed map[string]bool          // agentID → collapsed
+
+	// Sidebar grouping (Phase 14)
+	GroupByAdapter bool // true = group by adapter, false = group by date
+
+	// Search (Phase 15)
+	SearchMode   bool
+	SearchInput  textinput.Model
+	SearchQuery  string
+	SearchResult []adapter.Session
+
 	// Legacy fallback (used in demo mode)
 	ConversationList []string
+}
+
+// CostTracker accumulates token usage and cost for the current conversation (Phase 16).
+type CostTracker struct {
+	InputTokens  int
+	OutputTokens int
+	TotalCost    float64
+	Model        string
 }
 
 // AgentPlugin implements the Agent chat interface
@@ -62,24 +100,77 @@ type AgentPlugin struct {
 	width    int
 	height   int
 	adapters []adapter.Adapter // Registered adapters (A-1)
+
+	// Conversation integration (Phase 6)
+	bus          *agentbus.Bus
+	store        *agentbus.Store
+	conversation *agentbus.ManagedSession // Active conversation, nil if idle
+	stdinPipe    io.WriteCloser           // Claude CLI stdin pipe
+	cancelConv   context.CancelFunc       // Cancel func for current Claude CLI subprocess
+	streaming    bool                     // Currently receiving a response
+	streamText   strings.Builder          // Accumulator for streaming text delta
+	overlay      *dialog.Overlay          // Dialog overlay stack
+	eventChan    chan agentbus.Event       // Bus→BubbleTea bridge channel
+
+	// Conversation state
+	pendingPerm  *agentbus.PermissionRequest // Current permission request
+	pendingQ     *agentbus.QuestionRequest   // Current question request
+	currentPhase string                      // Latest phase breadcrumb
+
+	// Render cache (Phase 10): messageIndex → rendered string
+	renderCache map[int]string
+	lastWidth   int // width at last cache build
+
+	// Session management (Phase 11)
+	resumeSessionID string // session ID to resume on next send (set when user selects a historical session)
+	activeSessionID  string // session ID of the currently running subprocess
+	currentTitle     string // title of the current session (set after first assistant response)
+	titleGenerated   bool   // true once title has been generated for the current session
+
+	// Cost & token tracking (Phase 16)
+	cost CostTracker
+
+	// Error handling & resilience (Phase 18)
+	lastError       error  // Most recent fatal error (process crash, CLI not found, etc.)
+	lastUserMessage string // Last message sent (for retry)
+}
+
+// newTextarea creates and configures the multi-line input textarea.
+func newTextarea() textarea.Model {
+	ta := textarea.New()
+	ta.Placeholder = "Type a message… (Enter to send, Shift+Enter for newline)"
+	ta.CharLimit = 10000
+	ta.SetWidth(50)
+	ta.SetHeight(3)
+	ta.ShowLineNumbers = false
+	ta.FocusedStyle.CursorLine = lipgloss.NewStyle() // no cursor-line highlight
+	// Shift+Enter inserts a newline; plain Enter is intercepted to send.
+	ta.KeyMap.InsertNewline.SetKeys("shift+enter", "ctrl+j")
+	return ta
 }
 
 // NewAgentPlugin creates a new Agent plugin instance
 func NewAgentPlugin() *AgentPlugin {
-	ti := textinput.New()
-	ti.Placeholder = "Type a message… (Ctrl+Enter to send)"
-	ti.CharLimit = 2000
-	ti.Width = 50
+	bus := agentbus.New()
+	store := agentbus.NewStore(bus)
+	eventChan := make(chan agentbus.Event, 256)
 
-	return &AgentPlugin{
+	searchInput := textinput.New()
+	searchInput.Placeholder = "Search sessions…"
+	searchInput.CharLimit = 200
+
+	p := &AgentPlugin{
 		state: AgentState{
 			Messages:       []chat.Message{},
-			Input:          ti,
+			Input:          newTextarea(),
+			SearchInput:    searchInput,
 			InputFocused:   true,
 			ToolsCollapsed: make(map[int]bool),
+			ActiveAgents:   make(map[string]*AgentTracker),
+			AgentCollapsed: make(map[string]bool),
 			SelectedConv:   0,
 			WideMode:       true,
-			MarkdownMode:   true, // Default to rendered markdown
+			MarkdownMode:   true,
 			ConversationList: []string{
 				"Current Session",
 				"Research: auth flow",
@@ -87,7 +178,23 @@ func NewAgentPlugin() *AgentPlugin {
 				"Plan: migration v2",
 			},
 		},
+		bus:         bus,
+		store:       store,
+		overlay:     dialog.NewOverlay(),
+		eventChan:   eventChan,
+		renderCache: make(map[int]string),
 	}
+
+	// Subscribe bus events → eventChan for BubbleTea consumption.
+	bus.Subscribe(func(e agentbus.Event) {
+		select {
+		case eventChan <- e:
+		default:
+			// Channel full — drop event to avoid blocking bus goroutine.
+		}
+	})
+
+	return p
 }
 
 // ID returns the plugin identifier
@@ -104,11 +211,13 @@ func (p *AgentPlugin) Init(ctx *plugin.Context) error {
 	p.ctx = ctx
 	p.state.MessageViewport = viewport.New(ctx.Width-4, ctx.Height-inputChromeHeight-1)
 	p.state.SidebarViewport = viewport.New(20, ctx.Height-1)
-	p.state.Input.Width = ctx.Width - 10
+	p.state.Input.SetWidth(ctx.Width - 10)
 
-	// Register adapters (A-1)
+	// Register adapters (A-1, Phase 12, Phase 13)
 	p.adapters = []adapter.Adapter{
 		adapter.NewClaudeAdapter(""),
+		adapter.NewCodexAdapter(""),
+		adapter.NewCursorAdapter(""),
 	}
 
 	return nil
@@ -116,27 +225,45 @@ func (p *AgentPlugin) Init(ctx *plugin.Context) error {
 
 // Start is called when the plugin is first activated
 func (p *AgentPlugin) Start() tea.Cmd {
-	p.state.Input.Focus()
+	_ = p.state.Input.Focus()
 	p.state.InputFocused = true
 
 	if p.ctx.DemoMode {
-		return textinput.Blink
+		return tea.Batch(textarea.Blink, listenForBusEvents(p.eventChan))
 	}
 
-	// Scan sessions from adapters (A-2)
-	return tea.Batch(textinput.Blink, p.scanSessionsCmd())
+	// Scan sessions from adapters (A-2) and start bus event listener.
+	return tea.Batch(textarea.Blink, p.scanSessionsCmd(), listenForBusEvents(p.eventChan))
 }
 
 // Stop is called when deactivated
 func (p *AgentPlugin) Stop() {
 	p.state.Input.Blur()
 	p.state.InputFocused = false
+	// Gracefully abort any active subprocess (Phase 18b).
+	if p.cancelConv != nil {
+		p.cancelConv()
+		p.cancelConv = nil
+	}
 }
 
 // Update handles messages
 func (p *AgentPlugin) Update(msg tea.Msg) (plugin.Plugin, tea.Cmd) {
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
+
+	// Let the overlay consume input first when a dialog is open.
+	if p.overlay.HasDialogs() {
+		if keyMsg, ok := msg.(tea.KeyMsg); ok {
+			action, overlayCmd := p.overlay.Update(keyMsg)
+			cmds = append(cmds, overlayCmd)
+			if action != dialog.ActionNone {
+				p.handleDialogAction(action)
+				p.overlay.CloseFront()
+			}
+			return p, tea.Batch(cmds...)
+		}
+	}
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -174,9 +301,36 @@ func (p *AgentPlugin) Update(msg tea.Msg) (plugin.Plugin, tea.Cmd) {
 			p.state.ToolsCollapsed = make(map[int]bool)
 		}
 		return p, nil
+
+	case claude.ConvStartedMsg:
+		if msg.Handle != nil {
+			p.stdinPipe = msg.Handle.Stdin
+			p.cancelConv = msg.Handle.Cancel
+			p.streaming = true
+			p.activeSessionID = msg.SessionID
+			p.titleGenerated = false
+		}
+		// Send the initial user message now that the subprocess is ready.
+		batchCmds := []tea.Cmd{listenForBusEvents(p.eventChan)}
+		if msg.Handle != nil && p.lastUserMessage != "" {
+			initialMsg := p.lastUserMessage
+			stdinPipe := p.stdinPipe
+			batchCmds = append(batchCmds, func() tea.Msg {
+				_ = claude.SendMessage(stdinPipe, initialMsg)
+				return nil
+			})
+		}
+		return p, tea.Batch(batchCmds...)
+
+	case busEventMsg:
+		handleCmd := p.handleBusEvent(msg.Event)
+		cmds = append(cmds, handleCmd)
+		// Re-issue listener to pick up next event.
+		cmds = append(cmds, listenForBusEvents(p.eventChan))
+		return p, tea.Batch(cmds...)
 	}
 
-	if p.state.InputFocused {
+	if p.state.InputFocused && !p.overlay.HasDialogs() {
 		p.state.Input, cmd = p.state.Input.Update(msg)
 		cmds = append(cmds, cmd)
 	}
@@ -185,6 +339,253 @@ func (p *AgentPlugin) Update(msg tea.Msg) (plugin.Plugin, tea.Cmd) {
 	cmds = append(cmds, cmd)
 
 	return p, tea.Batch(cmds...)
+}
+
+// handleBusEvent processes an agentbus.Event received from the bus.
+func (p *AgentPlugin) handleBusEvent(e agentbus.Event) tea.Cmd {
+	switch e.Type {
+	case agentbus.EventTextDelta:
+		p.streamText.WriteString(e.Text)
+		// Update or create the current assistant message with the accumulated text.
+		p.upsertStreamingMessage()
+		p.autoScroll()
+
+	case agentbus.EventToolCallStart:
+		// Add a tool call part to the current message.
+		part := chat.ContentPart{
+			Type:       chat.PartToolCall,
+			ToolName:   e.ToolName,
+			ToolInput:  string(e.ToolInput),
+			ToolStatus: "running",
+			ToolID:     e.ToolID,
+		}
+		p.appendPart(part)
+		p.autoScroll()
+
+	case agentbus.EventToolCallComplete:
+		// Find and update the matching tool call part.
+		p.updateToolPartStatus(e.ToolID, e.ToolStatus)
+
+	case agentbus.EventAgentSpawnStart:
+		tracker := &AgentTracker{
+			ID:        e.ToolID,
+			Name:      e.AgentDesc,
+			Type:      e.AgentType,
+			Status:    "running",
+			StartTime: e.Timestamp,
+		}
+		p.state.ActiveAgents[e.ToolID] = tracker
+		p.state.AgentCollapsed[e.ToolID] = true // start collapsed
+		part := chat.ContentPart{
+			Type:       chat.PartAgent,
+			AgentID:    e.ToolID,
+			AgentName:  e.AgentDesc,
+			AgentType:  e.AgentType,
+			ToolStatus: "running",
+			ToolID:     e.ToolID,
+		}
+		p.appendPart(part)
+
+	case agentbus.EventAgentSpawnFinish:
+		if t, ok := p.state.ActiveAgents[e.ToolID]; ok {
+			t.Status = "complete"
+		}
+		p.updateToolPartStatus(e.ToolID, "complete")
+
+	case agentbus.EventPhaseChanged:
+		p.currentPhase = e.Phase
+
+	case agentbus.EventMessageComplete:
+		// Finalize the streaming message.
+		p.streamText.Reset()
+		p.streaming = false
+		// Generate session title from first user message (Phase 11c).
+		if !p.titleGenerated {
+			for _, msg := range p.state.Messages {
+				if msg.Type == chat.MessageTypeUser && msg.Content != "" {
+					title := msg.Content
+					if len(title) > 80 {
+						title = title[:77] + "…"
+					}
+					p.currentTitle = title
+					p.titleGenerated = true
+					break
+				}
+			}
+		}
+
+	case agentbus.EventPermissionRequired:
+		p.pendingPerm = e.Permission
+		if e.Permission != nil {
+			p.overlay.Open(dialog.NewPermission(
+				e.Permission.ID,
+				e.Permission.ToolName,
+				e.Permission.Description,
+				e.Permission.Preview,
+			))
+		}
+
+	case agentbus.EventQuestionAsked:
+		p.pendingQ = e.Question
+		if e.Question != nil {
+			p.overlay.Open(dialog.NewQuestion(e.Question.ID, e.Question.Questions))
+		}
+
+	case agentbus.EventCostUpdate:
+		// Accumulate token counts and estimate cost (Phase 16a).
+		p.cost.InputTokens += e.InputTokens
+		p.cost.OutputTokens += e.OutputTokens
+		if e.Model != "" {
+			p.cost.Model = e.Model
+		}
+		inputCost := float64(p.cost.InputTokens) * estimateCostPerToken(p.cost.Model, true)
+		outputCost := float64(p.cost.OutputTokens) * estimateCostPerToken(p.cost.Model, false)
+		p.cost.TotalCost = inputCost + outputCost
+
+	case agentbus.EventStreamError:
+		p.lastError = e.Error
+		errMsg := "Claude CLI error"
+		if e.Error != nil {
+			errMsg = e.Error.Error()
+		}
+		p.state.Messages = append(p.state.Messages, chat.Message{
+			Type:    chat.MessageTypeAssistant,
+			Content: "⚠ " + errMsg,
+			Status:  "error",
+		})
+		p.streaming = false
+
+	case agentbus.EventProcessExited:
+		if e.ExitCode != 0 {
+			p.lastError = e.Error
+		}
+		p.streaming = false
+		p.stdinPipe = nil
+	}
+	return nil
+}
+
+// handleDialogAction handles the result of a dialog being closed.
+func (p *AgentPlugin) handleDialogAction(action dialog.Action) {
+	if p.pendingPerm != nil {
+		var responseAction string
+		switch action {
+		case dialog.ActionAllow:
+			responseAction = "allow"
+		case dialog.ActionAllowSession:
+			responseAction = "allow_session"
+		case dialog.ActionDeny:
+			responseAction = "deny"
+		}
+		if responseAction != "" {
+			p.bus.Publish(agentbus.Event{
+				Type: agentbus.EventPermissionResponse,
+				PermResp: &agentbus.PermissionResponse{
+					RequestID: p.pendingPerm.ID,
+					Action:    responseAction,
+				},
+			})
+		}
+		p.pendingPerm = nil
+		return
+	}
+
+	if p.pendingQ != nil {
+		// For questions, ActionConfirm = submit answers, ActionDeny = skip.
+		resp := agentbus.QuestionResponse{
+			RequestID: p.pendingQ.ID,
+			Answers:   make(map[string]string),
+			Skipped:   action == dialog.ActionDeny,
+		}
+		p.bus.Publish(agentbus.Event{
+			Type:      agentbus.EventQuestionAnswered,
+			QuestResp: &resp,
+		})
+		p.pendingQ = nil
+	}
+}
+
+// renderErrorBanner renders a red-bordered error banner (Phase 18c).
+func renderErrorBanner(err error, width int) string {
+	if err == nil {
+		return ""
+	}
+	msg := err.Error()
+	if len(msg) > width-6 {
+		msg = msg[:width-9] + "…"
+	}
+	hint := "Press R to retry · Ctrl+N for new chat"
+	banner := lipgloss.JoinVertical(lipgloss.Left,
+		"⚠ "+msg,
+		lipgloss.NewStyle().Foreground(styles.Dim).Render(hint),
+	)
+	return lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(styles.Error).
+		Foreground(styles.Error).
+		Width(width - 4).
+		Padding(0, 1).
+		Render(banner)
+}
+
+const maxStreamSize = 1 * 1024 * 1024 // 1MB
+
+// upsertStreamingMessage creates or updates the last assistant message with current stream text.
+func (p *AgentPlugin) upsertStreamingMessage() {
+	text := p.streamText.String()
+	// Cap at 1MB to prevent runaway memory (Phase 18).
+	if len(text) > maxStreamSize {
+		text = text[:maxStreamSize] + "\n\n[output truncated]"
+	}
+	msgs := p.state.Messages
+	if len(msgs) > 0 && msgs[len(msgs)-1].Type == chat.MessageTypeAssistant &&
+		msgs[len(msgs)-1].Status == "streaming" {
+		// Update in place.
+		msgs[len(msgs)-1].Content = text
+		return
+	}
+	// Create new streaming assistant message.
+	p.state.Messages = append(msgs, chat.Message{
+		Type:    chat.MessageTypeAssistant,
+		Content: text,
+		Status:  "streaming",
+	})
+}
+
+// appendPart adds a ContentPart to the last assistant message.
+func (p *AgentPlugin) appendPart(part chat.ContentPart) {
+	msgs := p.state.Messages
+	if len(msgs) > 0 && msgs[len(msgs)-1].Type == chat.MessageTypeAssistant {
+		msgs[len(msgs)-1].Parts = append(msgs[len(msgs)-1].Parts, part)
+		return
+	}
+	// Create a new assistant message with just this part.
+	p.state.Messages = append(msgs, chat.Message{
+		Type:   chat.MessageTypeAssistant,
+		Status: "streaming",
+		Parts:  []chat.ContentPart{part},
+	})
+}
+
+// updateToolPartStatus finds a PartToolCall with the given ToolID and updates its status.
+func (p *AgentPlugin) updateToolPartStatus(toolID, status string) {
+	msgs := p.state.Messages
+	for i := len(msgs) - 1; i >= 0; i-- {
+		for j := range msgs[i].Parts {
+			if msgs[i].Parts[j].ToolID == toolID {
+				msgs[i].Parts[j].ToolStatus = status
+				return
+			}
+		}
+	}
+}
+
+// autoScroll scrolls the viewport to the bottom if the user hasn't scrolled up.
+func (p *AgentPlugin) autoScroll() {
+	vp := &p.state.MessageViewport
+	if vp.AtBottom() {
+		vp.GotoBottom()
+	}
 }
 
 // View renders the agent chat interface.
@@ -255,7 +656,20 @@ func (p *AgentPlugin) renderWideLayout(width, contentHeight int) string {
 
 // renderChatColumn renders the chat viewport + separator + input as exactly `height` lines.
 func (p *AgentPlugin) renderChatColumn(width, height int) string {
-	vpHeight := height - inputChromeHeight
+	// Dynamically size the textarea: grow 1-8 lines based on content.
+	lineCount := strings.Count(p.state.Input.Value(), "\n") + 1
+	if lineCount < 1 {
+		lineCount = 1
+	}
+	if lineCount > 8 {
+		lineCount = 8
+	}
+	p.state.Input.SetHeight(lineCount)
+	p.state.Input.SetWidth(width - 4)
+
+	// 1 separator line + textarea lines.
+	inputChrome := 1 + lineCount
+	vpHeight := height - inputChrome
 	if vpHeight < 1 {
 		vpHeight = 1
 	}
@@ -275,14 +689,54 @@ func (p *AgentPlugin) renderChatColumn(width, height int) string {
 		vpLines = vpLines[:vpHeight]
 	}
 
-	sepStyle := lipgloss.NewStyle().Foreground(styles.Dim)
-	separator := sepStyle.Render(strings.Repeat("─", width))
+	// Build separator with streaming cost indicator (Phase 16b).
+	costIndicator := p.renderCostIndicator(width)
+	sepStr := strings.Repeat("─", width)
+	if costIndicator != "" {
+		// Overwrite the right side of the separator with the cost indicator.
+		indicatorLen := lipgloss.Width(costIndicator)
+		if indicatorLen < width {
+			sepStr = strings.Repeat("─", width-indicatorLen) + costIndicator
+		}
+	}
+	separator := lipgloss.NewStyle().Foreground(styles.Dim).Render(sepStr)
 
-	promptStyle := lipgloss.NewStyle().Foreground(styles.Primary).Bold(true)
-	p.state.Input.Width = width - 6
-	inputLine := " " + promptStyle.Render("❯ ") + p.state.Input.View()
+	inputView := p.state.Input.View()
 
-	return strings.Join(vpLines, "\n") + "\n" + separator + "\n" + inputLine
+	// Show error banner between viewport and separator if there's a recent error (Phase 18c).
+	if p.lastError != nil && !p.streaming {
+		errBanner := renderErrorBanner(p.lastError, width)
+		return strings.Join(vpLines, "\n") + "\n" + errBanner + "\n" + separator + "\n" + inputView
+	}
+
+	return strings.Join(vpLines, "\n") + "\n" + separator + "\n" + inputView
+}
+
+// renderCostIndicator returns a compact cost/status string for the separator line.
+func (p *AgentPlugin) renderCostIndicator(width int) string {
+	if !p.streaming && p.cost.TotalCost == 0 {
+		return ""
+	}
+
+	var parts []string
+	if p.streaming {
+		dot := lipgloss.NewStyle().Foreground(styles.Primary).Render("⬤")
+		parts = append(parts, dot+" streaming…")
+	}
+	if p.cost.InputTokens > 0 || p.cost.OutputTokens > 0 {
+		inK := fmt.Sprintf("%.1fk", float64(p.cost.InputTokens)/1000)
+		outK := fmt.Sprintf("%.1fk", float64(p.cost.OutputTokens)/1000)
+		parts = append(parts, inK+" in / "+outK+" out")
+	}
+	if p.cost.TotalCost > 0 {
+		parts = append(parts, fmt.Sprintf("$%.4f", p.cost.TotalCost))
+	}
+
+	if len(parts) == 0 {
+		return ""
+	}
+	indicator := strings.Join(parts, " | ")
+	return lipgloss.NewStyle().Foreground(styles.Dim).Render(indicator)
 }
 
 // renderSidebar renders the session list grouped by date (A-2).
@@ -293,11 +747,23 @@ func (p *AgentPlugin) renderSidebar(width, height int) string {
 	lines = append(lines, " "+titleStyle.Render("Conversations"))
 	lines = append(lines, "")
 
-	// Use demo data if in demo mode or sessions not yet loaded
-	if p.ctx.DemoMode || !p.state.SessionsLoaded {
+	// Search mode: show search input and results (Phase 15a).
+	if p.state.SearchMode {
+		p.state.SearchInput.Width = width - 4
+		searchBox := lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(styles.Primary).
+			Padding(0, 1).
+			Render(p.state.SearchInput.View())
+		lines = append(lines, searchBox)
+		lines = append(lines, "")
+		lines = append(lines, p.renderSearchResults(width)...)
+	} else if p.ctx.DemoMode || !p.state.SessionsLoaded {
 		lines = append(lines, p.renderLegacySidebar(width)...)
 	} else if len(p.state.Sessions) == 0 {
 		lines = append(lines, lipgloss.NewStyle().Foreground(styles.Dim).Render("  No sessions found"))
+	} else if p.state.GroupByAdapter {
+		lines = append(lines, p.renderAdapterGroupedSessions(width)...)
 	} else {
 		lines = append(lines, p.renderGroupedSessions(width)...)
 	}
@@ -360,6 +826,30 @@ func (p *AgentPlugin) renderGroupedSessions(width int) []string {
 
 	groupHeaderStyle := lipgloss.NewStyle().Bold(true).Foreground(styles.Info)
 	timeStyle := lipgloss.NewStyle().Foreground(styles.Dim)
+	activeStyle := lipgloss.NewStyle().Foreground(styles.Primary)
+
+	// Show in-progress new conversation at top of list (Phase 11d).
+	if p.activeSessionID == "" && p.stdinPipe != nil {
+		// New session not yet assigned an ID — show ephemeral entry.
+		title := p.currentTitle
+		if title == "" {
+			title = "New Conversation…"
+		}
+		icon := "▸"
+		label := fmt.Sprintf(" %s %s", icon, truncateSidebarTitle(title, width))
+		runningDot := " ●"
+		if p.streaming {
+			label += activeStyle.Render(runningDot)
+		}
+		line := lipgloss.NewStyle().
+			Foreground(styles.Primary).
+			Bold(true).
+			Background(styles.Secondary).
+			Width(width).
+			Render(label)
+		lines = append(lines, line)
+		lines = append(lines, "")
+	}
 
 	for _, group := range p.state.Groups {
 		// Group header
@@ -367,22 +857,31 @@ func (p *AgentPlugin) renderGroupedSessions(width int) []string {
 
 		for _, session := range group.Sessions {
 			selected := globalIdx == p.state.SelectedConv
+			isActive := session.ID != "" && session.ID == p.activeSessionID
 
+			// Icon: ▸ for active subprocess, ● for cursor-selected, ○ for others.
 			icon := "○"
-			if selected {
+			if isActive {
+				icon = "▸"
+			} else if selected {
 				icon = "●"
 			}
 
 			// Title truncation
 			title := session.Title
-			maxTitleWidth := width - 5
-			if maxTitleWidth > 3 && len(title) > maxTitleWidth {
-				title = title[:maxTitleWidth-1] + "…"
+			// If this is the active session and we have a generated title, use it.
+			if isActive && p.currentTitle != "" {
+				title = p.currentTitle
+			}
+			badge := adapterBadge(session.Adapter)
+			label := fmt.Sprintf(" %s %s %s", icon, badge, truncateSidebarTitle(title, width-5))
+
+			// Running indicator for the active streaming session.
+			if isActive && p.streaming {
+				label += activeStyle.Render(" ●")
 			}
 
-			label := fmt.Sprintf(" %s %s", icon, title)
-
-			if selected {
+			if selected || isActive {
 				line := lipgloss.NewStyle().
 					Foreground(styles.Primary).
 					Bold(true).
@@ -416,6 +915,194 @@ func (p *AgentPlugin) renderGroupedSessions(width int) []string {
 	return lines
 }
 
+// renderSearchResults renders the filtered search result list (Phase 15c).
+func (p *AgentPlugin) renderSearchResults(width int) []string {
+	var lines []string
+	results := p.state.SearchResult
+	timeStyle := lipgloss.NewStyle().Foreground(styles.Dim)
+
+	if len(results) == 0 {
+		lines = append(lines, lipgloss.NewStyle().Foreground(styles.Dim).Render("  No matches found"))
+		return lines
+	}
+
+	for i, session := range results {
+		selected := i == p.state.SelectedConv
+		icon := "○"
+		if selected {
+			icon = "●"
+		}
+
+		badge := adapterBadge(session.Adapter)
+		title := highlightMatch(session.Title, p.state.SearchQuery, width-7)
+		label := fmt.Sprintf(" %s %s %s", icon, badge, title)
+
+		if selected {
+			line := lipgloss.NewStyle().
+				Foreground(styles.Primary).
+				Bold(true).
+				Background(styles.Secondary).
+				Width(width).
+				Render(label)
+			lines = append(lines, line)
+		} else {
+			lines = append(lines, lipgloss.NewStyle().Foreground(styles.White).Render(label))
+		}
+
+		meta := fmt.Sprintf("    %s · %d msgs", timeAgo(session.UpdatedAt), session.MessageCount)
+		lines = append(lines, timeStyle.Render(meta))
+	}
+
+	return lines
+}
+
+// highlightMatch returns the title with the query match visually distinguished.
+// The matched portion is bolded; unmatched plain. Returns plain title if no match.
+func highlightMatch(title, query string, maxWidth int) string {
+	if query == "" || maxWidth < 3 {
+		return truncateSidebarTitle(title, maxWidth+5)
+	}
+	lowerTitle := strings.ToLower(title)
+	lowerQuery := strings.ToLower(query)
+	idx := strings.Index(lowerTitle, lowerQuery)
+	if idx < 0 {
+		return truncateSidebarTitle(title, maxWidth+5)
+	}
+
+	before := title[:idx]
+	match := title[idx : idx+len(query)]
+	after := title[idx+len(query):]
+
+	highlightStyle := lipgloss.NewStyle().Foreground(styles.Warning).Bold(true)
+	result := before + highlightStyle.Render(match) + after
+
+	// Truncate total if too long (approximate — ANSI codes affect length).
+	if len(title) > maxWidth {
+		truncated := title
+		if len(truncated) > maxWidth-1 {
+			truncated = title[:maxWidth-2] + "…"
+		}
+		// Re-apply highlight on truncated.
+		lowerTrunc := strings.ToLower(truncated)
+		idx2 := strings.Index(lowerTrunc, lowerQuery)
+		if idx2 >= 0 {
+			return truncated[:idx2] + highlightStyle.Render(truncated[idx2:idx2+len(query)]) + truncated[idx2+len(query):]
+		}
+		return truncated
+	}
+
+	return result
+}
+
+// truncateSidebarTitle truncates a session title to fit the sidebar width.
+func truncateSidebarTitle(title string, width int) string {
+	maxTitleWidth := width - 5
+	if maxTitleWidth < 3 {
+		return title
+	}
+	if len(title) > maxTitleWidth {
+		return title[:maxTitleWidth-1] + "…"
+	}
+	return title
+}
+
+// adapterBadge returns a colored badge string for a given adapter ID (Phase 14a).
+func adapterBadge(adapterID string) string {
+	switch adapterID {
+	case "claude":
+		return lipgloss.NewStyle().Foreground(styles.Info).Render("[C]")
+	case "codex":
+		return lipgloss.NewStyle().Foreground(styles.Success).Render("[X]")
+	case "cursor":
+		return lipgloss.NewStyle().Foreground(styles.Primary).Render("[R]")
+	default:
+		return lipgloss.NewStyle().Foreground(styles.Dim).Render("[?]")
+	}
+}
+
+// renderAdapterGroupedSessions renders sessions grouped by adapter (Phase 14b).
+func (p *AgentPlugin) renderAdapterGroupedSessions(width int) []string {
+	var lines []string
+	globalIdx := 0
+
+	groupHeaderStyle := lipgloss.NewStyle().Bold(true).Foreground(styles.Info)
+	timeStyle := lipgloss.NewStyle().Foreground(styles.Dim)
+	activeStyle := lipgloss.NewStyle().Foreground(styles.Primary)
+
+	// Collect groups by adapter.
+	adapterOrder := []string{"claude", "codex", "cursor"}
+	adapterSessions := make(map[string][]adapter.Session)
+	adapterNames := map[string]string{
+		"claude": "Claude Code",
+		"codex":  "Codex",
+		"cursor": "Cursor",
+	}
+
+	for _, s := range p.state.Sessions {
+		adapterSessions[s.Adapter] = append(adapterSessions[s.Adapter], s)
+	}
+
+	for _, adapterID := range adapterOrder {
+		sessions := adapterSessions[adapterID]
+		if len(sessions) == 0 {
+			continue
+		}
+
+		name := adapterNames[adapterID]
+		if name == "" {
+			name = adapterID
+		}
+		header := fmt.Sprintf("%s (%d)", name, len(sessions))
+		lines = append(lines, " "+groupHeaderStyle.Render(header))
+
+		for _, session := range sessions {
+			selected := globalIdx == p.state.SelectedConv
+			isActive := session.ID != "" && session.ID == p.activeSessionID
+
+			icon := "○"
+			if isActive {
+				icon = "▸"
+			} else if selected {
+				icon = "●"
+			}
+
+			title := session.Title
+			if isActive && p.currentTitle != "" {
+				title = p.currentTitle
+			}
+			badge := adapterBadge(session.Adapter)
+			label := fmt.Sprintf(" %s %s %s", icon, badge, truncateSidebarTitle(title, width-5))
+
+			if isActive && p.streaming {
+				label += activeStyle.Render(" ●")
+			}
+
+			if selected || isActive {
+				line := lipgloss.NewStyle().
+					Foreground(styles.Primary).
+					Bold(true).
+					Background(styles.Secondary).
+					Width(width).
+					Render(label)
+				lines = append(lines, line)
+			} else {
+				lines = append(lines, lipgloss.NewStyle().
+					Foreground(styles.White).
+					Render(label))
+			}
+
+			meta := fmt.Sprintf("    %s · %d msgs", timeAgo(session.UpdatedAt), session.MessageCount)
+			lines = append(lines, timeStyle.Render(meta))
+
+			globalIdx++
+		}
+
+		lines = append(lines, "")
+	}
+
+	return lines
+}
+
 // IsFocused returns whether the plugin is active
 func (p *AgentPlugin) IsFocused() bool { return p.focused }
 
@@ -423,7 +1110,7 @@ func (p *AgentPlugin) IsFocused() bool { return p.focused }
 func (p *AgentPlugin) SetFocused(focused bool) {
 	p.focused = focused
 	if focused {
-		p.state.Input.Focus()
+		_ = p.state.Input.Focus()
 		p.state.InputFocused = true
 	} else {
 		p.state.Input.Blur()
@@ -444,6 +1131,9 @@ func (p *AgentPlugin) KeyHints() []plugin.KeyHint {
 	return []plugin.KeyHint{
 		{Key: "j/k", Description: "sessions"},
 		{Key: "enter", Description: "load"},
+		{Key: "ctrl+n", Description: "new chat"},
+		{Key: "ctrl+l", Description: "clear"},
+		{Key: "ctrl+g", Description: "group by"},
 		{Key: "a", Description: "analytics"},
 		{Key: "m", Description: "toggle markdown"},
 		{Key: "ctrl+b", Description: "toggle sidebar"},
@@ -455,10 +1145,65 @@ func (p *AgentPlugin) KeyHints() []plugin.KeyHint {
 func (p *AgentPlugin) handleKeyPress(msg tea.KeyMsg) (plugin.Plugin, tea.Cmd) {
 	key := msg.String()
 
+	// Search mode: route most keys to the search input (Phase 15).
+	if p.state.SearchMode {
+		switch key {
+		case "esc":
+			// Cancel search.
+			p.state.SearchMode = false
+			p.state.SearchQuery = ""
+			p.state.SearchResult = nil
+			p.state.SearchInput.Reset()
+			p.state.SearchInput.Blur()
+			return p, nil
+		case "enter":
+			// Load the highlighted search result.
+			return p, p.loadSelectedSession()
+		case "j", "down":
+			total := len(p.state.SearchResult)
+			if total > 0 && p.state.SelectedConv < total-1 {
+				p.state.SelectedConv++
+			}
+			return p, nil
+		case "k", "up":
+			if p.state.SelectedConv > 0 {
+				p.state.SelectedConv--
+			}
+			return p, nil
+		default:
+			var cmd tea.Cmd
+			p.state.SearchInput, cmd = p.state.SearchInput.Update(msg)
+			q := p.state.SearchInput.Value()
+			if q != p.state.SearchQuery {
+				p.state.SearchQuery = q
+				p.state.SearchResult = p.searchSessions(q)
+				p.state.SelectedConv = 0
+			}
+			return p, cmd
+		}
+	}
+
 	switch key {
 	case "ctrl+b":
 		p.state.WideMode = !p.state.WideMode
 		return p, nil
+
+	case "ctrl+g":
+		// Toggle sidebar grouping: date-grouped ↔ adapter-grouped (Phase 14b)
+		p.state.GroupByAdapter = !p.state.GroupByAdapter
+		return p, nil
+
+	case "/":
+		// Activate search mode when not typing in the input (Phase 15a).
+		if !p.state.InputFocused {
+			p.state.SearchMode = true
+			p.state.SearchQuery = ""
+			p.state.SearchResult = p.state.Sessions
+			p.state.SelectedConv = 0
+			p.state.SearchInput.Reset()
+			_ = p.state.SearchInput.Focus()
+			return p, textinput.Blink
+		}
 
 	case "m":
 		// Toggle markdown rendering (A-6)
@@ -506,30 +1251,31 @@ func (p *AgentPlugin) handleKeyPress(msg tea.KeyMsg) (plugin.Plugin, tea.Cmd) {
 		}
 
 	case "enter":
-		if !p.state.InputFocused {
-			// Load selected session messages
-			return p, p.loadSelectedSession()
-		}
-
-	case "ctrl+enter":
 		if p.state.InputFocused {
+			// Send message — Shift+Enter is handled by textarea KeyMap for newlines.
 			return p, p.sendMessage()
 		}
-		return p, nil
+		// Sidebar: load selected session messages.
+		return p, p.loadSelectedSession()
 
 	case "tab":
 		// Toggle between sidebar and input focus
 		p.state.InputFocused = !p.state.InputFocused
 		if p.state.InputFocused {
-			p.state.Input.Focus()
+			_ = p.state.Input.Focus()
 		} else {
 			p.state.Input.Blur()
 		}
 		return p, nil
 
-	case "esc", "backspace":
-		// If input is focused, blur it first
+	case "esc":
 		if p.state.InputFocused {
+			if strings.TrimSpace(p.state.Input.Value()) != "" {
+				// First Esc: clear text, stay focused.
+				p.state.Input.Reset()
+				return p, nil
+			}
+			// Second Esc (empty): blur textarea.
 			p.state.InputFocused = false
 			p.state.Input.Blur()
 			return p, nil
@@ -538,7 +1284,44 @@ func (p *AgentPlugin) handleKeyPress(msg tea.KeyMsg) (plugin.Plugin, tea.Cmd) {
 			return plugin.FocusPluginMsg{ID: "home"}
 		}
 
+	case "ctrl+n":
+		// Start a fresh conversation: clear state, do not resume.
+		p.state.Messages = []chat.Message{}
+		p.renderCache = make(map[int]string)
+		p.stdinPipe = nil
+		p.streaming = false
+		p.streamText.Reset()
+		p.resumeSessionID = ""
+		p.activeSessionID = ""
+		p.currentTitle = ""
+		p.titleGenerated = false
+		_ = p.state.Input.Focus()
+		p.state.InputFocused = true
+		return p, nil
+
+	case "r":
+		// Retry last message after a process crash (Phase 18d).
+		if !p.state.InputFocused && p.lastError != nil && !p.streaming && p.lastUserMessage != "" {
+			p.lastError = nil
+			p.state.Input.SetValue(p.lastUserMessage)
+			return p, p.sendMessage()
+		}
+
 	case "ctrl+c":
+		// Abort the current streaming response (Phase 17).
+		if p.streaming && p.cancelConv != nil {
+			p.cancelConv()
+			p.cancelConv = nil
+			p.streaming = false
+			p.stdinPipe = nil
+			p.streamText.Reset()
+		}
+		return p, nil
+
+	case "ctrl+l":
+		// Clear chat viewport (Phase 17).
+		p.state.Messages = []chat.Message{}
+		p.renderCache = make(map[int]string)
 		return p, nil
 
 	default:
@@ -552,26 +1335,73 @@ func (p *AgentPlugin) handleKeyPress(msg tea.KeyMsg) (plugin.Plugin, tea.Cmd) {
 	return p, nil
 }
 
-// renderMessages renders all messages, with optional Glamour markdown (A-6)
+// renderMessages renders all messages with caching for completed messages.
 func (p *AgentPlugin) renderMessages(width int) string {
 	if len(p.state.Messages) == 0 {
 		return styles.DimStyle.Render("  No messages yet. Start a conversation!")
 	}
 
+	// Invalidate cache on resize.
+	if width != p.lastWidth {
+		p.renderCache = make(map[int]string)
+		p.lastWidth = width
+	}
+
 	var rendered []string
 	for i, msg := range p.state.Messages {
+		// Use cached render for completed messages.
+		if cached, ok := p.renderCache[i]; ok {
+			rendered = append(rendered, cached)
+			rendered = append(rendered, "")
+			continue
+		}
+
 		collapsed := p.state.ToolsCollapsed[i]
+		var msgRendered string
 
 		if msg.Type == chat.MessageTypeAssistant && p.state.MarkdownMode {
-			// Use Glamour markdown rendering (A-6)
-			rendered = append(rendered, renderAssistantMarkdown(msg.Content, width))
+			if msg.Status == "streaming" {
+				// Use streaming renderer — no cache yet.
+				msgRendered = renderAssistantMarkdownStreaming(msg.Content, width)
+			} else {
+				msgRendered = renderAssistantMarkdown(msg.Content, width)
+				// Cache completed messages.
+				p.renderCache[i] = msgRendered
+			}
 		} else {
-			msgRendered := chat.RenderMessage(msg, width, collapsed)
-			rendered = append(rendered, msgRendered)
+			msgRendered = chat.RenderMessage(msg, width, collapsed)
+			if msg.Status != "streaming" {
+				p.renderCache[i] = msgRendered
+			}
 		}
+		rendered = append(rendered, msgRendered)
 		rendered = append(rendered, "")
 	}
 	return strings.Join(rendered, "\n")
+}
+
+// renderAssistantMarkdownStreaming renders a streaming assistant message using
+// the incremental Glamour approach — complete paragraphs rendered, trailing
+// partial text shown raw.
+func renderAssistantMarkdownStreaming(content string, width int) string {
+	barWidth := 2
+	contentWidth := width - barWidth - 2
+	if contentWidth < 20 {
+		contentWidth = 20
+	}
+
+	rendered := markdown.RenderStreaming(content, contentWidth)
+	rendered = strings.TrimRight(rendered, "\n")
+
+	lines := strings.Split(rendered, "\n")
+	barStyle := lipgloss.NewStyle().Foreground(styles.Primary)
+
+	var result []string
+	for _, line := range lines {
+		bar := barStyle.Render("▎")
+		result = append(result, bar+" "+line)
+	}
+	return strings.Join(result, "\n")
 }
 
 // renderAssistantMarkdown renders an assistant message using Glamour (A-6)
@@ -598,26 +1428,53 @@ func renderAssistantMarkdown(content string, width int) string {
 	return strings.Join(result, "\n")
 }
 
-// sendMessage sends the current input as a message
+// sendMessage sends the current textarea input as a message.
+// If a Claude CLI subprocess is already running, writes to its stdin.
+// Otherwise, starts a new conversation subprocess.
 func (p *AgentPlugin) sendMessage() tea.Cmd {
 	content := strings.TrimSpace(p.state.Input.Value())
-	if content == "" {
+	if content == "" || p.streaming {
 		return nil
 	}
 
-	userMsg := chat.Message{
+	p.state.Messages = append(p.state.Messages, chat.Message{
 		Type:    chat.MessageTypeUser,
 		Content: content,
-	}
-	p.state.Messages = append(p.state.Messages, userMsg)
+	})
 	p.state.Input.Reset()
+	p.streaming = true
+	p.streamText.Reset()
+	p.lastError = nil
+	p.lastUserMessage = content
 
-	return func() tea.Msg {
-		return AddMessageMsg{Message: chat.Message{
-			Type:    chat.MessageTypeAssistant,
-			Content: "I'm a placeholder response. In the future, I'll integrate with the Claude CLI to provide real responses.",
-		}}
+	if p.stdinPipe != nil {
+		// Send to existing conversation subprocess.
+		stdinPipe := p.stdinPipe
+		return func() tea.Msg {
+			_ = claude.SendMessage(stdinPipe, content)
+			return nil
+		}
 	}
+
+	// Start a new conversation subprocess (fresh or resuming).
+	projectDir := p.getProjectDir()
+	config := claude.ConversationConfig{
+		ProjectDir: projectDir,
+		SessionID:  p.resumeSessionID,
+	}
+	p.resumeSessionID = "" // consume the resume ID
+	bus := p.bus
+	return claude.RunConversationCmd(config, bus)
+}
+
+// getProjectDir returns the best project directory for new conversations.
+func (p *AgentPlugin) getProjectDir() string {
+	// Prefer the selected session's project path.
+	if p.state.SessionsLoaded && len(p.state.Sessions) > 0 &&
+		p.state.SelectedConv < len(p.state.Sessions) {
+		return p.state.Sessions[p.state.SelectedConv].ProjectPath
+	}
+	return ""
 }
 
 // totalSessions returns the total number of navigable sessions
@@ -628,16 +1485,29 @@ func (p *AgentPlugin) totalSessions() int {
 	return len(p.state.Sessions)
 }
 
-// loadSelectedSession loads messages for the currently selected session
+// loadSelectedSession loads messages for the currently selected session and
+// prepares the session ID for resumption when the user sends the next message.
 func (p *AgentPlugin) loadSelectedSession() tea.Cmd {
 	if p.ctx.DemoMode || !p.state.SessionsLoaded {
 		return nil
 	}
-	if p.state.SelectedConv < 0 || p.state.SelectedConv >= len(p.state.Sessions) {
+
+	// In search mode, navigate from search results.
+	sessions := p.state.Sessions
+	if p.state.SearchMode && len(p.state.SearchResult) > 0 {
+		sessions = p.state.SearchResult
+	}
+
+	if p.state.SelectedConv < 0 || p.state.SelectedConv >= len(sessions) {
 		return nil
 	}
 
-	session := p.state.Sessions[p.state.SelectedConv]
+	session := sessions[p.state.SelectedConv]
+	// Set the resume session ID so the next sendMessage() will use --resume.
+	p.resumeSessionID = session.ID
+	p.currentTitle = session.Title
+	p.titleGenerated = true
+
 	adapters := p.adapters
 	epoch := p.ctx.Epoch
 	return func() tea.Msg {
@@ -652,6 +1522,31 @@ func (p *AgentPlugin) loadSelectedSession() tea.Cmd {
 		}
 		return SessionMessagesLoadedMsg{Error: fmt.Errorf("adapter %q not found", session.Adapter), Epoch: epoch}
 	}
+}
+
+// resumeSession starts a Claude CLI subprocess to resume a previous session.
+func (p *AgentPlugin) resumeSession(session adapter.Session) tea.Cmd {
+	config := claude.ConversationConfig{
+		ProjectDir: session.ProjectPath,
+		SessionID:  session.ID,
+	}
+	return claude.RunConversationCmd(config, p.bus)
+}
+
+// searchSessions filters sessions by title or project path (Phase 15b).
+func (p *AgentPlugin) searchSessions(query string) []adapter.Session {
+	if query == "" {
+		return p.state.Sessions
+	}
+	query = strings.ToLower(query)
+	var results []adapter.Session
+	for _, s := range p.state.Sessions {
+		if strings.Contains(strings.ToLower(s.Title), query) ||
+			strings.Contains(strings.ToLower(s.ProjectPath), query) {
+			results = append(results, s)
+		}
+	}
+	return results
 }
 
 // ── Commands ──────────────────────────────────────────────────────────────────
@@ -761,6 +1656,24 @@ var modelRates = map[string]modelCostRate{
 	"opus":   {InputPerMillion: 15.0, OutputPerMillion: 75.0},
 	"sonnet": {InputPerMillion: 3.0, OutputPerMillion: 15.0},
 	"haiku":  {InputPerMillion: 0.25, OutputPerMillion: 1.25},
+}
+
+// estimateCostPerToken returns cost per token for input (isInput=true) or output.
+func estimateCostPerToken(model string, isInput bool) float64 {
+	lowerModel := strings.ToLower(model)
+	for key, rate := range modelRates {
+		if strings.Contains(lowerModel, key) {
+			if isInput {
+				return rate.InputPerMillion / 1_000_000
+			}
+			return rate.OutputPerMillion / 1_000_000
+		}
+	}
+	// Default to Sonnet pricing.
+	if isInput {
+		return 3.0 / 1_000_000
+	}
+	return 15.0 / 1_000_000
 }
 
 // estimateCost estimates the cost of tokens for a given model
@@ -1048,4 +1961,22 @@ type SessionMessagesLoadedMsg struct {
 	Messages []chat.Message
 	Error    error
 	Epoch    uint64
+}
+
+// ── Streaming message types (Phase 6) ─────────────────────────────────────────
+
+// busEventMsg wraps an agentbus.Event for delivery through the Bubble Tea runtime.
+type busEventMsg struct{ Event agentbus.Event }
+
+// listenForBusEvents returns a tea.Cmd that reads one event from the channel
+// and delivers it as a busEventMsg. The caller should re-issue this command
+// after handling each event to keep the pipeline alive.
+func listenForBusEvents(ch <-chan agentbus.Event) tea.Cmd {
+	return func() tea.Msg {
+		e, ok := <-ch
+		if !ok {
+			return nil
+		}
+		return busEventMsg{Event: e}
+	}
 }

@@ -843,11 +843,11 @@ After the first assistant response in a new session, generate a title from the f
 In the sidebar, the currently active session shows a `▸` prefix and is highlighted with the primary color. Running sessions show a pulsing dot indicator.
 
 ### Verification
-- [ ] Selecting a historical session loads its messages
-- [ ] Sending a message in a historical session resumes it via --resume
-- [ ] Ctrl+N starts a fresh conversation
-- [ ] Active session is visually distinct in sidebar
-- [ ] Session title updates after first exchange
+- [x] Selecting a historical session loads its messages
+- [x] Sending a message in a historical session resumes it via --resume
+- [x] Ctrl+N starts a fresh conversation
+- [x] Active session is visually distinct in sidebar
+- [x] Session title updates after first exchange
 
 ---
 
@@ -892,10 +892,10 @@ p.adapters = []adapter.Adapter{
 ```
 
 ### Verification
-- [ ] Codex adapter correctly detects availability
-- [ ] Sessions from Codex appear in sidebar with "Codex" badge
-- [ ] Messages load correctly from Codex format
-- [ ] Graceful handling when Codex is not installed
+- [x] Codex adapter correctly detects availability
+- [x] Sessions from Codex appear in sidebar with "Codex" badge
+- [x] Messages load correctly from Codex format
+- [x] Graceful handling when Codex is not installed
 
 ---
 
@@ -933,10 +933,10 @@ Implementation:
 Register Cursor adapter alongside Claude and Codex.
 
 ### Verification
-- [ ] Cursor adapter correctly detects availability
-- [ ] Sessions appear in sidebar with "Cursor" badge
-- [ ] Messages load correctly
-- [ ] Graceful handling when Cursor is not installed
+- [x] Cursor adapter correctly detects availability
+- [x] Sessions appear in sidebar with "Cursor" badge
+- [x] Messages load correctly
+- [x] Graceful handling when Cursor is not installed
 
 ---
 
@@ -965,9 +965,9 @@ Add `Ctrl+G` to toggle between date-grouped and adapter-grouped sidebar views.
 Each group header shows the count: `Today (3)` or `Claude Code (12)`.
 
 ### Verification
-- [ ] Adapter badges render correctly with distinct colors
-- [ ] Ctrl+G toggles grouping mode
-- [ ] Session counts are accurate
+- [x] Adapter badges render correctly with distinct colors
+- [x] Ctrl+G toggles grouping mode
+- [x] Session counts are accurate
 
 ---
 
@@ -1005,10 +1005,10 @@ func (p *AgentPlugin) searchSessions(query string) []adapter.Session {
 Search results highlight the matching portion of the title.
 
 ### Verification
-- [ ] `/` activates search mode
-- [ ] Results filter in real-time as user types
-- [ ] Escape clears search and restores full list
-- [ ] Match highlighting works correctly
+- [x] `/` activates search mode
+- [x] Results filter in real-time as user types
+- [x] Escape clears search and restores full list
+- [x] Match highlighting works correctly
 
 ---
 
@@ -1044,9 +1044,9 @@ During streaming, show a compact cost indicator in the input area:
 In analytics mode, show cost breakdown per session including model, tokens, and estimated cost.
 
 ### Verification
-- [ ] Token counts update in real-time during streaming
-- [ ] Cost estimate is visible in input area
-- [ ] Analytics view shows per-session cost breakdown
+- [x] Token counts update in real-time during streaming
+- [x] Cost estimate is visible in input area
+- [x] Analytics view shows per-session cost breakdown
 
 ---
 
@@ -1081,9 +1081,9 @@ In analytics mode, show cost breakdown per session including model, tokens, and 
 Ensure all shortcuts are implemented in the `Update()` method with proper focus gating (shortcuts only active in appropriate context).
 
 ### Verification
-- [ ] All shortcuts work in their designated context
-- [ ] No shortcut conflicts between contexts
-- [ ] Ctrl+C during streaming gracefully aborts
+- [x] All shortcuts work in their designated context
+- [x] No shortcut conflicts between contexts
+- [x] Ctrl+C during streaming gracefully aborts
 
 ---
 
@@ -1142,12 +1142,12 @@ type RetryLastMsg struct{}
 ```
 
 ### Verification
-- [ ] Missing Claude CLI shows install instructions
-- [ ] Process crash shows error banner with retry option
-- [ ] Ctrl+C of prism-cli terminates Claude subprocess
-- [ ] Large output is truncated gracefully
-- [ ] Cannot send messages while already streaming
-- [ ] Permission dialog times out after 5 minutes
+- [x] Missing Claude CLI shows install instructions
+- [x] Process crash shows error banner with retry option
+- [x] Ctrl+C of prism-cli terminates Claude subprocess
+- [x] Large output is truncated gracefully
+- [x] Cannot send messages while already streaming
+- [x] Permission dialog times out after 5 minutes
 
 ---
 
@@ -1205,9 +1205,9 @@ func (c *BubbleTeaConsumer) OnEvent(event Event) {
 ```
 
 ### Verification
-- [ ] Events serialize/deserialize to JSON correctly
-- [ ] BubbleTeaConsumer correctly converts all event types
-- [ ] Event protocol is documented with examples
+- [x] Events serialize/deserialize to JSON correctly
+- [x] BubbleTeaConsumer correctly converts all event types
+- [x] Event protocol is documented with examples
 
 ---
 
@@ -1247,10 +1247,10 @@ go vet ./...   # No vet issues
 ```
 
 ### Verification
-- [ ] All unit tests pass
-- [ ] Integration tests pass on Windows, macOS, Linux
-- [ ] `make lint` clean
-- [ ] No race conditions detected with `go test -race`
+- [x] All unit tests pass
+- [x] Integration tests pass on Windows, macOS, Linux
+- [x] `make lint` clean
+- [x] No race conditions detected with `go test -race`
 
 ---
 
@@ -1362,6 +1362,6 @@ These phases can be worked on concurrently:
 - [ ] Multi-line input works with Enter/Shift+Enter
 - [ ] Search finds sessions across all adapters
 - [ ] Error states show helpful messages with recovery options
-- [ ] Ctrl+C during streaming gracefully aborts
+- [x] Ctrl+C during streaming gracefully aborts
 - [ ] Prism-cli exit terminates all Claude subprocesses
 - [ ] Performance is smooth even with fast streaming output

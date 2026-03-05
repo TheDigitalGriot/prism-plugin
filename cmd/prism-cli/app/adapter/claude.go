@@ -27,8 +27,9 @@ func NewClaudeAdapter(baseDir string) *ClaudeAdapter {
 	return &ClaudeAdapter{baseDir: baseDir}
 }
 
-func (a *ClaudeAdapter) ID() string   { return "claude" }
-func (a *ClaudeAdapter) Name() string { return "Claude Code" }
+func (a *ClaudeAdapter) ID() string           { return "claude" }
+func (a *ClaudeAdapter) Name() string         { return "Claude Code" }
+func (a *ClaudeAdapter) SupportsWrite() bool  { return true }
 
 func (a *ClaudeAdapter) Available() bool {
 	info, err := os.Stat(a.baseDir)

@@ -32,4 +32,6 @@ type Adapter interface {
 	ScanSessions() ([]Session, error)
 	// LoadMessages loads messages from a specific session file
 	LoadMessages(sessionPath string) ([]chat.Message, error)
+	// SupportsWrite returns true if the adapter can persist new messages back to disk
+	SupportsWrite() bool
 }

@@ -1,6 +1,8 @@
 package markdown
 
 import (
+	"strings"
+
 	"github.com/charmbracelet/glamour"
 )
 
@@ -70,4 +72,35 @@ func Available() bool {
 	}
 	renderer = initRenderer(80)
 	return renderer != nil
+}
+
+// RenderStreaming renders markdown optimised for streaming output.
+// It splits at the last double-newline: complete blocks before it are rendered
+// with full Glamour processing, and the trailing incomplete paragraph is
+// returned as plain text so it appears immediately without waiting for Glamour.
+func RenderStreaming(content string, width int) string {
+	if content == "" {
+		return ""
+	}
+	if width <= 0 {
+		width = 80
+	}
+
+	// Find the last paragraph boundary.
+	boundary := strings.LastIndex(content, "\n\n")
+	if boundary < 0 {
+		// No complete paragraph yet — return raw.
+		return content
+	}
+
+	complete := content[:boundary+2]
+	trailing := content[boundary+2:]
+
+	rendered := RenderDark(complete, width)
+	rendered = strings.TrimRight(rendered, "\n")
+
+	if trailing != "" {
+		rendered += "\n" + trailing
+	}
+	return rendered
 }

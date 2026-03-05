@@ -21,6 +21,27 @@ type StreamEvent struct {
 	Result   string `json:"result,omitempty"`
 	IsError  bool   `json:"is_error,omitempty"`
 	Duration int    `json:"duration_ms,omitempty"`
+
+	// For permission request events (type: "permission_request")
+	PermissionRequest *PermissionRequestEvent `json:"permission_request,omitempty"`
+
+	// For cost/usage events
+	Usage *UsageEvent `json:"usage,omitempty"`
+}
+
+// PermissionRequestEvent is embedded in permission_request stream events.
+type PermissionRequestEvent struct {
+	ID          string `json:"id"`
+	ToolName    string `json:"tool_name"`
+	Description string `json:"description"`
+	Preview     string `json:"preview"`
+}
+
+// UsageEvent carries token usage information.
+type UsageEvent struct {
+	InputTokens  int    `json:"input_tokens"`
+	OutputTokens int    `json:"output_tokens"`
+	Model        string `json:"model"`
 }
 
 // ToolUse represents a tool being used by Claude
