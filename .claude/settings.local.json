@@ -5,5 +5,8 @@
       "Bash(go build:*)",
       "Bash(go test:*)"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "codebase-memory-mcp"
+  ]
 }
