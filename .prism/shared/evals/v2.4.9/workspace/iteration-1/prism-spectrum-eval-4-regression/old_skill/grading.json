@@ -1,0 +1,45 @@
+{
+  "expectations": [
+    {
+      "text": "All state files were loaded fresh (stories.json, progress.md, CLAUDE.md)",
+      "passed": false,
+      "evidence": "Phase 1 Load State table shows stories-basic.json READ, progress.md READ, but CLAUDE.md marked 'SKIPPED' with note 'Not re-read (project instructions already in context)'. The assertion requires all three files to be loaded fresh; CLAUDE.md was not re-read."
+    },
+    {
+      "text": "Exactly one story was executed per invocation",
+      "passed": true,
+      "evidence": "Phase 3: 'Selected: EVAL-001'. EVAL-002 blocked by EVAL-001 and skipped. Only EVAL-001 implemented in Phase 5."
+    },
+    {
+      "text": "All files in story.files were read BEFORE making changes",
+      "passed": true,
+      "evidence": "Phase 5 Step 1: 'Read prism-eval/src/data/mock-data.ts (119 lines)' before Step 2: 'Add comment block at top (SIMULATED)'"
+    },
+    {
+      "text": "Quality gates were run before any commit attempt",
+      "passed": true,
+      "evidence": "Phase 6 shows both quality gates executed ('typecheck: OK PASS', 'lint: OK PASS') before Phase 7 (Commit SIMULATED)"
+    },
+    {
+      "text": "Commit was atomic (one story = one commit, or simulated as such)",
+      "passed": true,
+      "evidence": "Phase 7: Single git add + git commit for prism-eval/src/data/mock-data.ts with message '[EVAL-001] Add eval test comment to mock-data.ts'"
+    },
+    {
+      "text": "stories.json was updated with status complete and completedAt",
+      "passed": true,
+      "evidence": "Phase 8: 'EVAL-001.status: pending -> complete', 'EVAL-001.completedAt: 2026-03-07T00:00:00Z', 'EVAL-001.commitHash: abc1234'"
+    },
+    {
+      "text": "Correct signal tag was used (spectrum-continue if remaining > 0)",
+      "passed": true,
+      "evidence": "Phase 9: 'After EVAL-001 completion: 1 complete, 1 remaining (EVAL-002). Remaining > 0: Use spectrum-continue'. Signal: '<spectrum-continue>STORY_COMPLETE: EVAL-001 - Progress: 1/2, 1 remaining</spectrum-continue>'"
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 1,
+    "total": 7,
+    "pass_rate": 0.86
+  }
+}

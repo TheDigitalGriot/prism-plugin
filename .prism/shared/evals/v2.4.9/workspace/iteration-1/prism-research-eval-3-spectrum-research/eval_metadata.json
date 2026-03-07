@@ -1,0 +1,16 @@
+{
+  "eval_id": 3,
+  "eval_name": "spectrum-research",
+  "skill": "prism-research",
+  "prompt": "Understand how the Spectrum autonomous execution workflow works in this project. Research the spectrum.sh script and prism-spectrum skill.",
+  "assertions": [
+    "Output file exists at the specified outputs/research.md path",
+    "Document describes the signal protocol (spectrum-continue, spectrum-retry, spectrum-blocked, promise COMPLETE)",
+    "Document describes stories.json state management and story status tracking",
+    "Document describes the fresh-context-per-iteration principle",
+    "Document references spectrum.sh script with file:line references",
+    "Document references prism-spectrum SKILL.md with file:line references",
+    "Document does NOT contain improvement suggestions or critiques",
+    "Mentioned files (spectrum.sh, SKILL.md) were read before agents were spawned"
+  ]
+}

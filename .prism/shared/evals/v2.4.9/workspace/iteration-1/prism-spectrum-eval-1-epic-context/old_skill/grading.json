@@ -1,0 +1,45 @@
+{
+  "expectations": [
+    {
+      "text": "Stories file was read completely before any implementation",
+      "passed": true,
+      "evidence": "Step 1 Load State: 'stories-basic.json - Read successfully. Contains 2 stories (EVAL-001, EVAL-002)'. Read before any implementation in Step 5."
+    },
+    {
+      "text": "Epic context fields were referenced: decisions, risks, outOfScope, or references",
+      "passed": false,
+      "evidence": "Section 'Notable Observation: Epic Context NOT Consulted': 'The v2.4.8 skill does NOT have a Step 1b (Epic Context). This means the following epic-level fields were available in stories.json but were NOT explicitly consulted as part of the workflow.' The fields are listed but explicitly marked as NOT consulted."
+    },
+    {
+      "text": "Story context fields were referenced: context.why, context.risks, or context.edgeCases",
+      "passed": false,
+      "evidence": "The transcript does not show any extraction or reference to story context.why, context.risks, or context.edgeCases. The v2.4.8 workflow lacks Step 1b and does not extract per-story context fields."
+    },
+    {
+      "text": "Quality gates were executed (echo commands from epic.qualityGates)",
+      "passed": true,
+      "evidence": "Step 6: 'echo typecheck: OK' and 'echo lint: OK' both executed. 'All quality gates passed.'"
+    },
+    {
+      "text": "Story announcement included spectrum-story signal with ID and Title",
+      "passed": true,
+      "evidence": "Step 4: '<spectrum-story>\\nID: EVAL-001\\nTitle: Add eval test comment to mock-data.ts\\nPriority: 1\\nFiles: prism-eval/src/data/mock-data.ts (modify)\\n</spectrum-story>'"
+    },
+    {
+      "text": "Progress.md was updated with a completion entry",
+      "passed": true,
+      "evidence": "Step 8 shows simulated progress.md append: '## 2026-03-07T00:00:00.000Z - EVAL-001 Complete' with What was done, Learnings, Files changed, Quality gates sections"
+    },
+    {
+      "text": "Only EVAL-001 was executed (EVAL-002 is blocked by EVAL-001)",
+      "passed": true,
+      "evidence": "Step 3: 'EVAL-001 (priority 1, no blockers) -- SELECTED'. 'EVAL-002 is blocked by EVAL-001 (not yet complete), so it is skipped.' Only EVAL-001 was executed."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 2,
+    "total": 7,
+    "pass_rate": 0.71
+  }
+}

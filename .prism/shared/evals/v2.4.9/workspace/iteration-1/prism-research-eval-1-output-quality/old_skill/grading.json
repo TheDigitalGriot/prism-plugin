@@ -1,0 +1,50 @@
+{
+  "expectations": [
+    {
+      "text": "Output file exists at the specified outputs/research.md path",
+      "passed": true,
+      "evidence": "File exists and contains 445 lines of research output"
+    },
+    {
+      "text": "Document contains file:line references (pattern like filename.ts:NN or filename.md:NN)",
+      "passed": true,
+      "evidence": "Numerous file:line references, e.g. 'skills/prism/SKILL.md:17-27', 'skills/prism-research/SKILL.md:1-5', 'agents/codebase-locator.md:1-6', 'skills/prism/SKILL.md:239-243', '.claude-plugin/plugin.json:1-8'"
+    },
+    {
+      "text": "Document has a 'Research Question' or equivalent heading section",
+      "passed": true,
+      "evidence": "Line 14: '## Research Question' followed by 'How does the navigation system work in this codebase?'"
+    },
+    {
+      "text": "Document has a 'Summary' section with 2-3 sentence overview",
+      "passed": true,
+      "evidence": "Line 19: '## Summary' with a 3-sentence paragraph covering the three-layer navigation architecture, YAML frontmatter discovery, and the 4-phase workflow"
+    },
+    {
+      "text": "Document has a 'Files Discovered' section listing relevant file paths",
+      "passed": true,
+      "evidence": "Line 22: '## Files Discovered' with a comprehensive table listing skills, commands, agents, and reference files"
+    },
+    {
+      "text": "Document has a 'Component Analysis' section explaining how code works",
+      "passed": true,
+      "evidence": "Line 79: '## Component Analysis' with subsections covering Skills (Layer 1), Commands (Layer 2), Agents (Layer 3), Navigation Flow, Plugin Discovery, State Persistence, Context Management, and TodoWrite Integration"
+    },
+    {
+      "text": "Document does NOT contain improvement suggestions, recommendations, or phrases like 'could be improved', 'should be refactored', 'consider using'",
+      "passed": true,
+      "evidence": "No improvement suggestions, recommendations, or critique language found. Document is purely descriptive."
+    },
+    {
+      "text": "Document references navigation-related files (e.g. NavigationContext, Sidebar, routing, AppShell, or screen components)",
+      "passed": true,
+      "evidence": "Covers navigation/routing extensively through skill routing tables, phase-to-phase transitions with ASCII flow diagrams, state-based workflow resumption, and context management navigation. Appropriate for a plugin codebase."
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 0,
+    "total": 8,
+    "pass_rate": 1.0
+  }
+}

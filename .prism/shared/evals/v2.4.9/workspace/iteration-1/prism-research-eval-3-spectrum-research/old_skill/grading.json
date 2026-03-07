@@ -1,0 +1,50 @@
+{
+  "expectations": [
+    {
+      "text": "Output file exists at the specified outputs/research.md path",
+      "passed": true,
+      "evidence": "File exists and contains 267 lines of research output"
+    },
+    {
+      "text": "Document describes the signal protocol (spectrum-continue, spectrum-retry, spectrum-blocked, promise COMPLETE)",
+      "passed": true,
+      "evidence": "Section '4. Signal Protocol' with table listing all 5 signals: Complete (<promise>COMPLETE</promise>), Continue (<spectrum-continue>), Retry (<spectrum-retry>), Blocked (<spectrum-blocked>), Error (<spectrum-error>) with tags, Go constants, and purposes"
+    },
+    {
+      "text": "Document describes stories.json state management and story status tracking",
+      "passed": true,
+      "evidence": "Section '5. stories.json Schema' describes the full schema including epic object and stories array with status field ('pending', 'in_progress', 'complete'), blockedBy, files, steps, and context fields"
+    },
+    {
+      "text": "Document describes the fresh-context-per-iteration principle",
+      "passed": true,
+      "evidence": "Pattern 'Fresh Context Pattern': 'The core design principle is that each iteration runs in a completely fresh Claude session. Memory persists exclusively through files: stories.json (story status), progress.md (accumulated learnings), and git commits (code changes).'"
+    },
+    {
+      "text": "Document references spectrum.sh script with file:line references",
+      "passed": true,
+      "evidence": "Multiple references: 'scripts/spectrum.sh:1-313', 'spectrum.sh:75-94' (prerequisites), 'spectrum.sh:34-66' (configuration), 'spectrum.sh:41-61' (progress path), 'spectrum.sh:212-308' (main loop), 'spectrum.sh:176-209' (signal checking)"
+    },
+    {
+      "text": "Document references prism-spectrum SKILL.md with file:line references",
+      "passed": true,
+      "evidence": "Multiple references: 'skills/prism-spectrum/SKILL.md:1-407', 'SKILL.md:12-18' (philosophy), 'SKILL.md:36-49' (Load State), 'SKILL.md:51-62' (Epic Context), 'SKILL.md:91-104' (Pick Next Story), 'SKILL.md:134-157' (Quality Gates), 'SKILL.md:231-258' (Signal Continuation)"
+    },
+    {
+      "text": "Document does NOT contain improvement suggestions or critiques",
+      "passed": true,
+      "evidence": "No improvement suggestions or critiques found. Document is purely descriptive."
+    },
+    {
+      "text": "Mentioned files (spectrum.sh, SKILL.md) were read before agents were spawned",
+      "passed": false,
+      "evidence": "Cannot determine reading order from the output document. The research.md does not contain a transcript or log showing the sequence of file reads versus agent spawning."
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 1,
+    "total": 8,
+    "pass_rate": 0.88
+  }
+}

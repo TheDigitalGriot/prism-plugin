@@ -1,0 +1,16 @@
+{
+  "eval_id": 2,
+  "eval_name": "graph-verification",
+  "skill": "prism-spectrum",
+  "prompt": "Execute the next story from .prism/shared/evals/v2.4.9/skills/prism-spectrum/fixtures/stories-graph-targets.json. Progress file: .prism/shared/evals/v2.4.9/skills/prism-spectrum/fixtures/progress.md",
+  "assertions": [
+    "Stories file was read completely before implementation",
+    "graphTargets field was recognized in story context",
+    "Graph verification was attempted or explicitly skipped (if codebase-memory-mcp unavailable)",
+    "If graph available: index_repository was called before implementation",
+    "If graph available: trace_call_path was called for functions in graphTargets",
+    "If graph unavailable: skip was noted silently (not errored)",
+    "Quality gates were executed",
+    "Progress.md was updated"
+  ]
+}

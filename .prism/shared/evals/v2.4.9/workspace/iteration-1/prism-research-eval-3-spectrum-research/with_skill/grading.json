@@ -1,0 +1,50 @@
+{
+  "expectations": [
+    {
+      "text": "Output file exists at the specified outputs/research.md path",
+      "passed": true,
+      "evidence": "File exists and contains 341 lines of research output"
+    },
+    {
+      "text": "Document describes the signal protocol (spectrum-continue, spectrum-retry, spectrum-blocked, promise COMPLETE)",
+      "passed": true,
+      "evidence": "Section '3. Signal Protocol' with detailed table at 'packages/prism-core/src/prism/signals.ts:58-104' listing all 5 signals: Complete (<promise>COMPLETE</promise>), Error (<spectrum-error>), Retry (<spectrum-retry>), Blocked (<spectrum-blocked>), Continue (<spectrum-continue>) with meanings and orchestrator actions"
+    },
+    {
+      "text": "Document describes stories.json state management and story status tracking",
+      "passed": true,
+      "evidence": "Section '4. Story Management' at 'packages/prism-core/src/prism/stories.ts:1-114' describing blocking resolution, next story selection, status tracking (pending/in_progress/complete), and file I/O. Also Section '9. Plan Decomposition' covering the stories.json schema."
+    },
+    {
+      "text": "Document describes the fresh-context-per-iteration principle",
+      "passed": true,
+      "evidence": "Pattern 'Fresh Context Per Iteration Pattern' at 'scripts/spectrum.sh:163-168': 'Each iteration spawns a completely fresh Claude CLI session... Memory persists only through files on disk (stories.json and progress.md), not through AI context windows. This prevents context degradation over long execution runs.'"
+    },
+    {
+      "text": "Document references spectrum.sh script with file:line references",
+      "passed": true,
+      "evidence": "Multiple file:line references: 'scripts/spectrum.sh:75-94' (prerequisites), 'scripts/spectrum.sh:36' (stories path), 'scripts/spectrum.sh:41-61' (progress path), 'scripts/spectrum.sh:235-286' (iteration loop), 'scripts/spectrum.sh:176-209' (signal detection)"
+    },
+    {
+      "text": "Document references prism-spectrum SKILL.md with file:line references",
+      "passed": true,
+      "evidence": "Multiple references: 'skills/prism-spectrum/SKILL.md:35-406' (workflow steps), 'SKILL.md:35-49' (Load State), 'SKILL.md:53-62' (Epic Context), 'SKILL.md:93-104' (Pick Next Story), 'SKILL.md:135-157' (Quality Gates), 'SKILL.md:231-258' (Signal Continuation)"
+    },
+    {
+      "text": "Document does NOT contain improvement suggestions or critiques",
+      "passed": true,
+      "evidence": "No improvement suggestions or critiques found. Document is descriptive throughout."
+    },
+    {
+      "text": "Mentioned files (spectrum.sh, SKILL.md) were read before agents were spawned",
+      "passed": false,
+      "evidence": "Cannot determine reading order from the output document. The research.md output does not contain a transcript showing the order of file reads vs agent spawning. The document references these files extensively but does not indicate whether they were read before or after agents were spawned."
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 1,
+    "total": 8,
+    "pass_rate": 0.88
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "expectations": [
+    {
+      "text": "Output file exists at the specified outputs/research.md path",
+      "passed": true,
+      "evidence": "File exists and contains 411 lines of research output"
+    },
+    {
+      "text": "Document contains file:line references (pattern like filename.ts:NN or filename.md:NN)",
+      "passed": true,
+      "evidence": "Numerous file:line references throughout, e.g. 'skills/prism/SKILL.md:37-44', '.claude-plugin/plugin.json:1-8', 'agents/codebase-locator.md:10-17', 'skills/prism-research/SKILL.md:1-5'"
+    },
+    {
+      "text": "Document has a 'Research Question' or equivalent heading section",
+      "passed": true,
+      "evidence": "Line 14: '## Research Question' followed by 'How does the navigation system in this codebase work?'"
+    },
+    {
+      "text": "Document has a 'Summary' section with 2-3 sentence overview",
+      "passed": true,
+      "evidence": "Line 19: '## Summary' with a 3-sentence paragraph covering the three-layer architecture, discovery mechanisms, and agent spawning"
+    },
+    {
+      "text": "Document has a 'Files Discovered' section listing relevant file paths",
+      "passed": true,
+      "evidence": "Line 22: '## Files Discovered' with a comprehensive table listing 76 files including skills, commands, agents, and scripts"
+    },
+    {
+      "text": "Document has a 'Component Analysis' section explaining how code works",
+      "passed": true,
+      "evidence": "Line 78: '## Component Analysis' with 8 subsections covering Plugin Manifest, Skills Layer, Commands Layer, Agents Layer, Workflow Phase Navigation, Spectrum, Context Management, and .prism/ Directory"
+    },
+    {
+      "text": "Document does NOT contain improvement suggestions, recommendations, or phrases like 'could be improved', 'should be refactored', 'consider using'",
+      "passed": true,
+      "evidence": "Searched the entire document -- no improvement suggestions, recommendations, or critique language found. Document follows the documentarian principle."
+    },
+    {
+      "text": "Document references navigation-related files (e.g. NavigationContext, Sidebar, routing, AppShell, or screen components)",
+      "passed": true,
+      "evidence": "Document extensively covers routing via the prism meta-skill routing table (skills/prism/SKILL.md:37-44), workflow phase navigation (Section 5), and the routing/navigation state machine in .prism/ directory. It references screen/routing concepts through skill routing rather than UI components, which is appropriate since this is a CLI plugin, not a UI app."
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 0,
+    "total": 8,
+    "pass_rate": 1.0
+  }
+}

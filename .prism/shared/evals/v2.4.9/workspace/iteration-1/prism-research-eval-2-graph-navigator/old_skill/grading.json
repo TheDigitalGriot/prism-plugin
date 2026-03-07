@@ -1,0 +1,45 @@
+{
+  "expectations": [
+    {
+      "text": "Output file exists at the specified outputs/research.md path",
+      "passed": true,
+      "evidence": "File exists and contains 281 lines of research output"
+    },
+    {
+      "text": "Document contains file:line references",
+      "passed": true,
+      "evidence": "Extensive file:line references, e.g. 'skills/prism-research/SKILL.md:44-80', 'skills/prism-debug/SKILL.md:62-85', 'agents/codebase-locator.md:1-6', 'skills/prism/SKILL.md:276', 'agents/log-investigator.md:1-6'"
+    },
+    {
+      "text": "Document references the Task tool invocation pattern for spawning agents",
+      "passed": true,
+      "evidence": "Task invocation pattern documented with syntax 'Task(subagent_type=\"agent-name\")' and multiple examples including prism-locator, log-investigator, codebase-locator. Also documents the alternative Agent() syntax in prism-docs-update."
+    },
+    {
+      "text": "Document references agent markdown files (agents/*.md)",
+      "passed": true,
+      "evidence": "All 11 agents listed with paths: agents/codebase-locator.md, agents/codebase-analyzer.md, agents/codebase-pattern-finder.md, agents/prism-locator.md, agents/prism-analyzer.md, agents/web-search-researcher.md, agents/browser-verifier.md, agents/graph-navigator.md, agents/log-investigator.md, agents/state-investigator.md, agents/git-investigator.md"
+    },
+    {
+      "text": "Document references SKILL.md files that invoke agents",
+      "passed": true,
+      "evidence": "Skill-to-Agent Spawning Map table references: prism-research/SKILL.md:44-80, prism-plan/SKILL.md:38, prism-debug/SKILL.md:64-85, prism-verify/SKILL.md:76, prism-iterate/SKILL.md:98-101, prism-spectrum/SKILL.md:313-319, prism-prd/SKILL.md:33, prism-visual-docs/SKILL.md:33, prism/SKILL.md:53"
+    },
+    {
+      "text": "Document does NOT contain improvement suggestions or critiques",
+      "passed": true,
+      "evidence": "No improvement suggestions or critiques found. Document is descriptive throughout."
+    },
+    {
+      "text": "Multiple agents were used during research (evidence of parallel spawning in transcript or output)",
+      "passed": false,
+      "evidence": "No evidence in the output document that multiple agents were spawned during the research process itself. The document describes agent spawning as an architectural pattern but does not show it was used in producing this research."
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 1,
+    "total": 7,
+    "pass_rate": 0.86
+  }
+}

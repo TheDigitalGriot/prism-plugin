@@ -1,0 +1,15 @@
+{
+  "eval_id": 1,
+  "eval_name": "epic-context-loading",
+  "skill": "prism-spectrum",
+  "prompt": "Execute the next story from .prism/shared/evals/v2.4.9/skills/prism-spectrum/fixtures/stories-basic.json. Progress file: .prism/shared/evals/v2.4.9/skills/prism-spectrum/fixtures/progress.md",
+  "assertions": [
+    "Stories file was read completely before any implementation",
+    "Epic context fields were referenced: decisions, risks, outOfScope, or references",
+    "Story context fields were referenced: context.why, context.risks, or context.edgeCases",
+    "Quality gates were executed (echo commands from epic.qualityGates)",
+    "Story announcement included spectrum-story signal with ID and Title",
+    "Progress.md was updated with a completion entry",
+    "Only EVAL-001 was executed (EVAL-002 is blocked by EVAL-001)"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "eval_id": 4,
+  "eval_name": "skill-discovery",
+  "skill": "prism-research",
+  "prompt": "Map out the skill discovery and routing system in this plugin. How does the prism meta-skill route to phase-specific skills?",
+  "assertions": [
+    "Output file exists at the specified outputs/research.md path",
+    "Document references YAML frontmatter in SKILL.md files (name, description, model fields)",
+    "Document references the prism meta-skill routing mechanism",
+    "Document has required template sections (Research Question/Summary/Files Discovered/Component Analysis)",
+    "Document contains file:line references to skill SKILL.md files",
+    "Document does NOT contain improvement suggestions or critiques",
+    "Output was saved to .prism/ directory structure"
+  ]
+}

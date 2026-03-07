@@ -1,0 +1,45 @@
+{
+  "expectations": [
+    {
+      "text": "Output file exists at the specified outputs/research.md path",
+      "passed": true,
+      "evidence": "File exists and contains 333 lines of research output"
+    },
+    {
+      "text": "Document references YAML frontmatter in SKILL.md files (name, description, model fields)",
+      "passed": true,
+      "evidence": "Section '1. Skill Discovery Mechanism' explicitly describes the three YAML frontmatter fields: 'name', 'description', and 'model'. Example frontmatter shown from skills/prism/SKILL.md:1-5 and skills/prism-research/SKILL.md:1-5"
+    },
+    {
+      "text": "Document references the prism meta-skill routing mechanism",
+      "passed": true,
+      "evidence": "Section '2. The Prism Meta-Skill (Hub Router)' at skills/prism/SKILL.md describes the routing decision tree: artifact check via prism-locator agent (SKILL.md:50-54), state-based routing (SKILL.md:57-61), complexity-based shortcutting (SKILL.md:39-44), and three routing modes (explicit, natural-language via meta-skill, direct to phase skill)"
+    },
+    {
+      "text": "Document has required template sections (Research Question/Summary/Files Discovered/Component Analysis)",
+      "passed": true,
+      "evidence": "All four sections present: '## Research Question' (line 14), '## Summary' (line 19), '## Files Discovered' (line 24), '## Component Analysis' (line 43)"
+    },
+    {
+      "text": "Document contains file:line references to skill SKILL.md files",
+      "passed": true,
+      "evidence": "Extensive references: 'skills/prism/SKILL.md:1-5', 'skills/prism/SKILL.md:17-27', 'skills/prism/SKILL.md:39-44', 'skills/prism/SKILL.md:50-54', 'skills/prism/SKILL.md:57-61', 'skills/prism-research/SKILL.md:1-5', 'skills/prism-research/SKILL.md:22-33'"
+    },
+    {
+      "text": "Document does NOT contain improvement suggestions or critiques",
+      "passed": true,
+      "evidence": "No improvement suggestions or critiques found. Document follows the documentarian principle throughout."
+    },
+    {
+      "text": "Output was saved to .prism/ directory structure",
+      "passed": true,
+      "evidence": "Output file is at .prism/shared/evals/v2.4.9/workspace/iteration-1/prism-research-eval-4-skill-discovery/with_skill/outputs/research.md, which is within the .prism/ directory structure"
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 0,
+    "total": 7,
+    "pass_rate": 1.0
+  }
+}

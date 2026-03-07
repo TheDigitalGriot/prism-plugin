@@ -1,0 +1,50 @@
+{
+  "expectations": [
+    {
+      "text": "Stories file was read completely before implementation",
+      "passed": true,
+      "evidence": "Step 1: 'stories-graph-targets.json: 1 story total, 0 complete, 1 pending'. Read before Step 5."
+    },
+    {
+      "text": "graphTargets field was recognized in story context",
+      "passed": false,
+      "evidence": "The transcript explicitly states: 'The v2.4.8 skill COMPLETELY IGNORES this field.' and 'No mention of graphTargets anywhere' in the v2.4.8 SKILL.md. The graphTargets observation section is written by the evaluator, not by the skill itself recognizing the field."
+    },
+    {
+      "text": "Graph verification was attempted or explicitly skipped (if codebase-memory-mcp unavailable)",
+      "passed": false,
+      "evidence": "Section 'graphTargets Observation': 'No Step 1c or Graph Verification step', 'No pre-implementation graph analysis', 'No post-implementation graph delta check', 'No integration with codebase-memory-mcp tools'. The v2.4.8 skill has no graph verification concept at all."
+    },
+    {
+      "text": "If graph available: index_repository was called before implementation",
+      "passed": false,
+      "evidence": "Story step 1 says 'Run index_repository to ensure graph is current' but transcript notes: 'IGNORED by v2.4.8 (treated as opaque step text, no action taken)'"
+    },
+    {
+      "text": "If graph available: trace_call_path was called for functions in graphTargets",
+      "passed": false,
+      "evidence": "Story step 2 says 'Run trace_call_path for loadWorkspace to check blast radius' but transcript notes: 'IGNORED by v2.4.8'. No trace_call_path was called or documented."
+    },
+    {
+      "text": "If graph unavailable: skip was noted silently (not errored)",
+      "passed": false,
+      "evidence": "The v2.4.8 skill did not skip graph verification -- it has no concept of graph verification at all. There is no silent skip, no error, and no acknowledgment of graph tools. The graph steps simply do not exist in the workflow."
+    },
+    {
+      "text": "Quality gates were executed",
+      "passed": true,
+      "evidence": "Step 6: 'echo typecheck: OK' and 'echo lint: OK' both executed. 'All quality gates PASSED.'"
+    },
+    {
+      "text": "Progress.md was updated",
+      "passed": true,
+      "evidence": "Step 8: Simulated progress.md append with '## 2026-03-07 - EVAL-GRAPH-001 Complete' including learnings noting that 'v2.4.8 spectrum has no graph integration'"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 5,
+    "total": 8,
+    "pass_rate": 0.38
+  }
+}

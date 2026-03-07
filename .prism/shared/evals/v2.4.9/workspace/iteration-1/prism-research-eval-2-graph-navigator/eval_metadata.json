@@ -1,0 +1,15 @@
+{
+  "eval_id": 2,
+  "eval_name": "graph-navigator",
+  "skill": "prism-research",
+  "prompt": "Research the agent spawning architecture in this codebase. How do skills invoke agents via the Task tool?",
+  "assertions": [
+    "Output file exists at the specified outputs/research.md path",
+    "Document contains file:line references",
+    "Document references the Task tool invocation pattern for spawning agents",
+    "Document references agent markdown files (agents/*.md)",
+    "Document references SKILL.md files that invoke agents",
+    "Document does NOT contain improvement suggestions or critiques",
+    "Multiple agents were used during research (evidence of parallel spawning in transcript or output)"
+  ]
+}

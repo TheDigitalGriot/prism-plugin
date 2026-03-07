@@ -1,0 +1,45 @@
+{
+  "expectations": [
+    {
+      "text": "All state files were loaded fresh (stories.json, progress.md, CLAUDE.md)",
+      "passed": true,
+      "evidence": "Regression Checklist #1: stories-basic.json loaded (YES), progress.md loaded (YES), CLAUDE.md loaded (YES). 'All three state files were read completely before any action was taken.'"
+    },
+    {
+      "text": "Exactly one story was executed per invocation",
+      "passed": true,
+      "evidence": "Regression Checklist #2: 'EVAL-001 selected (priority 1, no blockedBy)', 'EVAL-002 skipped (blocked by EVAL-001)', 'Only EVAL-001 was executed'. PASS confirmed."
+    },
+    {
+      "text": "All files in story.files were read BEFORE making changes",
+      "passed": true,
+      "evidence": "Regression Checklist #4: 'prism-eval/src/data/mock-data.ts was read in full (119 lines) BEFORE any implementation step'. PASS confirmed."
+    },
+    {
+      "text": "Quality gates were run before any commit attempt",
+      "passed": true,
+      "evidence": "Regression Checklist #5: Both echo quality gates executed and passed 'before the (simulated) commit step'. PASS confirmed."
+    },
+    {
+      "text": "Commit was atomic (one story = one commit, or simulated as such)",
+      "passed": true,
+      "evidence": "Regression Checklist #6: 'Would stage: prism-eval/src/data/mock-data.ts', 'Would commit with message: [EVAL-001] Add eval test comment to mock-data.ts', 'One story = one commit (no batching, no partial commits)'"
+    },
+    {
+      "text": "stories.json was updated with status complete and completedAt",
+      "passed": true,
+      "evidence": "Regression Checklist #7: 'status: pending -> complete', 'completedAt: ISO timestamp', 'commitHash: captured from git commit output', 'steps[*].done: all set to true'"
+    },
+    {
+      "text": "Correct signal tag was used (spectrum-continue if remaining > 0)",
+      "passed": true,
+      "evidence": "Regression Checklist #8: 'Remaining > 0, so spectrum-continue was used (NOT promise COMPLETE)'. Signal: '<spectrum-continue>STORY_COMPLETE: EVAL-001 - Progress: 1/2, 1 remaining</spectrum-continue>'"
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 0,
+    "total": 7,
+    "pass_rate": 1.0
+  }
+}

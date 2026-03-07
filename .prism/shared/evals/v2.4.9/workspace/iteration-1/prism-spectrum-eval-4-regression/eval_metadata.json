@@ -1,0 +1,15 @@
+{
+  "eval_id": 4,
+  "eval_name": "core-regression",
+  "skill": "prism-spectrum",
+  "prompt": "Execute the next story from .prism/shared/evals/v2.4.9/skills/prism-spectrum/fixtures/stories-basic.json. Progress file: .prism/shared/evals/v2.4.9/skills/prism-spectrum/fixtures/progress.md",
+  "assertions": [
+    "All state files were loaded fresh (stories.json, progress.md, CLAUDE.md)",
+    "Exactly one story was executed per invocation",
+    "All files in story.files were read BEFORE making changes",
+    "Quality gates were run before any commit attempt",
+    "Commit was atomic (one story = one commit, or simulated as such)",
+    "stories.json was updated with status complete and completedAt",
+    "Correct signal tag was used (spectrum-continue if remaining > 0)"
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "expectations": [
+    {
+      "text": "Stories file was read completely before any implementation",
+      "passed": true,
+      "evidence": "Step 1 Load State shows stories-basic.json was read first with full parse: '2 stories, both status pending'. All files read before Step 5 (Implement)."
+    },
+    {
+      "text": "Epic context fields were referenced: decisions, risks, outOfScope, or references",
+      "passed": true,
+      "evidence": "Step 1b explicitly extracts all four epic context fields: decisions (['Use existing file patterns', 'Keep changes minimal and focused']), risks (['Test fixture -- changes will be reverted after eval']), outOfScope (['New features', 'Refactoring existing code']), references (['CLAUDE.md'])"
+    },
+    {
+      "text": "Story context fields were referenced: context.why, context.risks, or context.edgeCases",
+      "passed": true,
+      "evidence": "Step 1b extracts all story context fields: context.why ('Verify that Spectrum reads epic context...'), context.risks (['File may not exist if prism-eval was not built']), context.edgeCases (['Empty file', 'File already has the comment']), context.patterns (['Follow existing comment style'])"
+    },
+    {
+      "text": "Quality gates were executed (echo commands from epic.qualityGates)",
+      "passed": true,
+      "evidence": "Step 6: 'echo typecheck: OK -- PASSED' and 'echo lint: OK -- PASSED'. Both quality gates from epic.qualityGates executed."
+    },
+    {
+      "text": "Story announcement included spectrum-story signal with ID and Title",
+      "passed": true,
+      "evidence": "Step 4: '<spectrum-story>\\nID: EVAL-001\\nTitle: Add eval test comment to mock-data.ts\\nPriority: 1\\nFiles: prism-eval/src/data/mock-data.ts (modify)\\n</spectrum-story>'"
+    },
+    {
+      "text": "Progress.md was updated with a completion entry",
+      "passed": true,
+      "evidence": "Step 8 shows simulated progress.md append with full entry: '## 2026-03-07 - EVAL-001 Complete' including What was done, Learnings, Files changed, Quality gates sections"
+    },
+    {
+      "text": "Only EVAL-001 was executed (EVAL-002 is blocked by EVAL-001)",
+      "passed": true,
+      "evidence": "Step 3: 'EVAL-001 (priority 1, blockedBy: null) -- SELECTED' and 'EVAL-002 (priority 2, blockedBy: EVAL-001) -- BLOCKED, skipped'. Only EVAL-001 was implemented."
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 0,
+    "total": 7,
+    "pass_rate": 1.0
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "eval_id": 1,
+  "eval_name": "output-quality",
+  "skill": "prism-research",
+  "prompt": "Research the navigation system in this codebase and document how it works. This project is a Claude Code plugin with skills, agents, and commands.",
+  "assertions": [
+    "Output file exists at the specified outputs/research.md path",
+    "Document contains file:line references (pattern like filename.ts:NN or filename.md:NN)",
+    "Document has a 'Research Question' or equivalent heading section",
+    "Document has a 'Summary' section with 2-3 sentence overview",
+    "Document has a 'Files Discovered' section listing relevant file paths",
+    "Document has a 'Component Analysis' section explaining how code works",
+    "Document does NOT contain improvement suggestions, recommendations, or phrases like 'could be improved', 'should be refactored', 'consider using'",
+    "Document references navigation-related files (e.g. NavigationContext, Sidebar, routing, AppShell, or screen components)"
+  ]
+}

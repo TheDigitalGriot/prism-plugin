@@ -1,0 +1,15 @@
+{
+  "eval_id": 3,
+  "eval_name": "browser-verification",
+  "skill": "prism-spectrum",
+  "prompt": "Execute the next story from .prism/shared/evals/v2.4.9/skills/prism-spectrum/fixtures/stories-ui.json. Progress file: .prism/shared/evals/v2.4.9/skills/prism-spectrum/fixtures/progress.md",
+  "assertions": [
+    "Stories file was read completely before implementation",
+    "Browser verification was attempted because .tsx file was modified (Step 6b)",
+    "playwright-cli availability was checked",
+    "If playwright-cli unavailable: skip was noted in progress.md",
+    "Progress.md entry follows format: What was done, Learnings, Files changed, Quality gates",
+    "Correct signal was output (spectrum-continue or promise COMPLETE)",
+    "stories.json was re-read to verify remaining count before signaling"
+  ]
+}
