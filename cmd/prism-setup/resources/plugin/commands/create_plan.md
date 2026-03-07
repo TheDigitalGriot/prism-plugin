@@ -49,6 +49,7 @@ Then wait for the user's input.
 2. **Spawn initial research tasks to gather context**:
    Before asking the user any questions, use specialized agents to research in parallel:
 
+   - Use the **graph-navigator** agent for structural impact analysis (blast radius, call chains, dead code)
    - Use the **codebase-locator** agent to find all files related to the ticket/task
    - Use the **codebase-analyzer** agent to understand how the current implementation works
    - If relevant, use the **prism-locator** agent to find any existing documents about this feature
@@ -58,6 +59,11 @@ Then wait for the user's input.
    - Find relevant source files, configs, and tests
    - Trace data flow and key functions
    - Return detailed explanations with file:line references
+
+   **If codebase-memory-mcp is available:**
+   - Spawn graph-navigator to run trace_call_path for each change target
+   - Populate the "Structural Impact Analysis" section with blast radius data
+   - Order plan phases by risk (higher blast radius = later phase)
 
 3. **Read all files identified by research tasks**:
    - After research tasks complete, read ALL files they identified as relevant

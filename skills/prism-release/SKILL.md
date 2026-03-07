@@ -147,9 +147,92 @@ The release should include 8 assets:
 - 1 Tauri installer (`Prism Setup_{VERSION}_x64-setup.exe`)
 - 1 Legacy NSIS all-in-one installer (`Prism-Setup-{VERSION}.exe`)
 
-### Step 7: Report results
+### Step 7: Create eval snapshot
 
-Print a summary with the release URL.
+Snapshot the current skills, agents, commands, and scripts for future eval comparisons:
+
+```bash
+VERSION=$(cat VERSION)
+SNAPSHOT_DIR=".prism/shared/evals/v${VERSION}-snapshot"
+
+mkdir -p "$SNAPSHOT_DIR"
+cp -r skills/ "$SNAPSHOT_DIR/skills/"
+cp -r agents/ "$SNAPSHOT_DIR/agents/"
+cp -r commands/ "$SNAPSHOT_DIR/commands/"
+cp -r scripts/ "$SNAPSHOT_DIR/scripts/"
+```
+
+Verify the snapshot:
+```bash
+echo "Snapshot created at $SNAPSHOT_DIR"
+ls "$SNAPSHOT_DIR/"
+echo "Skills: $(ls "$SNAPSHOT_DIR/skills/" | wc -l)"
+echo "Agents: $(ls "$SNAPSHOT_DIR/agents/" | wc -l)"
+echo "Commands: $(ls "$SNAPSHOT_DIR/commands/" | wc -l)"
+```
+
+### Step 8: Generate eval cases for all skills
+
+For each skill in the new snapshot, create an `evals.json` with eval cases covering the 4 evaluation dimensions. Read each SKILL.md and the previous version's SKILL.md (if a prior snapshot exists) to identify what changed.
+
+```bash
+PREV_SNAPSHOT=$(ls -d .prism/shared/evals/v*-snapshot 2>/dev/null | sort -V | tail -2 | head -1)
+```
+
+For each skill directory in `$SNAPSHOT_DIR/skills/*/`:
+
+1. Read the current `SKILL.md`
+2. If a previous snapshot exists, diff against the previous version's `SKILL.md`
+3. Create `.prism/shared/evals/v${VERSION}/skills/<skill-name>/evals.json` with eval cases:
+
+   - **Output quality eval** — tests that outputs meet format/content requirements defined in the skill
+   - **Behavioral compliance eval** — tests new workflow steps or behavioral changes vs the previous version
+   - **Regression eval** — tests that core behaviors from the previous version are still present
+
+4. If the skill uses test fixtures (like stories.json for prism-spectrum), create them under `fixtures/`
+
+The `evals.json` schema:
+
+```json
+{
+  "skill": "<skill-name>",
+  "version": "v<X.Y.Z>",
+  "baseline": "../../../v<PREV>-snapshot/skills/<skill-name>/SKILL.md",
+  "current": "skills/<skill-name>/SKILL.md",
+  "target_codebase": ".",
+  "evals": [
+    {
+      "id": 1,
+      "dimension": "output_quality",
+      "prompt": "A realistic task prompt for this skill",
+      "expected_output": "Description of expected result",
+      "files": [],
+      "expectations": [
+        "Verifiable assertion about the output"
+      ]
+    }
+  ]
+}
+```
+
+Write eval cases that are specific to what the skill does — not generic. For example:
+- **prism-research**: "Research the [X] system in this codebase" → expects file:line refs, research template, no suggestions
+- **prism-spectrum**: "Execute the next story from [fixture]" → expects state loading, quality gates, correct signals
+- **prism-plan**: "Create a plan for [feature]" → expects interactive approval, two-category success criteria
+- **prism-debug**: "Debug this [error]" → expects parallel investigators spawned
+
+If no changes exist between versions (skill unchanged), still create a minimal regression eval to confirm the skill works correctly at this version.
+
+Add the eval files to the release commit:
+```bash
+git add .prism/shared/evals/
+git commit --amend --no-edit
+git tag -f v${VERSION}
+```
+
+### Step 9: Report results
+
+Print a summary with the release URL, snapshot path, and eval case counts.
 
 ## Error Handling
 

@@ -51,6 +51,20 @@ For each phase in plan:
 |-----------|--------|
 | User can [action] | Needs verification |
 
+### 3b. Structural Validation (if codebase-memory-mcp available)
+
+Run graph-based verification to catch issues tests might miss:
+
+| Check | How | What It Catches |
+|-------|-----|-----------------|
+| No new dead code | `search_graph(max_degree=0, exclude_entry_points=true)` | Orphaned functions from refactoring |
+| Dependency integrity | `trace_call_path` for all modified functions | Broken call chains |
+| Boundary violations | `search_graph(file_pattern, relationship="CALLS")` | Cross-boundary calls |
+
+Include results in the validation report under "## Structural Validation Results".
+
+If codebase-memory-mcp is not available, skip with note: "Structural validation skipped: graph not indexed".
+
 ### 4. Document Deviations
 
 ```markdown

@@ -118,6 +118,14 @@ If the plan includes UI verification, visual testing, or browser-based success c
 
 Only include `browserGates` if the plan explicitly mentions UI verification or browser-based checks. Do not add them for backend-only plans.
 
+### 6c. Extract Epic Context (Enrichment)
+
+From the plan document, extract:
+1. **decisions** — from "Design Decisions", "Resolved Decisions", "Approach" sections
+2. **references** — from "Reference Implementations", "References" sections
+3. **outOfScope** — from "Out of Scope", "What We're NOT Doing" sections
+4. **risks** — from "Risks & Mitigations" section (brief summaries, not full table)
+
 ### 7. Generate Stories
 
 Create each story with:
@@ -138,6 +146,23 @@ Create each story with:
   ]
 }
 ```
+
+### 7b. Extract Story Context
+
+For each story, derive:
+1. **why** — the design decision driving this story's approach (1 sentence)
+2. **risks** — plan risks that apply to this story's files
+3. **edgeCases** — from the plan's edge case table, filtered to this story
+4. **patterns** — reference implementations relevant to this story
+5. **graphTargets** — qualified function/class names from step descriptions
+   (if codebase-memory-mcp available, use search_graph to get qualified names)
+
+### 7c. Graph-Informed Ordering (if codebase-memory-mcp available)
+
+1. Run trace_call_path for each change target identified in the plan
+2. Order stories so CALLEE changes come BEFORE CALLER changes
+3. Populate graphTargets with qualified names from graph search results
+4. Flag stories touching cross-service boundaries as higher risk
 
 ### 8. Present for Review
 
@@ -195,11 +220,36 @@ Upon approval:
     "name": "[Plan title]",
     "source": "[path to plan]",
     "createdAt": "[ISO timestamp]",
-    "qualityGates": [...]
+    "qualityGates": [...],
+    "decisions": ["..."],
+    "references": ["..."],
+    "outOfScope": ["..."],
+    "risks": ["..."]
   },
   "stories": [...]
 }
 ```
+
+Each story should include a `context` field when enrichment data is available:
+```json
+{
+  "context": {
+    "why": "...",
+    "risks": ["..."],
+    "edgeCases": ["..."],
+    "patterns": ["..."],
+    "graphTargets": ["qualified::name#Function"]
+  }
+}
+```
+
+### 9b. Generate Comparison Files (for A/B token measurement)
+
+Generate TWO files:
+1. `.prism/stories/stories-v1.json` — Current schema (epic key, no context fields)
+2. `.prism/stories/stories-v2.json` — Enriched schema (epic + all context fields)
+
+Copy the enriched version as the primary `.prism/stories/stories.json`.
 
 **Create `.prism/shared/spectrum/progress.md`**:
 ```markdown

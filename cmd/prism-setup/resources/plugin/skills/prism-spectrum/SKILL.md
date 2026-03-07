@@ -61,6 +61,23 @@ After loading state files, extract contextual intelligence:
 
 If epic or context fields are absent, proceed with current behavior (implement from steps only).
 
+### 1c. Graph Verification (if codebase-memory-mcp available)
+
+Before implementing:
+1. Run `index_repository` to ensure graph reflects latest code state
+2. For each function in `story.context.graphTargets`:
+   - Run `trace_call_path(function_name, direction="inbound")`
+   - Record current caller count
+3. If any target has significantly MORE callers than expected
+   → emit `<spectrum-blocked reason="Blast radius changed: [target] now has [N] callers">`
+
+After implementing:
+4. Run `index_repository` again to capture changes
+5. Run `search_graph(max_degree=0, exclude_entry_points=true)` → dead code check
+6. Log graph delta in progress.md entry (nodes added/removed, new dead code)
+
+If codebase-memory-mcp is not available, skip all graph steps silently.
+
 ### 2. Check Completion
 
 If no incomplete stories remain:

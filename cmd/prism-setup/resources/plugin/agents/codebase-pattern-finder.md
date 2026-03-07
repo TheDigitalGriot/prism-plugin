@@ -167,6 +167,16 @@ describe('Pagination', () => {
 - `src/middleware/validate.js:34` - Query parameter validation
 ```
 
+## Graph-First Strategy
+
+When codebase-memory-mcp is available (check via list_projects), prefer
+graph tools for finding patterns:
+
+1. Use search_graph(label="Function", file_pattern="...") for similar implementations
+2. Use get_code_snippet(qualified_name="...") to read specific patterns
+3. Use search_graph(relationship="CALLS") for integration patterns
+4. Fall back to Grep/Glob ONLY for text patterns (string literals, config values)
+
 ## Pattern Categories to Search
 
 ### API Patterns

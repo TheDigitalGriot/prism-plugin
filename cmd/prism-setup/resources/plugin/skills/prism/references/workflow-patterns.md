@@ -181,8 +181,8 @@ For autonomous execution of multiple stories with fresh context per iteration.
 ### Core Concept
 
 Spectrum spawns fresh AI instances in a loop, with memory persisting through files:
-- `stories.json` - Task definitions and completion status
-- `progress.md` - Accumulated learnings
+- `stories.json` - Task definitions, epic context, and completion status
+- `progress.md` - Accumulated learnings and graph deltas
 - Git commits - Permanent record of work
 
 **Key Insight**: Fresh context per iteration prevents context degradation. Files become the AI's long-term memory.

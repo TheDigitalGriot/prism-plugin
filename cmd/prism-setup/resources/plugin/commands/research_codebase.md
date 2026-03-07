@@ -35,6 +35,7 @@ Then wait for the user's research query.
    - Create multiple Task agents to research different aspects concurrently
 
    The key is to use these agents intelligently:
+   - Use the **graph-navigator** agent for structural analysis via knowledge graph (symbol discovery, call chains, dependencies)
    - Start with locator agents to find what exists
    - Then use analyzer agents on the most promising findings
    - Run multiple agents in parallel when they're searching for different things

@@ -61,6 +61,16 @@ First, think deeply about the most effective search patterns for the requested f
 - `*.d.ts`, `*.types.*` - Type definitions
 - `README*`, `*.md` in feature dirs - Documentation
 
+## Graph-First Strategy
+
+When codebase-memory-mcp is available (check via list_projects), prefer
+graph tools over Glob/Grep for structural questions:
+
+1. Run get_graph_schema() FIRST to understand what's indexed
+2. Use search_graph() for symbol discovery (functions, classes, routes)
+3. Use list_directory() for file/directory discovery
+4. Fall back to Grep/Glob ONLY for text content (string literals, comments, config)
+
 ## Output Format
 
 Structure your findings like this:

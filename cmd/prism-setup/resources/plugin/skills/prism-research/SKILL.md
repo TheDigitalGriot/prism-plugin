@@ -23,6 +23,7 @@ Invoke via Task tool with subagent_type:
 
 | Agent | Purpose |
 |-------|---------|
+| `graph-navigator` | Structural analysis via knowledge graph |
 | `codebase-locator` | Find WHERE files/components live |
 | `codebase-analyzer` | Understand HOW code works |
 | `codebase-pattern-finder` | Find patterns to model after |
@@ -43,6 +44,13 @@ If the user mentions specific files, read them FULLY before spawning agents:
 ```
 Task(subagent_type="prism-locator")
 "Find existing research about [topic]"
+```
+
+### 1b. Structural Orientation (if codebase-memory-mcp available)
+
+```
+Task(subagent_type="graph-navigator")
+"Index repository and provide structural overview: schema, key modules, function counts, relationship patterns for [topic]"
 ```
 
 ### 2. Locate Code

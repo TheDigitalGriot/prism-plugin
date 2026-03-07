@@ -56,6 +56,13 @@ If starting fresh or need more context:
    Check if tests were added/modified as specified.
    Run test commands and capture results.
    Return: Test status and any missing coverage
+
+   Task 4 - Structural validation (if codebase-memory-mcp available):
+   Use graph-navigator agent to verify:
+   - No new dead code introduced
+   - Dependency integrity for all modified functions
+   - No architectural boundary violations
+   Return: Structural validation results
    ```
 
 ### Step 2: Systematic Validation

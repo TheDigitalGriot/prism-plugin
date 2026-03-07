@@ -778,7 +778,7 @@ export class PrismPanelProvider implements vscode.WebviewViewProvider {
       .sort((a, b) => b.completedAt.localeCompare(a.completedAt))
       .slice(0, 50);
 
-    const planGates: string[] = s?.plan?.qualityGates ?? [];
+    const planGates: string[] = s?.epic?.qualityGates ?? [];
     const existingByCmd = new Map(this._gates.map((g) => [g.command, g]));
     this._gates = planGates.map((cmd) => {
       const existing = existingByCmd.get(cmd);

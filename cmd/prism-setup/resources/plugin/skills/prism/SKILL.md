@@ -257,6 +257,7 @@ All agents in `agents/`:
 
 | Agent | Purpose |
 |-------|---------|
+| `graph-navigator` | Structural analysis via knowledge graph |
 | `codebase-locator` | Find WHERE code lives |
 | `codebase-analyzer` | Understand HOW code works |
 | `codebase-pattern-finder` | Find patterns to follow |
