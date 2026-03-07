@@ -70,31 +70,33 @@ Build a 5-screen Electron admin dashboard that visualizes eval, benchmark, compa
 
 ### Steps
 
-- [ ] 1.1 Install dependencies:
+- [x] 1.1 Install dependencies:
   ```
   npm install tailwindcss @tailwindcss/vite recharts dagre @types/dagre
   ```
-- [ ] 1.2 Create `prism-eval/src/theme/spectral.css` — all SPECTRAL color tokens as `--prism-*` CSS custom properties (spec Section 1: Color System)
-- [ ] 1.3 Create `prism-eval/src/theme/fonts.css` — `@font-face` declarations for JetBrains Mono and DM Sans (or Google Fonts import)
-- [ ] 1.4 Update `prism-eval/src/index.css` — import Tailwind v4, theme CSS, fonts CSS, add `@theme` block mapping `--prism-*` to Tailwind utilities
-- [ ] 1.5 Update `prism-eval/vite.renderer.config.mts` — add `@vitejs/plugin-react` (already present) and `tailwindcss()` plugin
-- [ ] 1.6 Create `prism-eval/src/types/index.ts` — TypeScript interfaces for all data models:
+- [x] 1.2 Create `prism-eval/src/theme/spectral.css` — all SPECTRAL color tokens as `--prism-*` CSS custom properties (spec Section 1: Color System)
+- [x] 1.3 Create `prism-eval/src/theme/fonts.css` — `@font-face` declarations for JetBrains Mono and DM Sans (or Google Fonts import)
+- [x] 1.4 Update `prism-eval/src/index.css` — import Tailwind v4, theme CSS, fonts CSS, add `@theme` block mapping `--prism-*` to Tailwind utilities
+- [x] 1.5 Update `prism-eval/vite.renderer.config.mts` — add `@vitejs/plugin-react` (already present) and `tailwindcss()` plugin
+- [x] 1.6 Create `prism-eval/src/types/index.ts` — TypeScript interfaces for all data models:
   - `Skill`, `EvalCase`, `GradingResult`, `ComparisonResult`, `AnalysisResult`, `BenchmarkData`, `HistoryData`, `TimingData`, `TraceStep`, `LiveFeedEvent`
-- [ ] 1.7 Create `prism-eval/src/data/mock-data.ts` — extract mock data from prototype JSX, typed with interfaces
-- [ ] 1.8 Create `prism-eval/src/context/NavigationContext.tsx` — useReducer with:
+- [x] 1.7 Create `prism-eval/src/data/mock-data.ts` — extract mock data from prototype JSX, typed with interfaces
+- [x] 1.8 Create `prism-eval/src/context/NavigationContext.tsx` — useReducer with:
   - State: `{ activeScreen, breadcrumbs, params: { skillFilter?, evalId?, traceRunId?, selectedVersion? } }`
   - Actions: `NAVIGATE`, `SET_FILTER`, `SELECT_EVAL`, `SELECT_TRACE`, `SELECT_VERSION`
-- [ ] 1.9 Create `prism-eval/src/components/layout/Sidebar.tsx` — 220px fixed sidebar with:
+- [x] 1.9 Create `prism-eval/src/components/layout/Sidebar.tsx` — 220px fixed sidebar with:
   - Logo area (32px spectral gradient "P" + "Prism Admin" + version)
   - 5 navigation items with active indicator (3px spectral gradient left bar)
   - Status footer (green dot + last scan + counts)
-- [ ] 1.10 Create `prism-eval/src/components/layout/TopBar.tsx` — 44px top bar with:
+- [x] 1.10 Create `prism-eval/src/components/layout/TopBar.tsx` — 44px top bar with:
   - Left: breadcrumb navigation (all screens, active bold)
   - Right: namespace badge + user avatar
-- [ ] 1.11 Create `prism-eval/src/components/layout/AppShell.tsx` — flexbox layout:
+- [x] 1.11 Create `prism-eval/src/components/layout/AppShell.tsx` — flexbox layout:
   - Sidebar (220px fixed) + content column (top bar 44px + screen content flex:1)
-- [ ] 1.12 Update `prism-eval/src/App.tsx` — wrap in NavigationProvider, render AppShell, route to screen placeholders based on activeScreen
-- [ ] 1.13 Update `prism-eval/src/main.ts` — set minimum window size (1024x680), set title "Prism Admin"
+- [x] 1.12 Update `prism-eval/src/App.tsx` — wrap in NavigationProvider, render AppShell, route to screen placeholders based on activeScreen
+- [x] 1.13 Update `prism-eval/src/main.ts` — set minimum window size (1024x680), set title "Prism Admin"
+
+**Checkpoint**: [x] Phase 1 complete
 
 ### Verification
 ```bash
@@ -113,13 +115,15 @@ cd prism-eval && npm start
 
 ### Steps
 
-- [ ] 2.1 Create `prism-eval/src/components/shared/SpectralBar.tsx` — 2px gradient line, configurable max-width (200-320px)
-- [ ] 2.2 Create `prism-eval/src/components/shared/Badge.tsx` — compact label with colored text on dim background. Props: `label`, `color` (spectral key), `size?`. 10px uppercase JetBrains Mono, 0.08em letter-spacing
-- [ ] 2.3 Create `prism-eval/src/components/shared/StatCard.tsx` — metric card with icon, uppercase label, 28px JetBrains Mono value, optional subtitle. Props: `icon`, `label`, `value`, `subtitle?`, `color`
-- [ ] 2.4 Create `prism-eval/src/components/shared/DeltaIndicator.tsx` — inline delta with arrow (▲/▼), percentage, green/red/muted coloring. Props: `delta`, `lowerIsBetter?`
-- [ ] 2.5 Create `prism-eval/src/components/shared/PassRateRing.tsx` — SVG circular progress. Props: `rate` (0-1), `size` (36/48/56px). Stroke color: green ≥0.8, amber ≥0.6, red <0.6. Animated stroke-dashoffset on mount (800ms ease)
-- [ ] 2.6 Create `prism-eval/src/components/shared/ExpectationRow.tsx` — pass/fail row with check/cross icon, text, evidence. Props: `text`, `passed`, `evidence`
-- [ ] 2.7 Create `prism-eval/src/components/shared/SurfaceCard.tsx` — reusable card wrapper with `--prism-surface` background, border, optional header bar. Props: `title?`, `headerRight?`, `children`, `accentColor?`
+- [x] 2.1 Create `prism-eval/src/components/shared/SpectralBar.tsx` — 2px gradient line, configurable max-width (200-320px)
+- [x] 2.2 Create `prism-eval/src/components/shared/Badge.tsx` — compact label with colored text on dim background. Props: `label`, `color` (spectral key), `size?`. 10px uppercase JetBrains Mono, 0.08em letter-spacing
+- [x] 2.3 Create `prism-eval/src/components/shared/StatCard.tsx` — metric card with icon, uppercase label, 28px JetBrains Mono value, optional subtitle. Props: `icon`, `label`, `value`, `subtitle?`, `color`
+- [x] 2.4 Create `prism-eval/src/components/shared/DeltaIndicator.tsx` — inline delta with arrow (▲/▼), percentage, green/red/muted coloring. Props: `delta`, `lowerIsBetter?`
+- [x] 2.5 Create `prism-eval/src/components/shared/PassRateRing.tsx` — SVG circular progress. Props: `rate` (0-1), `size` (36/48/56px). Stroke color: green ≥0.8, amber ≥0.6, red <0.6. Animated stroke-dashoffset on mount (800ms ease)
+- [x] 2.6 Create `prism-eval/src/components/shared/ExpectationRow.tsx` — pass/fail row with check/cross icon, text, evidence. Props: `text`, `passed`, `evidence`
+- [x] 2.7 Create `prism-eval/src/components/shared/SurfaceCard.tsx` — reusable card wrapper with `--prism-surface` background, border, optional header bar. Props: `title?`, `headerRight?`, `children`, `accentColor?`
+
+**Checkpoint**: [x] Phase 2 complete
 
 ### Verification
 ```bash
@@ -136,33 +140,35 @@ cd prism-eval && npm start
 
 ### Steps
 
-- [ ] 3.1 Create `prism-eval/src/screens/MissionControl.tsx` — layout container:
+- [x] 3.1 Create `prism-eval/src/screens/MissionControl.tsx` — layout container:
   - Header ("Mission Control" + subtitle + SpectralBar)
   - Stat cards row (flex, gap:14px, wrap)
   - Two-column section: skill table (2/3) + live feed (1/3)
   - Version progression (full-width bottom)
-- [ ] 3.2 Implement stat cards row — 4 StatCard components:
+- [x] 3.2 Implement stat cards row — 4 StatCard components:
   - Avg Pass Rate (green, delta subtitle)
   - Total Evals (blue, coverage subtitle)
   - Skills Improved (teal, baseline subtitle)
   - Total Tokens (amber, "Across all eval runs")
-- [ ] 3.3 Create `prism-eval/src/components/mission-control/SkillPerformanceTable.tsx`:
+- [x] 3.3 Create `prism-eval/src/components/mission-control/SkillPerformanceTable.tsx`:
   - SurfaceCard with header (title + legend badges CAP/PREF)
   - Rows: PassRateRing (36px) + skill name (JetBrains Mono 13px bold) + metadata + DeltaIndicator + type badge
   - Max-height 340px with overflow scroll
   - Row hover: surfaceHover background
   - Row click: dispatches NAVIGATE to Eval Explorer with skillFilter
-- [ ] 3.4 Create `prism-eval/src/components/mission-control/LiveFeed.tsx`:
+- [x] 3.4 Create `prism-eval/src/components/mission-control/LiveFeed.tsx`:
   - SurfaceCard with "Live Feed" header + green pulsing dot
   - Entries: 2px left-edge color bar + type badge (EVAL/TOOL/SPAWN/BENCH/COMPARE/GRADE) + timestamp + description + agent name
   - Mock data: 8-10 events from prototype
   - New entries animate with slide-in (200ms ease-out + teal flash)
-- [ ] 3.5 Create `prism-eval/src/components/mission-control/VersionProgression.tsx`:
-  - Recharts BarChart showing pass rate per version (v2.4.5 → v2.4.9)
+- [x] 3.5 Create `prism-eval/src/components/mission-control/VersionProgression.tsx`:
+  - Custom SVG BarChart showing pass rate per version (v2.4.5 → v2.4.9)
   - Spectral gradient on latest version bar
   - Percentage labels above bars, version labels below
   - SurfaceCard wrapper
   - Bar click: dispatches NAVIGATE to Benchmarks with version selected
+
+**Checkpoint**: [x] Phase 3 complete
 
 ### Verification
 ```bash
@@ -182,37 +188,39 @@ cd prism-eval && npm start
 
 ### Steps
 
-- [ ] 4.1 Create `prism-eval/src/context/EvalContext.tsx` — useReducer with:
+- [x] 4.1 Create `prism-eval/src/context/EvalContext.tsx` — useReducer with:
   - State: `{ evals, selectedEvalId, activeSkillFilter, detailOpen }`
   - Actions: `SELECT_EVAL`, `SET_SKILL_FILTER`, `CLOSE_DETAIL`
   - Computed: filtered evals based on activeSkillFilter
-- [ ] 4.2 Create `prism-eval/src/screens/EvalExplorer.tsx` — layout:
+- [x] 4.2 Create `prism-eval/src/screens/EvalExplorer.tsx` — layout:
   - Header + SpectralBar + skill filter chips
   - Two-panel split: eval list (360px when detail open, 100% when closed) + detail panel (flex:1)
-- [ ] 4.3 Create `prism-eval/src/components/eval-explorer/SkillFilterChips.tsx`:
+- [x] 4.3 Create `prism-eval/src/components/eval-explorer/SkillFilterChips.tsx`:
   - Horizontal chip row: "All (N)" default + one chip per unique skill
   - Active chip: colored border + dim background
   - JetBrains Mono 11px, skill names without `prism-` prefix
-- [ ] 4.4 Create `prism-eval/src/components/eval-explorer/EvalCard.tsx`:
+- [x] 4.4 Create `prism-eval/src/components/eval-explorer/EvalCard.tsx`:
   - Top: skill badge (teal) + pass count fraction + WIN/LOSE badge
   - Middle: eval prompt text (13px, 2 lines max, text-overflow ellipsis)
   - Bottom: score, token count (K), time in JetBrains Mono
   - Click: dispatches SELECT_EVAL, list narrows to 360px
   - Selected: blue border + surfaceHover
   - Hover on non-selected: borderLight
-- [ ] 4.5 Create `prism-eval/src/components/eval-explorer/EvalDetailPanel.tsx`:
+- [x] 4.5 Create `prism-eval/src/components/eval-explorer/EvalDetailPanel.tsx`:
   - Close button (returns to full-width list)
   - Header: eval ID + prompt as heading
   - Score comparison: 3 side-by-side cards (v2.4.9 green / v2.4.8 amber / No Skill muted)
   - Each card: 24px JetBrains Mono score/5, token count, time
-- [ ] 4.6 Create `prism-eval/src/components/eval-explorer/ComparatorVerdict.tsx`:
+- [x] 4.6 Create `prism-eval/src/components/eval-explorer/ComparatorVerdict.tsx`:
   - Highlighted callout bar: greenDim background, green border
   - Scale icon (⚖) + winner declaration + rubric summary text
   - Data from comparison.json mock
-- [ ] 4.7 Create `prism-eval/src/components/eval-explorer/ExpectationsPanel.tsx`:
+- [x] 4.7 Create `prism-eval/src/components/eval-explorer/ExpectationsPanel.tsx`:
   - SurfaceCard with pass count header
   - ExpectationRow components for each expectation
   - Evidence detail expandable on click
+
+**Checkpoint**: [x] Phase 4 complete
 
 ### Verification
 ```bash
@@ -234,48 +242,44 @@ cd prism-eval && npm start
 
 ### Steps
 
-- [ ] 5.1 Create `prism-eval/src/context/TraceContext.tsx` — useReducer with:
+- [x] 5.1 Create `prism-eval/src/context/TraceContext.tsx` — useReducer with:
   - State: `{ steps, playhead, playing, speed, maxTime, selectedStep, activeSteps }`
   - Actions: `PLAY`, `PAUSE`, `RESET`, `SKIP_TO_END`, `SET_SPEED`, `SET_PLAYHEAD`, `SELECT_STEP`, `TICK`
   - Computed: `activeSteps = steps.filter(s => s.time <= playhead)`
-- [ ] 5.2 Create `prism-eval/src/screens/AgentTraces.tsx` — layout:
+- [x] 5.2 Create `prism-eval/src/screens/AgentTraces.tsx` — layout:
   - DAG canvas (flex:1) + step detail panel (280px right)
   - Playback controls bar below DAG
-- [ ] 5.3 Create `prism-eval/src/components/traces/DagCanvas.tsx`:
-  - Use dagre to compute node positions for the eval pipeline topology:
-    ```
-    Orchestrator → fork → with_skill(load) + old_skill(load)
-    → with_skill(execute) + old_skill(execute)
-    → with_skill(output) + old_skill(output) → join
-    → Grader → Comparator → Analyzer → Aggregator
-    ```
+- [x] 5.3 Create `prism-eval/src/components/traces/DagCanvas.tsx`:
+  - Fixed position layout for the eval pipeline topology (fork-join pattern)
   - SVG rendering of nodes and edges
   - Node states: inactive (navyLight fill, dashed edges), active (colored fill 22% opacity, solid edges), running (pulsing glow ring animation)
   - Status dot: green (complete), amber (running), border-gray (pending)
   - Labels: agent name (9px JetBrains Mono bold), action (8px muted)
   - Node colors: blue (orchestration), teal (with_skill), amber (old_skill), green (evaluation)
   - Click node → dispatches SELECT_STEP
-- [ ] 5.4 Create `prism-eval/src/components/traces/DagNode.tsx`:
+- [x] 5.4 Create `prism-eval/src/components/traces/DagNode.tsx`:
   - SVG group: circle + status dot + label text
   - Animated pulsing glow for running state (SVG animate on r and opacity)
   - Active fill transition (300ms)
-- [ ] 5.5 Create `prism-eval/src/components/traces/DagEdge.tsx`:
+- [x] 5.5 Create `prism-eval/src/components/traces/DagEdge.tsx`:
   - SVG line from bottom of source to top of target
   - Active: solid teal 2px 88% opacity
   - Inactive: dashed 1px border color
-  - Animated stroke-dashoffset on activation
-- [ ] 5.6 Create `prism-eval/src/components/traces/PlaybackControls.tsx`:
-  - Reset (⟲), Play/Pause (▶/❚❚), Skip to End (⟶⏐)
-  - Timeline scrubber: range input with spectral gradient fill
+  - Transition on activation
+- [x] 5.6 Create `prism-eval/src/components/traces/PlaybackControls.tsx`:
+  - Reset, Play/Pause, Skip to End buttons
+  - Timeline scrubber: range input with gradient fill
   - Time display: current/max in JetBrains Mono
-  - Speed buttons: 1×/2×/4× toggle group (teal highlight on active)
+  - Speed buttons: 1x/2x/4x toggle group (teal highlight on active)
   - Timer logic: setInterval at 100ms, increment by 0.1 * speed
   - Dragging scrubber pauses playback
-- [ ] 5.7 Create `prism-eval/src/components/traces/StepDetailPanel.tsx`:
-  - Agent card: colored border, icon, name, action description
+- [x] 5.7 Create `prism-eval/src/components/traces/StepDetailPanel.tsx`:
+  - Agent card: colored border, name, action description
   - Timing section: start, duration, end (JetBrains Mono)
   - Tool calls: vertical list with → prefix, teal tool names
   - Empty state: "Click a node in the DAG to view step details."
+
+**Checkpoint**: [x] Phase 5 complete
 
 ### Verification
 ```bash
@@ -299,29 +303,29 @@ cd prism-eval && npm start
 
 ### Steps
 
-- [ ] 6.1 Create `prism-eval/src/screens/Benchmarks.tsx` — layout:
+- [x] 6.1 Create `prism-eval/src/screens/Benchmarks.tsx` — layout:
   - Header + SpectralBar
   - Version cards row (3 cards)
   - Metric comparison section (3 rows)
   - Model outgrowth warning
   - Per-skill breakdown table
-- [ ] 6.2 Create `prism-eval/src/components/benchmarks/VersionCard.tsx`:
+- [x] 6.2 Create `prism-eval/src/components/benchmarks/VersionCard.tsx`:
   - Label (CURRENT/BASELINE/NO SKILL) uppercase textMuted
   - Version string (20px bold JetBrains Mono, version-colored)
   - PassRateRing (56px) with percentage
   - Token + time stats with ± stddev
   - Current card: 3px spectral gradient top stripe + green-tinted border
-- [ ] 6.3 Create `prism-eval/src/components/benchmarks/MetricComparison.tsx`:
+- [x] 6.3 Create `prism-eval/src/components/benchmarks/MetricComparison.tsx`:
   - 3 metric rows (Pass Rate, Mean Tokens, Mean Time)
   - Each row: label + delta badge + two horizontal bars (green current, amber baseline)
   - Numeric values at right edge
   - `lowerIsBetter` flag inverts delta color for tokens and time
-- [ ] 6.4 Create `prism-eval/src/components/benchmarks/OutgrowthWarning.tsx`:
+- [x] 6.4 Create `prism-eval/src/components/benchmarks/OutgrowthWarning.tsx`:
   - Amber-tinted callout with ⚠ icon
   - Without-skill pass rate + gap to with-skill rate
   - Per-skill outgrowth gaps as badge pills
   - Contextual message about capability uplift convergence
-- [ ] 6.5 Create `prism-eval/src/components/benchmarks/SkillBreakdown.tsx`:
+- [x] 6.5 Create `prism-eval/src/components/benchmarks/SkillBreakdown.tsx`:
   - Table rows: skill name (JetBrains Mono) + horizontal progress bar + percentage + DeltaIndicator
   - Bar color by pass rate threshold (green/amber/red)
   - Click row → navigates to Eval Explorer filtered to that skill
@@ -345,10 +349,10 @@ cd prism-eval && npm start
 
 ### Steps
 
-- [ ] 7.1 Create `prism-eval/src/screens/SkillGraph.tsx` — layout:
+- [x] 7.1 Create `prism-eval/src/screens/SkillGraph.tsx` — layout:
   - Graph canvas (flex:1) + node detail panel (260px right)
   - Legend row above graph
-- [ ] 7.2 Create `prism-eval/src/components/graph/GraphCanvas.tsx`:
+- [x] 7.2 Create `prism-eval/src/components/graph/GraphCanvas.tsx`:
   - SVG viewBox centered on (0,0)
   - Central `prism` meta-router node (teal, 30px radius)
   - 13 skill nodes arranged radially at 200px orbit
@@ -357,14 +361,14 @@ cd prism-eval && npm start
   - Dashed edges from central node to all skills (33% opacity)
   - Click node → dispatches SELECT_NODE
   - Selected node: thicker stroke (2.5px vs 1.5px)
-- [ ] 7.3 Create `prism-eval/src/components/graph/GraphNode.tsx`:
+- [x] 7.3 Create `prism-eval/src/components/graph/GraphNode.tsx`:
   - SVG group: outer circle (fill), inner circle (fill level), label text
   - Color: blue for capability uplift, amber for encoded preference, teal for meta
   - Label: skill name (without `prism-` prefix) + pass rate %
   - Hover: scale 1.05× via CSS transform
-- [ ] 7.4 Create `prism-eval/src/components/graph/GraphLegend.tsx`:
+- [x] 7.4 Create `prism-eval/src/components/graph/GraphLegend.tsx`:
   - Horizontal badge row: capability uplift count (blue), encoded preference count (amber), meta router (teal)
-- [ ] 7.5 Create `prism-eval/src/components/graph/NodeDetailPanel.tsx`:
+- [x] 7.5 Create `prism-eval/src/components/graph/NodeDetailPanel.tsx`:
   - Skill card: name (JetBrains Mono) + type badge with colored border
   - Metrics: 4 rows — pass rate, eval count, delta, token usage
   - Outgrowth status: contextual message based on skill type
@@ -391,7 +395,7 @@ cd prism-eval && npm start
 
 ### Steps
 
-- [ ] 8.1 Update `prism-eval/src/preload.ts` — expose `evalAPI` via contextBridge:
+- [x] 8.1 Update `prism-eval/src/preload.ts` — expose `evalAPI` via contextBridge:
   ```typescript
   contextBridge.exposeInMainWorld('evalAPI', {
     invoke: (channel: string, data?: unknown) => ipcRenderer.invoke(channel, data),
@@ -399,8 +403,8 @@ cd prism-eval && npm start
     selectDirectory: () => ipcRenderer.invoke('eval:selectDirectory'),
   })
   ```
-- [ ] 8.2 Create `prism-eval/src/types/electron.d.ts` — type declarations for `window.evalAPI`
-- [ ] 8.3 Create `prism-eval/src/services/EvalDataService.ts` — main process service:
+- [x] 8.2 Create `prism-eval/src/types/electron.d.ts` — type declarations for `window.evalAPI`
+- [x] 8.3 Create `prism-eval/src/services/EvalDataService.ts` — main process service:
   - `loadWorkspace(dirPath: string)` — reads all JSON files from a skill-creator workspace
   - `loadEvalsJson(path)` → typed `EvalCase[]`
   - `loadGradingJson(path)` → typed `GradingResult`
@@ -410,22 +414,22 @@ cd prism-eval && npm start
   - `loadHistoryJson(path)` → typed `HistoryData`
   - `loadTimingJson(path)` → typed `TimingData`
   - Validation: graceful handling of missing/malformed files
-- [ ] 8.4 Register IPC handlers in `prism-eval/src/main.ts`:
+- [x] 8.4 Register IPC handlers in `prism-eval/src/main.ts`:
   - `eval:selectDirectory` → `dialog.showOpenDialog({ properties: ['openDirectory'] })`
   - `eval:loadWorkspace` → calls EvalDataService.loadWorkspace
   - `eval:getEvals` → returns loaded evals
   - `eval:getBenchmark` → returns loaded benchmark
   - `eval:getHistory` → returns loaded history
   - `eval:getTraces` → returns loaded trace data
-- [ ] 8.5 Create `prism-eval/src/context/DataContext.tsx` — useReducer:
+- [x] 8.5 Create `prism-eval/src/context/DataContext.tsx` — useReducer:
   - State: `{ loaded, workspacePath, evals, benchmark, history, traces, error }`
   - Actions: `SET_WORKSPACE`, `LOAD_SUCCESS`, `LOAD_ERROR`
   - On mount: check for previously loaded workspace path
-- [ ] 8.6 Create `prism-eval/src/components/shared/WorkspaceSelector.tsx`:
+- [x] 8.6 Create `prism-eval/src/components/shared/WorkspaceSelector.tsx`:
   - "Open Workspace" button in sidebar footer or top bar
   - Calls `evalAPI.selectDirectory()`, dispatches SET_WORKSPACE
   - Shows loaded workspace path when connected
-- [ ] 8.7 Update all screens to consume DataContext instead of direct mock data imports:
+- [x] 8.7 Update all screens to consume DataContext instead of direct mock data imports:
   - If `loaded === false`, show mock data with a subtle "Demo Data" badge
   - If `loaded === true`, render real workspace data
 
@@ -447,19 +451,19 @@ cd prism-eval && npm start
 
 ### Steps
 
-- [ ] 9.1 Wire Mission Control click-throughs:
+- [x] 9.1 Wire Mission Control click-throughs:
   - Skill row click → Eval Explorer with `skillFilter` set
   - Version bar click → Benchmarks with `selectedVersion` set
   - Live feed "View All" → Agent Traces (latest run)
-- [ ] 9.2 Wire Eval Explorer click-throughs:
+- [x] 9.2 Wire Eval Explorer click-throughs:
   - "View Trace" button in detail → Agent Traces with `traceRunId` set
   - Skill filter chip already working from Phase 4
-- [ ] 9.3 Wire Benchmark click-throughs:
+- [x] 9.3 Wire Benchmark click-throughs:
   - Skill breakdown row → Eval Explorer with `skillFilter` set
   - Outgrowth badge → Skill Graph with skill node pre-selected
-- [ ] 9.4 Wire Skill Graph click-throughs:
+- [x] 9.4 Wire Skill Graph click-throughs:
   - "View Evals" button in node detail → Eval Explorer with `skillFilter` set
-- [ ] 9.5 Update breadcrumb navigation:
+- [x] 9.5 Update breadcrumb navigation:
   - Track navigation stack in context
   - Breadcrumbs show path (e.g., "Mission Control / Eval Explorer / prism-research")
   - Clicking breadcrumb segment navigates back to that screen with prior params
@@ -484,30 +488,30 @@ cd prism-eval && npm start
 
 ### Steps
 
-- [ ] 10.1 PassRateRing mount animation:
+- [x] 10.1 PassRateRing mount animation:
   - Animated `stroke-dashoffset` from 0 → target over 800ms with ease curve
   - Trigger on component mount or data change
-- [ ] 10.2 Live feed entry animation:
+- [x] 10.2 Live feed entry animation:
   - New entries slide in from top (200ms ease-out)
   - Brief teal flash on left edge (fade out over 500ms)
-- [ ] 10.3 Screen transitions:
+- [x] 10.3 Screen transitions:
   - Fade-crossfade between screens (150ms)
   - CSS transition on opacity + transform (slight translateY)
-- [ ] 10.4 Version progression bar animation:
+- [x] 10.4 Version progression bar animation:
   - Staggered height growth on mount (each bar delays 80ms, grows over 500ms)
-- [ ] 10.5 DAG node activation animation:
+- [x] 10.5 DAG node activation animation:
   - Fill color fades in over 300ms on activation
   - Edge stroke-dashoffset animates from source to target
   - Running glow ring: SVG animate on r (28-36px) and opacity (0.3-0.1), 2s cycle
-- [ ] 10.6 Skeleton loading states:
+- [x] 10.6 Skeleton loading states:
   - Shimmer animation (navy → navyLight gradient sweep) for loading cards
   - Show while DataContext is loading workspace
-- [ ] 10.7 Visual polish pass:
+- [x] 10.7 Visual polish pass:
   - Verify all font sizes match spec (JetBrains Mono data values, DM Sans body)
   - Verify all color applications match prototype
   - Verify hover states on interactive elements
   - Verify spacing and gap values match spec
-- [ ] 10.8 Window management:
+- [x] 10.8 Window management:
   - Minimum size enforced: 1024 × 680
   - Window position/size persistence to userData (follow window-state.ts pattern from cmd/prism-electron/)
   - App title: "Prism Admin — Eval Dashboard"
