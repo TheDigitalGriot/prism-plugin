@@ -29,6 +29,7 @@ export default defineConfig({
       { text: 'VS Code', link: '/vscode/' },
       { text: 'Electron', link: '/electron/' },
       { text: 'Monorepo', link: '/monorepo/' },
+      { text: 'Eval', link: '/eval/' },
       {
         text: 'GitHub',
         link: 'https://github.com/placeholder/prism',
@@ -159,7 +160,17 @@ export default defineConfig({
           { text: 'packages/prism-ui', link: '/monorepo/prism-ui' },
           { text: 'Platform Shell Responsibilities', link: '/monorepo/platform-shells' },
           { text: 'Development Workflow', link: '/monorepo/dev-workflow' },
-          { text: 'Production Hardening (v2.3.5)', link: '/monorepo/production-hardening' },
+          { text: 'Production Hardening (v2.4.1+)', link: '/monorepo/production-hardening' },
+          { text: 'Centralized Version Management', link: '/monorepo/version-management' },
+          { text: 'Unified Tauri Installer', link: '/monorepo/installer' },
+        ],
+      },
+      {
+        text: 'Part VII — Eval Dashboard',
+        collapsed: true,
+        items: [
+          { text: 'Eval Dashboard Overview', link: '/eval/' },
+          { text: 'Screens & Skill Integration', link: '/eval/screens' },
         ],
       },
     ],
@@ -170,7 +181,7 @@ export default defineConfig({
 
     footer: {
       message: 'Prism — AI-Driven Development Workflow Suite',
-      copyright: 'v2.3.5',
+      copyright: 'v2.5.0',
     },
 
     editLink: {

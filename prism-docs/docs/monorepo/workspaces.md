@@ -13,14 +13,14 @@ Root `package.json` registers 8 workspaces — run `npm install` from the repo r
   "name": "prism-plugin",
   "private": true,
   "workspaces": [
-    "packages/prism-core",
-    "packages/prism-ui",
+    "packages/*",
     "cmd/prism-vscode",
     "cmd/prism-vscode/webview-ui",
     "cmd/prism-vscode/webview-office",
     "cmd/prism-vscode/webview-panel",
     "cmd/prism-electron",
-    "cmd/prism-electron/webview-ui"
+    "cmd/prism-electron/webview-ui",
+    "cmd/prism-installer"
   ]
 }
 ```

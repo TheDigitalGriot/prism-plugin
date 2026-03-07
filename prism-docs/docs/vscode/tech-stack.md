@@ -8,7 +8,7 @@ outline: [2, 3]
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                     Prism VS Code Extension v2.3.0                          │
+│                     Prism VS Code Extension v2.4.9                          │
 ├──────────────┬──────────────┬──────────────┬───────────────┬────────────────┤
 │  Extension   │  Sidebar     │  Bottom      │  Office       │  Build         │
 │  Host        │  Webview     │  Panel       │  Webview      │  Tools         │

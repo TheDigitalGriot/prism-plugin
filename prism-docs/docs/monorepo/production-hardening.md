@@ -1,10 +1,10 @@
 ---
-title: Production Hardening (v2.3.5)
-description: Hardening measures added in v2.3.5 across office renderer, Claude CLI detection, layout persistence, quality gates, and workspace discovery.
+title: Production Hardening (v2.4.1+)
+description: Hardening measures across office renderer, Claude CLI detection, layout persistence, quality gates, and workspace discovery.
 outline: [2, 3]
 ---
 
-# Production Hardening (v2.3.5)
+# Production Hardening (v2.4.1+)
 
 | Area | Hardening |
 |------|-----------|
