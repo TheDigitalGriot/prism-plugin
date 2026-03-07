@@ -1,0 +1,47 @@
+{
+  "skill": "prism-prd",
+  "version": "v2.5.0",
+  "baseline": "../../../v2.4.8-snapshot/skills/prism-prd/SKILL.md",
+  "current": "skills/prism-prd/SKILL.md",
+  "target_codebase": ".",
+  "evals": [
+    {
+      "id": 1,
+      "dimension": "output_quality",
+      "prompt": "Create a PRD for a task management app with kanban boards and team collaboration features",
+      "expected_output": "A complete PRD saved to .prism/shared/plans/ with DATE-task-management-PRD.md naming, covering problem statement, target users, feature list with priorities, technical requirements, risks, and success metrics",
+      "files": [],
+      "expectations": [
+        "PRD file is created at .prism/shared/plans/YYYY-MM-DD-*-PRD.md",
+        "Document contains sections: Problem Statement, Target Users, Features, Technical Requirements, Risks, Success Metrics",
+        "Features are prioritized (P0/P1/P2 or MoSCoW)",
+        "Companion document options are offered after PRD generation"
+      ]
+    },
+    {
+      "id": 2,
+      "dimension": "regression",
+      "prompt": "I have an idea for a mobile fitness tracking app. Can you help me document the product requirements?",
+      "expected_output": "Skill triggers correctly, checks for existing context via prism-locator agent, invokes /generate_prd command, saves output to .prism/shared/plans/, and offers next workflow steps",
+      "files": [],
+      "expectations": [
+        "Skill checks for existing research/documentation before starting",
+        "The /generate_prd command is invoked",
+        "Output is saved to .prism/shared/plans/ directory with correct naming convention",
+        "Next steps include /prism-research and /prism-plan options"
+      ]
+    },
+    {
+      "id": 3,
+      "dimension": "behavioral_compliance",
+      "prompt": "Generate a lightweight PRD for a simple landing page builder MVP",
+      "expected_output": "A lightweight PRD focused on core sections only, respecting the depth calibration guidance for startup/MVP level",
+      "files": [],
+      "expectations": [
+        "PRD depth matches lightweight/MVP calibration — not enterprise-level exhaustive detail",
+        "Quality gates are checked: problem statement, target user, features, feasibility, scope, metrics, risks, open questions",
+        "TodoWrite is used to track PRD items"
+      ]
+    }
+  ]
+}

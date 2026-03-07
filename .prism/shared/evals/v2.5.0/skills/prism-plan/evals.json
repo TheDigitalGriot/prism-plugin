@@ -1,0 +1,50 @@
+{
+  "skill": "prism-plan",
+  "version": "v2.5.0",
+  "baseline": "../../../v2.4.8-snapshot/skills/prism-plan/SKILL.md",
+  "current": "skills/prism-plan/SKILL.md",
+  "target_codebase": ".",
+  "evals": [
+    {
+      "id": 1,
+      "dimension": "regression",
+      "prompt": "Create a plan for adding WebSocket support to this project. There is existing research at .prism/shared/research/2026-03-07-websocket-research.md.",
+      "expected_output": "Interactive planning flow that loads research context before presenting understanding",
+      "files": [],
+      "expectations": [
+        "prism-analyzer agent is spawned to extract decisions, constraints, and patterns from the research document",
+        "Understanding is presented to the user BEFORE writing the full plan (interactive rule)",
+        "User confirmation is requested before proceeding to full plan",
+        "Plan is NOT written in one shot -- structure approval is requested first"
+      ]
+    },
+    {
+      "id": 2,
+      "dimension": "output_quality",
+      "prompt": "Plan the implementation for a new CLI dashboard screen that shows real-time test results.",
+      "expected_output": "Plan document saved to .prism/shared/plans/ with all required sections",
+      "files": [],
+      "expectations": [
+        "Plan is saved to .prism/shared/plans/YYYY-MM-DD-feature.md",
+        "Success criteria are split into Automated Verification and Manual Verification sections",
+        "Each phase includes specific file paths and verification commands",
+        "A 'What We Are NOT Doing' scope section is included",
+        "Risks and mitigations section is present",
+        "TodoWrite is used to track phases"
+      ]
+    },
+    {
+      "id": 3,
+      "dimension": "behavioral_compliance",
+      "prompt": "I need a plan to migrate our database from SQLite to PostgreSQL. I'm not sure about the approach yet.",
+      "expected_output": "Multiple design options are presented with pros/cons before committing to a plan",
+      "files": [],
+      "expectations": [
+        "Design options (Option A, Option B, etc.) are presented with pros and cons",
+        "User is asked to choose an approach before plan is written",
+        "Questions are asked to resolve unknowns rather than assuming",
+        "Plan includes migration and rollback considerations (Be Practical philosophy)"
+      ]
+    }
+  ]
+}

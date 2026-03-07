@@ -1,0 +1,75 @@
+{
+  "skill": "prism-spectrum",
+  "version": "v2.5.0",
+  "baseline": "../../../v2.4.8-snapshot/skills/prism-spectrum/SKILL.md",
+  "current": "skills/prism-spectrum/SKILL.md",
+  "target_codebase": ".",
+  "test_fixtures": {
+    "stories_basic": ".prism/shared/evals/v2.4.9/skills/prism-spectrum/fixtures/stories-basic.json",
+    "stories_graph": ".prism/shared/evals/v2.4.9/skills/prism-spectrum/fixtures/stories-graph-targets.json",
+    "stories_ui": ".prism/shared/evals/v2.4.9/skills/prism-spectrum/fixtures/stories-ui.json"
+  },
+  "evals": [
+    {
+      "id": 1,
+      "dimension": "behavioral_compliance",
+      "prompt": "Execute the next story from .prism/shared/evals/v2.4.9/skills/prism-spectrum/fixtures/stories-basic.json. Progress file: .prism/shared/evals/v2.4.9/skills/prism-spectrum/fixtures/progress.md",
+      "expected_output": "Story execution that loads epic context (decisions, risks, outOfScope) before implementing",
+      "files": [],
+      "expectations": [
+        "Stories file is read completely before any implementation",
+        "Epic context is loaded: epic.decisions, epic.risks, epic.outOfScope, epic.references (Step 1b)",
+        "Story context is loaded: context.why, context.risks, context.patterns, context.edgeCases (Step 1b)",
+        "Quality gates from epic.qualityGates are executed (not plan.qualityGates)",
+        "Story announcement includes <spectrum-story> signal with ID, Title, Priority, Files",
+        "Progress.md is updated with learnings after completion"
+      ]
+    },
+    {
+      "id": 2,
+      "dimension": "behavioral_compliance",
+      "prompt": "Execute the next story from .prism/shared/evals/v2.4.9/skills/prism-spectrum/fixtures/stories-graph-targets.json. Progress file: .prism/shared/evals/v2.4.9/skills/prism-spectrum/fixtures/progress.md",
+      "expected_output": "Story execution with graph verification before and after implementation",
+      "files": [],
+      "expectations": [
+        "index_repository is called before implementation (Step 1c)",
+        "trace_call_path is called for functions listed in story.context.graphTargets",
+        "Blast radius is checked against caller count before proceeding",
+        "index_repository is called again after implementation to capture changes",
+        "search_graph with max_degree=0, exclude_entry_points=true is run for dead code check",
+        "Graph delta is logged in progress.md entry (nodes added/removed)"
+      ]
+    },
+    {
+      "id": 3,
+      "dimension": "output_quality",
+      "prompt": "Execute the next story from .prism/shared/evals/v2.4.9/skills/prism-spectrum/fixtures/stories-ui.json. Progress file: .prism/shared/evals/v2.4.9/skills/prism-spectrum/fixtures/progress.md",
+      "expected_output": "Story execution that attempts browser verification for UI changes",
+      "files": [],
+      "expectations": [
+        "Browser verification is attempted for .tsx/.jsx/.css file changes (Step 6b)",
+        "playwright-cli availability is checked before attempting verification",
+        "If playwright-cli unavailable, skip is noted in progress.md",
+        "Progress.md entry follows the correct format (What was done, Learnings, Files changed, Quality gates)",
+        "Correct signal is output: spectrum-continue if stories remain, promise COMPLETE if none remain",
+        "stories.json is re-read and remaining count verified before signaling (Step 9)"
+      ]
+    },
+    {
+      "id": 4,
+      "dimension": "regression",
+      "prompt": "Execute the next story from .prism/shared/evals/v2.4.9/skills/prism-spectrum/fixtures/stories-basic.json. Progress file: .prism/shared/evals/v2.4.9/skills/prism-spectrum/fixtures/progress.md",
+      "expected_output": "Story execution preserving all v2.4.8 core behaviors",
+      "files": [],
+      "expectations": [
+        "All state files are loaded fresh (stories.json, progress.md, CLAUDE.md)",
+        "Exactly one story is executed per invocation",
+        "All files in story.files are read BEFORE making changes",
+        "Quality gates are run before committing",
+        "Commit is atomic: one story = one commit",
+        "stories.json is updated with status: complete, completedAt, commitHash",
+        "Error handling uses correct signals (spectrum-retry for gate failures, spectrum-blocked for unclear requirements)"
+      ]
+    }
+  ]
+}

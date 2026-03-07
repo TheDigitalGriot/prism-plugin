@@ -1,0 +1,52 @@
+{
+  "skill": "prism-iterate",
+  "version": "v2.5.0",
+  "baseline": "../../../v2.4.8-snapshot/skills/prism-iterate/SKILL.md",
+  "current": "skills/prism-iterate/SKILL.md",
+  "target_codebase": ".",
+  "evals": [
+    {
+      "id": 1,
+      "dimension": "output_quality",
+      "prompt": "The validation report found that Phase 5 of the three-package-split plan has a broken import path. The plan says to import from @prism-core/utils but the actual module exports from @prism-core/lib. Iterate on the plan to fix this.",
+      "expected_output": "Presents an Iteration Needed summary identifying the trigger, current state, changes required, and impact. Updates the plan with an iteration log entry. Resumes implementation from the corrected phase.",
+      "files": [".prism/shared/plans/2026-03-01-three-package-split.md"],
+      "expectations": [
+        "Reads the full plan before making any changes",
+        "Presents a structured 'Iteration Needed' block with Trigger, Current State, Changes Required, and Impact",
+        "Adds an Iteration Log entry to the plan with date, reason, and specific changes",
+        "Does NOT delete existing plan content — uses strikethrough or annotations to preserve history",
+        "Gets user approval before resuming implementation",
+        "Resumes from the affected phase, not from the beginning"
+      ]
+    },
+    {
+      "id": 2,
+      "dimension": "regression",
+      "prompt": "The user says 'the sidebar layout needs to change from vertical to horizontal'. Iterate on the plan to accommodate this vague feedback.",
+      "expected_output": "Questions the vague feedback before making changes. Asks clarifying questions about which sidebar, what horizontal means in context, and impact on other phases.",
+      "files": [],
+      "expectations": [
+        "Does not immediately rewrite the plan based on vague feedback",
+        "Asks clarifying questions (which sidebar, what does horizontal mean, scope of change)",
+        "Follows the 'Be Skeptical' philosophy — questions vague feedback and verifies feasibility",
+        "Follows the 'Be Interactive' philosophy — confirms understanding before making changes",
+        "Only proceeds with plan changes after getting clear answers"
+      ]
+    },
+    {
+      "id": 3,
+      "dimension": "regression",
+      "prompt": "Iterate on the plan. Phase 7 needs a new sub-phase 7.5 to handle database migration that was discovered during implementation. The new phase requires understanding the existing ORM setup.",
+      "expected_output": "Spawns research agents to understand the ORM setup before adding Phase 7.5 to the plan. Updates success criteria if needed.",
+      "files": [],
+      "expectations": [
+        "Spawns research subagents (codebase-locator, codebase-analyzer) to understand the ORM setup",
+        "Adds Phase 7.5 to the plan without disrupting completed phases",
+        "Updates TodoWrite to reflect the new phase",
+        "Maintains the separation of automated vs manual success criteria",
+        "Leaves no unresolved questions in the updated plan"
+      ]
+    }
+  ]
+}

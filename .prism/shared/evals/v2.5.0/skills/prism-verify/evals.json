@@ -1,0 +1,48 @@
+{
+  "skill": "prism-verify",
+  "version": "v2.5.0",
+  "baseline": "../../../v2.4.8-snapshot/skills/prism-verify/SKILL.md",
+  "current": "skills/prism-verify/SKILL.md",
+  "target_codebase": ".",
+  "evals": [
+    {
+      "id": 1,
+      "dimension": "output_quality",
+      "prompt": "Verify that the sidebar UI renders correctly after my changes",
+      "expected_output": "Skill checks for playwright-cli, detects dev server command from package.json, starts the server, spawns browser-verifier agent, captures screenshot, writes verification-result.json, and presents pass/fail summary",
+      "files": [],
+      "expectations": [
+        "Playwright-cli availability is checked first",
+        "Dev server command is detected from package.json scripts (dev, start, or serve)",
+        "Results are saved to .prism/local/verifications/ directory",
+        "Output includes verification-result.json, screenshot.png, and verification-summary.md"
+      ]
+    },
+    {
+      "id": 2,
+      "dimension": "behavioral_compliance",
+      "prompt": "Run browser verification on my React app at http://localhost:3000",
+      "expected_output": "Skill uses the provided URL directly instead of detecting from package.json, spawns browser-verifier agent, and always cleans up sessions and processes on completion",
+      "files": [],
+      "expectations": [
+        "Provided URL http://localhost:3000 is used directly",
+        "Browser-verifier agent is spawned with correct session naming",
+        "Cleanup runs even if verification fails — session closed and dev server killed",
+        "Verification failure is treated as a signal, not a hard blocker"
+      ]
+    },
+    {
+      "id": 3,
+      "dimension": "regression",
+      "prompt": "Verify the UI looks correct",
+      "expected_output": "If playwright-cli is not installed, skill warns gracefully and skips without erroring. If installed, full verification flow executes with headless mode by default.",
+      "files": [],
+      "expectations": [
+        "Graceful skip when playwright-cli is not installed — warning message, no error",
+        "Headless mode is used by default (no --headed flag)",
+        "Artifacts are stored in .prism/local/ (gitignored, never committed)",
+        "Session naming follows verify-{story-id} or verify-{timestamp} convention"
+      ]
+    }
+  ]
+}

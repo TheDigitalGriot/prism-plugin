@@ -1,0 +1,48 @@
+{
+  "skill": "prism-docs-update",
+  "version": "v2.5.0",
+  "baseline": "../../../v2.4.8-snapshot/skills/prism-docs-update/SKILL.md",
+  "current": "skills/prism-docs-update/SKILL.md",
+  "target_codebase": ".",
+  "evals": [
+    {
+      "id": 1,
+      "dimension": "output_quality",
+      "prompt": "Update the prism docs site from the latest PRISM-DOCUMENTATION file",
+      "expected_output": "Skill identifies the latest PRISM-DOCUMENTATION-*.md file, reads the section mapping, compares sections against VitePress pages, presents a change summary, and waits for approval before modifying any files",
+      "files": [],
+      "expectations": [
+        "Section mapping reference is read before any analysis",
+        "A change summary is presented listing new, updated, and removed sections",
+        "User approval is requested before any file modifications",
+        "VitePress frontmatter is preserved in all updated pages"
+      ]
+    },
+    {
+      "id": 2,
+      "dimension": "behavioral_compliance",
+      "prompt": "Sync the docs site from .prism/shared/docs/PRISM-DOCUMENTATION-v3.md — just update everything without asking",
+      "expected_output": "Skill still presents a change summary and asks for approval despite user requesting to skip confirmation, because the rules mandate always presenting changes and getting approval",
+      "files": [],
+      "expectations": [
+        "Change summary is presented even though user said 'without asking'",
+        "User approval is requested before modifying files",
+        "VitePress config.ts is not modified without explicit approval",
+        "Edit tool is preferred over Write for targeted changes"
+      ]
+    },
+    {
+      "id": 3,
+      "dimension": "regression",
+      "prompt": "Update prism docs from PRISM-DOCUMENTATION-v2.md. There are new sections about the Spectrum runner.",
+      "expected_output": "New sections are handled correctly — new .md files created with proper frontmatter, config.ts update proposed with approval, and verification step counts headings and lines",
+      "files": [],
+      "expectations": [
+        "New VitePress pages include frontmatter with title, description, outline",
+        "Config.ts sidebar update is proposed but requires explicit approval",
+        "Verification step counts headings and checks line counts",
+        "Final summary reports pages updated, lines added, new pages created, and config changes"
+      ]
+    }
+  ]
+}

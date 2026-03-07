@@ -1,0 +1,55 @@
+{
+  "skill": "prism-release",
+  "version": "v2.5.0",
+  "baseline": "../../../v2.4.8-snapshot/skills/prism-release/SKILL.md",
+  "current": "skills/prism-release/SKILL.md",
+  "target_codebase": ".",
+  "evals": [
+    {
+      "id": 1,
+      "dimension": "output_quality",
+      "prompt": "Release a new patch version of prism-plugin. The current version is 2.5.0.",
+      "expected_output": "Follows the full 9-step release pipeline: asks bump type, bumps version to 2.5.1, builds all artifacts (CLI, VSIX, Electron, Tauri, NSIS), commits, tags, pushes, creates GitHub release with 8 assets, creates eval snapshot, generates eval cases, and reports results.",
+      "files": ["VERSION"],
+      "expectations": [
+        "Asks the user which semver component to bump before proceeding",
+        "Reads VERSION file and shows current version",
+        "Runs bump-version.py with the chosen bump type",
+        "Manually checks Cargo.toml and tauri.conf.json for version updates",
+        "Builds all 5 artifact types (CLI, VSIX, NSIS resources, Electron, Tauri)",
+        "Creates git commit and tag with the new version",
+        "Creates GitHub release with 8 assets listed",
+        "Reports a summary with release URL at the end"
+      ]
+    },
+    {
+      "id": 2,
+      "dimension": "behavioral_compliance",
+      "prompt": "Release a new minor version. The current version is 2.5.0. I want a minor bump.",
+      "expected_output": "After building and pushing, creates an eval snapshot at .prism/shared/evals/v2.6.0-snapshot/ by copying skills/, agents/, commands/, and scripts/. Then generates evals.json files for each skill.",
+      "files": ["VERSION"],
+      "expectations": [
+        "Creates snapshot directory at .prism/shared/evals/v2.6.0-snapshot/",
+        "Copies skills/, agents/, commands/, and scripts/ into the snapshot directory",
+        "Verifies the snapshot by listing contents and counting items",
+        "Finds the previous snapshot to use as baseline for diffing",
+        "Generates evals.json files for each skill under .prism/shared/evals/v2.6.0/skills/<name>/",
+        "Adds eval files to the release commit with git add and amend",
+        "Re-tags after amending the commit"
+      ]
+    },
+    {
+      "id": 3,
+      "dimension": "regression",
+      "prompt": "Release a patch version. The gh CLI is not authenticated.",
+      "expected_output": "Completes all build steps but when gh release create fails, tells the user to run gh auth login rather than proceeding or force-pushing.",
+      "files": [],
+      "expectations": [
+        "Completes version bump and all build steps before encountering the error",
+        "Does NOT force-push or skip the GitHub release step",
+        "Tells the user to run 'gh auth login' when gh fails",
+        "Does NOT attempt workarounds that bypass authentication"
+      ]
+    }
+  ]
+}

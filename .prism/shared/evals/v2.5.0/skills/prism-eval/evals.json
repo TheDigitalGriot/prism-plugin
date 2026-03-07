@@ -1,0 +1,62 @@
+{
+  "skill": "prism-eval",
+  "version": "v2.5.0",
+  "baseline": null,
+  "current": "skills/prism-eval/SKILL.md",
+  "target_codebase": ".",
+  "evals": [
+    {
+      "id": 1,
+      "dimension": "output_quality",
+      "prompt": "Run evals for v2.5.0. There are eval cases defined for prism-implement and prism-validate.",
+      "expected_output": "Discovers evals.json files for both skills, creates iteration workspace, spawns parallel eval runs, grades outputs against expectations, builds benchmark.json, generates eval-viewer.html, and presents a results summary table.",
+      "files": [
+        ".prism/shared/evals/v2.5.0/skills/prism-implement/evals.json",
+        ".prism/shared/evals/v2.5.0/skills/prism-validate/evals.json"
+      ],
+      "expectations": [
+        "Globs for all evals.json files under .prism/shared/evals/v2.5.0/",
+        "Creates workspace directory with correct iteration number",
+        "Spawns eval runs in parallel using Agent with run_in_background=true",
+        "Captures timing data (total_tokens, duration_ms) as each agent completes",
+        "Grades each output against its expectations from evals.json",
+        "Writes grading.json with passed/failed counts and evidence for each assertion",
+        "Builds benchmark.json with metadata, runs, and run_summary",
+        "Generates eval-viewer.html and opens it in the browser",
+        "Presents a results summary with pass rates per eval case"
+      ]
+    },
+    {
+      "id": 2,
+      "dimension": "output_quality",
+      "prompt": "Compare v2.4.8 vs v2.5.0 for the prism-validate skill.",
+      "expected_output": "Runs each eval case twice — once with the v2.5.0 SKILL.md and once with the v2.4.8-snapshot SKILL.md. Produces a side-by-side comparison showing pass rate deltas and token usage differences.",
+      "files": [
+        ".prism/shared/evals/v2.5.0/skills/prism-validate/evals.json",
+        ".prism/shared/evals/v2.4.8-snapshot/skills/prism-validate/SKILL.md"
+      ],
+      "expectations": [
+        "Identifies comparative mode from the two version numbers in the prompt",
+        "Spawns TWO subagents per eval case — one for current, one for baseline",
+        "The baseline subagent reads from .prism/shared/evals/v2.4.8-snapshot/skills/prism-validate/SKILL.md",
+        "Saves outputs to with_skill/ and old_skill/ subdirectories respectively",
+        "Uses configuration names 'with_skill' and 'without_skill' in benchmark.json",
+        "Presents a comparison table with columns: Eval, v2.5.0, v2.4.8, Delta",
+        "Reports mean pass rate and mean tokens for each version"
+      ]
+    },
+    {
+      "id": 3,
+      "dimension": "output_quality",
+      "prompt": "Run evals for v2.5.0 but no evals.json files exist for any skill yet.",
+      "expected_output": "Reports that no eval cases were found and offers to help write them.",
+      "files": [],
+      "expectations": [
+        "Globs for evals.json files and finds none",
+        "Tells the user that no eval cases exist for v2.5.0",
+        "Offers to help create eval cases for specific skills",
+        "Does NOT fabricate eval cases or run empty evaluations"
+      ]
+    }
+  ]
+}

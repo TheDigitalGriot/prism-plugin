@@ -1,0 +1,72 @@
+{
+  "skill": "prism-research",
+  "version": "v2.5.0",
+  "baseline": "../../../v2.4.8-snapshot/skills/prism-research/SKILL.md",
+  "current": "skills/prism-research/SKILL.md",
+  "target_codebase": ".",
+  "evals": [
+    {
+      "id": 1,
+      "dimension": "output_quality",
+      "prompt": "Research the navigation system in this codebase and document how it works. This project is a Claude Code plugin with skills, agents, and commands.",
+      "expected_output": "Comprehensive research document following the prism-research template with file:line references",
+      "files": [],
+      "expectations": [
+        "Research document covers navigation-related files (NavigationContext, Sidebar, TopBar, AppShell, or equivalent routing components)",
+        "Document includes file:line references, not just file names",
+        "Document follows YYYY-MM-DD-topic.md naming convention",
+        "Output is saved to .prism/shared/research/ directory",
+        "Document has required sections: Research Question, Summary, Files Discovered, Component Analysis",
+        "No improvement suggestions or critiques appear (documentarian principle)"
+      ]
+    },
+    {
+      "id": 2,
+      "dimension": "behavioral_compliance",
+      "prompt": "Research the agent spawning architecture in this codebase. How do skills invoke agents via the Task tool?",
+      "expected_output": "Research document produced using graph-navigator agent and parallel agent spawning",
+      "files": [],
+      "expectations": [
+        "graph-navigator agent is spawned for structural orientation (Step 1b)",
+        "prism-locator agent is spawned to check existing research",
+        "codebase-locator and/or codebase-analyzer agents are spawned",
+        "Multiple agents are spawned in parallel where independent",
+        "No improvement suggestions appear (documentarian, not critic)",
+        "Research output references structural relationships between skills and agents"
+      ]
+    },
+    {
+      "id": 3,
+      "dimension": "behavioral_compliance",
+      "prompt": "Understand how the Spectrum autonomous execution workflow works in this project. Research the spectrum.sh script and prism-spectrum skill.",
+      "expected_output": "Research document covering the Spectrum loop, signals, and state management",
+      "files": [
+        "scripts/spectrum.sh",
+        "skills/prism-spectrum/SKILL.md"
+      ],
+      "expectations": [
+        "Mentioned files (spectrum.sh, SKILL.md) are read FULLY before spawning agents (Rule: Read files first)",
+        "Document describes the signal protocol (spectrum-continue, spectrum-retry, spectrum-blocked, spectrum-error, promise COMPLETE)",
+        "Document describes stories.json state management",
+        "Document describes fresh-context-per-iteration principle",
+        "No recommendations for how to improve the workflow appear",
+        "All agents complete before synthesis (Rule: Wait for completion)"
+      ]
+    },
+    {
+      "id": 4,
+      "dimension": "regression",
+      "prompt": "Map out the skill discovery and routing system in this plugin. How does the prism meta-skill route to phase-specific skills?",
+      "expected_output": "Research document covering skill YAML frontmatter, trigger matching, and the prism meta-router",
+      "files": [],
+      "expectations": [
+        "prism-locator agent is used to check for existing research",
+        "Output is saved to .prism/shared/research/ directory",
+        "Document includes file:line references to SKILL.md files",
+        "codebase-locator agent is spawned to find skill files",
+        "Research template sections are all present (Summary, Files Discovered, etc.)",
+        "TodoWrite is used to track open questions if any arise"
+      ]
+    }
+  ]
+}

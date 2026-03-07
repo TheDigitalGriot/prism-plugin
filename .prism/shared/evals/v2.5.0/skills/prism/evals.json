@@ -1,0 +1,47 @@
+{
+  "skill": "prism",
+  "version": "v2.5.0",
+  "baseline": "../../../v2.4.8-snapshot/skills/prism/SKILL.md",
+  "current": "skills/prism/SKILL.md",
+  "target_codebase": ".",
+  "evals": [
+    {
+      "id": 1,
+      "dimension": "regression",
+      "prompt": "I need to add a new authentication system to this project. Help me figure out the right approach using the Prism workflow.",
+      "expected_output": "Prism meta-skill activates and routes to the correct starting phase based on existing .prism/ artifacts",
+      "files": [],
+      "expectations": [
+        "prism-locator agent is spawned to check for existing research/plans in .prism/",
+        "Workflow selection logic is applied (R->P->I->V for unfamiliar work, or abbreviated if artifacts exist)",
+        "The correct phase skill is recommended or invoked based on findings",
+        "If .prism/ directory does not exist, init_prism.py is suggested"
+      ]
+    },
+    {
+      "id": 2,
+      "dimension": "output_quality",
+      "prompt": "I want to refactor the command routing in this plugin. Walk me through what Prism phases I should use and in what order.",
+      "expected_output": "Clear guidance on which Prism phases apply and why, referencing the workflow selection table",
+      "files": [],
+      "expectations": [
+        "Response references the workflow selection table (R->P->I->V for unfamiliar, P->I->V for known, etc.)",
+        "Each recommended phase includes its output artifact path (e.g., .prism/shared/research/YYYY-MM-DD-topic.md)",
+        "Debug and Validate phases are mentioned as part of the full workflow",
+        "Context management thresholds are referenced if session is long"
+      ]
+    },
+    {
+      "id": 3,
+      "dimension": "regression",
+      "prompt": "Fix this one-line typo in the README. Use Prism.",
+      "expected_output": "Prism recognizes this as a trivial fix and recommends direct implementation without full workflow",
+      "files": [],
+      "expectations": [
+        "Trivial fix path is selected (direct implementation, no Research or Plan phases)",
+        "No unnecessary agent spawning for a simple change",
+        "The workflow selection table's '<20 lines' rule is applied correctly"
+      ]
+    }
+  ]
+}

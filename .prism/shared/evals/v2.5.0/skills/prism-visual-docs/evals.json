@@ -1,0 +1,47 @@
+{
+  "skill": "prism-visual-docs",
+  "version": "v2.5.0",
+  "baseline": "../../../v2.4.8-snapshot/skills/prism-visual-docs/SKILL.md",
+  "current": "skills/prism-visual-docs/SKILL.md",
+  "target_codebase": ".",
+  "evals": [
+    {
+      "id": 1,
+      "dimension": "output_quality",
+      "prompt": "Create user flows and wireframes for the e-commerce checkout experience based on our PRD",
+      "expected_output": "Skill locates the PRD via prism-locator, reads it fully, invokes /generate_user_flows with the PRD path, generates user personas, ASCII flow diagrams, wireframes, component library, and responsive specs, then saves to .prism/shared/plans/",
+      "files": [],
+      "expectations": [
+        "PRD is located and read fully before generating visual docs",
+        "/generate_user_flows command is invoked with the PRD file path",
+        "Output saved to .prism/shared/plans/YYYY-MM-DD-*-USER-FLOWS.md",
+        "Next workflow steps are offered including /prism-plan and /prism-implement"
+      ]
+    },
+    {
+      "id": 2,
+      "dimension": "behavioral_compliance",
+      "prompt": "Design low-fidelity wireframes for our dashboard MVP, we also need a tech spec",
+      "expected_output": "Skill respects low-fidelity depth calibration, generates both user flows and tech spec via respective commands, saves both documents, and tracks progress with TodoWrite",
+      "files": [],
+      "expectations": [
+        "Depth calibration matches low-fidelity/MVP — focuses on key flows only",
+        "/generate_tech_spec command is also invoked for the tech spec request",
+        "Both USER-FLOWS.md and TECHNICAL-SPEC.md files are saved to .prism/shared/plans/",
+        "TodoWrite tracks visual doc items (personas, flows, inventory, wireframes, components, breakpoints)"
+      ]
+    },
+    {
+      "id": 3,
+      "dimension": "regression",
+      "prompt": "Map out the user journeys for our mobile app",
+      "expected_output": "Skill triggers correctly, follows the full 6-step workflow, and quality gates are checked before marking complete",
+      "files": [],
+      "expectations": [
+        "Quality gates verified: personas, flows (5-10), screen inventory, wireframes, component library, responsive breakpoints, accessibility, states (empty/loading/error/success)",
+        "Companion document options offered (tech spec, pricing)",
+        "prism-locator agent is spawned to find relevant PRD"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "skill": "prism-validate",
+  "version": "v2.5.0",
+  "baseline": "../../../v2.4.8-snapshot/skills/prism-validate/SKILL.md",
+  "current": "skills/prism-validate/SKILL.md",
+  "target_codebase": ".",
+  "evals": [
+    {
+      "id": 1,
+      "dimension": "output_quality",
+      "prompt": "Validate the implementation of the three-package-split plan at .prism/shared/plans/2026-03-01-three-package-split.md. All 20 phases should be complete.",
+      "expected_output": "A validation report saved to .prism/shared/validation/ with phase completion counts, automated test results, manual verification items, deviations table, and a PASS/FAIL/PARTIAL status.",
+      "files": [".prism/shared/plans/2026-03-01-three-package-split.md"],
+      "expectations": [
+        "Loads the plan and checks git log for recent commits",
+        "Runs git diff --stat to identify changes in scope",
+        "Verifies each phase by checking checkboxes AND reading actual code",
+        "Separates success criteria into Automated (with commands and results) and Manual tables",
+        "Documents any deviations in a structured table with Deviation/Reason/Impact columns",
+        "Saves report to .prism/shared/validation/YYYY-MM-DD-report.md",
+        "Presents a summary with Phases N/M, Automated N/M, Manual N/M, and overall Status"
+      ]
+    },
+    {
+      "id": 2,
+      "dimension": "behavioral_compliance",
+      "prompt": "Validate the implementation. The codebase-memory-mcp graph tools are available.",
+      "expected_output": "Validation report includes a Structural Validation Results section with dead code check, dependency integrity, and boundary violation checks using graph tools.",
+      "files": [],
+      "expectations": [
+        "Includes a '## Structural Validation Results' section in the report",
+        "Runs search_graph with max_degree=0 and exclude_entry_points=true to check for dead code",
+        "Uses trace_call_path for modified functions to verify dependency integrity",
+        "Checks for boundary violations using search_graph with relationship=CALLS",
+        "Reports results of each structural check in a table format"
+      ]
+    },
+    {
+      "id": 3,
+      "dimension": "behavioral_compliance",
+      "prompt": "Validate the implementation. The codebase-memory-mcp is NOT available in this session.",
+      "expected_output": "Validation report skips structural validation with a note explaining why.",
+      "files": [],
+      "expectations": [
+        "Does not attempt to call graph tools when codebase-memory-mcp is unavailable",
+        "Includes a note: 'Structural validation skipped: graph not indexed' or equivalent",
+        "Still completes all other validation steps (phases, automated, manual, deviations)"
+      ]
+    }
+  ]
+}

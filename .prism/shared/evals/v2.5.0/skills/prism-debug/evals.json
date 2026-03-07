@@ -1,0 +1,52 @@
+{
+  "skill": "prism-debug",
+  "version": "v2.5.0",
+  "baseline": "../../../v2.4.8-snapshot/skills/prism-debug/SKILL.md",
+  "current": "skills/prism-debug/SKILL.md",
+  "target_codebase": ".",
+  "evals": [
+    {
+      "id": 1,
+      "dimension": "regression",
+      "prompt": "My TypeScript build is failing with 'Cannot find module' errors after I moved some files around. Debug this.",
+      "expected_output": "Parallel debug investigation spawning all three investigation agents with structured debug report output",
+      "files": [],
+      "expectations": [
+        "log-investigator agent is spawned to check for build error logs",
+        "state-investigator agent is spawned to check config and imports",
+        "git-investigator agent is spawned to analyze recent file moves",
+        "All three agents are spawned in parallel (not sequentially)",
+        "Output follows the structured debug report format (Problem Statement, Error Analysis, Investigation Findings, Root Cause Hypothesis, Suggested Fix Approach, Files to Examine)",
+        "No files are modified during investigation (read-only rule)"
+      ]
+    },
+    {
+      "id": 2,
+      "dimension": "output_quality",
+      "prompt": "Debug this: npm test is failing with 3 test failures after the last commit. The tests were passing before.",
+      "expected_output": "Debug report with actionable root cause hypothesis and specific fix suggestions",
+      "files": [],
+      "expectations": [
+        "Error analysis section parses test failure output (failing test names, assertion errors, file locations)",
+        "Root cause hypothesis is clearly stated as a hypothesis, not a certainty",
+        "Suggested fix approach includes numbered steps (at least 2 alternatives)",
+        "Files to Examine section lists specific file:line references",
+        "git-investigator checks the last commit for regression-causing changes"
+      ]
+    },
+    {
+      "id": 3,
+      "dimension": "behavioral_compliance",
+      "prompt": "A Spectrum quality gate failed during STORY-005 execution. The typecheck gate returned errors. Debug the failure for the next retry iteration.",
+      "expected_output": "Debug investigation formatted for Spectrum integration with progress.md-compatible output",
+      "files": [],
+      "expectations": [
+        "stories.json is read to understand STORY-005 context",
+        "progress.md is read for recent history",
+        "Output follows the Spectrum debug progress entry format (Timestamp, Quality Gate Failed, Error Output, Investigation Findings, Root Cause, Suggested Fix)",
+        "Findings are formatted for appending to progress.md",
+        "Typecheck error locations (file:line) are parsed and listed"
+      ]
+    }
+  ]
+}
