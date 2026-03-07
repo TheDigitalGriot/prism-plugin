@@ -1,4 +1,4 @@
-# Prism - Complete Documentation v2.4.9
+# Prism - Complete Documentation v2.5.0
 
 > A multi-platform development workflow suite for autonomous AI-driven development.
 > Includes a Charmbracelet TUI dashboard (Go), a VS Code extension (TypeScript/React),
@@ -95,7 +95,7 @@
 60. [Security Hardening](#security-hardening)
 61. [Three-Platform Feature Parity](#three-platform-feature-parity)
 
-### Part V — Monorepo Architecture (v2.4.9)
+### Part V — Monorepo Architecture (v2.5.0)
 
 62. [Repository Structure](#repository-structure)
 63. [npm Workspaces](#npm-workspaces)
@@ -104,12 +104,19 @@
 66. [Platform Shell Responsibilities](#platform-shell-responsibilities)
 67. [Development Workflow](#development-workflow)
 68. [Production Hardening (v2.4.1+)](#production-hardening-v241)
-69. [Centralized Version Management (v2.4.9)](#centralized-version-management-v249)
+69. [Centralized Version Management (v2.5.0)](#centralized-version-management-v250)
 70. [Unified Tauri Installer (v2.4.7+)](#unified-tauri-installer-v247)
 
 ### Part VI — VitePress Documentation Site
 
 71. [Documentation Site Overview](#documentation-site-overview)
+
+### Part VII — Prism Eval Dashboard (Electron)
+
+72. [Eval Dashboard Overview](#eval-dashboard-overview)
+73. [Eval Dashboard Architecture](#eval-dashboard-architecture)
+74. [Eval Dashboard Screens](#eval-dashboard-screens)
+75. [Eval Skill Integration](#eval-skill-integration)
 
 ---
 
@@ -122,8 +129,9 @@ Prism ships as three complementary interfaces for the same 4-phase workflow (Res
 | **CLI Dashboard** | `cmd/prism-cli/` | Go 1.23, Bubble Tea, FauxGL | Terminal-native, full-screen TUI, Spectrum execution |
 | **VS Code Extension** | `cmd/prism-vscode/` | TypeScript, React 18, Vite | IDE-integrated, chat-driven, visual office & monitor |
 | **Electron Desktop App** | `cmd/prism-electron/` | TypeScript, React 19, Electron 40, Vite, Tailwind v4 | Standalone desktop app, V2 IDE shell, native menus |
+| **Eval Dashboard** | `prism-eval/` | Electron 40, React 19, Tailwind v4, Recharts, Dagre | Skill evaluation viewer — benchmarks, traces, graphs |
 
-All three share the same `.prism/` directory structure, `stories.json` schema, signal protocol, and Claude CLI integration. They can be used independently or side-by-side. The Electron app features a full V2 IDE shell with activity bars, collapsible rails, tabbed editors, and floating chat pill. It shares all business logic, React UI components, and the gRPC-over-postMessage protocol with the VS Code extension via a proper npm monorepo with `packages/prism-core` and `packages/prism-ui` shared packages (see Part V — Monorepo Architecture). A unified Tauri-based installer (`cmd/prism-installer/`) provides native Windows `.exe` and macOS `.dmg` installers with platform-specific wizard UIs. A VitePress documentation site at `prism-docs/` provides navigable, searchable documentation across ~75 pages (see Part VI).
+All four share the same `.prism/` directory structure, `stories.json` schema, signal protocol, and Claude CLI integration. They can be used independently or side-by-side. The Electron app features a full V2 IDE shell with activity bars, collapsible rails, tabbed editors, and floating chat pill. It shares all business logic, React UI components, and the gRPC-over-postMessage protocol with the VS Code extension via a proper npm monorepo with `packages/prism-core` and `packages/prism-ui` shared packages (see Part V — Monorepo Architecture). A unified Tauri-based installer (`cmd/prism-installer/`) provides native Windows `.exe` and macOS `.dmg` installers with platform-specific wizard UIs. A VitePress documentation site at `prism-docs/` provides navigable, searchable documentation across ~79 pages (see Part VI). A dedicated Eval Dashboard at `prism-eval/` visualizes skill evaluation results, benchmarks, and agent traces (see Part VII).
 
 ---
 
@@ -135,9 +143,9 @@ The Prism Claude Code plugin is the foundation that underpins every platform —
 
 The Prism plugin registers with Claude Code through a conventional directory layout that is automatically discovered at startup. It provides:
 
-- **25 commands** — User-invocable operations via `/command-name` (3,959 lines)
-- **10 agents** — Specialized subprocesses spawned via `Task(subagent_type="agent-name")` (1,365 lines)
-- **13 skills** — Auto-activating workflow orchestrators with trigger patterns (2,123 lines)
+- **25 commands** — User-invocable operations via `/command-name` (4,023 lines)
+- **11 agents** — Specialized subprocesses spawned via `Task(subagent_type="agent-name")` (1,491 lines)
+- **14 skills** — Auto-activating workflow orchestrators with trigger patterns (2,496 lines)
 - **5 scripts** — Shell, PowerShell, and Python automation (921 lines)
 - **No hooks or MCP servers** — The plugin relies entirely on prompt engineering, not runtime hooks
 
@@ -155,7 +163,7 @@ Unlike traditional software plugins that extend functionality through code, Pris
 {
   "name": "prism",
   "description": "Structured 4-phase development workflow (Research -> Plan -> Implement -> Validate) with Spectrum-style iterative execution with TUI",
-  "version": "2.4.9",
+  "version": "2.5.0",
   "author": { "name": "Prism Team" }
 }
 ```
@@ -170,7 +178,7 @@ Unlike traditional software plugins that extend functionality through code, Pris
     "name": "prism",
     "source": { "source": "github", "repo": "TheDigitalGriot/prism-plugin" },
     "description": "Structured 4-phase development workflow (Research -> Plan -> Implement -> Validate)",
-    "version": "2.4.9"
+    "version": "2.5.0"
   }]
 }
 ```
@@ -178,7 +186,7 @@ Unlike traditional software plugins that extend functionality through code, Pris
 | Field | Value |
 |-------|-------|
 | Plugin Name | `prism` |
-| Version | 2.4.9 |
+| Version | 2.5.0 |
 | Distribution | GitHub: `TheDigitalGriot/prism-plugin` |
 | Build Step | None — pure markdown prompt engineering |
 | Auto-Discovery | Claude Code scans `commands/`, `agents/`, `skills/*/SKILL.md` on enable |
@@ -330,6 +338,12 @@ Agents live at `agents/` and are spawned via `Task(subagent_type="agent-name")`.
 |---|-------|------|-------|-------|-------|------|
 | 10 | `browser-verifier` | `browser-verifier.md` | 92 | **haiku** | Bash | Executes playwright-cli commands, returns structured JSON verification results. |
 
+### Code Intelligence Agent (v2.5.0)
+
+| # | Agent | File | Lines | Model | Tools | Role |
+|---|-------|------|-------|-------|-------|------|
+| 11 | `graph-navigator` | `graph-navigator.md` | 95 | **haiku** | codebase-memory-mcp (11 graph tools) | Queries the codebase knowledge graph for structural analysis — functions, call chains, dependencies, dead code, blast radius. Never reads files directly; uses graph tools exclusively. |
+
 ### Agent Frontmatter Format
 
 ```markdown
@@ -360,11 +374,11 @@ Skills live at `skills/*/SKILL.md` and are auto-discovered workflow orchestrator
 
 | # | Skill | Lines | Model | Trigger Patterns |
 |---|-------|-------|-------|-----------------|
-| 1 | `prism` | 275 | **sonnet** | "help me build", "implement this feature", "fix this bug", "prism", "structured workflow" |
-| 2 | `prism-research` | 113 | **sonnet** | "research this", "understand how X works", "map out the system", "explore the codebase" |
+| 1 | `prism` | 276 | **sonnet** | "help me build", "implement this feature", "fix this bug", "prism", "structured workflow" |
+| 2 | `prism-research` | 121 | **sonnet** | "research this", "understand how X works", "map out the system", "explore the codebase" |
 | 3 | `prism-plan` | 126 | **opus** | "create a plan", "plan the implementation", "design how to build" |
 | 4 | `prism-implement` | 122 | **sonnet** | "implement the plan", "start building", "execute phase 1" |
-| 5 | `prism-validate` | 94 | **sonnet** | "validate the plan", "verify implementation", "check if complete" |
+| 5 | `prism-validate` | 108 | **sonnet** | "validate the plan", "verify implementation", "check if complete" |
 | 6 | `prism-iterate` | 103 | **opus** | "iterate on plan", "update and continue", "adjust the approach" |
 
 ### Specialized Skills
@@ -372,10 +386,18 @@ Skills live at `skills/*/SKILL.md` and are auto-discovered workflow orchestrator
 | # | Skill | Lines | Model | Trigger Patterns |
 |---|-------|-------|-------|-----------------|
 | 7 | `prism-debug` | 221 | **sonnet** | "debug this", "why is this failing", "investigate the error" |
-| 8 | `prism-spectrum` | 376 | **sonnet** | "spectrum", "execute story", "run spectrum" |
+| 8 | `prism-spectrum` | 406 | **sonnet** | "spectrum", "execute story", "run spectrum" |
 | 9 | `prism-verify` | 125 | **sonnet** | "verify the UI", "check the browser", "visual verification" |
 | 10 | `prism-prd` | 122 | **opus** | "create a PRD", "write product requirements", "document this product" |
 | 11 | `prism-visual-docs` | 146 | **opus** | "create user flows", "design the screens", "create wireframes" |
+
+### Release, Eval & Docs Skills (v2.5.0)
+
+| # | Skill | Lines | Model | Trigger Patterns |
+|---|-------|-------|-------|-----------------|
+| 12 | `prism-release` | 245 | — | "release", "bump version", "new version", "cut a release" |
+| 13 | `prism-eval` | 237 | **sonnet** | "run evals", "compare versions", "benchmark skills", "evaluate v2.5.0", "regression check" |
+| 14 | `prism-docs-update` | 138 | — | "update prism docs", "sync docs site", "update documentation site" |
 
 ### Skill Subdirectory Contents
 
@@ -407,12 +429,21 @@ skills/
 │   └── references/
 │       ├── verification-template.md     # Browser verification template
 │       └── verification-patterns.md     # Playwright-cli patterns
-├── prism-spectrum/SKILL.md              # 376 lines — largest skill
+├── prism-spectrum/SKILL.md              # 406 lines — largest skill
 ├── prism-debug/SKILL.md                 # 221 lines
 ├── prism-implement/SKILL.md             # 122 lines
 ├── prism-iterate/SKILL.md               # 103 lines
 ├── prism-prd/SKILL.md                   # 122 lines
-└── prism-visual-docs/SKILL.md           # 146 lines
+├── prism-visual-docs/SKILL.md           # 146 lines
+├── prism-release/SKILL.md              # 245 lines — full release pipeline
+├── prism-eval/
+│   ├── SKILL.md                         # 237 lines — skill evaluation runner
+│   └── references/
+│       └── eval-schemas.md              # evals.json and benchmark.json schemas
+└── prism-docs-update/
+    ├── SKILL.md                         # 138 lines — VitePress docs syncer
+    └── references/
+        └── section-mapping.md           # Monolithic doc → VitePress page mapping
 ```
 
 ### Skill Frontmatter Format
@@ -565,6 +596,7 @@ Used for straightforward execution, routing, and integration tasks that don't re
 | `prism-debug` | Skill | Debug agent coordination |
 | `prism-spectrum` | Skill | Single-story execution with signal protocol |
 | `prism-verify` | Skill | Browser verification orchestration |
+| `prism-eval` | Skill | Eval runner — parallel agents, grading, benchmarking |
 
 ### Haiku — Fast Lookups & Simple Operations
 
@@ -578,6 +610,7 @@ Used for tasks that are fast, focused, and don't require nuanced judgment.
 | `state-investigator` | Agent | Environment checks — straightforward |
 | `git-investigator` | Agent | Git log analysis — structured data |
 | `browser-verifier` | Agent | Playwright command execution — procedural |
+| `graph-navigator` | Agent | Knowledge graph queries — structural lookups |
 | `commit` | Command | Git commit — minimal judgment needed |
 | `worktree` | Command | Git worktree creation — procedural |
 | `review-setup` | Command | Branch checkout — procedural |
@@ -619,6 +652,15 @@ prism-implement
 
 prism-spectrum
   └── /prism-debug (on quality gate failure — auto-retry)
+
+prism-release
+  └── (no commands — direct Bash execution for build/tag/push/release)
+
+prism-eval
+  └── (spawns parallel eval runner agents, then grader agents)
+
+prism-docs-update
+  └── (spawns parallel agents to compare and update VitePress pages)
 ```
 
 ### Skills → Agents (Parallel Spawning)
@@ -861,7 +903,7 @@ prism-plugin/                              # Repository root
 │   ├── worktree.md                        #  90 lines — haiku
 │   └── review-setup.md                    #  91 lines — haiku
 │
-├── agents/                                # 10 subagents (1,365 lines total)
+├── agents/                                # 11 subagents (1,491 lines total)
 │   ├── codebase-locator.md                # 122 lines — haiku
 │   ├── codebase-analyzer.md               # 143 lines — opus
 │   ├── codebase-pattern-finder.md         # 227 lines — sonnet
@@ -871,31 +913,39 @@ prism-plugin/                              # Repository root
 │   ├── log-investigator.md                # 106 lines — haiku
 │   ├── state-investigator.md              # 121 lines — haiku
 │   ├── git-investigator.md                # 140 lines — haiku
-│   └── browser-verifier.md               #  92 lines — haiku
+│   ├── browser-verifier.md               #  92 lines — haiku
+│   └── graph-navigator.md                #  95 lines — haiku (knowledge graph queries)
 │
-├── skills/                                # 11 auto-discovered skills (1,823 lines total)
+├── skills/                                # 14 auto-discovered skills (2,496 lines total)
 │   ├── prism/
-│   │   ├── SKILL.md                       # 275 lines — sonnet (master orchestrator)
+│   │   ├── SKILL.md                       # 276 lines — sonnet (master orchestrator)
 │   │   ├── references/workflow-patterns.md
 │   │   └── scripts/init_prism.py          # 174 lines
 │   ├── prism-research/
-│   │   ├── SKILL.md                       # 113 lines — sonnet
+│   │   ├── SKILL.md                       # 121 lines — sonnet
 │   │   └── references/{exploration-patterns,research-template}.md
 │   ├── prism-plan/
 │   │   ├── SKILL.md                       # 126 lines — opus
 │   │   └── references/plan-template.md
 │   ├── prism-implement/SKILL.md           # 122 lines — sonnet
 │   ├── prism-validate/
-│   │   ├── SKILL.md                       #  94 lines — sonnet
+│   │   ├── SKILL.md                       # 108 lines — sonnet
 │   │   └── references/validation-template.md
 │   ├── prism-iterate/SKILL.md             # 103 lines — opus
-│   ├── prism-spectrum/SKILL.md            # 376 lines — sonnet
+│   ├── prism-spectrum/SKILL.md            # 406 lines — sonnet
 │   ├── prism-debug/SKILL.md               # 221 lines — sonnet
 │   ├── prism-verify/
 │   │   ├── SKILL.md                       # 125 lines — sonnet
 │   │   └── references/{verification-template,verification-patterns}.md
 │   ├── prism-prd/SKILL.md                 # 122 lines — opus
-│   └── prism-visual-docs/SKILL.md         # 146 lines — opus
+│   ├── prism-visual-docs/SKILL.md         # 146 lines — opus
+│   ├── prism-release/SKILL.md             # 245 lines — full release pipeline
+│   ├── prism-eval/
+│   │   ├── SKILL.md                       # 237 lines — sonnet (skill eval runner)
+│   │   └── references/eval-schemas.md
+│   └── prism-docs-update/
+│       ├── SKILL.md                       # 138 lines — VitePress docs syncer
+│       └── references/section-mapping.md
 │
 ├── scripts/                               # Automation scripts (773 lines total)
 │   ├── spectrum.sh                        # 312 lines — autonomous execution loop
@@ -913,6 +963,9 @@ prism-plugin/                              # Repository root
 │   ├── prism-core/                        # Platform-agnostic business logic
 │   └── prism-ui/                          # Shared React components
 │
+├── prism-eval/                            # Eval Dashboard (Part VII) — Electron app
+│   └── src/                               # 52 TS/TSX files, React 19, Tailwind v4
+│
 └── .prism/                                # Workflow artifacts directory
     ├── stories/                           # stories.json files
     ├── shared/                            # Committed: research, plans, validation
@@ -928,35 +981,37 @@ prism-plugin/                              # Repository root
 | Category | Files | Total Lines |
 |----------|-------|-------------|
 | Plugin manifests | 2 | 28 |
-| Commands | 25 | 3,729 |
-| Agents | 10 | 1,365 |
-| Skills (SKILL.md) | 11 | 1,823 |
-| Skill references | 7 | ~350 |
+| Commands | 25 | 4,023 |
+| Agents | 11 | 1,491 |
+| Skills (SKILL.md) | 14 | 2,496 |
+| Skill references | 9 | ~450 |
 | Scripts | 3 (+ 1 Python) | 947 |
 | CLAUDE.md | 1 | 115 |
 | Hooks | 0 | 0 |
 | MCP servers | 0 | 0 |
-| **Plugin total** | **~60** | **~8,357** |
+| **Plugin total** | **~66** | **~9,550** |
 
 ### Model Assignment Distribution
 
 | Model | Components | Typical Cost | Use Case |
 |-------|------------|-------------|----------|
 | **Opus** | 14 assignments | Highest | Deep analysis, planning, document generation |
-| **Sonnet** | 21 assignments | Medium | General execution, routing, coordination |
-| **Haiku** | 10 assignments | Lowest | Fast lookups, simple operations, file scanning |
+| **Sonnet** | 22 assignments | Medium | General execution, routing, coordination |
+| **Haiku** | 11 assignments | Lowest | Fast lookups, simple operations, file scanning |
 
 ### Largest Components
 
 | Component | Type | Lines | Purpose |
 |-----------|------|-------|---------|
 | `create_plan.md` | Command | 442 | Interactive plan creation — most complex single prompt |
-| `prism-spectrum` | Skill | 376 | Autonomous story execution with signal protocol |
+| `prism-spectrum` | Skill | 406 | Autonomous story execution with signal protocol |
 | `spectrum.sh` | Script | 312 | Shell loop for autonomous execution |
-| `prism` | Skill | 275 | Master orchestrator routing all workflows |
+| `prism` | Skill | 276 | Master orchestrator routing all workflows |
 | `decompose_plan.md` | Command | 256 | Plan-to-stories conversion |
 | `generate_tech_spec.md` | Command | 252 | Technical specification generation |
 | `iterate_plan.md` | Command | 249 | Plan iteration with surgical edits |
+| `prism-release` | Skill | 245 | Full release pipeline with eval snapshot |
+| `prism-eval` | Skill | 237 | Skill evaluation runner with benchmarking |
 
 ### How the Plugin Connects to Platforms
 
@@ -965,7 +1020,7 @@ The Claude plugin is the **brain** — the three platform implementations (CLI, 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                    Claude Plugin (Part V)                         │
-│   25 commands, 10 agents, 11 skills, 4 scripts                  │
+│   25 commands, 11 agents, 14 skills, 4 scripts                  │
 │   Pure prompt engineering — defines workflows and behavior       │
 │                                                                   │
 │   Invoked by: claude CLI process                                 │
@@ -4447,7 +4502,7 @@ The `registry/` package manages `~/.prism/workspaces.json` for cross-directory p
       "path": "/Users/demo/project",
       "name": "project",
       "lastAccessed": "2026-03-02T14:00:00Z",
-      "version": "2.4.9"
+      "version": "2.5.0"
     }
   ]
 }
@@ -4908,7 +4963,7 @@ case plugin.PluginResizeMsg:
 | Watcher Artifact Scan | 10 seconds | `plugin_browser.go` |
 | State Storage | `~/.config/prism-cli/state/` | `state.go` |
 | Workspace Registry | `~/.prism/workspaces.json` | `registry.go` |
-| Version | 2.4.9 | `main.go:19` |
+| Version | 2.5.0 | `main.go:19` |
 
 ### Pagination Configuration
 
@@ -5010,7 +5065,7 @@ The Prism VS Code Extension (`cmd/prism-vscode/`) brings the full 4-phase workfl
 | Field | Value |
 |-------|-------|
 | Name | Prism |
-| Version | 2.4.9 |
+| Version | 2.5.0 |
 | Publisher | prism |
 | Categories | AI, Programming Languages, Other |
 | Min VS Code | 1.109.0 |
@@ -6777,9 +6832,9 @@ The Electron app shares approximately 90% of its codebase with the VS Code exten
 
 ---
 
-# Part V — Monorepo Architecture (v2.4.9)
+# Part V — Monorepo Architecture (v2.5.0)
 
-The repository was restructured from two independent applications with fragile path aliases into a proper npm workspaces monorepo in v2.3.5, with continued refinements through v2.4.9. Shared packages (`@prism/core`, `@prism/ui`) contain all business logic and React components. A unified Tauri-based installer replaced the legacy NSIS approach in v2.4.7.
+The repository was restructured from two independent applications with fragile path aliases into a proper npm workspaces monorepo in v2.3.5, with continued refinements through v2.5.0. Shared packages (`@prism/core`, `@prism/ui`) contain all business logic and React components. A unified Tauri-based installer replaced the legacy NSIS approach in v2.4.7. The `prism-eval` Electron app and three new skills (`prism-eval`, `prism-release`, `prism-docs-update`) were added in v2.5.0.
 
 ---
 
@@ -6991,7 +7046,7 @@ cd cmd/prism-electron && npm run make
 | **Workspace discovery** | 50-entry sibling directory cap; graceful `git` not found; 5s/10s/15s git command timeouts |
 
 
-## Centralized Version Management (v2.4.9)
+## Centralized Version Management (v2.5.0)
 
 Prior to v2.4.3, version strings were hardcoded in 14+ files across the monorepo and bumped manually. This was error-prone and versions frequently drifted. The bump script was updated in v2.4.7 to replace `cmd/prism-setup` references with the Tauri installer.
 
@@ -7000,16 +7055,16 @@ Prior to v2.4.3, version strings were hardcoded in 14+ files across the monorepo
 A single `VERSION` file at the repository root is the source of truth:
 
 ```
-2.4.9
+2.5.0
 ```
 
 ### Bump Script (`scripts/bump-version.py`)
 
 ```bash
-python scripts/bump-version.py patch           # 2.4.9 -> 2.4.10
-python scripts/bump-version.py minor           # 2.4.9 -> 2.5.0
-python scripts/bump-version.py major           # 2.4.9 -> 3.0.0
-python scripts/bump-version.py --set 2.5.0     # explicit version
+python scripts/bump-version.py patch           # 2.5.0 -> 2.5.1
+python scripts/bump-version.py minor           # 2.5.0 -> 2.6.0
+python scripts/bump-version.py major           # 2.5.0 -> 3.0.0
+python scripts/bump-version.py --set 2.6.0     # explicit version
 ```
 
 The script reads the current version from `VERSION`, computes the new version, then updates all production version locations:
@@ -7267,7 +7322,191 @@ npm run docs:preview  # Preview built site
 | VS Code (Part III) | 15 | Controller, IPC, sidebar, panel, trees, office |
 | Electron (Part IV) | 13 | Main process, IPC bridge, V2 UI, state management, security |
 | Monorepo (Part V) | 7 | Workspaces, prism-core, prism-ui, platform shells |
-| **Total** | **~75** | Full content from this documentation file |
+| Eval Dashboard (Part VII) | 4 | Overview, architecture, screens, skill integration |
+| **Total** | **~79** | Full content from this documentation file |
+
+---
+
+# Part VII — Prism Eval Dashboard (Electron)
+
+The Prism Eval Dashboard is a standalone Electron desktop application for running, viewing, and comparing skill evaluations across plugin versions. It works in tandem with the `prism-eval` skill and the `prism-release` pipeline to provide a visual quality assurance layer for prompt engineering.
+
+## Eval Dashboard Overview
+
+| Property | Value |
+|----------|-------|
+| Location | `prism-eval/` |
+| Runtime | Electron 40, React 19, TypeScript |
+| Build | Electron Forge + Vite |
+| Styling | Tailwind CSS v4 |
+| Charts | Recharts |
+| Layout | Dagre (DAG layout for agent traces) |
+| Source files | 52 TypeScript/TSX files (~1,278 lines) |
+| Window title | "Prism Admin — Eval Dashboard" |
+
+### Purpose
+
+When the `prism-eval` skill runs evaluations, it produces structured JSON output (`benchmark.json`, `grading.json`, `timing.json`) under `.prism/shared/evals/`. The Eval Dashboard reads these workspaces and presents the data across five interactive screens, enabling developers to:
+
+- Monitor aggregate skill health across versions
+- Drill into individual eval case pass/fail grades with evidence
+- Replay agent execution traces as DAG visualizations
+- Compare benchmark metrics (pass rate, tokens, time) between versions
+- Visualize the skill dependency graph
+
+---
+
+## Eval Dashboard Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Main Process (src/main.ts)                             │
+│  ├── Window management (1024×680 min, state persisted)  │
+│  ├── IPC: eval:selectDirectory → file picker dialog     │
+│  └── IPC: eval:loadWorkspace → EvalDataService          │
+├─────────────────────────────────────────────────────────┤
+│  Preload (src/preload.ts)                               │
+│  └── contextBridge: electronAPI.selectDirectory/load     │
+├─────────────────────────────────────────────────────────┤
+│  Renderer (React 19 SPA)                                │
+│  ├── AppShell (Sidebar + TopBar + content area)         │
+│  ├── DataContext (workspace data provider)              │
+│  ├── NavigationContext (screen routing)                 │
+│  ├── EvalContext (eval selection state)                 │
+│  ├── TraceContext (trace playback state)                │
+│  └── 5 screens (see below)                             │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Data Flow
+
+```
+.prism/shared/evals/<version>/workspace/iteration-N/
+    │
+    ├── benchmark.json          ──→  Benchmarks screen
+    ├── <skill>-eval-<id>/
+    │   ├── eval_metadata.json  ──→  EvalExplorer (assertions)
+    │   ├── grading.json        ──→  EvalExplorer (pass/fail)
+    │   ├── timing.json         ──→  Benchmarks (token/time)
+    │   └── with_skill/
+    │       └── outputs/        ──→  EvalExplorer (full output)
+    │
+    └── WorkspaceSelector ──→ user picks iteration directory
+```
+
+The `EvalDataService` (main process) reads the workspace directory, parses all JSON files, and sends structured data to the renderer via IPC.
+
+---
+
+## Eval Dashboard Screens
+
+### 1. Mission Control
+
+The operational overview screen. Displays:
+
+- **Stat cards**: Average pass rate, total evals run, skills improved, total tokens consumed
+- **Skill Performance Table**: All skills with pass rate, eval count, delta, token usage
+- **Version Progression**: Line chart showing pass rate trend across versions
+- **Live Feed**: Chronological event log of eval runs (EVAL, TOOL, SPAWN, BENCH, COMPARE, GRADE events)
+- **Delta Indicators**: Color-coded arrows showing improvement/regression per skill
+
+### 2. Eval Explorer
+
+Drill-down into individual eval cases:
+
+- **Skill Filter Chips**: Filter by skill name
+- **Eval Cards**: Each eval case showing prompt, with-skill score vs old-skill score, comparator verdict
+- **Eval Detail Panel**: Slide-out panel with full prompt, expectations list (pass/fail with evidence), output preview
+- **Expectations Panel**: Individual assertion rows with pass/fail badges and evidence quotes
+
+### 3. Agent Traces
+
+DAG-based visualization of agent execution:
+
+- **DagCanvas**: Renders agent execution as a directed acyclic graph using Dagre layout
+- **DagNode**: Individual agent steps (color-coded by status: complete/running/pending)
+- **DagEdge**: Dependency arrows between steps
+- **Playback Controls**: Step through trace execution chronologically
+- **Step Detail Panel**: Selected step's tools used, duration, and output
+
+### 4. Benchmarks
+
+Version-to-version metric comparison:
+
+- **Version Cards**: Side-by-side cards for current vs baseline versions
+- **Metric Comparison**: Pass rate, mean tokens ± stddev, mean time ± stddev
+- **Skill Breakdown**: Per-skill comparison table with delta highlighting
+- **Outgrowth Warning**: Alerts when token usage grows disproportionately to quality gains
+
+### 5. Skill Graph
+
+Interactive visualization of skill relationships:
+
+- **GraphCanvas**: Force-directed or hierarchical layout of skills, commands, and agents
+- **GraphNode**: Nodes sized by line count, colored by model assignment
+- **GraphLegend**: Model color key (Opus/Sonnet/Haiku)
+- **Node Detail Panel**: Click a node to see connections, line count, trigger patterns
+
+---
+
+## Eval Skill Integration
+
+The Eval Dashboard is the visual frontend for the `prism-eval` skill workflow:
+
+```
+┌──────────────┐     ┌──────────────┐     ┌──────────────────┐
+│ prism-release │────▶│  prism-eval  │────▶│  Eval Dashboard  │
+│ (Step 7-8:   │     │  (Skill)     │     │  (Electron app)  │
+│  snapshot +  │     │  Runs evals, │     │  Visualizes      │
+│  eval gen)   │     │  grades,     │     │  benchmark.json, │
+│              │     │  benchmarks) │     │  grading.json,   │
+└──────────────┘     └──────────────┘     │  timing.json)    │
+                                          └──────────────────┘
+```
+
+### Eval Lifecycle
+
+1. **`/prism-release`** creates a version snapshot (`.prism/shared/evals/v2.5.0-snapshot/`) and generates `evals.json` for each skill
+2. **`prism-eval`** skill runs eval cases — spawns parallel agents, captures timing, grades outputs, builds `benchmark.json`
+3. **Eval Dashboard** reads the workspace directory, presents results across all 5 screens
+4. Developer reviews pass rates, identifies regressions, and iterates on skills
+
+### Eval Data Schema
+
+Eval cases are defined in `.prism/shared/evals/<version>/skills/<skill>/evals.json`:
+
+```json
+{
+  "skill": "prism-research",
+  "version": "v2.5.0",
+  "baseline": "../../../v2.4.9-snapshot/skills/prism-research/SKILL.md",
+  "evals": [
+    {
+      "id": 1,
+      "dimension": "output_quality|behavioral_compliance|regression",
+      "prompt": "Research the authentication system in this codebase",
+      "expected_output": "Structured research document with file:line references",
+      "expectations": [
+        "Output follows research template format",
+        "Contains file:line references, not just file paths",
+        "Does not suggest improvements (documentarian principle)"
+      ]
+    }
+  ]
+}
+```
+
+### Technology Stack
+
+| Layer | Technology | Version |
+|-------|-----------|---------|
+| Desktop runtime | Electron | 40.0.0 |
+| UI framework | React | 19.2.4 |
+| Build tooling | Electron Forge + Vite | 7.11.1 / 5.4.21 |
+| Styling | Tailwind CSS | v4.2.1 |
+| Charts | Recharts | 3.8.0 |
+| DAG layout | Dagre | 0.8.5 |
+| Language | TypeScript | ~4.5.4 |
 
 ---
 
