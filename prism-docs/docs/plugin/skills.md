@@ -24,7 +24,7 @@ Skills live at `skills/*/SKILL.md` and are auto-discovered workflow orchestrator
 | # | Skill | Lines | Model | Trigger Patterns |
 |---|-------|-------|-------|-----------------|
 | 7 | `prism-debug` | 221 | **sonnet** | "debug this", "why is this failing", "investigate the error" |
-| 8 | `prism-spectrum` | 376 | **sonnet** | "spectrum", "execute story", "run spectrum" |
+| 8 | `prism-spectrum` | 254 | **sonnet** | "spectrum", "execute story", "run spectrum" |
 | 9 | `prism-verify` | 125 | **sonnet** | "verify the UI", "check the browser", "visual verification" |
 | 10 | `prism-prd` | 122 | **opus** | "create a PRD", "write product requirements", "document this product" |
 | 11 | `prism-visual-docs` | 146 | **opus** | "create user flows", "design the screens", "create wireframes" |
@@ -40,7 +40,7 @@ skills/
 │   ├── references/
 │   │   └── workflow-patterns.md         # Reusable workflow pattern library
 │   └── scripts/
-│       └── init_prism.py                # 174 lines — .prism/ directory initializer
+│       └── init_prism.py                # 178 lines — .prism/ directory initializer
 ├── prism-research/
 │   ├── SKILL.md                         # 113 lines
 │   └── references/
@@ -59,7 +59,11 @@ skills/
 │   └── references/
 │       ├── verification-template.md     # Browser verification template
 │       └── verification-patterns.md     # Playwright-cli patterns
-├── prism-spectrum/SKILL.md              # 376 lines — largest skill
+├── prism-spectrum/
+│   ├── SKILL.md                         # 254 lines — manifest-aware story execution
+│   └── references/
+│       ├── story-manifest-schema.md     # Per-requirement tracking schema
+│       └── contracts-convention.md      # Cross-domain contract convention
 ├── prism-debug/SKILL.md                 # 221 lines
 ├── prism-implement/SKILL.md             # 122 lines
 ├── prism-iterate/SKILL.md               # 103 lines

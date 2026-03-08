@@ -30,7 +30,8 @@ User request / ticket
 │  /decompose_plan                                              │
 │  Converts plan phases into executable stories                 │
 │  Output: .prism/stories/stories.json                          │
-│          (or .prism/stories/<epic>/stories.json)              │
+│          .prism/stories/<story-id>-manifest.json (per story)  │
+│          .prism/shared/contracts/interfaces.json (if needed)  │
 └──────────────────────────────┬───────────────────────────────┘
                                │
                 ┌──────────────┴──────────────┐

@@ -78,32 +78,11 @@ After implementing:
 
 If codebase-memory-mcp is not available, skip all graph steps silently.
 
-### 2. Check Completion
+### 2. Identify Your Story
 
-If no incomplete stories remain:
+The story to execute is provided in your prompt by `spectrum.sh` (e.g., "Execute story STORY-003 from ..."). Story selection is deterministic — do not pick a different story. If no story ID is in the prompt, fall back to picking the highest-priority incomplete unblocked story.
 
-```
-Output: <promise>COMPLETE</promise>
-```
-
-Exit immediately - all work is done.
-
-### 3. Pick Next Story
-
-Select the highest priority incomplete story:
-
-```javascript
-const availableStories = stories
-    .filter(s => s.status !== 'complete')
-    .filter(s => !s.blockedBy || isComplete(s.blockedBy))
-    .sort((a, b) => a.priority - b.priority);
-
-const nextStory = availableStories[0];
-```
-
-If a story is blocked by an incomplete story, skip it.
-
-### 4. Announce Story
+### 3. Announce Story
 
 Before implementing, output:
 
@@ -116,14 +95,15 @@ Files: [list of files to modify]
 </spectrum-story>
 ```
 
-### 5. Implement Story
+### 4. Implement Story
 
 Follow Prism implementation patterns:
 
 1. Read ALL files mentioned in the story's `files` array BEFORE making changes
-2. Make changes according to the story's `steps`
-3. Mark each step's `done` field as you complete it
-4. Use TodoWrite for in-session tracking
+2. Check for a manifest file at `.prism/stories/<story-id>-manifest.json`. If it exists, implement one requirement at a time (respecting `depends_on` ordering), skip requirements where `passes: true`, and run each requirement's `gate` command after completing it. Update `passes: true` on success. Read any `contracts_to_read` files before implementing.
+3. If no manifest exists, make changes according to the story's `steps`
+4. Mark each step's `done` field as you complete it
+5. Use TodoWrite for in-session tracking
 
 **Implementation Rules**:
 - Follow existing code patterns (check progress.md for learnings)
@@ -131,7 +111,7 @@ Follow Prism implementation patterns:
 - Don't over-engineer
 - Don't add features not in the story
 
-### 6. Run Quality Gates
+### 5. Run Quality Gates
 
 Execute ALL verification commands from `epic.qualityGates`:
 
@@ -156,7 +136,7 @@ make test
 5. Output: `<spectrum-retry reason="QUALITY_GATE_FAILED">[debug summary]</spectrum-retry>`
 6. Exit (spectrum.sh will retry in fresh session with debug context)
 
-### 6b. Browser Verification (if applicable)
+### 5b. Browser Verification (if applicable)
 
 If the story modified UI files (`.tsx`, `.jsx`, `.vue`, `.svelte`, `.html`, `.css`):
 
@@ -179,7 +159,7 @@ If the story modified UI files (`.tsx`, `.jsx`, `.vue`, `.svelte`, `.html`, `.cs
 7. Close session: `playwright-cli session-close story-{id}`
 8. Kill dev server process
 
-### 7. Commit Changes
+### 6. Commit Changes
 
 If all quality gates pass:
 
@@ -194,100 +174,40 @@ Implemented by Spectrum iteration"
 
 Capture the commit hash for the story record.
 
-### 8. Update State Files
+### 7. Update State Files
 
-**Update stories.json**:
-- Set story `status` to `"complete"`
-- Set `completedAt` to current ISO timestamp
-- Set `commitHash` to the new commit hash
-- Mark all steps as `done: true`
+**Update stories.json**: Set story `status` to `"complete"`, `completedAt` to ISO timestamp, `commitHash` to the new commit hash, and all steps to `done: true`. (`spectrum.sh` will independently verify this state post-iteration.)
 
-**Append to progress.md**:
+**Append to progress.md**: Add a brief entry with what was done, learnings for future iterations, files changed, and quality gate results. If new general patterns were discovered, add them to the "Codebase Patterns" section at the top of progress.md.
 
-```markdown
----
+### 8. Signal Continuation
 
-## [ISO Timestamp] - [STORY-XXX] Complete
+Emit the appropriate signal tag at the end of your response. `spectrum.sh` will independently verify story completion state post-iteration, so focus on accurate reporting rather than defensive counting.
 
-**What was done**: [1-2 sentence summary]
-
-**Learnings**:
-- [Pattern discovered]
-- [Gotcha encountered]
-- [Useful context for future iterations]
-
-**Files changed**:
-- [file1.ts]
-- [file2.ts]
-
-**Quality gates**: All passed
-- typecheck: OK
-- lint: OK
-- test: OK
-```
-
-If new general patterns were discovered, add them to the "Codebase Patterns" section at the top of progress.md.
-
-### 9. Signal Continuation
-
-**CRITICAL**: Re-read the stories file and explicitly count remaining stories before signaling.
-
-```javascript
-// Re-parse the stories file (use the same path from the prompt) to get accurate count
-const stories = JSON.parse(readFile('<stories-path>')).stories;
-const remaining = stories.filter(s => s.status !== 'complete').length;
-const total = stories.length;
-const completed = total - remaining;
-
-// Log the count for verification
-console.log(`Progress: ${completed}/${total} stories complete, ${remaining} remaining`);
-```
-
-**MUST verify count before outputting signal:**
-
-**If remaining > 0** (more incomplete stories exist):
-```
-<spectrum-continue>STORY_COMPLETE: [STORY-XXX] - Progress: [completed]/[total], [remaining] remaining</spectrum-continue>
-```
-
-**If remaining === 0** (ALL stories now complete):
-```
-<promise>COMPLETE</promise>
-```
-
-**WARNING**: NEVER output `<promise>COMPLETE</promise>` unless you have verified that ZERO stories remain incomplete. Premature completion signals will stop the entire execution loop.
+- Story completed successfully: `<spectrum-continue>STORY_COMPLETE: [STORY-XXX]</spectrum-continue>`
+- All stories now complete: `<promise>COMPLETE</promise>`
+- Quality gate failed: `<spectrum-retry reason="QUALITY_GATE_FAILED">[details]</spectrum-retry>`
+- Story blocked: `<spectrum-blocked reason="...">[details]</spectrum-blocked>`
+- Fatal error: `<spectrum-error reason="...">[details]</spectrum-error>`
 
 ## Error Handling
 
 | Scenario | Action |
 |----------|--------|
-| Story requirements unclear | Record question in progress.md, output `<spectrum-blocked reason="UNCLEAR">[question]</spectrum-blocked>` |
-| Quality gate fails | Record failure details, output `<spectrum-retry reason="QUALITY_GATE_FAILED">[details]</spectrum-retry>` |
-| Merge conflict | Record conflict, output `<spectrum-error reason="MERGE_CONFLICT">[details]</spectrum-error>` |
+| Story requirements unclear | Record question in progress.md, signal `<spectrum-blocked>` |
+| Quality gate fails | Run auto-debug (see below), signal `<spectrum-retry>` |
+| Merge conflict | Record conflict, signal `<spectrum-error>` |
 | File not found | Check if it should be created, adapt or record in learnings |
-| Dependency not complete | Skip story, pick next available |
-
-## Output Signals
-
-| Signal | Meaning | Spectrum.sh Action |
-|--------|---------|-----------------|
-| `<promise>COMPLETE</promise>` | All stories done | Terminate loop |
-| `<spectrum-continue>...</spectrum-continue>` | Story complete, more remain | Continue loop |
-| `<spectrum-retry>...</spectrum-retry>` | Recoverable error | Retry (fresh session) |
-| `<spectrum-blocked>...</spectrum-blocked>` | Story blocked | Skip, continue loop |
-| `<spectrum-error>...</spectrum-error>` | Fatal error | Stop loop |
 
 ## Rules
 
 1. **Load state fresh** - Never assume prior context, always read files
-2. **One story only** - Execute exactly one story per session
+2. **One story only** - Execute exactly the story specified by spectrum.sh
 3. **Quality gates mandatory** - No commit without all checks passing
 4. **Atomic commits** - Each story = exactly one commit
 5. **Record learnings** - Help future iterations succeed
 6. **Clean output** - Use signal tags for orchestrator parsing
-7. **Don't skip blocked stories** - Only work on unblocked stories
-8. **Follow existing patterns** - Check progress.md before implementing
-9. **VERIFY before COMPLETE** - Re-read stories.json and count remaining before outputting `<promise>COMPLETE</promise>`. If remaining > 0, use `<spectrum-continue>` instead
+7. **Follow existing patterns** - Check progress.md before implementing
 
 ## Debug Integration
 
@@ -295,112 +215,40 @@ When quality gates fail, automatically invoke debug investigation before retryin
 
 ### Auto-Debug Flow
 
-```
-Quality Gate Failure
-        │
-        ▼
-┌─────────────────────────────────────────────────────────────┐
-│  1. Capture Error Output                                     │
-│     - Full error messages                                    │
-│     - File:line references                                   │
-│     - Stack traces                                           │
-└─────────────────────────────────────────────────────────────┘
-        │
-        ▼
-┌─────────────────────────────────────────────────────────────┐
-│  2. Spawn Debug Investigation Agents (parallel)              │
-│                                                              │
-│  Task(subagent_type="log-investigator")                     │
-│  "Check logs for errors related to: [failure summary]"      │
-│                                                              │
-│  Task(subagent_type="state-investigator")                   │
-│  "Check app state for anomalies: [failure context]"         │
-│                                                              │
-│  Task(subagent_type="git-investigator")                     │
-│  "Check recent changes that might cause: [failure]"         │
-└─────────────────────────────────────────────────────────────┘
-        │
-        ▼
-┌─────────────────────────────────────────────────────────────┐
-│  3. Synthesize Findings                                      │
-│     - Combine agent results                                  │
-│     - Identify root cause hypothesis                         │
-│     - Formulate fix approach                                 │
-└─────────────────────────────────────────────────────────────┘
-        │
-        ▼
-┌─────────────────────────────────────────────────────────────┐
-│  4. Record in progress.md                                    │
-│     - Error output                                           │
-│     - Investigation findings                                 │
-│     - Root cause hypothesis                                  │
-│     - Suggested fix for next iteration                       │
-└─────────────────────────────────────────────────────────────┘
-```
+On quality gate failure:
 
-### Debug Progress Entry Format
+1. **Capture** full error output (messages, file:line refs, stack traces)
+2. **Spawn 3 debug agents in parallel**:
+   - `Task(subagent_type="log-investigator")` — check logs for related errors
+   - `Task(subagent_type="state-investigator")` — check app state for anomalies
+   - `Task(subagent_type="git-investigator")` — check recent changes that might cause failure
+3. **Synthesize** findings into root cause hypothesis and fix approach
+4. **Record** in progress.md: error output, investigation findings, root cause, suggested fix, files to examine
 
-When debug runs, append to progress.md:
+### Debug Signal
 
-```markdown
----
-
-## [Timestamp] - Debug Investigation for [STORY-XXX]
-
-**Quality Gate Failed**: [typecheck/lint/test]
-
-**Error Output**:
-```
-[captured error output]
-```
-
-**Investigation Findings**:
-- **Logs**: [summary from log-investigator]
-- **State**: [summary from state-investigator]
-- **Git**: [summary from git-investigator]
-
-**Root Cause Hypothesis**: [what we think is wrong]
-
-**Suggested Fix**: [specific approach for next iteration to try]
-
-**Files to Examine**:
-- [file:line] - [why]
-```
-
-### Debug Signal Enhancement
-
-The `<spectrum-retry>` signal now includes debug context:
+Include debug context in the retry signal so the next iteration can act on it:
 
 ```xml
 <spectrum-retry reason="QUALITY_GATE_FAILED">
   <error>npm test failed: 2 tests failing</error>
   <root_cause>Missing mock for AuthService in test setup</root_cause>
   <suggested_fix>Add AuthService mock to test/setup.ts beforeEach</suggested_fix>
-  <files>
-    - src/auth/auth.service.ts:45
-    - test/auth.test.ts:12
-  </files>
+  <files>src/auth/auth.service.ts:45, test/auth.test.ts:12</files>
 </spectrum-retry>
 ```
-
-This context helps the next fresh iteration understand what went wrong and how to fix it.
 
 ## Example Session Flow
 
 ```
-1. Load stories.json → 5 stories, 2 complete
-2. Load progress.md → Previous learnings about auth patterns
-3. Check: 3 incomplete stories remain (not 0, so continue)
-4. Pick: STORY-003 (priority 3, not blocked)
-5. Output: <spectrum-story>ID: STORY-003...</spectrum-story>
-6. Read files: src/auth/login.ts, src/types/auth.ts
-7. Implement: Add password validation
-8. Run: npm run typecheck ✓, npm run lint ✓, npm test ✓
-9. Commit: "[STORY-003] Add password validation"
-10. Update: stories.json (status: complete), progress.md (learnings)
-11. RE-READ stories.json → count remaining: filter status !== 'complete'
-12. Verify: 3/5 complete, 2 remaining (remaining > 0, so use spectrum-continue)
-13. Output: <spectrum-continue>STORY_COMPLETE: STORY-003 - Progress: 3/5, 2 remaining</spectrum-continue>
+1. Read prompt → "Execute story STORY-003 from .prism/stories/stories.json"
+2. Load stories.json, progress.md, CLAUDE.md
+3. Read story STORY-003 context: why, risks, patterns, edge cases
+4. Announce: <spectrum-story>ID: STORY-003, Title: Add password validation</spectrum-story>
+5. Read files: src/auth/login.ts, src/types/auth.ts
+6. Implement: Add password validation
+7. Run quality gates: typecheck ✓, lint ✓, test ✓
+8. Commit: "[STORY-003] Add password validation"
+9. Update: stories.json (status: complete), progress.md (learnings)
+10. Signal: <spectrum-continue>STORY_COMPLETE: STORY-003</spectrum-continue>
 ```
-
-**IMPORTANT**: Step 11-12 must RE-READ the file and COUNT before choosing the signal. Never assume the count.

@@ -6,31 +6,46 @@ outline: [2, 3]
 
 # Scripts & Automation
 
-## `scripts/spectrum.sh` (312 lines)
+## `scripts/spectrum.sh` (518 lines)
 
-The Spectrum iterative executor — the main autonomous execution loop that spawns fresh Claude Code sessions per story.
+The Spectrum iterative executor — the main autonomous execution loop that spawns fresh Claude Code sessions per story. In v2.5.1, all deterministic operations (story selection, status updates, schema validation, progress logging, lockfile management) were moved from the AI skill into this bash script for reliability.
 
 ```
-┌─────────────────────────────────────────────────────┐
-│  spectrum.sh Loop                                    │
-│                                                      │
-│  1. Load stories.json                                │
-│  2. Count remaining stories                          │
-│  3. If 0 remaining → EXIT SUCCESS                    │
-│  4. If max iterations → EXIT LIMIT                   │
-│  5. Spawn: claude --dangerously-skip-permissions     │
-│            --print "/prism-spectrum"                  │
-│  6. Parse signal from output:                        │
-│     • <promise>COMPLETE</promise> → check remaining  │
-│     • <spectrum-continue> → pause, next iteration    │
-│     • <spectrum-retry reason="..."> → increment err  │
-│     • <spectrum-blocked reason="..."> → skip story   │
-│     • <spectrum-error reason="..."> → stop           │
-│  7. If 3+ consecutive errors → EXIT ERROR            │
-│  8. Sleep $SPECTRUM_PAUSE seconds                     │
-│  9. → Loop to step 2                                 │
-└─────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────┐
+│  spectrum.sh Loop (v2.5.1)                               │
+│                                                          │
+│  0. validate_schema() — verify stories.json structure    │
+│  1. acquire_lock() — PID-based lockfile with stale check │
+│  2. select_next_story() — jq: incomplete + unblocked     │
+│  3. If no story remaining → EXIT SUCCESS                 │
+│  4. If max iterations → EXIT LIMIT                       │
+│  5. Spawn: claude --dangerously-skip-permissions         │
+│            --print "/prism-spectrum"                      │
+│            (includes pre-selected story ID in prompt)     │
+│  6. Parse signal from output:                            │
+│     • <promise>COMPLETE</promise> → check remaining      │
+│     • <spectrum-continue> → verify + next iteration      │
+│     • <spectrum-retry reason="..."> → increment err      │
+│     • <spectrum-blocked reason="..."> → skip story       │
+│     • <spectrum-error reason="..."> → stop               │
+│  7. update_story_status() — atomic jq update + validate  │
+│  8. append_progress() — timestamped logging              │
+│  9. If 3+ consecutive errors → EXIT ERROR                │
+│ 10. Sleep $SPECTRUM_PAUSE seconds                        │
+│ 11. → Loop to step 2                                     │
+│ 12. release_lock() — on EXIT trap                        │
+└─────────────────────────────────────────────────────────┘
 ```
+
+**Key functions (v2.5.1):**
+
+| Function | Description |
+|----------|-------------|
+| `validate_schema()` | Validates `.epic.name`, `.stories` array, per-story required fields |
+| `select_next_story()` | jq query: incomplete + unblocked stories sorted by priority |
+| `update_story_status()` | Atomic jq update with temp file + JSON validation before `mv` |
+| `append_progress()` | Timestamped iteration logging to `progress.md` |
+| `acquire_lock()` / `release_lock()` | Lockfile at `.prism/local/spectrum.lock` with stale PID detection |
 
 **Environment variables:**
 
@@ -58,10 +73,10 @@ Native PowerShell installer for Windows:
 - Configures PATH in PowerShell `$PROFILE`
 - Same auto/source/download method pattern as bash version
 
-## `skills/prism/scripts/init_prism.py` (174 lines)
+## `skills/prism/scripts/init_prism.py` (178 lines)
 
 Initializes the `.prism/` directory structure in any project:
-- Creates 11 directories: `stories/`, `shared/{research,plans,validation,handoffs,prs,spectrum,ref,docs}`, `local/{ref,docs}`
+- Creates 13 directories: `stories/`, `shared/{research,plans,validation,handoffs,prs,spectrum,ref,docs,contracts}`, `shared/validation/baselines/`, `local/{ref,docs}`
 - Adds `.prism/local/` to `.gitignore`
 - Creates `README.md` in `.prism/shared/`
 - Optionally adds Prism section to `CLAUDE.md`

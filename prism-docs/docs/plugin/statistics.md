@@ -11,15 +11,15 @@ outline: [2, 3]
 | Category | Files | Total Lines |
 |----------|-------|-------------|
 | Plugin manifests | 2 | 28 |
-| Commands | 25 | 4,023 |
-| Agents | 11 | 1,491 |
-| Skills (SKILL.md) | 14 | 2,496 |
-| Skill references | 9 | ~450 |
-| Scripts | 3 (+ 1 Python) | 947 |
+| Commands | 25 | 4,051 |
+| Agents | 11 | 1,494 |
+| Skills (SKILL.md) | 14 | 2,344 |
+| Skill references | 11 | ~1,735 |
+| Scripts | 3 (+ 1 Python) | 1,157 |
 | CLAUDE.md | 1 | 115 |
 | Hooks | 0 | 0 |
 | MCP servers | 0 | 0 |
-| **Plugin total** | **~66** | **~9,550** |
+| **Plugin total** | **~68** | **~10,924** |
 
 ## Model Assignment Distribution
 
@@ -34,10 +34,10 @@ outline: [2, 3]
 | Component | Type | Lines | Purpose |
 |-----------|------|-------|---------|
 | `create_plan.md` | Command | 442 | Interactive plan creation — most complex single prompt |
-| `prism-spectrum` | Skill | 406 | Autonomous story execution with signal protocol |
-| `spectrum.sh` | Script | 312 | Shell loop for autonomous execution |
+| `spectrum.sh` | Script | 518 | Shell loop with deterministic operations |
+| `decompose_plan.md` | Command | 334 | Plan-to-stories with manifests and contracts |
 | `prism` | Skill | 276 | Master orchestrator routing all workflows |
-| `decompose_plan.md` | Command | 256 | Plan-to-stories conversion |
+| `prism-spectrum` | Skill | 254 | Manifest-aware story execution with signals |
 | `generate_tech_spec.md` | Command | 252 | Technical specification generation |
 | `iterate_plan.md` | Command | 249 | Plan iteration with surgical edits |
 | `prism-release` | Skill | 245 | Full release pipeline with eval snapshot |
@@ -50,7 +50,7 @@ The Claude plugin is the **brain** — the three platform implementations (CLI, 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                    Claude Plugin (Part V)                         │
-│   25 commands, 11 agents, 14 skills, 4 scripts                  │
+│   25 commands, 11 agents, 14 skills, 4 scripts, 11 references   │
 │   Pure prompt engineering — defines workflows and behavior       │
 │                                                                   │
 │   Invoked by: claude CLI process                                 │

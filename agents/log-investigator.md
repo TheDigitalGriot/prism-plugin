@@ -1,11 +1,11 @@
+---
+name: log-investigator
+description: Analyzes log files for errors, warnings, and patterns related to a reported issue. Use Task tool with subagent_type="log-investigator" for log analysis during debug investigations.
+tools: Bash
+model: haiku
+---
+
 # Log Investigator Agent
-
-Specialized agent for analyzing logs during debug investigations.
-
-## Model
-haiku
-
-## Purpose
 
 Find and analyze log files for errors, warnings, and patterns related to a reported issue.
 

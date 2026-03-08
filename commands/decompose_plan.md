@@ -251,6 +251,32 @@ Generate TWO files:
 
 Copy the enriched version as the primary `.prism/stories/stories.json`.
 
+### 9c. Generate Story Manifests
+
+For each story, generate a companion manifest file at `.prism/stories/<story-id>-manifest.json` (or `.prism/stories/<epic>/<story-id>-manifest.json` for epic-scoped).
+
+Map each story step to a requirement:
+- `id`: `REQ-001`, `REQ-002`, etc. (sequential within the manifest)
+- `description`: from the step's description
+- `depends_on`: from step ordering (each step depends on the previous)
+- `owns_files`: from the story's `files` list, filtered to what this step touches
+- `gate`: from `epic.qualityGates` or phase-specific verification commands
+- `contracts_to_read` / `contracts_to_write`: populated if the story has cross-domain dependencies (see Step 9d)
+- `passes`: `false` (initial state)
+
+See `skills/prism-spectrum/references/story-manifest-schema.md` for the full schema.
+
+### 9d. Initialize Contracts (if applicable)
+
+If any stories have cross-domain dependencies (multiple stories touching the same interfaces, types, or API boundaries), create `.prism/shared/contracts/interfaces.json` with the shared type shapes identified during decomposition.
+
+Only create contracts when:
+- Two or more stories write to / read from the same interface
+- A story's output is consumed by a later story across a domain boundary
+- The plan explicitly identifies shared contracts or interfaces
+
+See `skills/prism-spectrum/references/contracts-convention.md` for the convention.
+
 **Create `.prism/shared/spectrum/progress.md`**:
 ```markdown
 ---
@@ -277,7 +303,9 @@ lastUpdated: [ISO timestamp]
 
 **Files created**:
 - `.prism/stories/stories.json` - [N] stories
+- `.prism/stories/<story-id>-manifest.json` - Per-story requirement manifests
 - `.prism/shared/spectrum/progress.md` - Progress log
+- `.prism/shared/contracts/interfaces.json` - (if cross-domain dependencies detected)
 
 **To start autonomous execution**:
 ```bash

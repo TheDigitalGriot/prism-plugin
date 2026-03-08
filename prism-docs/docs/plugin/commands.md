@@ -17,7 +17,7 @@ Commands live at `commands/` and are user-invocable via `/command-name`. Each is
 | 3 | `/implement_plan` | `implement_plan.md` | 85 | **sonnet** | Executes approved plans phase by phase with verification checkpoints |
 | 4 | `/validate_plan` | `validate_plan.md` | 167 | **sonnet** | Validates implementation against plan, runs automated checks, generates report |
 | 5 | `/iterate_plan` | `iterate_plan.md` | 249 | **opus** | Updates existing plans surgically based on feedback |
-| 6 | `/decompose_plan` | `decompose_plan.md` | 256 | **opus** | Converts plans into `stories.json` for Spectrum autonomous execution |
+| 6 | `/decompose_plan` | `decompose_plan.md` | 334 | **opus** | Converts plans into `stories.json` with per-story manifests and cross-domain contracts |
 
 ## Session Management Commands
 

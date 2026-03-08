@@ -30,6 +30,8 @@ def init_prism(base_path: str = ".") -> None:
         ".prism/shared/spectrum",
         ".prism/shared/ref",
         ".prism/shared/docs",
+        ".prism/shared/contracts",
+        ".prism/shared/validation/baselines",
         ".prism/local/ref",
         ".prism/local/docs",
     ]
@@ -79,6 +81,7 @@ to the repository and shared with the team.
 │   ├── handoffs/      # Session handoff docs
 │   ├── prs/           # PR descriptions
 │   ├── spectrum/      # Spectrum execution state (progress.md)
+│   ├── contracts/     # Cross-domain interface contracts
 │   ├── ref/           # Reference materials
 │   └── docs/          # Project documentation
 └── local/             # Personal notes (gitignored)
@@ -159,6 +162,7 @@ Prism locations:
     print("   |   +-- plans/        # Implementation plans")
     print("   |   +-- validation/   # Validation reports")
     print("   |   +-- spectrum/     # Execution state (progress.md)")
+    print("   |   +-- contracts/    # Cross-domain interface contracts")
     print("   |   +-- ref/          # Reference materials")
     print("   |   +-- docs/         # Project documentation")
     print("   +-- local/            # Personal notes (gitignored)")

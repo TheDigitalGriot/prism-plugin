@@ -4,7 +4,7 @@ author: Claude
 repository: prism-plugin
 branch: feat/accuracy-context-upgrade
 ticket: N/A
-status: draft
+status: implemented
 research: .prism/shared/research/2026-03-07-prism-v250-gap-analysis.md
 ---
 
@@ -49,13 +49,13 @@ research: .prism/shared/research/2026-03-07-prism-v250-gap-analysis.md
 | `scripts/spectrum.sh` | Add `select_next_story()`, `update_story_status()`, `validate_schema()`, `append_progress()` functions; update `run_iteration()` to pre-select story and pass ID to Claude; add post-iteration `jq` state check alongside signal parsing |
 
 **Steps**:
-1. [ ] Add `validate_schema()` function (~line 94, after `check_prerequisites`) — validates `stories.json` has `.epic.name`, `.stories` array, each story has `id`, `status`, `priority`, `blockedBy` fields. Exit with clear error if invalid.
-2. [ ] Add `select_next_story()` function (~line 104, after `count_total`) — `jq` query: filter stories where `status != "complete"`, exclude stories whose `blockedBy` references an incomplete story, sort by `.priority`, take first. Return story ID or empty string if none available.
-3. [ ] Add `update_story_status()` function — takes story ID and new status, uses `jq` to update in-place: `.stories[] | select(.id == $ID) .status = $STATUS`. Write to temp file, validate JSON, then `mv` to original.
-4. [ ] Add `append_progress()` function — takes iteration number, story ID, outcome string. Appends timestamped entry to `$PROGRESS_FILE` via `cat >>`.
-5. [ ] Update `run_iteration()` (line 155) — call `select_next_story()` first. If empty, return COMPLETE signal directly (no Claude invocation needed). Pass selected story ID in the Claude prompt: `"Execute story $STORY_ID from $STORIES_FILE..."`.
-6. [ ] Add post-iteration state verification after `check_signals()` (line 253) — re-read `stories.json` via `count_remaining`. If `remaining == 0`, override signal to COMPLETE regardless of what Claude emitted. If remaining unchanged from before iteration, treat as retry.
-7. [ ] Call `validate_schema` in `main()` after `check_prerequisites` (line 213).
+1. [x] Add `validate_schema()` function (~line 94, after `check_prerequisites`) — validates `stories.json` has `.epic.name`, `.stories` array, each story has `id`, `status`, `priority`, `blockedBy` fields. Exit with clear error if invalid.
+2. [x] Add `select_next_story()` function (~line 104, after `count_total`) — `jq` query: filter stories where `status != "complete"`, exclude stories whose `blockedBy` references an incomplete story, sort by `.priority`, take first. Return story ID or empty string if none available.
+3. [x] Add `update_story_status()` function — takes story ID and new status, uses `jq` to update in-place: `.stories[] | select(.id == $ID) .status = $STATUS`. Write to temp file, validate JSON, then `mv` to original.
+4. [x] Add `append_progress()` function — takes iteration number, story ID, outcome string. Appends timestamped entry to `$PROGRESS_FILE` via `cat >>`.
+5. [x] Update `run_iteration()` (line 155) — call `select_next_story()` first. If empty, return COMPLETE signal directly (no Claude invocation needed). Pass selected story ID in the Claude prompt: `"Execute story $STORY_ID from $STORIES_FILE..."`.
+6. [x] Add post-iteration state verification after `check_signals()` (line 253) — re-read `stories.json` via `count_remaining`. If `remaining == 0`, override signal to COMPLETE regardless of what Claude emitted. If remaining unchanged from before iteration, treat as retry.
+7. [x] Call `validate_schema` in `main()` after `check_prerequisites` (line 213).
 
 **Verification**:
 ```bash
@@ -67,7 +67,7 @@ bash scripts/spectrum.sh /tmp/test-stories.json  # Should exit with schema error
 # (manual check with sample stories.json)
 ```
 
-**Checkpoint**: Phase 1 complete
+**Checkpoint**: [x] Phase 1 complete
 
 ---
 
@@ -81,10 +81,10 @@ bash scripts/spectrum.sh /tmp/test-stories.json  # Should exit with schema error
 | `scripts/spectrum.sh` | Fix `run_iteration` exit code handling, improve no-signal behavior, add lockfile, log iteration outcomes |
 
 **Steps**:
-1. [ ] Fix `run_iteration()` exit code (line 249) — replace `output=$(run_iteration) || true` with proper exit code capture: `local iter_exit=0; output=$(run_iteration) || iter_exit=$?`. If `iter_exit != 0`, log the exit code and treat as retry (not silent continue).
-2. [ ] Improve no-signal fallback (line 207-208) — instead of silently returning "continue", log a warning: `warn "No signal detected in output ($(echo "$output" | wc -c) bytes). Treating as retry."` and return 2 (retry) instead of 1 (continue).
-3. [ ] Add lockfile mechanism — create `$PROJECT_DIR/.prism/local/spectrum.lock` with PID at start of `main()`. Check for existing lock and exit if another instance is running. Remove lock in a `trap EXIT`.
-4. [ ] Add iteration outcome logging — after each iteration, append a one-line summary to `$PROGRESS_FILE` via `append_progress()`: timestamp, iteration number, story ID, signal received, remaining count.
+1. [x] Fix `run_iteration()` exit code (line 249) — replace `output=$(run_iteration) || true` with proper exit code capture: `local iter_exit=0; output=$(run_iteration) || iter_exit=$?`. If `iter_exit != 0`, log the exit code and treat as retry (not silent continue). *(Done in Phase 1)*
+2. [x] Improve no-signal fallback (line 207-208) — instead of silently returning "continue", log a warning: `warn "No signal detected in output ($(echo "$output" | wc -c) bytes). Treating as retry."` and return 2 (retry) instead of 1 (continue).
+3. [x] Add lockfile mechanism — create `$PROJECT_DIR/.prism/local/spectrum.lock` with PID at start of `main()`. Check for existing lock and exit if another instance is running. Remove lock in a `trap EXIT`.
+4. [x] Add iteration outcome logging — after each iteration, append a one-line summary to `$PROGRESS_FILE` via `append_progress()`: timestamp, iteration number, story ID, signal received, remaining count. *(Done in Phase 1)*
 
 **Verification**:
 ```bash
@@ -96,7 +96,7 @@ kill %1
 # No-signal now warns and retries instead of silently continuing
 ```
 
-**Checkpoint**: Phase 2 complete
+**Checkpoint**: [x] Phase 2 complete
 
 ---
 
@@ -110,12 +110,12 @@ kill %1
 | `skills/prism-spectrum/SKILL.md` | Remove story selection logic (now in spectrum.sh), remove JSON status update instructions (now in spectrum.sh), simplify signal emission section (spectrum.sh verifies post-hoc), remove stories.json manipulation examples |
 
 **Steps**:
-1. [ ] Read the full `prism-spectrum/SKILL.md` and identify all sections that describe deterministic operations now handled by `spectrum.sh`.
-2. [ ] Remove/simplify the story selection section — replace detailed priority/blocker logic with: "The story to execute is provided in your prompt by spectrum.sh. Focus on implementation, not selection."
-3. [ ] Remove/simplify JSON status update instructions — replace with: "spectrum.sh handles status updates after your session. Focus on implementation and committing code."
-4. [ ] Simplify signal emission section — keep the signal tag list but remove the detailed verification logic (spectrum.sh now does post-hoc state verification). Reduce to: "Emit the appropriate signal tag at the end of your response. spectrum.sh will independently verify story completion state."
-5. [ ] Remove the `stories.json` re-reading and counting instructions (lines ~233-258) — this is now done by `spectrum.sh` post-iteration.
-6. [ ] Verify the skill still correctly describes: implementation workflow, quality gate execution, debug agent spawning on failure, commit protocol, progress.md context.
+1. [x] Read the full `prism-spectrum/SKILL.md` and identify all sections that describe deterministic operations now handled by `spectrum.sh`.
+2. [x] Remove/simplify the story selection section — replaced Sections 2+3 (Check Completion + Pick Next Story) with single "Identify Your Story" section referencing spectrum.sh pre-selection.
+3. [x] Remove/simplify JSON status update instructions — condensed Section 8 to single paragraph noting spectrum.sh verifies post-iteration.
+4. [x] Simplify signal emission section — replaced Section 9 with compact signal list, removed re-read/count logic.
+5. [x] Remove the `stories.json` re-reading and counting instructions — removed from Section 9, Example Flow, and Rules.
+6. [x] Verify the skill still correctly describes: implementation workflow, quality gate execution, debug agent spawning on failure, commit protocol, progress.md context. Also: condensed Debug Integration (ASCII art → numbered list), removed redundant Output Signals table, renumbered sections 2-8.
 
 **Verification**:
 ```bash
@@ -125,7 +125,7 @@ wc -l skills/prism-spectrum/SKILL.md  # Target: ~280 lines (down from ~406)
 # Manual: invoke /prism-spectrum in a test session and verify it still runs the implementation workflow correctly
 ```
 
-**Checkpoint**: Phase 3 complete
+**Checkpoint**: [x] Phase 3 complete
 
 ---
 
@@ -142,10 +142,10 @@ wc -l skills/prism-spectrum/SKILL.md  # Target: ~280 lines (down from ~406)
 | `agents/prism-analyzer.md` | Add "documentarian, not critic" note to behavioral constraints |
 
 **Steps**:
-1. [ ] Add YAML frontmatter to `git-investigator.md` — prepend `---` block with `name: git-investigator`, `description: Analyzes git history to find changes related to a reported issue. Use Task tool with subagent_type="git-investigator" for git state and history analysis during debug investigations.`, `tools: Bash`, `model: haiku`. Remove the `## Model` heading and its `haiku` content (lines 5-6) since model is now in frontmatter.
-2. [ ] Add YAML frontmatter to `log-investigator.md` — same pattern. `name: log-investigator`, description about log analysis, `tools: Bash`, `model: haiku`. Remove `## Model` section.
-3. [ ] Add YAML frontmatter to `state-investigator.md` — same pattern. `name: state-investigator`, description about application state examination, `tools: Bash`, `model: haiku`. Remove `## Model` section.
-4. [ ] Add documentarian constraint to `prism-analyzer.md` — after the "Filter Aggressively" section (~line 20), add a note: "When analyzing research documents, describe findings factually. Do not critique the codebase, suggest improvements, or editorialize beyond what the document states. Your role is to extract and relay insights, not to generate new opinions about the code."
+1. [x] Add YAML frontmatter to `git-investigator.md` — prepend `---` block with `name: git-investigator`, `description: Analyzes git history to find changes related to a reported issue. Use Task tool with subagent_type="git-investigator" for git state and history analysis during debug investigations.`, `tools: Bash`, `model: haiku`. Remove the `## Model` heading and its `haiku` content (lines 5-6) since model is now in frontmatter.
+2. [x] Add YAML frontmatter to `log-investigator.md` — same pattern. `name: log-investigator`, description about log analysis, `tools: Bash`, `model: haiku`. Remove `## Model` section.
+3. [x] Add YAML frontmatter to `state-investigator.md` — same pattern. `name: state-investigator`, description about application state examination, `tools: Bash`, `model: haiku`. Remove `## Model` section.
+4. [x] Add documentarian constraint to `prism-analyzer.md` — after the "Filter Aggressively" section (~line 20), add a note: "When analyzing research documents, describe findings factually. Do not critique the codebase, suggest improvements, or editorialize beyond what the document states. Your role is to extract and relay insights, not to generate new opinions about the code."
 
 **Verification**:
 ```bash
@@ -154,7 +154,7 @@ for f in agents/*.md; do head -1 "$f"; done
 # All should output "---"
 ```
 
-**Checkpoint**: Phase 4 complete
+**Checkpoint**: [x] Phase 4 complete
 
 ---
 
@@ -174,39 +174,9 @@ for f in agents/*.md; do head -1 "$f"; done
 | `skills/prism-spectrum/references/contracts-convention.md` | Convention documentation for `.prism/shared/contracts/` directory |
 
 **Steps**:
-1. [ ] Create `story-manifest-schema.md` — document the JSON schema for `story-manifest.json`:
-   ```json
-   {
-     "story_id": "string (matches stories.json story ID)",
-     "requirements": [{
-       "id": "REQ-NNN",
-       "description": "string",
-       "depends_on": ["REQ-NNN"],
-       "owns_files": ["src/path/to/file.ts"],
-       "gate": "npm test -- --grep 'pattern'",
-       "contracts_to_read": ["interfaces.json"],
-       "contracts_to_write": ["api-endpoints.json"],
-       "passes": false
-     }],
-     "last_session": {
-       "timestamp": "ISO-8601",
-       "commit": "short-hash",
-       "requirements_passing": 0,
-       "requirements_total": 0
-     }
-   }
-   ```
-2. [ ] Create `contracts-convention.md` — document the contracts directory structure:
-   ```
-   .prism/shared/contracts/
-   ├── interfaces.json       # Type shapes between domains
-   ├── api-endpoints.json    # Endpoint contracts
-   ├── component-props.json  # UI component prop contracts
-   ├── dependencies.json     # Cross-domain dependency graph
-   └── test-obligations.json # What each domain must verify
-   ```
-   Include lifecycle documentation: proposed → agreed → verified.
-3. [ ] Update `init_prism.py` (line 35, directory list) — add `shared/contracts` and `shared/validation/baselines` to the directories created during initialization.
+1. [x] Create `story-manifest-schema.md` — documented JSON schema with field reference, usage in prism-spectrum, generation by decompose_plan, and fallback behavior.
+2. [x] Create `contracts-convention.md` — documented directory structure, contract lifecycle (proposed → agreed → verified), file format examples (interfaces.json, api-endpoints.json, dependencies.json), and Spectrum integration.
+3. [x] Update `init_prism.py` (line 35, directory list) — added `shared/contracts` and `shared/validation/baselines`. Also updated README template and final output to mention contracts directory.
 
 **Verification**:
 ```bash
@@ -216,7 +186,7 @@ ls -la .prism/shared/contracts/  # Should exist after running
 ls -la .prism/shared/validation/baselines/  # Should exist after running
 ```
 
-**Checkpoint**: Phase 5 complete
+**Checkpoint**: [x] Phase 5 complete
 
 ---
 
@@ -231,9 +201,9 @@ ls -la .prism/shared/validation/baselines/  # Should exist after running
 | `skills/prism-spectrum/SKILL.md` | Add manifest-aware requirement tracking — if `story-manifest.json` exists for the current story, track per-requirement pass/fail |
 
 **Steps**:
-1. [ ] Add manifest generation step to `decompose_plan.md` — after story creation (Step 6), add Step 7: "For each story, generate a companion `story-manifest.json` at `.prism/stories/<story-id>-manifest.json` (or `.prism/stories/<epic>/<story-id>-manifest.json` for epic-scoped). Map each story step to a requirement with `id`, `description`, `depends_on` (from step ordering), `owns_files` (from story files list), and `gate` (from epic quality gates or phase verification commands)."
-2. [ ] Add manifest consumption to `prism-spectrum` SKILL.md — in the "Implement Story" section, add: "If a manifest file exists at `.prism/stories/<story-id>-manifest.json`, read it and implement one requirement at a time. After each requirement, run its `gate` command. Update `passes: true` in the manifest on success. This enables cross-session tracking of partial story progress."
-3. [ ] Add contracts initialization to `decompose_plan.md` — after manifest generation: "If any story has cross-domain dependencies (multiple stories touching the same interfaces), create `.prism/shared/contracts/interfaces.json` with the shared type shapes identified during decomposition."
+1. [x] Add manifest generation step to `decompose_plan.md` — added Step 9c after story generation. Maps each story step to a requirement with id, description, depends_on, owns_files, gate, contracts_to_read/write. References schema doc.
+2. [x] Add manifest consumption to `prism-spectrum` SKILL.md — added to "Implement Story" section (step 2): check for manifest, implement per-requirement with gate verification, skip passing requirements, read contracts.
+3. [x] Add contracts initialization to `decompose_plan.md` — added Step 9d: create interfaces.json when cross-domain dependencies detected. Also updated Step 10 output to list manifest and contract files.
 
 **Verification**:
 ```bash
@@ -242,7 +212,7 @@ ls -la .prism/shared/validation/baselines/  # Should exist after running
 # Verify manifest requirements map to story steps
 ```
 
-**Checkpoint**: Phase 6 complete
+**Checkpoint**: [x] Phase 6 complete
 
 ---
 
@@ -304,12 +274,12 @@ Each phase produces independent commits, so partial rollback is possible:
 
 | Phase | Status | Started | Completed | Notes |
 |-------|--------|---------|-----------|-------|
-| Phase 1: Script-back spectrum.sh | Not started | | | |
-| Phase 2: Harden error handling | Not started | | | |
-| Phase 3: Reduce prism-spectrum | Not started | | | |
-| Phase 4: Standardize agent frontmatter | Not started | | | |
-| Phase 5: Story manifest + contracts | Not started | | | |
-| Phase 6: Update decompose_plan | Not started | | | |
+| Phase 1: Script-back spectrum.sh | Complete | 2026-03-07 | 2026-03-07 | 486 lines (up from 313). All 7 steps done. jq queries verified with sample data. |
+| Phase 2: Harden error handling | Complete | 2026-03-07 | 2026-03-07 | 518 lines. Lockfile w/ stale PID detection, no-signal→retry, exit code capture + logging all done. Steps 1&4 were already addressed in Phase 1. |
+| Phase 3: Reduce prism-spectrum | Complete | 2026-03-07 | 2026-03-07 | 253 lines (down from 406, 38% reduction). Removed story selection, counting, Output Signals table, ASCII debug flowchart. Renumbered sections. |
+| Phase 4: Standardize agent frontmatter | Complete | 2026-03-07 | 2026-03-07 | All 11 agents now have YAML frontmatter. 3 investigators got tools:Bash. prism-analyzer got documentarian constraint. |
+| Phase 5: Story manifest + contracts | Complete | 2026-03-07 | 2026-03-07 | Created story-manifest-schema.md + contracts-convention.md. Updated init_prism.py (2 new dirs + README + output). |
+| Phase 6: Update decompose_plan | Complete | 2026-03-07 | 2026-03-07 | Added Steps 9c (manifest gen) + 9d (contracts init) to decompose_plan. Added manifest consumption to prism-spectrum Section 4. Updated Step 10 output. |
 
 ---
 

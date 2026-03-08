@@ -1,11 +1,11 @@
+---
+name: state-investigator
+description: Examines application state including databases, config files, and environment to find anomalies related to a reported issue. Use Task tool with subagent_type="state-investigator" for state analysis during debug investigations.
+tools: Bash
+model: haiku
+---
+
 # State Investigator Agent
-
-Specialized agent for checking application state during debug investigations.
-
-## Model
-haiku
-
-## Purpose
 
 Examine application state including databases, config files, and environment to find anomalies related to a reported issue.
 

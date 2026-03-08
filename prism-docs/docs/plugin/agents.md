@@ -1,6 +1,6 @@
 ---
 title: Agents Reference
-description: All 10 Prism agents — specialized subprocesses spawned via Task(subagent_type="agent-name").
+description: All 11 Prism agents — specialized subprocesses spawned via Task(subagent_type="agent-name").
 outline: [2, 3]
 ---
 
@@ -16,7 +16,7 @@ Agents live at `agents/` and are spawned via `Task(subagent_type="agent-name")`.
 | 2 | `codebase-analyzer` | `codebase-analyzer.md` | 143 | **opus** | Read, Glob, Grep, Bash | Understand HOW code works — traces data flow, explains logic with file:line refs. |
 | 3 | `codebase-pattern-finder` | `codebase-pattern-finder.md` | 227 | **sonnet** | Read, Glob, Grep, Bash | Finds similar implementations, returns concrete code examples to model after. |
 | 4 | `prism-locator` | `prism-locator.md` | 134 | **haiku** | Read, Glob, Grep | Discovers documents in `.prism/` directory, categorizes by type. |
-| 5 | `prism-analyzer` | `prism-analyzer.md` | 172 | **opus** | Read, Glob, Grep | Deep-dives on `.prism/` documents, extracts decisions and actionable items. |
+| 5 | `prism-analyzer` | `prism-analyzer.md` | 175 | **opus** | Read, Glob, Grep | Deep-dives on `.prism/` documents, extracts decisions and actionable items. "Documentarian, Not Critic" principle enforced. |
 | 6 | `web-search-researcher` | `web-search-researcher.md` | 108 | **sonnet** | WebSearch, WebFetch, Read | Researches current information from the web with source links. |
 
 ## Debug Agents

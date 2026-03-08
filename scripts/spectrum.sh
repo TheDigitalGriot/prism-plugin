@@ -65,11 +65,38 @@ MAX_ITERATIONS="${SPECTRUM_MAX_ITERATIONS:-50}"
 VERBOSE="${SPECTRUM_VERBOSE:-false}"
 PAUSE="${SPECTRUM_PAUSE:-2}"
 
+# Lockfile for concurrent execution protection
+LOCKFILE="$PROJECT_DIR/.prism/local/spectrum.lock"
+
 # Logging functions
 log() { echo -e "${BLUE}[spectrum]${NC} $(date +%H:%M:%S) $*"; }
 success() { echo -e "${GREEN}[spectrum]${NC} $(date +%H:%M:%S) $*"; }
 warn() { echo -e "${YELLOW}[spectrum]${NC} $(date +%H:%M:%S) $*"; }
 error() { echo -e "${RED}[spectrum]${NC} $(date +%H:%M:%S) ERROR: $*" >&2; }
+
+# Acquire lockfile to prevent concurrent spectrum runs
+acquire_lock() {
+    mkdir -p "$(dirname "$LOCKFILE")"
+    if [[ -f "$LOCKFILE" ]]; then
+        local existing_pid
+        existing_pid=$(cat "$LOCKFILE" 2>/dev/null)
+        # Check if the process is still running
+        if [[ -n "$existing_pid" ]] && kill -0 "$existing_pid" 2>/dev/null; then
+            error "Another spectrum instance is already running (PID: $existing_pid)"
+            error "If this is stale, remove: $LOCKFILE"
+            exit 1
+        else
+            warn "Removing stale lockfile (PID $existing_pid no longer running)"
+            rm -f "$LOCKFILE"
+        fi
+    fi
+    echo $$ > "$LOCKFILE"
+}
+
+# Release lockfile
+release_lock() {
+    rm -f "$LOCKFILE"
+}
 
 # Check prerequisites
 check_prerequisites() {
@@ -91,6 +118,124 @@ check_prerequisites() {
         error "Run /decompose_plan first to generate stories.json"
         exit 1
     fi
+}
+
+# Validate stories.json schema before loop entry
+validate_schema() {
+    local errors=()
+
+    # Check valid JSON
+    if ! jq empty "$STORIES_FILE" 2>/dev/null; then
+        error "Invalid JSON in $STORIES_FILE"
+        exit 1
+    fi
+
+    # Check required top-level fields
+    if [[ "$(jq 'has("epic")' "$STORIES_FILE")" != "true" ]]; then
+        errors+=("Missing required field: .epic")
+    fi
+    if [[ "$(jq 'has("stories")' "$STORIES_FILE")" != "true" ]]; then
+        errors+=("Missing required field: .stories")
+    fi
+    if [[ "$(jq '.epic | has("name")' "$STORIES_FILE" 2>/dev/null)" != "true" ]]; then
+        errors+=("Missing required field: .epic.name")
+    fi
+    if [[ "$(jq '.stories | type' "$STORIES_FILE")" != '"array"' ]]; then
+        errors+=("Field .stories must be an array")
+    fi
+
+    # Check each story has required fields
+    local missing_fields
+    missing_fields=$(jq -r '
+        .stories | to_entries[] |
+        select(
+            (.value.id == null) or
+            (.value.status == null) or
+            (.value.priority == null) or
+            (.value | has("blockedBy") | not)
+        ) |
+        "Story at index \(.key): missing one of id, status, priority, blockedBy"
+    ' "$STORIES_FILE" 2>/dev/null)
+
+    if [[ -n "$missing_fields" ]]; then
+        while IFS= read -r line; do
+            errors+=("$line")
+        done <<< "$missing_fields"
+    fi
+
+    if [[ ${#errors[@]} -gt 0 ]]; then
+        error "Schema validation failed for $STORIES_FILE:"
+        for err in "${errors[@]}"; do
+            error "  - $err"
+        done
+        exit 1
+    fi
+
+    if [[ "$VERBOSE" == "true" ]]; then
+        log "Schema validation passed"
+    fi
+}
+
+# Select next story: pending, unblocked, lowest priority number
+select_next_story() {
+    jq -r '
+        # Build set of complete story IDs
+        ([.stories[] | select(.status == "complete") | .id]) as $complete |
+        # Filter: not complete, and either unblocked or blocked by a complete story
+        [.stories[] |
+            select(.status != "complete") |
+            select(
+                (.blockedBy == null) or
+                (.blockedBy == "") or
+                (.blockedBy as $b | $complete | any(. == $b))
+            )
+        ] |
+        sort_by(.priority) |
+        first |
+        .id // empty
+    ' "$STORIES_FILE"
+}
+
+# Update a story's status in stories.json
+update_story_status() {
+    local story_id="$1"
+    local new_status="$2"
+    local tmp_file="${STORIES_FILE}.tmp"
+
+    jq --arg id "$story_id" --arg status "$new_status" '
+        .stories = [.stories[] |
+            if .id == $id then .status = $status else . end
+        ]
+    ' "$STORIES_FILE" > "$tmp_file"
+
+    # Validate the output is valid JSON before replacing
+    if jq empty "$tmp_file" 2>/dev/null; then
+        mv "$tmp_file" "$STORIES_FILE"
+    else
+        error "Failed to update story status — produced invalid JSON"
+        rm -f "$tmp_file"
+        return 1
+    fi
+}
+
+# Append progress entry
+append_progress() {
+    local iteration="$1"
+    local story_id="$2"
+    local outcome="$3"
+    local remaining
+    remaining=$(count_remaining)
+    local total
+    total=$(count_total)
+    local complete=$((total - remaining))
+
+    cat >> "$PROGRESS_FILE" << EOF
+### Iteration $iteration — $(date '+%Y-%m-%d %H:%M:%S')
+- **Story**: $story_id
+- **Outcome**: $outcome
+- **Progress**: $complete/$total complete ($remaining remaining)
+
+EOF
 }
 
 # Count remaining stories
@@ -152,12 +297,16 @@ print_banner() {
 }
 
 # Run single iteration
+# Args: $1 = story ID to execute
 run_iteration() {
+    local story_id="$1"
     local output
     local exit_code=0
 
-    # Build the prompt for Claude
-    local prompt="Execute the next story from $STORIES_FILE using the /prism-spectrum workflow. Progress file: $PROGRESS_FILE"
+    # Build the prompt — story is pre-selected by spectrum.sh, not by Claude
+    local prompt="Execute story $story_id from $STORIES_FILE using the /prism-spectrum workflow. Progress file: $PROGRESS_FILE. The story has been pre-selected — do not pick a different story."
+
+    log "Executing story: $story_id"
 
     # Run Claude with prism-spectrum skill from the project directory
     # Using --print to capture output, --dangerously-skip-permissions for autonomous operation
@@ -204,13 +353,19 @@ check_signals() {
         return 3  # Error
     fi
 
-    # No explicit signal - assume continue
-    return 1
+    # No explicit signal - warn and treat as retry (not silent continue)
+    local output_bytes
+    output_bytes=$(echo "$output" | wc -c)
+    warn "No signal detected in output ($output_bytes bytes). Treating as retry."
+    return 2
 }
 
 # Main loop
 main() {
     check_prerequisites
+    validate_schema
+    acquire_lock
+    trap release_lock EXIT
     init_progress
 
     local epic_name
@@ -244,13 +399,61 @@ main() {
             break
         fi
 
-        # Run iteration
-        local output
-        output=$(run_iteration) || true
+        # Pre-select story deterministically (no LLM involvement)
+        local story_id
+        story_id=$(select_next_story)
 
-        # Check signals (capture return code without triggering set -e)
+        if [[ -z "$story_id" ]]; then
+            # No unblocked stories available but remaining > 0 means all are blocked
+            warn "No unblocked stories available ($remaining remaining, all blocked)"
+            warn "Stopping — resolve blockers manually"
+            break
+        fi
+
+        # Mark story as in_progress before invoking Claude
+        update_story_status "$story_id" "in_progress"
+
+        local remaining_before=$remaining
+
+        # Run iteration with pre-selected story
+        local output
+        local iter_exit=0
+        output=$(run_iteration "$story_id") || iter_exit=$?
+
+        if [[ $iter_exit -ne 0 ]]; then
+            warn "Claude CLI exited with code $iter_exit"
+        fi
+
+        # Check signals from Claude output
         local signal=0
         check_signals "$output" || signal=$?
+
+        # Post-iteration state verification: check stories.json independently
+        local remaining_after
+        remaining_after=$(count_remaining)
+
+        if [[ $remaining_after -eq 0 ]]; then
+            # All stories complete — override signal regardless of what Claude emitted
+            signal=0
+            log "Post-iteration check: all stories complete (overriding signal)"
+        elif [[ $remaining_after -eq $remaining_before ]] && [[ $signal -eq 1 ]]; then
+            # Remaining unchanged but Claude said "continue" — treat as retry
+            signal=2
+            warn "Post-iteration check: no progress detected (remaining unchanged at $remaining_after), treating as retry"
+        fi
+
+        # Determine outcome label for progress log
+        local outcome
+        case $signal in
+            0) outcome="COMPLETE" ;;
+            1) outcome="continue" ;;
+            2) outcome="retry" ;;
+            3) outcome="error" ;;
+            *) outcome="unknown (signal=$signal)" ;;
+        esac
+
+        # Log iteration outcome
+        append_progress "$iteration" "$story_id" "$outcome"
 
         case $signal in
             0)  # Complete
@@ -259,15 +462,18 @@ main() {
                 break
                 ;;
             1)  # Continue
-                log "Iteration $iteration complete"
+                log "Iteration $iteration complete (story: $story_id)"
                 consecutive_errors=0
                 ;;
             2)  # Retry
-                warn "Retry requested, continuing..."
+                warn "Retry requested for story $story_id, continuing..."
+                # Reset story back to pending so it can be re-selected
+                update_story_status "$story_id" "pending"
                 consecutive_errors=$((consecutive_errors + 1))
                 ;;
             3)  # Error
-                error "Fatal error, stopping"
+                error "Fatal error on story $story_id, stopping"
+                update_story_status "$story_id" "pending"
                 consecutive_errors=$((consecutive_errors + 1))
                 ;;
         esac
@@ -279,7 +485,7 @@ main() {
         fi
 
         # Pause between iterations
-        if [[ $remaining -gt 0 ]] && [[ $iteration -lt $MAX_ITERATIONS ]]; then
+        if [[ $remaining_after -gt 0 ]] && [[ $iteration -lt $MAX_ITERATIONS ]]; then
             log "Pausing ${PAUSE}s before next iteration..."
             sleep "$PAUSE"
         fi
