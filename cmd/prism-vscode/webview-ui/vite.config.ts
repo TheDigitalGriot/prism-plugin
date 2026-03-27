@@ -54,6 +54,10 @@ export default defineConfig({
     alias: {
       "@": resolve(__dirname, "./src"),
       "@prism-ui": resolve(__dirname, "../../../packages/prism-ui/src"),
+      // Pin to local React 18 — prevents @prism-ui from resolving
+      // React 19 from root node_modules (npm workspace hoisting).
+      "react": resolve(__dirname, "node_modules/react"),
+      "react-dom": resolve(__dirname, "node_modules/react-dom"),
     },
   },
 

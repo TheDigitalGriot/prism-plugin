@@ -5,6 +5,7 @@
       "label": "npm: compile",
       "type": "shell",
       "command": "npm run compile",
+      "options": { "cwd": "${workspaceFolder}/cmd/prism-vscode" },
       "group": "build",
       "problemMatcher": "$esbuild-watch",
       "isBackground": false
@@ -13,6 +14,7 @@
       "label": "npm: watch",
       "type": "shell",
       "command": "npm run watch",
+      "options": { "cwd": "${workspaceFolder}/cmd/prism-vscode" },
       "group": "build",
       "problemMatcher": "$esbuild-watch",
       "isBackground": true

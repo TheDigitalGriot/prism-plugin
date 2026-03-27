@@ -23,6 +23,9 @@ export default defineConfig({
   resolve: {
     alias: {
       '@prism-ui': path.resolve(__dirname, '../../../packages/prism-ui/src'),
+      // Pin React to local copy to prevent workspace hoisting mismatches.
+      'react': path.resolve(__dirname, 'node_modules/react'),
+      'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
     },
   },
   build: {

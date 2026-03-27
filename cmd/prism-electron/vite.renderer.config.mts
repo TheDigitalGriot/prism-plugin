@@ -15,6 +15,12 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, 'webview-ui/src'),
       '@prism-ui': path.resolve(__dirname, '../../packages/prism-ui/src'),
+      // Pin to single React instance — webview-ui depends on React 18 but
+      // root node_modules has React 19 (hoisted from prism-electron).
+      // Without explicit aliases, @prism-ui resolves React 19 while
+      // webview-ui resolves React 18, causing a dual-instance crash.
+      'react': path.resolve(__dirname, 'webview-ui/node_modules/react'),
+      'react-dom': path.resolve(__dirname, 'webview-ui/node_modules/react-dom'),
     },
   },
   build: {
