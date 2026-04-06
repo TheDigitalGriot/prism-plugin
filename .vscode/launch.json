@@ -6,10 +6,10 @@
       "type": "extensionHost",
       "request": "launch",
       "args": [
-        "--extensionDevelopmentPath=${workspaceFolder}/cmd/prism-vscode"
+        "--extensionDevelopmentPath=${workspaceFolder}/apps/prism-vscode"
       ],
       "outFiles": [
-        "${workspaceFolder}/cmd/prism-vscode/dist/**/*.js"
+        "${workspaceFolder}/apps/prism-vscode/dist/**/*.js"
       ],
       "preLaunchTask": "npm: compile"
     }
