@@ -2,7 +2,7 @@
   "name": "prism",
   "displayName": "Prism",
   "description": "Prism 4-phase development workflow: Research → Plan → Implement → Validate",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "publisher": "prism",
   "private": true,
   "engines": {
@@ -458,7 +458,8 @@
     "watch:panel": "cd webview-panel && npm run dev",
     "build:webview": "cd webview-ui && npm run build",
     "build:panel": "cd webview-panel && npm run build",
-    "package": "npm run check-types && npm run build:panel && npm run build:webview && node esbuild.mjs --production",
+    "build:office": "cd webview-office && npm run build",
+    "package": "npm run check-types && npm run build:panel && npm run build:office && npm run build:webview && node esbuild.mjs --production",
     "check-types": "tsc --noEmit",
     "lint": "eslint src --ext ts",
     "test": "vscode-test",

@@ -1,3 +1,7 @@
+# Parent and sibling repo directories - never bundle these
+../../**
+../**
+
 .vscode/**
 .vscode-test/**
 src/**
@@ -6,11 +10,26 @@ esbuild.mjs
 tsconfig.json
 **/*.map
 node_modules/**
+out/**
+
+# webview-ui: exclude source, keep build/
 webview-ui/node_modules/**
 webview-ui/src/**
 webview-ui/index.html
 webview-ui/vite.config.ts
 webview-ui/tsconfig.json
+webview-ui/tsconfig.tsbuildinfo
 webview-ui/components.json
 webview-ui/.vite-port
-out/**
+webview-ui/package.json
+webview-ui/package-lock.json
+
+# webview-panel: exclude source, keep dist/ (output goes to ../dist/webview-panel)
+webview-panel/**
+
+# webview-office: exclude source, keep dist/ (output goes to ../dist/webview-office)
+webview-office/**
+
+# test/dev artifacts
+jest.config.js
+**/.vite-panel-port
