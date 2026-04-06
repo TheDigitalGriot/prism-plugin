@@ -37,6 +37,39 @@ For each phase in plan:
 3. **Run commands** - Execute verification from plan
 4. **Document** - Note pass/fail/deviations
 
+### 2a. Independent Verification (Distrust Pattern)
+
+**Do NOT trust self-reported completion.** Implementation phases may report success while missing requirements, over-building beyond scope, or misunderstanding intent. Verify independently.
+
+### For Each Plan Phase:
+
+1. **Read the plan phase requirements** — extract every specific deliverable
+2. **Read the actual code** — do not rely on checkbox status in the plan
+3. **Check for missing requirements:**
+   - For each requirement, grep/glob for the implementing code
+   - If you cannot find it, it is MISSING regardless of what the plan says
+4. **Check for over-building:**
+   - Run `git diff --stat` against the base branch
+   - Identify files changed that are NOT mentioned in any plan phase
+   - Unplanned changes are over-building unless they are necessary refactors
+5. **Check for scope drift:**
+   - Compare the plan's stated goal with what was actually built
+   - Flag any feature that wasn't requested
+
+### Output for This Section:
+
+```
+### Independent Verification
+| Requirement | Plan Says | Code Says | Status |
+|-------------|-----------|-----------|--------|
+| {req 1} | ✅ Done | Found in `file:line` | ✅ Verified |
+| {req 2} | ✅ Done | NOT FOUND | ❌ Missing |
+| {req 3} | Not mentioned | Found in `file:line` | ⚠️ Over-built |
+```
+
+### Unplanned Changes:
+- `path/to/file.ts` — {why this was changed, whether it's justified}
+
 ### 3. Check Success Criteria
 
 **Automated**:

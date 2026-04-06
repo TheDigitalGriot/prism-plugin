@@ -41,6 +41,10 @@ Invoke via Task tool with subagent_type:
 | `prism-analyzer` | Extract HIGH-VALUE insights from docs |
 | `web-search-researcher` | Research external docs/APIs |
 
+### Model Selection
+
+When the research scope is narrow (single file, specific function), consider overriding agent models down to haiku for faster, cheaper results. When the scope is broad (full subsystem, cross-cutting concern), use default models. See `references/model-selection.md` in `prism-spectrum` for the full guide.
+
 ## Workflow
 
 ### 0. Read Mentioned Files First

@@ -119,6 +119,69 @@ Follow Prism implementation patterns:
 - Don't over-engineer
 - Don't add features not in the story
 
+### Model Selection for Agent Dispatches
+
+When dispatching agents during implementation, select the model based on task complexity. Load `references/model-selection.md` for the full guide. Quick rule: mechanical tasks (1-2 files, clear spec) → haiku; integration tasks → sonnet; design/review → opus.
+
+## 4a. Report Implementation Status
+
+After implementing the story, self-assess your work and report one of four statuses:
+
+| Status | When to Use | What Happens Next |
+|--------|-------------|-------------------|
+| **DONE** | Implementation complete, confident in quality | Proceed to quality gates |
+| **DONE_WITH_CONCERNS** | Complete but with doubts about approach | Log concerns to progress.md, proceed to quality gates |
+| **NEEDS_CONTEXT** | Missing information needed to complete | Emit `<spectrum-needs-context>` with what's needed |
+| **BLOCKED** | Cannot complete the story | Emit `<spectrum-blocked>` with root cause |
+
+### DONE_WITH_CONCERNS
+
+If you completed the work but have doubts:
+1. Log your concerns in progress.md under a `### Concerns` subsection
+2. Proceed to quality gates — the two-stage review will catch real issues
+3. Include concerns in the `<spectrum-continue>` signal:
+
+```xml
+<spectrum-continue>
+  <concerns>
+    - Concern 1: description
+    - Concern 2: description
+  </concerns>
+</spectrum-continue>
+```
+
+### NEEDS_CONTEXT
+
+If you cannot complete without additional information:
+1. Do NOT commit partial work
+2. Reset any uncommitted changes: `git checkout -- .`
+3. Emit the signal with specific questions:
+
+```xml
+<spectrum-needs-context>
+  <story>{STORY_ID}</story>
+  <questions>
+    - What is the expected behavior when X happens?
+    - Which API endpoint should this call?
+  </questions>
+</spectrum-needs-context>
+```
+
+### BLOCKED
+
+If the story cannot be completed:
+1. Do NOT commit partial work
+2. Reset any uncommitted changes: `git checkout -- .`
+3. Emit the signal with root cause:
+
+```xml
+<spectrum-blocked>
+  <story>{STORY_ID}</story>
+  <reason>Description of why this is blocked</reason>
+  <suggestion>What would unblock this</suggestion>
+</spectrum-blocked>
+```
+
 ### 5. Run Quality Gates
 
 Execute ALL verification commands from `epic.qualityGates`:
@@ -143,6 +206,49 @@ make test
 4. Record failure details AND debug findings in progress.md
 5. Output: `<spectrum-retry reason="QUALITY_GATE_FAILED">[debug summary]</spectrum-retry>`
 6. Exit (spectrum.sh will retry in fresh session with debug context)
+
+## 5a. Two-Stage Review
+
+After quality gates pass, dispatch two reviewer agents sequentially. This catches scope drift and quality issues that automated gates cannot detect.
+
+### Stage 1: Spec Compliance
+
+Load `references/spec-review-prompt.md` for the dispatch template.
+
+1. Dispatch `spec-reviewer` agent with:
+   - Full story object from stories.json
+   - List of files modified (from story `files` array)
+   - Quality gate results
+2. If **❌ Issues Found**:
+   - Fix the issues identified
+   - Re-run quality gates
+   - Re-dispatch spec reviewer
+   - Do NOT proceed until ✅ Spec Compliant
+3. If **✅ Spec Compliant**: Proceed to Stage 2
+
+### Stage 2: Code Quality
+
+Load `references/quality-review-prompt.md` for the dispatch template.
+
+1. Dispatch `quality-reviewer` agent with:
+   - Summary of changes
+   - Story context (why, risks, patterns)
+   - Changed files list
+2. If **Critical or Important issues found**:
+   - Fix the issues
+   - Re-run quality gates
+   - Re-dispatch quality reviewer
+3. If **Minor only**: Note in progress.md, proceed
+4. If **✅ Approved**: Proceed to commit
+
+### Review Skip Conditions
+
+Skip two-stage review ONLY when:
+- Story modifies only configuration files (no logic changes)
+- Story is documentation-only
+- Story is a revert of a previous story
+
+In all other cases, both review stages are REQUIRED.
 
 ### 5b. Browser Verification (UI stories only)
 
