@@ -13,8 +13,9 @@ const (
 	SignalComplete  // <promise>COMPLETE</promise>
 	SignalContinue  // <spectrum-continue>...</spectrum-continue>
 	SignalRetry     // <spectrum-retry>...</spectrum-retry>
-	SignalBlocked   // <spectrum-blocked>...</spectrum-blocked>
-	SignalError     // <spectrum-error>...</spectrum-error>
+	SignalBlocked      // <spectrum-blocked>...</spectrum-blocked>
+	SignalError        // <spectrum-error>...</spectrum-error>
+	SignalNeedsContext // <spectrum-needs-context>
 )
 
 func (s SignalType) String() string {
@@ -29,6 +30,8 @@ func (s SignalType) String() string {
 		return "BLOCKED"
 	case SignalError:
 		return "ERROR"
+	case SignalNeedsContext:
+		return "needs-context"
 	default:
 		return "NONE"
 	}
@@ -48,8 +51,10 @@ var (
 	retryRe    = regexp.MustCompile(`(?s)<spectrum-retry[^>]*>(.*?)</spectrum-retry>`)
 	blockedRe  = regexp.MustCompile(`(?s)<spectrum-blocked[^>]*>(.*?)</spectrum-blocked>`)
 	errorRe    = regexp.MustCompile(`(?s)<spectrum-error[^>]*>(.*?)</spectrum-error>`)
-	storyRe    = regexp.MustCompile(`(?s)<spectrum-story>(.*?)</spectrum-story>`)
-	reasonRe   = regexp.MustCompile(`reason="([^"]*)"`)
+	storyRe       = regexp.MustCompile(`(?s)<spectrum-story>(.*?)</spectrum-story>`)
+	reasonRe      = regexp.MustCompile(`reason="([^"]*)"`)
+	needsContextRe = regexp.MustCompile(`<spectrum-needs-context>`)
+	concernsRe    = regexp.MustCompile(`(?s)<concerns>(.*?)</concerns>`)
 )
 
 // ParseSignal detects and extracts the first signal found in output text
@@ -89,12 +94,21 @@ func ParseSignal(output string) Signal {
 		}
 	}
 
+	// Check for needs-context
+	if needsContextRe.MatchString(output) {
+		return Signal{Type: SignalNeedsContext}
+	}
+
 	// Check for continue
 	if match := continueRe.FindStringSubmatch(output); match != nil {
-		return Signal{
+		sig := Signal{
 			Type:    SignalContinue,
 			Content: strings.TrimSpace(match[1]),
 		}
+		if cm := concernsRe.FindStringSubmatch(output); cm != nil {
+			sig.Reason = strings.TrimSpace(cm[1])
+		}
+		return sig
 	}
 
 	return Signal{Type: SignalNone}
