@@ -1,7 +1,10 @@
 import { defineConfig } from "vite"
 import react from "@vitejs/plugin-react"
 import tailwindcss from "@tailwindcss/vite"
-import { resolve } from "path"
+import { resolve, dirname } from "path"
+import { createRequire } from "module"
+
+const require = createRequire(import.meta.url)
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
@@ -29,6 +32,10 @@ export default defineConfig({
     alias: {
       "@": resolve(__dirname, "./src"),
       "@prism-ui": resolve(__dirname, "../../../packages/prism-ui/src"),
+      // Pin react to hoisted workspace root — prevents resolution failures
+      // when local node_modules doesn't exist after npm workspace hoisting.
+      "react": dirname(require.resolve("react/package.json")),
+      "react-dom": dirname(require.resolve("react-dom/package.json")),
     },
   },
 

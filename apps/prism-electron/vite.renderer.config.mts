@@ -3,8 +3,10 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const require = createRequire(import.meta.url);
 
 // The renderer SPA lives in webview-ui/. We keep the default root (project dir)
 // so the Forge Vite plugin outputs to .vite/renderer/ at project root, which
@@ -15,12 +17,10 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, 'webview-ui/src'),
       '@prism-ui': path.resolve(__dirname, '../../packages/prism-ui/src'),
-      // Pin to single React instance — webview-ui depends on React 18 but
-      // root node_modules has React 19 (hoisted from prism-electron).
-      // Without explicit aliases, @prism-ui resolves React 19 while
-      // webview-ui resolves React 18, causing a dual-instance crash.
-      'react': path.resolve(__dirname, 'webview-ui/node_modules/react'),
-      'react-dom': path.resolve(__dirname, 'webview-ui/node_modules/react-dom'),
+      // Pin to hoisted workspace react — webview-ui/node_modules doesn't exist
+      // after npm workspace hoisting; resolve via require to find the real path.
+      'react': path.dirname(require.resolve('react/package.json')),
+      'react-dom': path.dirname(require.resolve('react-dom/package.json')),
     },
   },
   build: {
