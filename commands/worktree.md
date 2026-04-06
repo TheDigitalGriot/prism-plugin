@@ -31,6 +31,55 @@ git worktree add -b [BRANCH_NAME] [WORKTREE_PATH] [BASE_BRANCH]
 git worktree add [WORKTREE_PATH] [BRANCH_NAME]
 ```
 
+## Safety Checks (Run Before Creating)
+
+Before creating any worktree, verify these safety conditions:
+
+### 1. Gitignore Verification
+
+If placing the worktree inside the project (e.g., `.worktrees/`), verify it's gitignored:
+
+```bash
+git check-ignore -q .worktrees 2>/dev/null
+echo $?  # Must be 0 (ignored). If 1, add to .gitignore first.
+```
+
+If NOT ignored, add it before proceeding:
+```bash
+echo '.worktrees/' >> .gitignore
+git add .gitignore
+git commit -m "chore: add .worktrees/ to gitignore"
+```
+
+### 2. Test Baseline
+
+After creation, run the project's test suite to establish a clean baseline:
+
+```bash
+cd [WORKTREE_PATH]
+# Detect and run appropriate test command
+npm test       # Node.js
+go test ./...  # Go
+cargo test     # Rust
+pytest         # Python
+```
+
+If tests fail on a clean worktree, the base branch has issues — do not proceed until resolved.
+
+### 3. .prism/ Shared Directory
+
+Symlink the shared directory so research and plans are accessible:
+
+```bash
+mkdir -p [WORKTREE_PATH]/.prism
+ln -s $(git rev-parse --show-toplevel)/.prism/shared [WORKTREE_PATH]/.prism/shared
+```
+
+On Windows, copy instead of symlink:
+```bash
+cp -r $(git rev-parse --show-toplevel)/.prism/shared [WORKTREE_PATH]/.prism/shared
+```
+
 ### 3. Configure the Worktree
 
 After creating:
