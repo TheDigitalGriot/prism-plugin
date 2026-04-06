@@ -144,6 +144,49 @@ make test
 5. Output: `<spectrum-retry reason="QUALITY_GATE_FAILED">[debug summary]</spectrum-retry>`
 6. Exit (spectrum.sh will retry in fresh session with debug context)
 
+## 5a. Two-Stage Review
+
+After quality gates pass, dispatch two reviewer agents sequentially. This catches scope drift and quality issues that automated gates cannot detect.
+
+### Stage 1: Spec Compliance
+
+Load `references/spec-review-prompt.md` for the dispatch template.
+
+1. Dispatch `spec-reviewer` agent with:
+   - Full story object from stories.json
+   - List of files modified (from story `files` array)
+   - Quality gate results
+2. If **❌ Issues Found**:
+   - Fix the issues identified
+   - Re-run quality gates
+   - Re-dispatch spec reviewer
+   - Do NOT proceed until ✅ Spec Compliant
+3. If **✅ Spec Compliant**: Proceed to Stage 2
+
+### Stage 2: Code Quality
+
+Load `references/quality-review-prompt.md` for the dispatch template.
+
+1. Dispatch `quality-reviewer` agent with:
+   - Summary of changes
+   - Story context (why, risks, patterns)
+   - Changed files list
+2. If **Critical or Important issues found**:
+   - Fix the issues
+   - Re-run quality gates
+   - Re-dispatch quality reviewer
+3. If **Minor only**: Note in progress.md, proceed
+4. If **✅ Approved**: Proceed to commit
+
+### Review Skip Conditions
+
+Skip two-stage review ONLY when:
+- Story modifies only configuration files (no logic changes)
+- Story is documentation-only
+- Story is a revert of a previous story
+
+In all other cases, both review stages are REQUIRED.
+
 ### 5b. Browser Verification (UI stories only)
 
 If story `files[]` includes UI paths (`.tsx`, `.jsx`, `.vue`, `.svelte`, `.html`, `.css`):
