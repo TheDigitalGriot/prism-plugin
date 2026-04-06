@@ -9,7 +9,7 @@ outline: [2, 3]
 ## Scripts
 
 ```bash
-cd cmd/prism-electron
+cd apps/prism-electron
 
 npm start           # Dev mode: Electron Forge + Vite HMR
 npm run package     # Build production app (no installer)

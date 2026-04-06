@@ -6,7 +6,7 @@ outline: [2, 3]
 
 # Centralized Version Management (v2.5.0)
 
-Prior to v2.4.3, version strings were hardcoded in 14+ files across the monorepo and bumped manually. This was error-prone and versions frequently drifted. The bump script was updated in v2.4.7 to replace `cmd/prism-setup` references with the Tauri installer.
+Prior to v2.4.3, version strings were hardcoded in 14+ files across the monorepo and bumped manually. This was error-prone and versions frequently drifted. The bump script was updated in v2.4.7 to replace `apps/prism-setup` references with the Tauri installer.
 
 ## VERSION File
 
@@ -34,21 +34,21 @@ The script reads the current version from `VERSION`, computes the new version, t
 | 1 | `VERSION` | Root source of truth |
 | 2 | `.claude-plugin/plugin.json` | `"version"` JSON field |
 | 3 | `.claude-plugin/marketplace.json` | `"version"` JSON field |
-| 4 | `cmd/prism-vscode/package.json` | `"version"` JSON field |
-| 5 | `cmd/prism-electron/package.json` | `"version"` JSON field |
-| 6 | `cmd/prism-installer/package.json` | `"version"` JSON field |
-| 7 | `cmd/prism-installer/src-tauri/tauri.conf.json` | `"version"` JSON field |
+| 4 | `apps/prism-vscode/package.json` | `"version"` JSON field |
+| 5 | `apps/prism-electron/package.json` | `"version"` JSON field |
+| 6 | `apps/prism-installer/package.json` | `"version"` JSON field |
+| 7 | `apps/prism-installer/src-tauri/tauri.conf.json` | `"version"` JSON field |
 
 ### Text files (find-and-replace of old → new)
 
 | # | File | What is Updated |
 |---|------|-----------------|
-| 8 | `cmd/prism-cli/main.go` | `var version = "X.Y.Z"` |
-| 9 | `cmd/prism-cli/app/footer.go` | `"vX.Y.Z"` hardcoded TUI footer |
+| 8 | `apps/prism-cli/main.go` | `var version = "X.Y.Z"` |
+| 9 | `apps/prism-cli/app/footer.go` | `"vX.Y.Z"` hardcoded TUI footer |
 | 10 | `packages/prism-core/src/shared/PrismState.ts` | `DEFAULT_PRISM_STATE.version` |
 | 11 | `packages/prism-ui/src/context/PrismStateContext.tsx` | `DEFAULT_STATE.version` |
 
-> **Deprecated**: `cmd/prism-setup/` (Electron-based NSIS installer) entries are commented out in the script but kept for rollback.
+> **Deprecated**: `apps/prism-setup/` (Electron-based NSIS installer) entries are commented out in the script but kept for rollback.
 
 ## Where Version Appears to Users
 
@@ -70,12 +70,12 @@ The `/prism-release` skill uses the bump script:
 python scripts/bump-version.py patch --root .
 
 # Step 2: Build
-cd cmd/prism-cli && make build-all
+cd apps/prism-cli && make build-all
 
 # Step 3: Commit + tag
 git add -A && git commit -m "vX.Y.Z" && git tag vX.Y.Z
 git push && git push origin vX.Y.Z
 
 # Step 4: GitHub release (triggers installer CI)
-gh release create vX.Y.Z cmd/prism-cli/bin/* ...
+gh release create vX.Y.Z apps/prism-cli/bin/* ...
 ```

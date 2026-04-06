@@ -15,9 +15,9 @@ cd packages/prism-core && npm run typecheck
 cd packages/prism-ui   && npm run typecheck
 
 # Build VS Code extension
-cd cmd/prism-vscode && npm run compile
-cd cmd/prism-vscode/webview-ui && npm run build
+cd apps/prism-vscode && npm run compile
+cd apps/prism-vscode/webview-ui && npm run build
 
 # Build Electron app
-cd cmd/prism-electron && npm run make
+cd apps/prism-electron && npm run make
 ```

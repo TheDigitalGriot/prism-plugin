@@ -6,7 +6,7 @@ outline: [2, 3]
 
 # VS Code Extension Overview
 
-The Prism VS Code Extension (`cmd/prism-vscode/`) brings the full 4-phase workflow directly into the IDE. It provides a sidebar chat interface, tree views for research/plans/stories, Spectrum autonomous execution, an Office pixel-art visualization, a Monitor dashboard, and Workspaces management — all without leaving VS Code.
+The Prism VS Code Extension (`apps/prism-vscode/`) brings the full 4-phase workflow directly into the IDE. It provides a sidebar chat interface, tree views for research/plans/stories, Spectrum autonomous execution, an Office pixel-art visualization, a Monitor dashboard, and Workspaces management — all without leaving VS Code.
 
 ## Key Features
 

@@ -275,7 +275,7 @@ If no files are staged when `c` is pressed, the commit modal still opens (user c
 ┌───────────────┐  [Ctrl+D]  ┌───────────────────────────────────────┐
 │ Any Screen     │───────────▶│ File Finder Overlay                   │
 │               │            │ [Filter: mod                         ]│
-└───────────────┘            │ > cmd/prism-cli/app/model.go          │
+└───────────────┘            │ > apps/prism-cli/app/model.go          │
                               │   go.mod                              │
                               └──────────────┬────────────────────────┘
                                              │ [Enter] select file

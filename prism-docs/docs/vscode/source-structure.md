@@ -7,7 +7,7 @@ outline: [2, 3]
 # Source Structure
 
 ```
-cmd/prism-vscode/
+apps/prism-vscode/
 ├── package.json                          # Extension manifest, commands, views, settings
 ├── tsconfig.json                         # TypeScript configuration
 ├── esbuild.mjs                           # Build script (aliases @prism-core → ../../packages/prism-core/src)

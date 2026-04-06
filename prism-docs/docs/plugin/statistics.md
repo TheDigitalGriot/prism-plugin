@@ -18,7 +18,7 @@ outline: [2, 3]
 | Scripts | 11 | ~2,400 |
 | CLAUDE.md | 1 | 115 |
 | Hooks | 7 events | ~40 |
-| MCP servers | 0 | 0 |
+| MCP servers | 2 | — |
 | **Plugin total** | **~97** | **~13,700** |
 
 ## Model Assignment Distribution

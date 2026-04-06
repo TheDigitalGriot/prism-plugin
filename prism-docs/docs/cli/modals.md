@@ -104,9 +104,9 @@ Source: `file_finder.go:127-150` — `BuildModal()`, width 70.
 ╭───────────────────────── Find File ─────────────────────────╮
 │  [Type to search files...: mod                             ]│
 │                                                              │
-│  > cmd/prism-cli/app/model.go                               │
-│    cmd/prism-cli/app/model_test.go                          │
-│    cmd/prism-cli/modal/modal.go                             │
+│  > apps/prism-cli/app/model.go                               │
+│    apps/prism-cli/app/model_test.go                          │
+│    apps/prism-cli/modal/modal.go                             │
 │    go.mod                                                    │
 │                                                              │
 │  ↑/↓ navigate • enter open • esc close                      │

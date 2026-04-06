@@ -58,6 +58,20 @@ Commands live at `commands/` and are user-invocable via `/command-name`. Each is
 | 24 | `/worktree` | `worktree.md` | 90 | **haiku** | Creates git worktrees for parallel development |
 | 25 | `/review-setup` | `review-setup.md` | 91 | **haiku** | Sets up local environment to review a colleague's branch or PR |
 
+## Deprecated Commands (v3.0.2)
+
+Five commands are deprecated because they duplicate functionality now fully covered by the corresponding Prism skills. The skill versions are preferred — they carry richer context, manifests, and signal protocol support.
+
+| Command | Superseded By | Status |
+|---------|--------------|--------|
+| `/research_codebase` | `/prism-research` skill | Deprecated — use skill |
+| `/create_plan` | `/prism-plan` skill | Deprecated — use skill |
+| `/implement_plan` | `/prism-implement` skill | Deprecated — use skill |
+| `/validate_plan` | `/prism-validate` skill | Deprecated — use skill |
+| `/iterate_plan` | `/prism-iterate` skill | Deprecated — use skill |
+
+The command files are retained for backward compatibility but may be removed in a future major version.
+
 ## Command Frontmatter Format
 
 ```markdown

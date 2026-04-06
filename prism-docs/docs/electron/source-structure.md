@@ -7,7 +7,7 @@ outline: [2, 3]
 # Electron Source Structure
 
 ```
-cmd/prism-electron/
+apps/prism-electron/
 ├── src/                               # Main process (Node.js + TypeScript)
 │   ├── main.ts                        # App lifecycle, window, menu, CLI args (111 lines)
 │   ├── preload.ts                     # contextBridge: electronAPI + office IPC (62 lines)

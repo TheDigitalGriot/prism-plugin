@@ -6,12 +6,12 @@ outline: [2, 3]
 
 # Unified Tauri Installer (v2.4.7+)
 
-Replaced the native NSIS-only Windows installer (`installer/`, v2.4.3) and the earlier Electron-based setup wizard (`cmd/prism-setup/`) with a unified Tauri v2 cross-platform installer at `cmd/prism-installer/`. The same Rust + React 19 codebase produces native Windows `.exe` (via NSIS bundler) and macOS `.dmg` installers with platform-specific wizard UIs.
+Replaced the native NSIS-only Windows installer (`installer/`, v2.4.3) and the earlier Electron-based setup wizard (`apps/prism-setup/`) with a unified Tauri v2 cross-platform installer at `apps/prism-installer/`. The same Rust + React 19 codebase produces native Windows `.exe` (via NSIS bundler) and macOS `.dmg` installers with platform-specific wizard UIs.
 
 ## Installer Architecture
 
 ```
-cmd/prism-installer/
+apps/prism-installer/
 ├── src/                              # React 19 frontend
 │   ├── App.tsx                       # Platform router → WindowsInstaller | MacInstaller
 │   ├── hooks/
@@ -156,4 +156,4 @@ The installer binary doubles as the uninstaller. On Windows:
 | Installer | Location | Status |
 |-----------|----------|--------|
 | **NSIS scripts** | `installer/` | Legacy — `.nsi` scripts and built `.exe` files still on disk |
-| **Electron setup** | `cmd/prism-setup/` | Deprecated (v2.4.6) — not in npm workspaces, version no longer bumped |
+| **Electron setup** | `apps/prism-setup/` | Deprecated (v2.4.6) — not in npm workspaces, version no longer bumped |

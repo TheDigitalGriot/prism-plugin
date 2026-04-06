@@ -27,7 +27,6 @@ Used when the task requires understanding complex relationships, generating stru
 | `prism-plan` | Skill | Interactive planning with user feedback loops |
 | `prism-iterate` | Skill | Plan adjustment requiring deep understanding |
 | `prism-prd` | Skill | PRD orchestration with context awareness |
-| `prism-visual-docs` | Skill | Visual documentation orchestration |
 
 ## Sonnet — General Implementation Work
 
@@ -55,6 +54,7 @@ Used for straightforward execution, routing, and integration tasks that don't re
 | `prism-spectrum` | Skill | Single-story execution with signal protocol |
 | `prism-verify` | Skill | Browser verification orchestration |
 | `prism-eval` | Skill | Eval runner — parallel agents, grading, benchmarking |
+| `prism-visual-docs` | Skill | Visual documentation orchestration (downgraded from Opus in v3.0.2) |
 
 ## Haiku — Fast Lookups & Simple Operations
 

@@ -9,7 +9,7 @@ outline: [2, 3]
 ## Build
 
 ```bash
-cd cmd/prism-cli
+cd apps/prism-cli
 
 make build          # Build for current platform → bin/prism-cli
 make build-all      # Cross-compile (windows/darwin/linux × amd64/arm64)

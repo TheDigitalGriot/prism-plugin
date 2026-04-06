@@ -9,7 +9,7 @@ outline: [2, 3]
 ## Package Structure
 
 ```
-cmd/prism-cli/
+apps/prism-cli/
 ├── main.go                         # CLI entry point, Cobra commands, flag parsing, uninstaller (340 lines)
 ├── Makefile                        # Build targets (67 lines)
 ├── go.mod                          # Dependencies (Go 1.23.0)
