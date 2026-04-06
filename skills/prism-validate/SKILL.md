@@ -37,7 +37,7 @@ For each phase in plan:
 3. **Run commands** - Execute verification from plan
 4. **Document** - Note pass/fail/deviations
 
-## 2a. Independent Verification (Distrust Pattern)
+### 2a. Independent Verification (Distrust Pattern)
 
 **Do NOT trust self-reported completion.** Implementation phases may report success while missing requirements, over-building beyond scope, or misunderstanding intent. Verify independently.
 
