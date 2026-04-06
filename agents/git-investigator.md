@@ -3,6 +3,9 @@ name: git-investigator
 description: Analyzes git history to find changes related to a reported issue. Use Task tool with subagent_type="git-investigator" for git state and history analysis during debug investigations.
 tools: Bash
 model: haiku
+effort: low
+maxTurns: 8
+disallowedTools: Write, Edit, NotebookEdit, Read, Glob, Grep
 ---
 
 # Git Investigator Agent

@@ -16,6 +16,10 @@ Create actionable implementation plans through iteration with the user.
 - **Be Thorough** - Read all context files COMPLETELY; include specific file:line references
 - **Be Practical** - Focus on incremental, testable changes; consider migration and rollback
 
+<HARD-GATE>
+Do NOT invoke any implementation skill, write any production code, scaffold any project, or take any implementation action until you have presented a plan and the user has approved it. Planning and implementation are separate phases — never collapse them.
+</HARD-GATE>
+
 ## Prerequisites
 
 - Research exists in `.prism/shared/research/` OR

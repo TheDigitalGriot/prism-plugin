@@ -1,8 +1,9 @@
 {
   "name": "prism",
   "description": "Structured 4-phase development workflow (Research -> Plan -> Implement -> Validate) with Spectrum-style iterative execution with TUI",
-  "version": "2.5.2",
+  "version": "3.0.0",
   "author": {
     "name": "Prism Team"
-  }
+  },
+  "hooks": "hooks/hooks.json"
 }

@@ -110,6 +110,16 @@ After completing phases:
 5. **Update plan document** - Keep checkboxes current
 6. **Stop at checkpoints** - Get approval first
 
+## Rationalization Prevention
+
+| Rationalization | Reality |
+|----------------|---------|
+| "I'll just fix this small thing while I'm here" | One story. One plan phase. Nothing else. |
+| "This related code should be updated too" | If it's not in the plan, it doesn't exist. |
+| "I can skip verification, it's obviously correct" | Nothing is obviously correct. Run the commands. |
+| "The user won't mind if I combine these phases" | Phases exist for a reason. Stop at checkpoints. |
+| "This is basically the same as what was planned" | "Basically" hides deviations. Document the mismatch. |
+
 ## Session Handoff
 
 If context high or session ending, add to plan:

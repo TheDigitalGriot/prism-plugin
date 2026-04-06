@@ -48,7 +48,15 @@ Parse the stories and identify:
 - Pending stories (status: "pending" or "in_progress")
 - Blocked stories (has blockedBy that isn't complete)
 
-### 1b. Load Epic + Story Context
+### 1b. Load Story Manifest & Contracts
+
+If `.prism/stories/<story-id>-manifest.json` exists:
+→ Load `references/story-manifest-schema.md` for manifest-driven execution.
+
+If story has `contracts_to_read` or `contracts_to_write`:
+→ Load `references/contracts-convention.md` for contract lifecycle.
+
+### 1c. Load Epic + Story Context
 
 After loading state files, extract contextual intelligence:
 
@@ -136,64 +144,17 @@ make test
 5. Output: `<spectrum-retry reason="QUALITY_GATE_FAILED">[debug summary]</spectrum-retry>`
 6. Exit (spectrum.sh will retry in fresh session with debug context)
 
-### 5b. Browser Verification (if applicable)
+### 5b. Browser Verification (UI stories only)
 
-If the story modified UI files (`.tsx`, `.jsx`, `.vue`, `.svelte`, `.html`, `.css`):
+If story `files[]` includes UI paths (`.tsx`, `.jsx`, `.vue`, `.svelte`, `.html`, `.css`):
+→ Load `references/browser-verification.md` and follow the protocol.
+Skip entirely for backend-only stories.
 
-1. Check if `playwright-cli` is available:
-   ```bash
-   which playwright-cli 2>/dev/null || npx @playwright/cli --version 2>/dev/null
-   ```
-2. If not available, skip with note in progress.md: "Browser verification skipped: playwright-cli not installed"
-3. Detect dev server command from `package.json` scripts (`dev` > `start` > `serve`)
-4. Start dev server in background, poll until responding (max 30s)
-5. Run browser verification:
-   ```bash
-   playwright-cli screenshot --session story-{id} http://localhost:PORT --name verify-{id}
-   playwright-cli console --session story-{id} http://localhost:PORT
-   ```
-6. Evaluate results:
-   - No console errors → PASS
-   - Screenshot captured → store in `.prism/local/verifications/`
-   - On failure → treat as quality gate failure (same debug flow as Section 6)
-7. Close session: `playwright-cli session-close story-{id}`
-8. Kill dev server process
+### 5c. Visual Regression (when baselines exist)
 
-### 5c. Visual Regression (if baselines exist)
-
-After quality gates and browser verification pass, check for visual regression baselines:
-
-1. **Detect UI files**: Check if any files in the story's `files` array have UI extensions (`.tsx`, `.jsx`, `.vue`, `.svelte`, `.css`, `.scss`, `.html`, `.svg`). If no UI files, skip.
-
-2. **Check for baselines**:
-   ```bash
-   ls .prism/shared/validation/baselines/{story-id}/*.png 2>/dev/null
-   ```
-   If no baselines exist, skip with note in progress.md: "Visual regression skipped: no baselines for {story-id}"
-
-3. **Run visual regression**: For each baseline, run against the live dev server (reuse from step 5b or start one):
-   ```bash
-   bash scripts/visual-regression.sh {url} \
-     .prism/shared/validation/baselines/{story-id} {baseline-name}
-   ```
-
-4. **Handle results**:
-   - `passed: true` → log in progress.md, continue to commit
-   - `passed: false` → spawn grader:
-     ```
-     Task(subagent_type="visual-regression-grader")
-     "Diff JSON: {JSON output}
-     Diff image: {diff_path}
-     Story: {story-id}, modifies: {files}
-     Plan criteria: {manual verification criteria}"
-     ```
-   - Grader verdict `regression` → record in progress.md, emit `<spectrum-retry reason="VISUAL_REGRESSION">[grader evidence]</spectrum-retry>`
-   - Grader verdict `intentional` → update baseline automatically (copy current screenshot over baseline), log in progress.md
-   - Grader verdict `inconclusive` → log in progress.md, proceed with commit (don't block on uncertainty)
-
-5. **Story manifest update**: If `story-manifest.json` exists, update the relevant requirement's `passes` field based on visual regression result.
-
-6. **Graceful skip**: If `playwright-cli` is not installed or `scripts/visual-regression.sh` is not found, skip silently (log, don't fail).
+If `.prism/shared/validation/baselines/{story-id}/` exists and contains PNGs matching story scope:
+→ Load `references/visual-regression.md` and follow the protocol.
+Skip if no baselines directory exists.
 
 ### 6. Commit Changes
 
@@ -235,6 +196,25 @@ Emit the appropriate signal tag at the end of your response. `spectrum.sh` will 
 | Merge conflict | Record conflict, signal `<spectrum-error>` |
 | File not found | Check if it should be created, adapt or record in learnings |
 
+## Iron Law
+
+```
+ONE STORY. ONE COMMIT. NOTHING ELSE.
+```
+
+"Violating the letter of this rule while adhering to the spirit" is violating the spirit.
+
+## Rationalization Prevention
+
+| Rationalization | Reality |
+|----------------|---------|
+| "I'll just fix this small thing while I'm here" | One story. One commit. Nothing else. |
+| "This is a trivial fix that's obviously correct" | Nothing is obviously correct. Run quality gates. |
+| "I can skip reading progress.md, I know the codebase" | You have ZERO prior context. Read ALL state files. |
+| "I should refactor this while making changes" | Refactoring is a separate story. Do not scope-creep. |
+| "The tests are probably passing" | "Probably" is not evidence. Run the commands. |
+| "I'll just update this related file too" | If it's not in story.files, don't touch it. |
+
 ## Rules
 
 1. **Load state fresh** - Never assume prior context, always read files
@@ -247,32 +227,8 @@ Emit the appropriate signal tag at the end of your response. `spectrum.sh` will 
 
 ## Debug Integration
 
-When quality gates fail, automatically invoke debug investigation before retrying.
-
-### Auto-Debug Flow
-
-On quality gate failure:
-
-1. **Capture** full error output (messages, file:line refs, stack traces)
-2. **Spawn 3 debug agents in parallel**:
-   - `Task(subagent_type="log-investigator")` — check logs for related errors
-   - `Task(subagent_type="state-investigator")` — check app state for anomalies
-   - `Task(subagent_type="git-investigator")` — check recent changes that might cause failure
-3. **Synthesize** findings into root cause hypothesis and fix approach
-4. **Record** in progress.md: error output, investigation findings, root cause, suggested fix, files to examine
-
-### Debug Signal
-
-Include debug context in the retry signal so the next iteration can act on it:
-
-```xml
-<spectrum-retry reason="QUALITY_GATE_FAILED">
-  <error>npm test failed: 2 tests failing</error>
-  <root_cause>Missing mock for AuthService in test setup</root_cause>
-  <suggested_fix>Add AuthService mock to test/setup.ts beforeEach</suggested_fix>
-  <files>src/auth/auth.service.ts:45, test/auth.test.ts:12</files>
-</spectrum-retry>
-```
+If quality gates fail after retry:
+→ Load `references/debug-integration.md` and follow the 3-agent parallel debug flow.
 
 ## Example Session Flow
 

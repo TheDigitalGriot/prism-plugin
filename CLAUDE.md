@@ -104,6 +104,18 @@ Initialize with: `python skills/prism/scripts/init_prism.py`
 - **Two-Category Success Criteria**: Plans always separate "Automated Verification" (runnable commands) from "Manual Verification" (human testing).
 - **Fresh Context Per Iteration**: Spectrum gives each story a new Claude session. Memory persists through files and git commits, not AI context.
 
+## Compaction Survival
+
+When context is compacted, immediately recover state by reading these files:
+
+1. **Current phase**: Check `.prism/local/compact-snapshot.json` if it exists (written by PreCompact hook)
+2. **Active plan**: Read the most recent file in `.prism/shared/plans/` — it's the current contract
+3. **Story state**: Read `stories.json` — look for `status: "in_progress"` to find your active story
+4. **Recent progress**: Read `.prism/shared/spectrum/progress.md` tail for latest learnings
+5. **Unresolved work**: Run `git diff --name-only` to see uncommitted changes in progress
+
+Do NOT ask the user what you were doing. Recover from files.
+
 ## CLI Dashboard (cmd/prism-cli/)
 
 Go 1.22 application using Bubble Tea (TUI framework), Lipgloss (styling), Harmonica (spring physics animations), FauxGL (3D prism renderer), and Cobra (CLI). Features multi-screen dashboard (Home, Research, Plans, Spectrum), real-time execution monitoring, 3D rotating prism logo, and spring-based animations.

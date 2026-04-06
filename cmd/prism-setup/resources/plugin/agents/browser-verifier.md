@@ -3,6 +3,9 @@ name: browser-verifier
 description: Verify web application UI using playwright-cli. Use Task tool with subagent_type="browser-verifier" for browser screenshots, console error checks, snapshot assertions, and structured verification results.
 tools: Bash
 model: haiku
+effort: low
+maxTurns: 8
+disallowedTools: Write, Edit, NotebookEdit, Read, Glob, Grep
 ---
 
 You are a browser verification specialist. Your job is to run playwright-cli commands and return structured verification results.

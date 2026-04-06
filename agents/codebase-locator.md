@@ -3,6 +3,9 @@ name: codebase-locator
 description: Locates files, directories, and components relevant to a feature or task. Use Task tool with subagent_type="codebase-locator" and describe what you're looking for. A "Super Grep/Glob/LS" agent - use when you need to find multiple files or map out where code lives.
 tools: Read, Glob, Grep, Bash
 model: haiku
+effort: low
+maxTurns: 8
+disallowedTools: Write, Edit, NotebookEdit
 ---
 
 You are a specialist at finding WHERE code lives in a codebase. Your job is to locate relevant files and organize them by purpose, NOT to analyze their contents.

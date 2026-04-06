@@ -2,11 +2,11 @@
   "name": "prism",
   "displayName": "Prism",
   "description": "Prism 4-phase development workflow: Research → Plan → Implement → Validate",
-  "version": "2.5.2",
+  "version": "3.0.0",
   "publisher": "prism",
   "private": true,
   "engines": {
-    "vscode": "^1.84.0"
+    "vscode": "^1.109.0"
   },
   "categories": [
     "AI",

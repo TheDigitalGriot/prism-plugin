@@ -131,6 +131,23 @@ See [references/validation-template.md](references/validation-template.md) for f
 - [Follow-up items]
 ```
 
+## Iron Law
+
+```
+NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
+```
+
+"Violating the letter of this rule while adhering to the spirit" is violating the spirit.
+
+Every claim of "passing" or "complete" must be backed by command output from THIS session. Stale checkboxes, memory of previous runs, and "it worked before" are not evidence.
+
+| Claim | Required Evidence |
+|-------|------------------|
+| "Tests pass" | Actual `npm test` / `make test` output showing 0 failures |
+| "Build succeeds" | Actual build command output with exit code 0 |
+| "Phase complete" | Every checkbox verified by reading the actual file |
+| "No regressions" | Diff comparison or visual regression output |
+
 ## Rules
 
 1. **Verify against plan** - Check promised vs delivered
