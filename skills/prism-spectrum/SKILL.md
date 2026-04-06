@@ -119,6 +119,10 @@ Follow Prism implementation patterns:
 - Don't over-engineer
 - Don't add features not in the story
 
+### Model Selection for Agent Dispatches
+
+When dispatching agents during implementation, select the model based on task complexity. Load `references/model-selection.md` for the full guide. Quick rule: mechanical tasks (1-2 files, clear spec) → haiku; integration tasks → sonnet; design/review → opus.
+
 ## 4a. Report Implementation Status
 
 After implementing the story, self-assess your work and report one of four statuses:
