@@ -25,9 +25,12 @@ The Spectrum iterative executor — the main autonomous execution loop that spaw
 │  6. Parse signal from output:                            │
 │     • <promise>COMPLETE</promise> → check remaining      │
 │     • <spectrum-continue> → verify + next iteration      │
+│     • <spectrum-continue><concerns> → log + continue ¹   │
 │     • <spectrum-retry reason="..."> → increment err      │
 │     • <spectrum-blocked reason="..."> → skip story       │
+│     • <spectrum-needs-context> → log questions + skip ¹  │
 │     • <spectrum-error reason="..."> → stop               │
+│  ¹ New in v3.0.1: concerns + needs-context signals       │
 │  7. update_story_status() — atomic jq update + validate  │
 │  8. append_progress() — timestamped logging              │
 │  9. If 3+ consecutive errors → EXIT ERROR                │
@@ -80,3 +83,21 @@ Initializes the `.prism/` directory structure in any project:
 - Adds `.prism/local/` to `.gitignore`
 - Creates `README.md` in `.prism/shared/`
 - Optionally adds Prism section to `CLAUDE.md`
+
+### Hook Scripts (v3.0.1)
+
+| Script | Type | Hook Event | Description |
+|--------|------|------------|-------------|
+| `pre-compact.py` | Python | PreCompact | Snapshots workflow state to `.prism/local/compact-snapshot.json` |
+| `post-compact.py` | Python | PostCompact | Restores state after context compression |
+| `log-observation.py` | Python | PostToolUse (Write\|Edit\|Bash) | Tracks file modifications for session continuity |
+| `worktree-setup.sh` | Bash | WorktreeCreate | Auto-setup: gitignore check, deps install, config copy, `.prism/shared` symlink |
+| `worktree-cleanup.sh` | Bash | WorktreeRemove | Warns on uncommitted changes, removes `.prism/shared` symlink |
+| `log-agent.py` | Python | SubagentStart/Stop | Logs agent dispatches to `.prism/local/agent-log.jsonl` |
+
+### Other Scripts
+
+| Script | Type | Description |
+|--------|------|-------------|
+| `visual-regression.sh` | Bash | Screenshots via playwright-cli, diffs against baselines with pixelmatch |
+| `bump-version.py` | Python | Bumps semver across all JSON/source files |

@@ -59,6 +59,7 @@ export default defineConfig({
           { text: 'Agents Reference', link: '/plugin/agents' },
           { text: 'Skills Reference', link: '/plugin/skills' },
           { text: 'Scripts & Automation', link: '/plugin/scripts' },
+          { text: 'Hooks Reference', link: '/plugin/hooks' },
           { text: 'Model Assignment Convention', link: '/plugin/model-assignment' },
           { text: 'Component Invocation Graph', link: '/plugin/invocation-graph' },
           { text: 'Data Flow Through .prism/', link: '/plugin/data-flow' },

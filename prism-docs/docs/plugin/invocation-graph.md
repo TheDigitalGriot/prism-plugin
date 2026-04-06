@@ -19,7 +19,10 @@ prism (master orchestrator)
   ├── /prism-debug
   ├── /prism-verify
   ├── /prism-prd
-  └── /prism-visual-docs
+  ├── /prism-visual-docs
+  ├── /prism-brainstorm
+  ├── /prism-design
+  └── /prism-finish
 
 prism-prd
   ├── /generate_prd
@@ -83,6 +86,10 @@ prism-prd ───────────────────────�
                                                │
 prism-visual-docs ─────────────────────────────┘
   └── prism-locator           (haiku)
+
+prism-spectrum (after quality gates)
+  ├── spec-reviewer            (sonnet)  ── validates story against spec
+  └── quality-reviewer         (sonnet)  ── enforces coding standards
 ```
 
 ## Commands → Agents

@@ -12,22 +12,24 @@ outline: [2, 3]
 |----------|-------|-------------|
 | Plugin manifests | 2 | 28 |
 | Commands | 25 | 4,051 |
-| Agents | 11 | 1,494 |
-| Skills (SKILL.md) | 14 | 2,344 |
-| Skill references | 11 | ~1,735 |
-| Scripts | 3 (+ 1 Python) | 1,157 |
+| Agents | 14 | ~1,750 |
+| Skills (SKILL.md) | 17 | ~2,700 |
+| Skill references | 19 | ~2,500 |
+| Scripts | 11 | ~2,400 |
 | CLAUDE.md | 1 | 115 |
-| Hooks | 0 | 0 |
+| Hooks | 7 events | ~40 |
 | MCP servers | 0 | 0 |
-| **Plugin total** | **~68** | **~10,924** |
+| **Plugin total** | **~97** | **~13,700** |
 
 ## Model Assignment Distribution
 
 | Model | Components | Typical Cost | Use Case |
 |-------|------------|-------------|----------|
-| **Opus** | 14 assignments | Highest | Deep analysis, planning, document generation |
-| **Sonnet** | 22 assignments | Medium | General execution, routing, coordination |
+| **Opus** | 16 assignments | Highest | Deep analysis, planning, document generation |
+| **Sonnet** | 26 assignments | Medium | General execution, routing, coordination |
 | **Haiku** | 11 assignments | Lowest | Fast lookups, simple operations, file scanning |
+
+**Dynamic Model Selection (v3.0.1):** Skills can override agent default models at dispatch time based on task complexity. See `skills/prism-spectrum/references/model-selection.md`.
 
 ## Largest Components
 
@@ -50,7 +52,7 @@ The Claude plugin is the **brain** — the three platform implementations (CLI, 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                    Claude Plugin (Part V)                         │
-│   25 commands, 11 agents, 14 skills, 4 scripts, 11 references   │
+│   25 commands, 14 agents, 17 skills, 7 hooks, 11 references      │
 │   Pure prompt engineering — defines workflows and behavior       │
 │                                                                   │
 │   Invoked by: claude CLI process                                 │

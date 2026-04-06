@@ -54,6 +54,32 @@ Autonomous execution uses XML-like signals for flow control:
 |--------|-----|---------|
 | Complete | `<promise>COMPLETE</promise>` | Story finished successfully |
 | Continue | `<spectrum-continue>` | Success, schedule next iteration |
+| Continue w/ Concerns | `<spectrum-continue><concerns>...</concerns>` | Success, but flagged doubts (v3.0.1) |
 | Retry | `<spectrum-retry reason="...">` | Transient failure, retry |
 | Blocked | `<spectrum-blocked reason="...">` | Cannot proceed, skip |
+| Needs Context | `<spectrum-needs-context>` | Missing information, skip to next (v3.0.1) |
 | Error | `<spectrum-error reason="...">` | Fatal error, stop |
+
+### 6. Two-Stage Review (v3.0.1)
+
+After Spectrum quality gates pass, two reviewer agents are dispatched sequentially:
+
+1. **Spec Compliance** (`spec-reviewer` agent) — verifies implementation matches requirements exactly. Checks for missing requirements, over-building, and scope drift. **Does not trust implementer self-reports.**
+2. **Code Quality** (`quality-reviewer` agent) — reviews code quality, architecture, and testing. Only dispatched after spec compliance passes.
+
+Review is skipped only for config-only changes, documentation-only stories, or reverts.
+
+### 7. Implementer Status Protocol (v3.0.1)
+
+During Spectrum execution, stories report one of four statuses:
+
+| Status | Meaning | What Happens |
+|--------|---------|-------------|
+| **DONE** | Confident in quality | Proceed to quality gates → review |
+| **DONE_WITH_CONCERNS** | Complete but with doubts | Log concerns, proceed (review catches issues) |
+| **NEEDS_CONTEXT** | Missing information | Emit signal, skip to next story |
+| **BLOCKED** | Cannot complete | Emit signal with root cause |
+
+### 8. Independent Verification / Distrust Pattern (v3.0.1)
+
+The `prism-validate` skill independently verifies all claimed completions. It does NOT trust checkbox status in plans — it reads actual code, greps for implementing functions, and checks `git diff --stat` for unplanned changes.

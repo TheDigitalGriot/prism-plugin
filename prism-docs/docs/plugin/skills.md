@@ -1,6 +1,6 @@
 ---
 title: Skills Reference
-description: All 14 Prism skills — auto-discovered workflow orchestrators with YAML frontmatter trigger patterns.
+description: All 17 Prism skills — auto-discovered workflow orchestrators with YAML frontmatter trigger patterns.
 outline: [2, 3]
 ---
 
@@ -29,13 +29,27 @@ Skills live at `skills/*/SKILL.md` and are auto-discovered workflow orchestrator
 | 10 | `prism-prd` | 122 | **opus** | "create a PRD", "write product requirements", "document this product" |
 | 11 | `prism-visual-docs` | 146 | **opus** | "create user flows", "design the screens", "create wireframes" |
 
+### Design & Completion Skills (v3.0.1)
+
+| # | Skill | Lines | Model | Trigger Patterns |
+|---|-------|-------|-------|-----------------|
+| 12 | `prism-brainstorm` | ~90 | **opus** | "brainstorm this", "design options", "explore approaches", "let's think about" |
+| 13 | `prism-design` | ~80 | **opus** | "design this", "create a design", "design the architecture" |
+| 14 | `prism-finish` | ~100 | **sonnet** | "finish this branch", "ready to merge", "create PR", "clean up branch" |
+
+**`prism-brainstorm`** includes a browser-based **Visual Companion** — a zero-dependency Node.js HTTP/WebSocket server that serves interactive HTML mockups for A/B design choices. User clicks are captured as JSONL events.
+
+**`prism-design`** bridges research and planning — it produces architectural decisions, interface contracts, and visual documentation that the planning phase turns into tasks.
+
+**`prism-finish`** presents 4 structured options: merge locally, push and create PR, keep as-is, or discard (requires confirmation).
+
 ### Release, Eval & Docs Skills (v2.5.0)
 
 | # | Skill | Lines | Model | Trigger Patterns |
 |---|-------|-------|-------|-----------------|
-| 12 | `prism-release` | 245 | — | "release", "bump version", "new version", "cut a release" |
-| 13 | `prism-eval` | 237 | **sonnet** | "run evals", "compare versions", "benchmark skills", "evaluate v2.5.0", "regression check" |
-| 14 | `prism-docs-update` | 138 | — | "update prism docs", "sync docs site", "update documentation site" |
+| 15 | `prism-release` | 245 | — | "release", "bump version", "new version", "cut a release" |
+| 16 | `prism-eval` | 237 | **sonnet** | "run evals", "compare versions", "benchmark skills", "evaluate v2.5.0", "regression check" |
+| 17 | `prism-docs-update` | 138 | — | "update prism docs", "sync docs site", "update documentation site" |
 
 ## Skill Subdirectory Contents
 
@@ -115,9 +129,11 @@ prism skill activates (trigger: "help me build")
     │
     ├── Detects task type → routes to appropriate phase
     │
+    ├── If needs design work   → /prism-brainstorm → /prism-design
     ├── If unfamiliar codebase → /prism-research
     ├── If needs planning      → /prism-plan
     ├── If plan exists         → /prism-implement
     ├── If needs validation    → /prism-validate
-    └── If needs iteration     → /prism-iterate
+    ├── If needs iteration     → /prism-iterate
+    └── If work is complete    → /prism-finish
 ```

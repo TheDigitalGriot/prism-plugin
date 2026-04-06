@@ -41,7 +41,7 @@ prism-plugin/                              # Repository root
 │   ├── worktree.md                        #  90 lines — haiku
 │   └── review-setup.md                    #  91 lines — haiku
 │
-├── agents/                                # 11 subagents (1,494 lines total)
+├── agents/                                # 14 subagents (~1,750 lines total)
 │   ├── codebase-locator.md                # 122 lines — haiku
 │   ├── codebase-analyzer.md               # 143 lines — opus
 │   ├── codebase-pattern-finder.md         # 227 lines — sonnet
@@ -52,7 +52,10 @@ prism-plugin/                              # Repository root
 │   ├── state-investigator.md              # 121 lines — haiku
 │   ├── git-investigator.md                # 140 lines — haiku
 │   ├── browser-verifier.md               #  92 lines — haiku
-│   └── graph-navigator.md                #  95 lines — haiku (knowledge graph queries)
+│   ├── graph-navigator.md                #  95 lines — haiku (knowledge graph queries)
+│   ├── visual-regression-grader.md       # ~100 lines — sonnet
+│   ├── spec-reviewer.md                  #  ~70 lines — sonnet (v3.0.1)
+│   └── quality-reviewer.md              #  ~75 lines — sonnet (v3.0.1)
 │
 ├── skills/                                # 14 auto-discovered skills (2,344 lines total)
 │   ├── prism/
@@ -85,9 +88,15 @@ prism-plugin/                              # Repository root
 │   ├── prism-eval/
 │   │   ├── SKILL.md                       # 237 lines — sonnet (eval runner)
 │   │   └── references/eval-schemas.md
-│   └── prism-docs-update/
-│       ├── SKILL.md                       # 138 lines — VitePress docs syncer
-│       └── references/section-mapping.md
+│   ├── prism-docs-update/
+│   │   ├── SKILL.md                       # 138 lines — VitePress docs syncer
+│   │   └── references/section-mapping.md
+│   ├── prism-brainstorm/
+│   │   └── SKILL.md                       # ~120 lines — sonnet (ideation & exploration)
+│   ├── prism-design/
+│   │   └── SKILL.md                       # ~130 lines — opus (architecture & design)
+│   └── prism-finish/
+│       └── SKILL.md                       # ~110 lines — sonnet (cleanup & wrap-up)
 │
 ├── scripts/                               # Automation scripts (979 lines total)
 │   ├── spectrum.sh                        # 518 lines — autonomous execution loop

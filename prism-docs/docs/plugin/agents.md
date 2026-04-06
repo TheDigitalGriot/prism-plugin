@@ -1,6 +1,6 @@
 ---
 title: Agents Reference
-description: All 11 Prism agents — specialized subprocesses spawned via Task(subagent_type="agent-name").
+description: All 14 Prism agents — specialized subprocesses spawned via Task(subagent_type="agent-name").
 outline: [2, 3]
 ---
 
@@ -38,6 +38,21 @@ Agents live at `agents/` and are spawned via `Task(subagent_type="agent-name")`.
 | # | Agent | File | Lines | Model | Tools | Role |
 |---|-------|------|-------|-------|-------|------|
 | 11 | `graph-navigator` | `graph-navigator.md` | 95 | **haiku** | codebase-memory-mcp (11 graph tools) | Queries the codebase knowledge graph for structural analysis — functions, call chains, dependencies, dead code, blast radius. Never reads files directly; uses graph tools exclusively. |
+
+### Visual Regression Agent
+
+| # | Agent | File | Lines | Model | Tools | Role |
+|---|-------|------|-------|-------|-------|------|
+| 12 | `visual-regression-grader` | `visual-regression-grader.md` | ~100 | **sonnet** | Read, Glob, Grep, Bash | Grades visual regression diffs: regression, intentional, or inconclusive. |
+
+### Review Agents (v3.0.1)
+
+Two-stage review agents dispatched sequentially after Spectrum quality gates pass. Spec compliance is verified first, then code quality. Both are read-only — they cannot modify code.
+
+| # | Agent | File | Lines | Model | Tools | Role |
+|---|-------|------|-------|-------|-------|------|
+| 13 | `spec-reviewer` | `spec-reviewer.md` | ~70 | **sonnet** | Read, Glob, Grep, Bash | Verifies implementation matches story requirements exactly. Checks for missing requirements, over-building, and scope drift. **Does NOT trust implementer self-reports** — verifies independently. |
+| 14 | `quality-reviewer` | `quality-reviewer.md` | ~75 | **sonnet** | Read, Glob, Grep, Bash | Reviews code quality, architecture, and testing AFTER spec compliance passes. Checks file responsibility, decomposition, testing, production readiness. |
 
 ## Agent Frontmatter Format
 
