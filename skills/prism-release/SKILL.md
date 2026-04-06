@@ -26,6 +26,16 @@ Read the current version from `VERSION` file and show it so the user knows what 
 cat VERSION
 ```
 
+### Step 1b: Validate plugin manifest
+
+**MANDATORY** — run before proceeding. Catches schema errors that silently prevent plugin loading.
+
+```bash
+claude plugin validate .
+```
+
+Expected: `✔ Validation passed`. If it fails, fix the errors before continuing.
+
 ### Step 2: Bump version across all files
 
 ```bash
