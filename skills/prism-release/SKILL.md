@@ -88,18 +88,34 @@ git push && git push origin v{NEW_VERSION}
 
 ### Step 6: Create GitHub release
 
+**IMPORTANT: Upload assets in small chunks (2-3 at a time).** GitHub's upload API returns 404 on bulk uploads with large files. Create the release first with a few small assets, then upload remaining assets separately.
+
 ```bash
+# Step 6a: Create release with CLI binaries (small files, reliable)
 gh release create v{NEW_VERSION} \
   apps/prism-cli/bin/prism-cli-darwin-amd64 \
   apps/prism-cli/bin/prism-cli-darwin-arm64 \
-  apps/prism-cli/bin/prism-cli-linux-amd64 \
-  apps/prism-cli/bin/prism-cli-linux-arm64 \
   apps/prism-cli/bin/prism-cli-windows-amd64.exe \
-  "apps/prism-electron/out/make/squirrel.windows/x64/Prism-{NEW_VERSION} Setup.exe" \
-  "apps/prism-installer/src-tauri/target/release/bundle/nsis/Prism Setup_{NEW_VERSION}_x64-setup.exe" \
-  installer/Prism-Setup-{NEW_VERSION}.exe \
   --title "Prism v{NEW_VERSION}" \
   --notes "Release notes here"
+
+# Step 6b: Upload remaining CLI binaries
+gh release upload v{NEW_VERSION} \
+  apps/prism-cli/bin/prism-cli-linux-amd64 \
+  apps/prism-cli/bin/prism-cli-linux-arm64
+
+# Step 6c: Upload large installers one at a time
+gh release upload v{NEW_VERSION} \
+  "apps/prism-electron/out/make/squirrel.windows/x64/Prism-{NEW_VERSION} Setup.exe"
+
+gh release upload v{NEW_VERSION} \
+  "apps/prism-installer/src-tauri/target/release/bundle/nsis/Prism Setup_{NEW_VERSION}_x64-setup.exe"
+
+gh release upload v{NEW_VERSION} \
+  installer/Prism-Setup-{NEW_VERSION}.exe
+
+# Step 6d: Update release notes with full changelog
+gh release edit v{NEW_VERSION} --notes "Full release notes here"
 ```
 
 The release should include 8 assets:
