@@ -31,7 +31,7 @@ jobs:
 
       - name: Build prism-cli for Windows
         run: |
-          cd cmd/prism-cli
+          cd apps/prism-cli
           GOOS=windows GOARCH=amd64 go build \
             -ldflags "-X main.version=${VERSION}" \
             -o bin/prism-cli-windows-amd64.exe .
@@ -40,28 +40,28 @@ jobs:
 
       - name: Build VSIX extension
         run: |
-          cd cmd/prism-vscode
+          cd apps/prism-vscode
           npm ci
           mkdir -p ../prism-setup/resources/extensions
           npx @vscode/vsce package \
             --no-dependencies \
-            --baseContentUrl https://github.com/TheDigitalGriot/prism-plugin/tree/main/cmd/prism-vscode \
-            --baseImagesUrl https://github.com/TheDigitalGriot/prism-plugin/raw/main/cmd/prism-vscode \
+            --baseContentUrl https://github.com/TheDigitalGriot/prism-plugin/tree/main/apps/prism-vscode \
+            --baseImagesUrl https://github.com/TheDigitalGriot/prism-plugin/raw/main/apps/prism-vscode \
             --out ../prism-setup/resources/extensions/prism.vsix
         continue-on-error: true
 
       - name: Copy plugin files
         run: |
-          mkdir -p cmd/prism-setup/resources/plugin
-          cp -r commands cmd/prism-setup/resources/plugin/
-          cp -r agents cmd/prism-setup/resources/plugin/
+          mkdir -p apps/prism-setup/resources/plugin
+          cp -r commands apps/prism-setup/resources/plugin/
+          cp -r agents apps/prism-setup/resources/plugin/
 
       - uses: actions/upload-artifact@v4
         with:
           name: nsis-resources
           path: |
-            cmd/prism-cli/bin/prism-cli-windows-amd64.exe
-            cmd/prism-setup/resources/
+            apps/prism-cli/bin/prism-cli-windows-amd64.exe
+            apps/prism-setup/resources/
 
   build-nsis:
     needs: prepare

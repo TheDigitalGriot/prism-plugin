@@ -24,7 +24,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.22'
-          cache-dependency-path: cmd/prism-cli/go.sum
+          cache-dependency-path: apps/prism-cli/go.sum
 
       - uses: actions/setup-node@v4
         with:
@@ -40,37 +40,37 @@ jobs:
           echo "version=${VERSION#v}" >> "$GITHUB_OUTPUT"
 
       - name: Ensure go.sum is up to date
-        run: cd cmd/prism-cli && go mod tidy
+        run: cd apps/prism-cli && go mod tidy
 
       - name: Build prism-cli for Windows (amd64)
         run: |
-          cd cmd/prism-cli
+          cd apps/prism-cli
           GOOS=windows GOARCH=amd64 go build \
             -ldflags "-X main.version=${{ steps.ver.outputs.version }}" \
             -o ../../artifacts/cli/windows-amd64/prism-cli.exe .
 
       - name: Build prism-cli for macOS (amd64)
         run: |
-          cd cmd/prism-cli
+          cd apps/prism-cli
           GOOS=darwin GOARCH=amd64 go build \
             -ldflags "-X main.version=${{ steps.ver.outputs.version }}" \
             -o ../../artifacts/cli/macos-amd64/prism-cli .
 
       - name: Build prism-cli for macOS (arm64)
         run: |
-          cd cmd/prism-cli
+          cd apps/prism-cli
           GOOS=darwin GOARCH=arm64 go build \
             -ldflags "-X main.version=${{ steps.ver.outputs.version }}" \
             -o ../../artifacts/cli/macos-arm64/prism-cli .
 
       - name: Build VSIX extension
         run: |
-          cd cmd/prism-vscode
+          cd apps/prism-vscode
           npm ci
           npx @vscode/vsce package \
             --no-dependencies \
-            --baseContentUrl https://github.com/TheDigitalGriot/prism-plugin/tree/main/cmd/prism-vscode \
-            --baseImagesUrl https://github.com/TheDigitalGriot/prism-plugin/raw/main/cmd/prism-vscode \
+            --baseContentUrl https://github.com/TheDigitalGriot/prism-plugin/tree/main/apps/prism-vscode \
+            --baseImagesUrl https://github.com/TheDigitalGriot/prism-plugin/raw/main/apps/prism-vscode \
             --out ../../artifacts/extensions/prism-${{ steps.ver.outputs.version }}.vsix
         continue-on-error: true
 
@@ -100,17 +100,17 @@ jobs:
       - name: Stage resources for Tauri
         shell: bash
         run: |
-          mkdir -p cmd/prism-installer/src-tauri/resources/bin
-          mkdir -p cmd/prism-installer/src-tauri/resources/extensions
-          mkdir -p cmd/prism-installer/src-tauri/resources/plugin
+          mkdir -p apps/prism-installer/src-tauri/resources/bin
+          mkdir -p apps/prism-installer/src-tauri/resources/extensions
+          mkdir -p apps/prism-installer/src-tauri/resources/plugin
           cp artifacts/cli/windows-amd64/prism-cli.exe \
-            cmd/prism-installer/src-tauri/resources/bin/prism-cli-x86_64-pc-windows-msvc.exe
+            apps/prism-installer/src-tauri/resources/bin/prism-cli-x86_64-pc-windows-msvc.exe
           if ls artifacts/extensions/*.vsix 2>/dev/null; then
             cp artifacts/extensions/*.vsix \
-              cmd/prism-installer/src-tauri/resources/extensions/
+              apps/prism-installer/src-tauri/resources/extensions/
           fi
           cp -r artifacts/plugin/* \
-            cmd/prism-installer/src-tauri/resources/plugin/
+            apps/prism-installer/src-tauri/resources/plugin/
 
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -121,11 +121,11 @@ jobs:
           node-version: '20'
 
       - name: Install frontend dependencies
-        working-directory: cmd/prism-installer
+        working-directory: apps/prism-installer
         run: npm ci
 
       - name: Build Tauri installer (Windows NSIS)
-        working-directory: cmd/prism-installer
+        working-directory: apps/prism-installer
         run: npm run tauri build -- --bundles nsis
         env:
           PRISM_VERSION: ${{ needs.prepare.outputs.version }}
@@ -133,7 +133,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: prism-installer-windows
-          path: cmd/prism-installer/src-tauri/target/release/bundle/nsis/*.exe
+          path: apps/prism-installer/src-tauri/target/release/bundle/nsis/*.exe
 
   # ─── Job 3: Build macOS DMG installer ────────────────────────────────────────
   build-macos:
@@ -149,19 +149,19 @@ jobs:
 
       - name: Stage resources for Tauri
         run: |
-          mkdir -p cmd/prism-installer/src-tauri/resources/bin
-          mkdir -p cmd/prism-installer/src-tauri/resources/extensions
-          mkdir -p cmd/prism-installer/src-tauri/resources/plugin
+          mkdir -p apps/prism-installer/src-tauri/resources/bin
+          mkdir -p apps/prism-installer/src-tauri/resources/extensions
+          mkdir -p apps/prism-installer/src-tauri/resources/plugin
           cp artifacts/cli/macos-arm64/prism-cli \
-            cmd/prism-installer/src-tauri/resources/bin/prism-cli-aarch64-apple-darwin
+            apps/prism-installer/src-tauri/resources/bin/prism-cli-aarch64-apple-darwin
           cp artifacts/cli/macos-amd64/prism-cli \
-            cmd/prism-installer/src-tauri/resources/bin/prism-cli-x86_64-apple-darwin
+            apps/prism-installer/src-tauri/resources/bin/prism-cli-x86_64-apple-darwin
           if ls artifacts/extensions/*.vsix 2>/dev/null; then
             cp artifacts/extensions/*.vsix \
-              cmd/prism-installer/src-tauri/resources/extensions/
+              apps/prism-installer/src-tauri/resources/extensions/
           fi
           cp -r artifacts/plugin/* \
-            cmd/prism-installer/src-tauri/resources/plugin/
+            apps/prism-installer/src-tauri/resources/plugin/
 
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -172,11 +172,11 @@ jobs:
           node-version: '20'
 
       - name: Install frontend dependencies
-        working-directory: cmd/prism-installer
+        working-directory: apps/prism-installer
         run: npm ci
 
       - name: Build Tauri installer (macOS DMG)
-        working-directory: cmd/prism-installer
+        working-directory: apps/prism-installer
         run: npm run tauri build -- --bundles dmg
         env:
           PRISM_VERSION: ${{ needs.prepare.outputs.version }}
@@ -184,7 +184,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: prism-installer-macos
-          path: cmd/prism-installer/src-tauri/target/release/bundle/dmg/*.dmg
+          path: apps/prism-installer/src-tauri/target/release/bundle/dmg/*.dmg
 
   # ─── Job 4: Publish GitHub Release ───────────────────────────────────────────
   release:
