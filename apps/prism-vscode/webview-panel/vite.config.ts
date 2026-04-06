@@ -3,6 +3,9 @@ import react from '@vitejs/plugin-react'
 import { writeFileSync } from 'fs'
 import type { Plugin, ViteDevServer } from 'vite'
 import path from 'path'
+import { createRequire } from 'module'
+
+const require = createRequire(import.meta.url)
 
 /** Write the dev server port to a file so the extension host can read it. */
 const writePortPlugin = (): Plugin => ({
@@ -23,9 +26,9 @@ export default defineConfig({
   resolve: {
     alias: {
       '@prism-ui': path.resolve(__dirname, '../../../packages/prism-ui/src'),
-      // Pin React to local copy to prevent workspace hoisting mismatches.
-      'react': path.resolve(__dirname, 'node_modules/react'),
-      'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
+      // Use require.resolve to find React wherever npm installed it (respects workspace hoisting).
+      'react': path.dirname(require.resolve('react/package.json')),
+      'react-dom': path.dirname(require.resolve('react-dom/package.json')),
     },
   },
   build: {
