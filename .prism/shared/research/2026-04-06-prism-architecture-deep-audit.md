@@ -374,9 +374,10 @@ The `--slim` flag reduces from 29 tools to 3, cutting token cost from ~18K to ~3
 
 ### Priority 4: Future Considerations
 
-11. **SDD as a native Prism skill** — currently lives in `.prism/shared/ref/superpowers/`. Consider creating `skills/prism-sdd/` that adapts the Superpowers SDD workflow to Prism conventions
-12. **Worktree integration with Spectrum** — Spectrum could optionally run in a worktree to keep main clean during autonomous execution
-13. **Agent dispatch cost dashboard** — the `log-agent.py` JSONL data could feed a cost analysis view in the CLI TUI
+11. **Worktree integration with Spectrum** — Spectrum could optionally run in a worktree to keep main clean during autonomous execution
+12. **Agent dispatch cost dashboard** — the `log-agent.py` JSONL data could feed a cost analysis view in the CLI TUI
+
+> **Note:** Prism's RPIV workflow (Research → Plan → Implement → Validate) IS the spec-driven development methodology. The Superpowers "Subagent-Driven Development" patterns (two-stage review, implementer status protocol, distrust pattern) have been absorbed into Prism's existing phases — there is no separate "SDD skill" to create. The Superpowers reference in `.prism/shared/ref/` is a studied reference, not a missing native implementation.
 
 ---
 
