@@ -9,7 +9,7 @@ How to run every app in the monorepo.
 ## CLI Dashboard (Go TUI)
 
 ```bash
-cd cmd/prism-cli
+cd apps/prism-cli
 go run .              # Run directly without building a binary
 go run . [args]       # Run with arguments
 make build            # Build binary → bin/prism-cli[.exe]
@@ -24,7 +24,7 @@ Other commands: `make test`, `make lint`, `make build-all` (cross-compile), `mak
 ## VSCode Extension
 
 ```bash
-cd cmd/prism-vscode
+cd apps/prism-vscode
 npm run watch         # Watches: esbuild + webview (port 5173) + panel (port 5175)
 ```
 
@@ -45,7 +45,7 @@ Production build: `npm run package`
 ## Electron App
 
 ```bash
-cd cmd/prism-electron
+cd apps/prism-electron
 npm start             # Launches Electron via Forge + Vite hot reload (port 5173)
 ```
 
