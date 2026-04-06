@@ -1,9 +1,12 @@
 import { defineConfig } from "vite"
 import react from "@vitejs/plugin-react"
 import tailwindcss from "@tailwindcss/vite"
-import { resolve } from "path"
+import { resolve, dirname } from "path"
 import { writeFileSync, existsSync, mkdirSync } from "fs"
+import { createRequire } from "module"
 import type { Plugin, ViteDevServer } from "vite"
+
+const require = createRequire(import.meta.url)
 
 /** Write the dev server port to a file so the extension host can read it. */
 const writePortPlugin = (): Plugin => ({
@@ -56,8 +59,8 @@ export default defineConfig({
       "@prism-ui": resolve(__dirname, "../../../packages/prism-ui/src"),
       // Pin to local React 18 — prevents @prism-ui from resolving
       // React 19 from root node_modules (npm workspace hoisting).
-      "react": resolve(__dirname, "node_modules/react"),
-      "react-dom": resolve(__dirname, "node_modules/react-dom"),
+      "react": dirname(require.resolve("react/package.json")),
+      "react-dom": dirname(require.resolve("react-dom/package.json")),
     },
   },
 
