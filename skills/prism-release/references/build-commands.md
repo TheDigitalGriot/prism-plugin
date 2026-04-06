@@ -5,18 +5,18 @@ Full bash commands for each build step in the prism-release pipeline.
 ## 3a. Cross-compile CLI binaries
 
 ```bash
-cd cmd/prism-cli && make build-all
+cd apps/prism-cli && make build-all
 ```
 
-Verify: `ls -la cmd/prism-cli/bin/` shows 5 binaries.
+Verify: `ls -la apps/prism-cli/bin/` shows 5 binaries.
 
 ## 3b. Package VSIX extension
 
 ```bash
-cd cmd/prism-vscode && npx @vscode/vsce package \
+cd apps/prism-vscode && npx @vscode/vsce package \
   --no-dependencies \
-  --baseContentUrl https://github.com/TheDigitalGriot/prism-plugin/tree/main/cmd/prism-vscode \
-  --baseImagesUrl https://github.com/TheDigitalGriot/prism-plugin/raw/main/cmd/prism-vscode \
+  --baseContentUrl https://github.com/TheDigitalGriot/prism-plugin/tree/main/apps/prism-vscode \
+  --baseImagesUrl https://github.com/TheDigitalGriot/prism-plugin/raw/main/apps/prism-vscode \
   --out ../prism-setup/resources/extensions/prism.vsix
 ```
 
@@ -24,31 +24,31 @@ cd cmd/prism-vscode && npx @vscode/vsce package \
 
 ```bash
 # Copy CLI binary for the installer
-mkdir -p cmd/prism-setup/resources/binaries
-cp cmd/prism-cli/bin/prism-cli-windows-amd64.exe cmd/prism-setup/resources/binaries/
+mkdir -p apps/prism-setup/resources/binaries
+cp apps/prism-cli/bin/prism-cli-windows-amd64.exe apps/prism-setup/resources/binaries/
 
 # Copy plugin files for the installer
-mkdir -p cmd/prism-setup/resources/plugin
-cp -r commands agents skills .claude-plugin cmd/prism-setup/resources/plugin/
+mkdir -p apps/prism-setup/resources/plugin
+cp -r commands agents skills .claude-plugin apps/prism-setup/resources/plugin/
 ```
 
 ## 3d. Build Electron desktop app
 
 ```bash
-cd cmd/prism-electron && npm run make
+cd apps/prism-electron && npm run make
 ```
 
-Verify: `ls cmd/prism-electron/out/make/squirrel.windows/x64/` shows `Prism-{VERSION} Setup.exe`.
+Verify: `ls apps/prism-electron/out/make/squirrel.windows/x64/` shows `Prism-{VERSION} Setup.exe`.
 
 ## 3e. Build Tauri installer (Prism Setup)
 
 ```bash
-cd cmd/prism-installer && npm run tauri build -- --bundles nsis
+cd apps/prism-installer && npm run tauri build -- --bundles nsis
 ```
 
-Output: `cmd/prism-installer/src-tauri/target/release/bundle/nsis/Prism Setup_{VERSION}_x64-setup.exe`
+Output: `apps/prism-installer/src-tauri/target/release/bundle/nsis/Prism Setup_{VERSION}_x64-setup.exe`
 
-Verify: `ls "cmd/prism-installer/src-tauri/target/release/bundle/nsis/Prism Setup_{NEW_VERSION}_x64-setup.exe"`
+Verify: `ls "apps/prism-installer/src-tauri/target/release/bundle/nsis/Prism Setup_{NEW_VERSION}_x64-setup.exe"`
 
 > **Note**: On macOS, use `--bundles dmg` instead. CI builds both via `prism-installer-release.yml`.
 

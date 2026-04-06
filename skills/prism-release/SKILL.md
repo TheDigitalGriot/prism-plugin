@@ -35,8 +35,8 @@ python scripts/bump-version.py <major|minor|patch> --root .
 This updates version locations including: VERSION, plugin.json, marketplace.json, main.go, footer.go, package.json files (prism-vscode, prism-electron, prism-installer), PrismState.ts, PrismStateContext.tsx. Verify the output shows all files updated.
 
 **Manual verification** — the bump script may miss these files. Check and update manually if needed:
-- `cmd/prism-installer/src-tauri/Cargo.toml` — `version = "{NEW_VERSION}"`
-- `cmd/prism-installer/src-tauri/tauri.conf.json` — `"version": "{NEW_VERSION}"`
+- `apps/prism-installer/src-tauri/Cargo.toml` — `version = "{NEW_VERSION}"`
+- `apps/prism-installer/src-tauri/tauri.conf.json` — `"version": "{NEW_VERSION}"`
 
 ### Step 3: Build all artifacts
 
@@ -45,16 +45,16 @@ Run these builds. CLI + VSIX can run in parallel, then Electron, then Tauri, the
 Load `references/build-commands.md` for the full build command reference.
 
 #### 3a. Cross-compile CLI binaries
-`cd cmd/prism-cli && make build-all` — produces 5 binaries in `cmd/prism-cli/bin/`.
+`cd apps/prism-cli && make build-all` — produces 5 binaries in `apps/prism-cli/bin/`.
 
 #### 3b. Package VSIX extension
-`npx @vscode/vsce package` from `cmd/prism-vscode/` — outputs to `cmd/prism-setup/resources/extensions/prism.vsix`.
+`npx @vscode/vsce package` from `apps/prism-vscode/` — outputs to `apps/prism-setup/resources/extensions/prism.vsix`.
 
 #### 3c. Populate NSIS installer resources
-Copy CLI binary and plugin files into `cmd/prism-setup/resources/`.
+Copy CLI binary and plugin files into `apps/prism-setup/resources/`.
 
 #### 3d. Build Electron desktop app
-`cd cmd/prism-electron && npm run make` — outputs Squirrel installer to `out/make/squirrel.windows/x64/`.
+`cd apps/prism-electron && npm run make` — outputs Squirrel installer to `out/make/squirrel.windows/x64/`.
 
 #### 3e. Build Tauri installer (Prism Setup)
 `npm run tauri build -- --bundles nsis` — outputs NSIS installer to `src-tauri/target/release/bundle/nsis/`. Use `--bundles dmg` on macOS.
@@ -65,13 +65,13 @@ Copy CLI binary and plugin files into `cmd/prism-setup/resources/`.
 ### Step 4: Commit and tag
 
 ```bash
-git add VERSION .claude-plugin/ cmd/prism-cli/main.go cmd/prism-cli/app/footer.go \
-  cmd/prism-vscode/package.json cmd/prism-electron/package.json \
-  cmd/prism-installer/package.json cmd/prism-installer/src-tauri/Cargo.toml \
-  cmd/prism-installer/src-tauri/tauri.conf.json cmd/prism-installer/src-tauri/src/ \
-  cmd/prism-installer/src/ \
-  cmd/prism-setup/resources/extensions/prism.vsix \
-  cmd/prism-setup/resources/plugin/ \
+git add VERSION .claude-plugin/ apps/prism-cli/main.go apps/prism-cli/app/footer.go \
+  apps/prism-vscode/package.json apps/prism-electron/package.json \
+  apps/prism-installer/package.json apps/prism-installer/src-tauri/Cargo.toml \
+  apps/prism-installer/src-tauri/tauri.conf.json apps/prism-installer/src-tauri/src/ \
+  apps/prism-installer/src/ \
+  apps/prism-setup/resources/extensions/prism.vsix \
+  apps/prism-setup/resources/plugin/ \
   packages/prism-core/src/shared/PrismState.ts \
   packages/prism-ui/src/context/PrismStateContext.tsx \
   installer/ scripts/
@@ -90,13 +90,13 @@ git push && git push origin v{NEW_VERSION}
 
 ```bash
 gh release create v{NEW_VERSION} \
-  cmd/prism-cli/bin/prism-cli-darwin-amd64 \
-  cmd/prism-cli/bin/prism-cli-darwin-arm64 \
-  cmd/prism-cli/bin/prism-cli-linux-amd64 \
-  cmd/prism-cli/bin/prism-cli-linux-arm64 \
-  cmd/prism-cli/bin/prism-cli-windows-amd64.exe \
-  "cmd/prism-electron/out/make/squirrel.windows/x64/Prism-{NEW_VERSION} Setup.exe" \
-  "cmd/prism-installer/src-tauri/target/release/bundle/nsis/Prism Setup_{NEW_VERSION}_x64-setup.exe" \
+  apps/prism-cli/bin/prism-cli-darwin-amd64 \
+  apps/prism-cli/bin/prism-cli-darwin-arm64 \
+  apps/prism-cli/bin/prism-cli-linux-amd64 \
+  apps/prism-cli/bin/prism-cli-linux-arm64 \
+  apps/prism-cli/bin/prism-cli-windows-amd64.exe \
+  "apps/prism-electron/out/make/squirrel.windows/x64/Prism-{NEW_VERSION} Setup.exe" \
+  "apps/prism-installer/src-tauri/target/release/bundle/nsis/Prism Setup_{NEW_VERSION}_x64-setup.exe" \
   installer/Prism-Setup-{NEW_VERSION}.exe \
   --title "Prism v{NEW_VERSION}" \
   --notes "Release notes here"
@@ -199,7 +199,7 @@ Print a summary with the release URL, snapshot path, and eval case counts.
 
 - If `gh` is not installed or not authenticated: tell the user to run `gh auth login`
 - If `make build-all` fails: check that Go 1.22+ is installed
-- If `npm run make` fails: check Electron Forge dependencies with `cd cmd/prism-electron && npm install`
+- If `npm run make` fails: check Electron Forge dependencies with `cd apps/prism-electron && npm install`
 - If `tauri build` fails: check Rust toolchain with `rustup show`, ensure NSIS is installed for bundling
 - If `makensis` fails: check NSIS 3.x is installed (`winget install NSIS.NSIS`)
 - If git push fails: report the error, do NOT force-push
