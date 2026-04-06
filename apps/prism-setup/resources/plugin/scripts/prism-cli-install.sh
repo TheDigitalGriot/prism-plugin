@@ -61,7 +61,7 @@ has_go() {
 build_from_source() {
     local script_dir
     script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    local source_dir="$script_dir/../cmd/prism-cli"
+    local source_dir="$script_dir/../apps/prism-cli"
 
     if [[ ! -d "$source_dir" ]]; then
         error "Source directory not found: $source_dir"

@@ -11,7 +11,7 @@ const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
     // Bundle the shared office assets (character sprites, floor/wall tiles, furniture)
-    // from cmd/prism-vscode/assets/ into the packaged app's resources/ directory.
+    // from apps/prism-vscode/assets/ into the packaged app's resources/ directory.
     // At runtime: accessed via path.join(process.resourcesPath, 'assets', ...)
     extraResource: ['../prism-vscode/assets'],
   },

@@ -269,16 +269,16 @@ export class ElectronOfficeProvider {
   /**
    * Determine the root directory that contains the 'assets/' folder.
    *
-   * - Development: cmd/prism-electron/../prism-vscode = cmd/prism-vscode/
+   * - Development: apps/prism-electron/../prism-vscode = apps/prism-vscode/
    *   (the canonical source of truth for all office assets)
-   * - Packaged: extraResource copies cmd/prism-vscode/assets → resources/assets/
+   * - Packaged: extraResource copies apps/prism-vscode/assets → resources/assets/
    *   so we return process.resourcesPath which contains the assets/ subdirectory
    */
   private _getAssetsRoot(): string {
     if (app.isPackaged) {
       return process.resourcesPath
     }
-    // In dev mode, app.getAppPath() = cmd/prism-electron/
+    // In dev mode, app.getAppPath() = apps/prism-electron/
     return path.resolve(app.getAppPath(), '..', 'prism-vscode')
   }
 

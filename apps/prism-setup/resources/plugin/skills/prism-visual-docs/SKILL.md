@@ -1,7 +1,7 @@
 ---
 name: prism-visual-docs
 description: Generate visual documentation including user flows, wireframes, screen inventories, and UX specifications as part of the prism workflow. Use when designing user experiences, mapping user journeys, creating wireframes, or documenting interaction patterns. Triggers on "create user flows", "design the screens", "map user journeys", "create wireframes", "document the UX", or when visual/interaction design documentation is needed.
-model: opus
+model: sonnet
 ---
 
 # Prism Visual Docs

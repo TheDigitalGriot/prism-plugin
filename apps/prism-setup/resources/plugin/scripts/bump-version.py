@@ -90,26 +90,26 @@ def main():
     json_files = [
         root / ".claude-plugin" / "plugin.json",
         root / ".claude-plugin" / "marketplace.json",
-        root / "cmd" / "prism-vscode" / "package.json",
-        root / "cmd" / "prism-electron" / "package.json",
+        root / "apps" / "prism-vscode" / "package.json",
+        root / "apps" / "prism-electron" / "package.json",
         # Tauri installer (new — supersedes prism-setup)
-        root / "cmd" / "prism-installer" / "package.json",
-        root / "cmd" / "prism-installer" / "src-tauri" / "tauri.conf.json",
+        root / "apps" / "prism-installer" / "package.json",
+        root / "apps" / "prism-installer" / "src-tauri" / "tauri.conf.json",
         # Deprecated: cmd/prism-setup — kept for rollback but no longer bumped
-        # root / "cmd" / "prism-setup" / "package.json",
+        # root / "apps" / "prism-setup" / "package.json",
     ]
 
     # Text files: straight find-and-replace of old → new
     text_files = [
-        root / "cmd" / "prism-cli" / "main.go",
-        root / "cmd" / "prism-cli" / "app" / "footer.go",
+        root / "apps" / "prism-cli" / "main.go",
+        root / "apps" / "prism-cli" / "app" / "footer.go",
         root / "packages" / "prism-core" / "src" / "shared" / "PrismState.ts",
         root / "packages" / "prism-ui" / "src" / "context" / "PrismStateContext.tsx",
         # Deprecated: cmd/prism-setup — kept for rollback but no longer bumped
-        # root / "cmd" / "prism-setup" / "src" / "main.ts",
-        # root / "cmd" / "prism-setup" / "src" / "screens" / "WelcomeScreen.tsx",
-        # root / "cmd" / "prism-setup" / "src" / "installer" / "download.ts",
-        # root / "cmd" / "prism-setup" / "src" / "installer" / "version.ts",
+        # root / "apps" / "prism-setup" / "src" / "main.ts",
+        # root / "apps" / "prism-setup" / "src" / "screens" / "WelcomeScreen.tsx",
+        # root / "apps" / "prism-setup" / "src" / "installer" / "download.ts",
+        # root / "apps" / "prism-setup" / "src" / "installer" / "version.ts",
     ]
 
     updated = []

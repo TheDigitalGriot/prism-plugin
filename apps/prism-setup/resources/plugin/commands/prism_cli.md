@@ -39,7 +39,7 @@ which prism-cli 2>/dev/null || \
 
 ### Build from source (requires Go 1.22+)
 ```bash
-cd cmd/prism-cli && go build -o ~/.prism/bin/prism-cli .
+cd apps/prism-cli && go build -o ~/.prism/bin/prism-cli .
 ```
 
 ## Usage

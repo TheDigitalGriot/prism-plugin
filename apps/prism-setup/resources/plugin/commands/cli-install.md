@@ -116,7 +116,7 @@ Prism CLI Install Complete
 If Go 1.22+ is installed and you need to build from source instead of downloading:
 
 ```bash
-cd "${CLAUDE_PLUGIN_ROOT}/cmd/prism-cli" && make build
+cd "${CLAUDE_PLUGIN_ROOT}/apps/prism-cli" && make build
 mkdir -p "$HOME/.prism/bin"
 cp bin/prism-cli* "$HOME/.prism/bin/"
 ```

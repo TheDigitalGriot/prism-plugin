@@ -3,6 +3,8 @@ description: Implement technical plans from .prism/shared/plans with verificatio
 model: sonnet
 ---
 
+> **Deprecated:** Prefer `/prism-implement` skill.
+
 # Implement Plan
 
 You are tasked with implementing an approved technical plan from `.prism/shared/plans/`. These plans contain phases with specific changes and success criteria.
