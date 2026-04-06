@@ -119,6 +119,65 @@ Follow Prism implementation patterns:
 - Don't over-engineer
 - Don't add features not in the story
 
+## 4a. Report Implementation Status
+
+After implementing the story, self-assess your work and report one of four statuses:
+
+| Status | When to Use | What Happens Next |
+|--------|-------------|-------------------|
+| **DONE** | Implementation complete, confident in quality | Proceed to quality gates |
+| **DONE_WITH_CONCERNS** | Complete but with doubts about approach | Log concerns to progress.md, proceed to quality gates |
+| **NEEDS_CONTEXT** | Missing information needed to complete | Emit `<spectrum-needs-context>` with what's needed |
+| **BLOCKED** | Cannot complete the story | Emit `<spectrum-blocked>` with root cause |
+
+### DONE_WITH_CONCERNS
+
+If you completed the work but have doubts:
+1. Log your concerns in progress.md under a `### Concerns` subsection
+2. Proceed to quality gates — the two-stage review will catch real issues
+3. Include concerns in the `<spectrum-continue>` signal:
+
+```xml
+<spectrum-continue>
+  <concerns>
+    - Concern 1: description
+    - Concern 2: description
+  </concerns>
+</spectrum-continue>
+```
+
+### NEEDS_CONTEXT
+
+If you cannot complete without additional information:
+1. Do NOT commit partial work
+2. Reset any uncommitted changes: `git checkout -- .`
+3. Emit the signal with specific questions:
+
+```xml
+<spectrum-needs-context>
+  <story>{STORY_ID}</story>
+  <questions>
+    - What is the expected behavior when X happens?
+    - Which API endpoint should this call?
+  </questions>
+</spectrum-needs-context>
+```
+
+### BLOCKED
+
+If the story cannot be completed:
+1. Do NOT commit partial work
+2. Reset any uncommitted changes: `git checkout -- .`
+3. Emit the signal with root cause:
+
+```xml
+<spectrum-blocked>
+  <story>{STORY_ID}</story>
+  <reason>Description of why this is blocked</reason>
+  <suggestion>What would unblock this</suggestion>
+</spectrum-blocked>
+```
+
 ### 5. Run Quality Gates
 
 Execute ALL verification commands from `epic.qualityGates`:
