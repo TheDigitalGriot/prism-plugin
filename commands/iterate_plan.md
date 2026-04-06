@@ -3,6 +3,8 @@ description: Iterate on existing implementation plans with thorough research and
 model: opus
 ---
 
+> **Deprecated:** Prefer `/prism-iterate` skill.
+
 # Iterate Implementation Plan
 
 You are tasked with updating existing implementation plans based on user feedback. You should be skeptical, thorough, and ensure changes are grounded in actual codebase reality.

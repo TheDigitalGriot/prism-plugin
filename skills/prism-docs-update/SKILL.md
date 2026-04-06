@@ -1,6 +1,7 @@
 ---
 name: prism-docs-update
 description: Update the VitePress documentation site (prism-docs/) from a versioned PRISM-DOCUMENTATION-[version].md file. Use when the user says "update prism docs", "sync docs site", "update documentation site", or references a new PRISM-DOCUMENTATION-*.md file that needs to be applied to the prism-docs/ VitePress pages. Triggers when a documentation .md file with the naming convention PRISM-DOCUMENTATION-[version-num].md is referenced for updating the prism-docs/ site.
+model: sonnet
 ---
 
 # Prism Docs Update

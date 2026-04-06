@@ -3,6 +3,10 @@
     "codebase-memory-mcp": {
       "type": "stdio",
       "command": "codebase-memory-mcp"
+    },
+    "chrome-devtools": {
+      "command": "npx",
+      "args": ["chrome-devtools-mcp@latest", "--headless", "--isolated", "--slim"]
     }
   }
 }

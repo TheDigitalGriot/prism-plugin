@@ -3,6 +3,8 @@ description: Debug issues by investigating logs, application state, and git hist
 model: sonnet
 ---
 
+> **Deprecated:** Prefer `/prism-debug` skill (the skill version, not this command).
+
 # Prism Debug
 
 Debug issues during manual testing or implementation by examining logs, application state, and git history. This command spawns parallel investigation agents without consuming the primary conversation context.

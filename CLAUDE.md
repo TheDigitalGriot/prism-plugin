@@ -42,6 +42,24 @@ Skills (Orchestrators)  →  Commands (Operations)  →  Agents (Specialists)
 3. **Implement** (`/prism-implement`): Executes plan phase by phase with verification checkpoints.
 4. **Validate** (`/prism-validate`): Verifies implementation against success criteria. Output → `.prism/shared/validation/`.
 
+Additional skills:
+- **Brainstorm** (`/prism-brainstorm`): Open-ended ideation before committing to a plan.
+- **Design** (`/prism-design`): UI/UX design exploration and specification.
+- **Finish** (`/prism-finish`): Wraps up a development branch (cleanup, PR description, handoff).
+
+## Execution Models
+
+Three execution models for different scales of work:
+
+| Scenario | Model | Invocation |
+|----------|-------|-----------|
+| Large feature (10+ stories), overnight autonomy | **Spectrum** | `/decompose_plan` → `./scripts/spectrum.sh` |
+| Medium feature (3-10 tasks), interactive session | **Subagent-Driven Dev** | `superpowers:subagent-driven-development` |
+| Quick fix or single-phase work | **Direct** | `/prism-implement` |
+| Parallel feature isolation | **Worktree** | `/worktree` + `/prism-finish` |
+
+**Commit convention:** Always use conventional commits (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`). Spectrum uses `feat(STORY-XXX):` format.
+
 ## Spectrum Autonomous Execution
 
 For large features (10+ stories):

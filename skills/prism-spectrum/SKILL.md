@@ -266,13 +266,22 @@ Skip if no baselines directory exists.
 
 If all quality gates pass:
 
+Commit message format:
+```
+feat(STORY-XXX): Brief description of what was implemented
+
+- Detail 1
+- Detail 2
+```
+
+Use the appropriate prefix: `feat:` for new features, `fix:` for bug fixes, `docs:` for documentation, `refactor:` for refactoring, `test:` for tests.
+
 ```bash
 git add [specific files from story]
-git commit -m "[STORY-XXX] [Story title]
+git commit -m "feat(STORY-XXX): [Story title]
 
-[Story description]
-
-Implemented by Spectrum iteration"
+- [Key change 1]
+- [Key change 2]"
 ```
 
 Capture the commit hash for the story record.
@@ -346,7 +355,7 @@ If quality gates fail after retry:
 5. Read files: src/auth/login.ts, src/types/auth.ts
 6. Implement: Add password validation
 7. Run quality gates: typecheck ✓, lint ✓, test ✓
-8. Commit: "[STORY-003] Add password validation"
+8. Commit: "feat(STORY-003): Add password validation"
 9. Update: stories.json (status: complete), progress.md (learnings)
 10. Signal: <spectrum-continue>STORY_COMPLETE: STORY-003</spectrum-continue>
 ```

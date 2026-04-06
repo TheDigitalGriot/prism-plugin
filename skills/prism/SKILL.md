@@ -24,6 +24,9 @@ Focus complexity through specialized agents to produce clear, quality code.
 | Iterate | `/prism-iterate` | Updated plan + continued implementation |
 | Spectrum | `/prism-spectrum` | Autonomous story execution via `spectrum.sh` |
 | Debug | `/prism-debug` | Debug investigation report |
+| Brainstorm | `/prism-brainstorm` | `.prism/shared/plans/YYYY-MM-DD-<topic>-design.md` |
+| Design | `/prism-design` | `.prism/shared/plans/YYYY-MM-DD-<topic>-design.md` |
+| Finish | `/prism-finish` | Merge, PR, keep, or discard branch |
 
 ### Document Generation
 
@@ -42,6 +45,7 @@ Focus complexity through specialized agents to produce clear, quality code.
 | Feature in known codebase | P->I->V (skip Research) |
 | Simple change, clear scope | I->V (skip Research + Plan) |
 | Trivial fix (<20 lines) | Direct implementation |
+| Design decisions needed | Brainstorm->Design->P->I->V |
 
 ## Starting the Workflow
 
@@ -56,6 +60,8 @@ Task(subagent_type="prism-locator")
 
 Based on findings:
 - **Nothing exists** -> Start with Research
+- **Design decisions needed** -> Start with Brainstorm
+- **Work is complete** -> Finish with prism-finish
 - **Research exists** -> Start with Plan
 - **Plan exists (incomplete)** -> Resume Implementation
 - **Implementation done** -> Run Validation
@@ -186,6 +192,49 @@ Investigate issues during implementation or when quality gates fail.
 **Spectrum Integration**:
 When Spectrum encounters quality gate failures, `/prism-debug` runs automatically to capture diagnostic context for the next retry iteration.
 
+### Brainstorm (`/prism-brainstorm`)
+
+Interactive design exploration with optional browser-based visual companion.
+
+**When to use**:
+- Design decisions before planning (A/B choices)
+- Visual UI decisions (layouts, components)
+- Exploring multiple approaches
+
+**Key behaviors**:
+- HARD-GATE: No code until design approved
+- Optional visual companion (HTML mockups in browser)
+- One question at a time
+- Saves design document to `.prism/shared/plans/`
+
+### Design (`/prism-design`)
+
+Bridge between research and planning — produces architectural decisions.
+
+**When to use**:
+- Research identified multiple viable approaches
+- Cross-cutting concerns need decisions
+- Feature involves user-facing design
+
+**Key behaviors**:
+- Invokes `/prism-brainstorm` for each decision
+- Optionally generates user flows
+- Saves design document to `.prism/shared/plans/`
+
+### Finish (`/prism-finish`)
+
+Complete development work with structured options.
+
+**When to use**:
+- Implementation and validation are complete
+- Ready to merge, create PR, or clean up
+
+**Key behaviors**:
+- Verifies tests pass first
+- 4 options: merge locally, push+PR, keep as-is, discard
+- Cleans up worktrees after merge/PR/discard
+- Integrates with `/describe_pr`
+
 ## Document Generation
 
 Generate formal documentation before or alongside development.
@@ -226,11 +275,11 @@ User flows, wireframes, and UX specifications.
 ### Document Flow
 
 ```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  prism-prd  │────▶│ visual-docs │────▶│  prism-plan │
-│  (Product   │     │  (UX Flows  │     │  (Impl      │
-│   Reqs)     │     │   & Specs)  │     │   Steps)    │
-└─────────────┘     └─────────────┘     └─────────────┘
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│  prism-prd  │────▶│ brainstorm/ │────▶│  prism-plan │────▶│  prism-     │
+│  (Product   │     │  design     │     │  (Impl      │     │  finish     │
+│   Reqs)     │     │  (Decisions)│     │   Steps)    │     │  (Ship)     │
+└─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
 ```
 
 ## Context Management

@@ -1,6 +1,7 @@
 ---
 name: prism-release
 description: Create a versioned release of prism-plugin. Bumps semantic version across all version files, builds CLI binaries + VSIX + Electron + Tauri installer + NSIS installer, commits, tags, pushes, and creates a GitHub release with all assets. Use when the user says "release", "bump version", "new version", "cut a release", "prism-release", or wants to publish a new version.
+model: sonnet
 ---
 
 # Prism Release
@@ -41,65 +42,25 @@ This updates version locations including: VERSION, plugin.json, marketplace.json
 
 Run these builds. CLI + VSIX can run in parallel, then Electron, then Tauri, then NSIS.
 
+Load `references/build-commands.md` for the full build command reference.
+
 #### 3a. Cross-compile CLI binaries
-
-```bash
-cd cmd/prism-cli && make build-all
-```
-
-Verify: `ls -la cmd/prism-cli/bin/` shows 5 binaries.
+`cd cmd/prism-cli && make build-all` — produces 5 binaries in `cmd/prism-cli/bin/`.
 
 #### 3b. Package VSIX extension
-
-```bash
-cd cmd/prism-vscode && npx @vscode/vsce package \
-  --no-dependencies \
-  --baseContentUrl https://github.com/TheDigitalGriot/prism-plugin/tree/main/cmd/prism-vscode \
-  --baseImagesUrl https://github.com/TheDigitalGriot/prism-plugin/raw/main/cmd/prism-vscode \
-  --out ../prism-setup/resources/extensions/prism.vsix
-```
+`npx @vscode/vsce package` from `cmd/prism-vscode/` — outputs to `cmd/prism-setup/resources/extensions/prism.vsix`.
 
 #### 3c. Populate NSIS installer resources
-
-```bash
-# Copy CLI binary for the installer
-mkdir -p cmd/prism-setup/resources/binaries
-cp cmd/prism-cli/bin/prism-cli-windows-amd64.exe cmd/prism-setup/resources/binaries/
-
-# Copy plugin files for the installer
-mkdir -p cmd/prism-setup/resources/plugin
-cp -r commands agents skills .claude-plugin cmd/prism-setup/resources/plugin/
-```
+Copy CLI binary and plugin files into `cmd/prism-setup/resources/`.
 
 #### 3d. Build Electron desktop app
-
-```bash
-cd cmd/prism-electron && npm run make
-```
-
-Verify: `ls cmd/prism-electron/out/make/squirrel.windows/x64/` shows `Prism-{VERSION} Setup.exe`.
+`cd cmd/prism-electron && npm run make` — outputs Squirrel installer to `out/make/squirrel.windows/x64/`.
 
 #### 3e. Build Tauri installer (Prism Setup)
-
-```bash
-cd cmd/prism-installer && npm run tauri build -- --bundles nsis
-```
-
-Output: `cmd/prism-installer/src-tauri/target/release/bundle/nsis/Prism Setup_{VERSION}_x64-setup.exe`
-
-Verify: `ls "cmd/prism-installer/src-tauri/target/release/bundle/nsis/Prism Setup_{NEW_VERSION}_x64-setup.exe"`
-
-> **Note**: On macOS, use `--bundles dmg` instead. CI builds both via `prism-installer-release.yml`.
+`npm run tauri build -- --bundles nsis` — outputs NSIS installer to `src-tauri/target/release/bundle/nsis/`. Use `--bundles dmg` on macOS.
 
 #### 3f. Compile legacy NSIS installer
-
-```bash
-makensis -V4 -DVERSION={NEW_VERSION} installer/prism-setup.nsi
-```
-
-If `makensis` is not in PATH, try: `"/c/Program Files (x86)/NSIS/makensis.exe"`
-
-Verify: `ls installer/Prism-Setup-{NEW_VERSION}.exe`
+`makensis -V4 -DVERSION={NEW_VERSION} installer/prism-setup.nsi` — outputs `installer/Prism-Setup-{NEW_VERSION}.exe`.
 
 ### Step 4: Commit and tag
 

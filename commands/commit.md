@@ -21,6 +21,19 @@ You are tasked with creating git commits for the changes made during this sessio
    - Use imperative mood in commit messages
    - Focus on why the changes were made, not just what
 
+### Conventional Commit Prefixes
+
+Always use a conventional commit prefix:
+
+| Prefix | When to Use |
+|--------|------------|
+| `feat:` | New feature or capability |
+| `fix:` | Bug fix |
+| `docs:` | Documentation only |
+| `refactor:` | Code change that neither fixes nor adds |
+| `test:` | Adding or updating tests |
+| `chore:` | Maintenance, dependencies, config |
+
 3. **Present your plan to the user:**
    - List the files you plan to add for each commit
    - Show the commit message(s) you'll use
