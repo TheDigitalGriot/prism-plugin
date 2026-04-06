@@ -8,10 +8,10 @@ Prism is a Claude Code plugin that implements a structured 4-phase development w
 
 ## Build & Test Commands (CLI only)
 
-The plugin itself is markdown-based prompt engineering with no build step. The Go-based CLI dashboard lives in `cmd/prism-cli/`:
+The plugin itself is markdown-based prompt engineering with no build step. The Go-based CLI dashboard lives in `apps/prism-cli/`:
 
 ```bash
-cd cmd/prism-cli
+cd apps/prism-cli
 make build          # Build for current platform
 make build-all      # Cross-compile (windows/darwin/linux, amd64/arm64)
 make test           # Run Go tests: go test -v ./...
@@ -134,7 +134,7 @@ When context is compacted, immediately recover state by reading these files:
 
 Do NOT ask the user what you were doing. Recover from files.
 
-## CLI Dashboard (cmd/prism-cli/)
+## CLI Dashboard (apps/prism-cli/)
 
 Go 1.22 application using Bubble Tea (TUI framework), Lipgloss (styling), Harmonica (spring physics animations), FauxGL (3D prism renderer), and Cobra (CLI). Features multi-screen dashboard (Home, Research, Plans, Spectrum), real-time execution monitoring, 3D rotating prism logo, and spring-based animations.
 
