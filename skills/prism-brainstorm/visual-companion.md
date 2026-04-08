@@ -73,6 +73,64 @@ Returns JSON:
 | `.mock-input` | Wireframe input field |
 | `.placeholder` | Gray placeholder block |
 
+## Fidelity Attribute
+
+Every fragment root (or `<body>` for full documents) supports a `data-fidelity` attribute that cascades griotwave fidelity primitives into the subtree. The classifier rules, slash-command overrides, carry-forward, and final-hi ceremonial rules live in `prism-brainstorm/SKILL.md` — this section just documents the attribute itself.
+
+| Value | What it does |
+|-------|--------------|
+| `data-fidelity="lo"` | Sketch — dashed borders, desaturated, no glass blur, no bloom |
+| `data-fidelity="mid"` | Structured — solid borders, light blur, no bloom |
+| `data-fidelity="hi"` | Polished — full griotwave glass with backdrop blur, ember bloom |
+
+Example fragment:
+
+```html
+<div data-fidelity="lo" class="options">
+  <div class="option" data-choice="A">
+    <h3>Option A: Sidebar Navigation</h3>
+    <p>Wireframe rendering — minimal styling.</p>
+  </div>
+  <div class="option" data-choice="B">
+    <h3>Option B: Top Navigation</h3>
+    <p>Wireframe rendering — minimal styling.</p>
+  </div>
+</div>
+```
+
+The CSS cascade reshapes `--fidelity-blur`, `--fidelity-shadow`, `--fidelity-bloom`, `--fidelity-border-style`, `--fidelity-saturation`, and `--fidelity-opacity` based on the active level. Components reference these variables instead of hard-coding effects, so flipping the attribute changes the visual treatment of the entire subtree without rewriting any other CSS.
+
+## Drawer State (`state/decisions.json`)
+
+The frame template's right-side drawer renders from a single state file: `$STATE_DIR/decisions.json`. The full classifier rules and write protocol live in `prism-brainstorm/SKILL.md` — this section just documents the schema and the live-update mechanism.
+
+### Schema
+
+```json
+{
+  "decisions": [
+    { "q": "Q1", "label": "Re-skin fidelity", "choice": "B", "summary": "Hybrid (inlined + regen script)" }
+  ],
+  "parked": [
+    { "fromQ": "Q2", "label": "/hi mid-stream priority", "concern": "Classifier vs command override", "revisit": "during Q2 implementation" }
+  ]
+}
+```
+
+### Live updates
+
+The brainstorm server (`server.cjs`) watches `$STATE_DIR` for `decisions.json` changes (100 ms debounced). On change it parses the file and broadcasts a WebSocket message:
+
+```json
+{ "type": "state-update", "payload": { "decisions": [...], "parked": [...] } }
+```
+
+`helper.js` receives the message and re-renders the two panes in the drawer. There is also a `GET /state/decisions.json` HTTP route that `helper.js` calls once on initial connect to seed the drawer with whatever state existed at page load.
+
+### Health signal
+
+When `parked.length >= 5`, the parking pane shows a yellow warning *"Long parking lot — session may be over-scoped"*. The skill treats this as a prompt to narrow scope rather than continuing to defer.
+
 ## File Naming
 
 Use semantic names that describe the content:
