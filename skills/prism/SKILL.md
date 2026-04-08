@@ -24,8 +24,8 @@ Focus complexity through specialized agents to produce clear, quality code.
 | Iterate | `/prism-iterate` | Updated plan + continued implementation |
 | Spectrum | `/prism-spectrum` | Autonomous story execution via `spectrum.sh` |
 | Debug | `/prism-debug` | Debug investigation report |
-| Brainstorm | `/prism-brainstorm` | `.prism/shared/plans/YYYY-MM-DD-<topic>-design.md` |
-| Design | `/prism-design` | `.prism/shared/plans/YYYY-MM-DD-<topic>-design.md` |
+| Brainstorm | `/prism-brainstorm` | `.prism/shared/brainstorms/YYYY-MM-DD-<topic>.md` (decision ledger) |
+| Design | `/prism-design` | `.prism/shared/designs/YYYY-MM-DD-<topic>-design.md` + `.pen` (dual output) |
 | Finish | `/prism-finish` | Merge, PR, keep, or discard branch |
 
 ### Document Generation
