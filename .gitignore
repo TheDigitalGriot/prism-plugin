@@ -17,5 +17,8 @@ cmd/prism-cli/prism-cli.exe
 # Prism local artifacts (not committed)
 .prism/local/
 
+# Dev-only MCP config — not shipped with the plugin
+.mcp.json
+
 # Visual regression diffs (ephemeral, regenerated on each run)
 .prism/shared/validation/diffs/
