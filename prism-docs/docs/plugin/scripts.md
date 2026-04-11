@@ -1,6 +1,6 @@
 ---
 title: Scripts & Automation
-description: The four automation scripts that power Prism's autonomous execution and installation.
+description: The automation scripts that power Prism's autonomous execution, installation, and subagent-driven plan extraction.
 outline: [2, 3]
 ---
 
@@ -87,12 +87,12 @@ Initializes the `.prism/` directory structure in any project:
 - Optionally adds Prism section to `CLAUDE.md`
 - Wrapped by the `/prism-init` skill (v3.0.3)
 
-### Hook Scripts (v3.0.1)
+### Hook Scripts (v3.0.1, extended v3.2.0)
 
 | Script | Type | Hook Event | Description |
 |--------|------|------------|-------------|
-| `pre-compact.py` | Python | PreCompact | Snapshots workflow state to `.prism/local/compact-snapshot.json` |
-| `post-compact.py` | Python | PostCompact | Restores state after context compression |
+| `pre-compact.py` | Python | PreCompact | Snapshots workflow state to `.prism/local/compact-snapshot.json`. **v3.2.0:** also detects in-flight `prism-subagent` runs via `get_active_subagent_run()` and embeds them as `active_subagent_run` in the snapshot |
+| `post-compact.py` | Python | PostCompact | Restores state after context compression. **v3.2.0:** surfaces a recovery message naming the active subagent state file path, current task, pending count, and instructions to read `state-schema.md` recovery protocol without re-extracting the plan |
 | `log-observation.py` | Python | PostToolUse (Write\|Edit\|Bash) | Tracks file modifications for session continuity |
 | `worktree-setup.sh` | Bash | WorktreeCreate | Auto-setup: gitignore check, deps install, config copy, `.prism/shared` symlink |
 | `worktree-cleanup.sh` | Bash | WorktreeRemove | Warns on uncommitted changes, removes `.prism/shared` symlink |
@@ -104,3 +104,4 @@ Initializes the `.prism/` directory structure in any project:
 |--------|------|-------------|
 | `visual-regression.sh` | Bash | Screenshots via playwright-cli, diffs against baselines with pixelmatch |
 | `bump-version.py` | Python | Bumps semver across all JSON/source files |
+| `extract-tasks.py` | Python | **v3.2.0** — Deterministic Prism plan markdown → `state.json` extractor for `prism-subagent`. ~280 lines. Auto-classifies tasks into 9 review classes, auto-detects domain (r3f/electron/fullstack/experiment/mixed), assigns per-task model ladder, atomic writes. Replaces ~3000 tokens of LLM extraction per run with regex parsing. Exit code 3 → controller falls back to LLM extraction. Verified against 4 real plans + 3 fixture plans, 100% extraction success |

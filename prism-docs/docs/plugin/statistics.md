@@ -6,7 +6,22 @@ outline: [2, 3]
 
 # Plugin Statistics
 
-## Component Counts <small>(v3.0.3)</small>
+## Component Counts <small>(v3.2.0)</small>
+
+| Category | Files | Total Lines | Change from v3.1.1 |
+|----------|-------|-------------|---------------------|
+| Plugin manifests | 2 | 28 | — |
+| Commands | 25 | 4,051 | — |
+| Agents | 14 | ~1,750 | — |
+| Skills (SKILL.md) | 20 | ~2,975 | +2 (prism-subagent, prism-dispatch) |
+| Skill references | 25 | ~5,500 | +6 (prism-subagent references: dispatch-protocol, status-protocol, review-decision-matrix, retry-ladder, state-schema, domain-hints) |
+| Scripts | 12 | ~2,680 | +1 (extract-tasks.py ~280 lines); pre-compact.py +39 lines, post-compact.py +13 lines |
+| CLAUDE.md | 1 | 116 | +1 line (prism-subagent in execution-models table) |
+| Hooks | 7 events | ~40 | — |
+| MCP servers | 2 | — | — |
+| **Plugin total** | **~108** | **~17,140** | +2 skills, +1 script, +6 references |
+
+## Component Counts <small>(v3.0.3, historical)</small>
 
 | Category | Files | Total Lines | Change from v3.0.2 |
 |----------|-------|-------------|---------------------|

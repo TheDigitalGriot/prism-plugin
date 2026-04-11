@@ -1,6 +1,6 @@
 ---
 title: Skills Reference
-description: All 18 Prism skills — auto-discovered workflow orchestrators with YAML frontmatter trigger patterns.
+description: All 20 Prism skills — auto-discovered workflow orchestrators with YAML frontmatter trigger patterns.
 outline: [2, 3]
 ---
 
@@ -59,6 +59,26 @@ Skills live at `skills/*/SKILL.md` and are auto-discovered workflow orchestrator
 | 17 | `prism-eval` | 237 | **sonnet** | "run evals", "compare versions", "benchmark skills", "evaluate v2.5.0", "regression check" |
 | 18 | `prism-docs-update` | 138 | — | "update prism docs", "sync docs site", "update documentation site" |
 
+### Subagent Execution Skills (v3.2.0)
+
+| # | Skill | Lines | Model | Trigger Patterns |
+|---|-------|-------|-------|-----------------|
+| 19 | `prism-subagent` | ~85 | **opus** | "subagent execute", "drive this plan with subagents", "dispatch implementers", "subagent driven development" |
+| 20 | `prism-dispatch` | ~140 | **sonnet** | "fan out", "parallel agents", "investigate in parallel", "multiple unrelated failures", "split this work across agents" |
+
+**`prism-subagent`** fills the medium-tier execution gap between `prism-implement` (single phase) and `prism-spectrum` (10+ stories, autonomous overnight). For 3–10 task plans where Spectrum is overkill, it dispatches a fresh implementer subagent per task with two-stage review (`spec-reviewer` then `quality-reviewer`), bounded retries, and compaction-survivable `state.json`. Innovations include domain-aware context priming (R3F / Electron / fullstack / experimental primers), diff-only reviews, a 5-status protocol with `NEEDS_CLARIFICATION` distinct from `NEEDS_CONTEXT`, a 9-class review decision matrix with explicit skip rules, repeated-issue and no-op spin loop detectors, automatic model escalation ladders, and 3-cycle hard caps on retries. Reuses `agents/spec-reviewer.md` and `agents/quality-reviewer.md` verbatim.
+
+**`prism-dispatch`** generalizes the parallel agent fan-out pattern for ad-hoc use, sibling to `prism-research` (fixed agent roster) and `prism-debug` (fixed 3-agent flow). Use when facing 2+ independent problem domains that can be investigated or fixed concurrently without shared state. Includes when-to-use decision flow, sibling-skills disambiguation table, per-agent model selection guidance, and explicit anti-patterns (fan-out stampede capped at 5 agents per dispatch; hidden sequential dependencies via file-overlap audit).
+
+**Execution-models table now reads:**
+
+| Scope | Skill |
+|---|---|
+| Single phase / quick fix | `/prism-implement` |
+| **3–10 tasks, mostly independent, stay in session** | **`/prism-subagent`** ← new |
+| 10+ stories, autonomous overnight | `/prism-spectrum` |
+| Parallel investigation of unrelated failures | `/prism-debug` |
+
 ## Skill Subdirectory Contents
 
 Each skill directory may contain supporting files:
@@ -106,10 +126,21 @@ skills/
 │   ├── SKILL.md                         # 237 lines — skill evaluation runner
 │   └── references/
 │       └── eval-schemas.md              # evals.json and benchmark.json schemas
-└── prism-docs-update/
-    ├── SKILL.md                         # 138 lines — VitePress docs syncer
-    └── references/
-        └── section-mapping.md           # Monolithic doc → VitePress page mapping
+├── prism-docs-update/
+│   ├── SKILL.md                         # 138 lines — VitePress docs syncer
+│   └── references/
+│       └── section-mapping.md           # Monolithic doc → VitePress page mapping
+├── prism-subagent/                      # v3.2.0 — same-session subagent-driven execution
+│   ├── SKILL.md                         # ~85 lines — opus, decision flow + iron laws
+│   └── references/                      # ~5500 tokens, on-demand
+│       ├── dispatch-protocol.md         # implementer + reviewer dispatch templates
+│       ├── status-protocol.md           # 5-status handling matrix
+│       ├── review-decision-matrix.md    # 9 task classes with skip rules
+│       ├── retry-ladder.md              # bounded retries + loop detectors
+│       ├── state-schema.md              # state.json schema + recovery protocol
+│       └── domain-hints.md              # R3F / Electron / fullstack / experimental
+└── prism-dispatch/                      # v3.2.0 — generalized parallel fan-out
+    └── SKILL.md                         # ~140 lines — sonnet, ad-hoc parallel dispatch
 ```
 
 ## Skill Frontmatter Format

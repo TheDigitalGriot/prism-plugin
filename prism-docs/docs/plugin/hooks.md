@@ -49,6 +49,8 @@ When Claude Code compresses conversation context, these hooks preserve workflow 
 
 This enables the compaction survival protocol documented in `CLAUDE.md` — the agent recovers from files rather than asking the user what it was doing.
 
+**v3.2.0 — `prism-subagent` integration:** Both hooks now detect and resume in-flight subagent runs. `pre-compact.py` adds `get_active_subagent_run()` which scans `.prism/local/subagent/*/state.json` for the most recently updated state file with at least one non-complete task, then embeds the result into `compact-snapshot.json` as `active_subagent_run` with `state_path`, `plan_slug`, `current_task`, `pending_count`, `in_progress_count`, and `domain`. `post-compact.py` reads this field and surfaces an explicit recovery message naming the state file path, current task, pending count, and instructions to follow `skills/prism-subagent/references/state-schema.md` recovery protocol without re-extracting the plan. Result: a `prism-subagent` run that gets compacted mid-execution recovers automatically — no manual state restoration required.
+
 ### PostToolUse (Observational Context)
 
 The `log-observation.py` script fires on every Write, Edit, or Bash tool use. It appends one-line entries to `.prism/local/observations.log` with timestamps and file paths. This creates a running session history that survives context compression.
