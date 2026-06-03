@@ -2,6 +2,7 @@
 name: prism-iterate
 description: Iteration phase combining plan updates and re-implementation. Use when plan needs adjustment after partial implementation or validation feedback. Triggers on "iterate on plan", "update and continue", "adjust the approach", or when validation reveals issues requiring plan changes.
 model: opus
+effort: xhigh
 ---
 
 # Prism Iterate
@@ -34,6 +35,8 @@ Check what exists:
 - User feedback
 
 ### 2. Identify Changes Needed
+
+Before proposing each iteration, ultrathink whether the previous approach actually moved the needle on the success criteria — surface whether the iteration is addressing a symptom or the root issue.
 
 ```markdown
 ## Iteration Needed

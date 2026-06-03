@@ -1,0 +1,9 @@
+{
+  "name": "prism-brainstorm-scripts",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Runtime dependencies for the prism-brainstorm visual companion (server.cjs, brainstorm-channel.ts).",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  }
+}

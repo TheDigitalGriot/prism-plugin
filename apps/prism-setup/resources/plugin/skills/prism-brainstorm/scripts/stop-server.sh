@@ -43,7 +43,7 @@ if [[ -f "$PID_FILE" ]]; then
     exit 1
   fi
 
-  rm -f "$PID_FILE" "${STATE_DIR}/server.log"
+  rm -f "$PID_FILE" "${STATE_DIR}/server.log" "${STATE_DIR}/open-viewer"
 
   # Only delete ephemeral /tmp directories
   if [[ "$SESSION_DIR" == /tmp/* ]]; then

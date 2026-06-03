@@ -79,6 +79,8 @@ const URL_HOST = process.env.BRAINSTORM_URL_HOST || (HOST === '127.0.0.1' ? 'loc
 const SESSION_DIR = process.env.BRAINSTORM_DIR || '/tmp/prism-brainstorm';
 const CONTENT_DIR = path.join(SESSION_DIR, 'content');
 const STATE_DIR = path.join(SESSION_DIR, 'state');
+const CHANNEL_PORT = process.env.BRAINSTORM_CHANNEL_PORT || '52342';
+const SESSION_ID = path.basename(SESSION_DIR);
 let ownerPid = process.env.BRAINSTORM_OWNER_PID ? Number(process.env.BRAINSTORM_OWNER_PID) : null;
 
 const MIME_TYPES = {
@@ -109,8 +111,19 @@ function isFullDocument(html) {
   return trimmed.startsWith('<!doctype') || trimmed.startsWith('<html');
 }
 
+const channelMetaTags =
+  '<meta name="brainstorm-channel-port" content="' + CHANNEL_PORT + '">\n' +
+  '<meta name="brainstorm-session-id" content="' + SESSION_ID + '">';
+
+function injectChannelMeta(html) {
+  if (html.includes('</head>')) {
+    return html.replace('</head>', channelMetaTags + '\n</head>');
+  }
+  return channelMetaTags + '\n' + html;
+}
+
 function wrapInFrame(content) {
-  return frameTemplate.replace('<!-- CONTENT -->', content);
+  return injectChannelMeta(frameTemplate.replace('<!-- CONTENT -->', content));
 }
 
 function getNewestScreen() {
@@ -131,8 +144,8 @@ function handleRequest(req, res) {
   if (req.method === 'GET' && req.url === '/') {
     const screenFile = getNewestScreen();
     let html = screenFile
-      ? (raw => isFullDocument(raw) ? raw : wrapInFrame(raw))(fs.readFileSync(screenFile, 'utf-8'))
-      : WAITING_PAGE;
+      ? (raw => isFullDocument(raw) ? injectChannelMeta(raw) : wrapInFrame(raw))(fs.readFileSync(screenFile, 'utf-8'))
+      : injectChannelMeta(WAITING_PAGE);
 
     if (html.includes('</body>')) {
       html = html.replace('</body>', helperInjection + '\n</body>');
@@ -142,6 +155,13 @@ function handleRequest(req, res) {
 
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
     res.end(html);
+  } else if (req.method === 'GET' && req.url === '/state/decisions.json') {
+    const decisionsFile = path.join(STATE_DIR, 'decisions.json');
+    const body = fs.existsSync(decisionsFile)
+      ? fs.readFileSync(decisionsFile, 'utf-8')
+      : '{"decisions":[],"parked":[]}';
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(body);
   } else if (req.method === 'GET' && req.url.startsWith('/files/')) {
     const fileName = req.url.slice(7);
     const filePath = path.join(CONTENT_DIR, path.basename(fileName));
@@ -273,6 +293,33 @@ function startServer() {
   const server = http.createServer(handleRequest);
   server.on('upgrade', handleUpgrade);
 
+  // Watch the decisions.json state file (Phase C drawer). Claude writes this
+  // file directly via the Write tool whenever a decision is confirmed or
+  // a question is parked. Broadcasts a state-update so the drawer re-renders.
+  const decisionsFile = path.join(STATE_DIR, 'decisions.json');
+  let decisionsTimer = null;
+  function broadcastDecisions() {
+    try {
+      const body = fs.existsSync(decisionsFile)
+        ? fs.readFileSync(decisionsFile, 'utf-8')
+        : '{"decisions":[],"parked":[]}';
+      const payload = JSON.parse(body);
+      broadcast({ type: 'state-update', payload });
+    } catch (err) {
+      console.error('decisions.json parse error:', err.message);
+    }
+  }
+  const stateWatcher = fs.watch(STATE_DIR, (eventType, filename) => {
+    if (filename !== 'decisions.json') return;
+    if (decisionsTimer) clearTimeout(decisionsTimer);
+    decisionsTimer = setTimeout(() => {
+      decisionsTimer = null;
+      touchActivity();
+      broadcastDecisions();
+    }, 100);
+  });
+  stateWatcher.on('error', (err) => console.error('state fs.watch error:', err.message));
+
   const watcher = fs.watch(CONTENT_DIR, (eventType, filename) => {
     if (!filename || !filename.endsWith('.html')) return;
 
@@ -337,13 +384,17 @@ function startServer() {
   }
 
   server.listen(PORT, HOST, () => {
+    const url = 'http://' + URL_HOST + ':' + PORT;
     const info = JSON.stringify({
       type: 'server-started', port: Number(PORT), host: HOST,
-      url_host: URL_HOST, url: 'http://' + URL_HOST + ':' + PORT,
+      url_host: URL_HOST, url: url,
       screen_dir: CONTENT_DIR, state_dir: STATE_DIR
     });
     console.log(info);
     fs.writeFileSync(path.join(STATE_DIR, 'server-info'), info + '\n');
+    // Trigger file for the prism-vscode extension's BrainstormViewerWatcher.
+    // The watcher reads this file and opens the URL in Simple Browser.
+    fs.writeFileSync(path.join(STATE_DIR, 'open-viewer'), url);
   });
 }
 

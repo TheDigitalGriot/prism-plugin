@@ -130,3 +130,5 @@ If context high or session ending, add to plan:
 - In Progress: Phase [N+1], step [X]
 - Next action: [specific step]
 ```
+
+> See also: [cl-plugin-structure/references/hook-events.md](../cl-plugin-structure/references/hook-events.md) for hook-touching implementation work (PostToolUse, WorktreeCreate, SubagentStart/Stop event taxonomy).

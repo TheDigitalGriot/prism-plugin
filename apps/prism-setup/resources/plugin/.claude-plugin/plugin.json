@@ -1,8 +1,21 @@
 {
   "name": "prism",
   "description": "Structured 4-phase development workflow (Research -> Plan -> Implement -> Validate) with Spectrum-style iterative execution with TUI",
-  "version": "3.0.3",
+  "version": "3.3.0",
+  "keywords": ["plugin-development", "skill-authoring", "token-optimization", "routing-table", "opus-4-8", "effort-levels"],
   "author": {
     "name": "Prism Team"
-  }
+  },
+  "mcpServers": {
+    "brainstorm-channel": {
+      "type": "stdio",
+      "command": "bun",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/skills/prism-brainstorm/scripts/brainstorm-channel.ts"
+      ]
+    }
+  },
+  "channels": [
+    { "server": "brainstorm-channel" }
+  ]
 }

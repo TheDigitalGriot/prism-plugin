@@ -235,3 +235,5 @@ cp -r scripts/ .prism/shared/evals/v<X.Y.Z>-snapshot/scripts/
 4. **Use exact field names** — grading.json uses `text`/`passed`/`evidence`, benchmark.json uses `configuration: "with_skill"/"without_skill"`
 5. **Don't modify source files** — spectrum/execution evals simulate changes, they don't commit
 6. **Generate the viewer** — always produce the eval-viewer.html for human review
+
+> See also: [cl-plugin-structure/references/token-optimization-research.md](../cl-plugin-structure/references/token-optimization-research.md) §10 (Plugin Audit Checklist) for token-budget and quality-gate patterns applicable when designing new eval dimensions.

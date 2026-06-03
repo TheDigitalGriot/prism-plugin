@@ -172,7 +172,7 @@ NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
 
 "Violating the letter of this rule while adhering to the spirit" is violating the spirit.
 
-Every claim of "passing" or "complete" must be backed by command output from THIS session. Stale checkboxes, memory of previous runs, and "it worked before" are not evidence.
+Every claim of "passing" or "complete" must be backed by command output from THIS session. Stale checkboxes, memory of previous runs, and "it worked before" are not evidence. When a validation gate ambiguously passes, ultrathink whether the success criteria were genuinely met or just papered over.
 
 | Claim | Required Evidence |
 |-------|------------------|
@@ -188,3 +188,5 @@ Every claim of "passing" or "complete" must be backed by command output from THI
 3. **Document deviations** - Any difference recorded
 4. **Severity matters** - Critical blocks, low follows up
 5. **Update the plan** - Mark actual completion
+
+> See also: [cl-plugin-structure/scripts/](../cl-plugin-structure/scripts/) for validator scripts (validate-agent.sh, validate-hook-schema.sh, validate-settings.sh) that can augment manual validation gates.

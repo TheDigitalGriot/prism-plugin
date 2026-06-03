@@ -2,6 +2,7 @@
 name: prism-brainstorm
 description: Interactive brainstorming with optional browser-based visual companion. Use when starting creative design work before planning. Triggers on "brainstorm this", "design options", "explore approaches", "let's think about", or when the user needs to make design decisions before implementation.
 model: opus
+effort: xhigh
 ---
 
 # Prism Brainstorm
@@ -19,7 +20,7 @@ Brainstorming produces a decision ledger, not code.
 - [ ] 1. **Explore project context** — Read relevant files, check `.prism/shared/research/` for existing research
 - [ ] 2. **Offer visual companion** — If visual questions ahead, offer the browser companion (load `visual-companion.md`)
 - [ ] 3. **Ask clarifying questions** — One at a time, wait for answers
-- [ ] 4. **Propose 2-3 approaches** — With trade-offs for each
+- [ ] 4. **Propose 2-3 approaches** — With trade-offs for each. For the divergent-thinking phase, ultrathink the problem space and surface assumptions that aren't being questioned.
 - [ ] 5. **Present design in sections** — Get user approval after each section
 - [ ] 6. **Write decision ledger** — Save to `.prism/shared/brainstorms/YYYY-MM-DD-<topic>.md` (NOT `plans/` — brainstorm is upstream of design)
 - [ ] 7. **Self-review** — Check for TODOs, contradictions, missing requirements
@@ -107,3 +108,5 @@ These survived the brainstorm as first-class items. They are known, deferred, an
 - **Follows:** `/prism-research` (optional — brainstorming can start from scratch)
 - **Precedes:** `/prism-design` (architecture) or `/prism-plan` (direct implementation)
 - **Visual companion:** Stored in `.prism/local/brainstorm/` (gitignored)
+
+> See also: [cl-plugin-structure/references/model-config.md](../cl-plugin-structure/references/model-config.md) §5 for `ultrathink` keyword behavior — this skill uses it in Step 4 to trigger deeper divergent-thinking reasoning.

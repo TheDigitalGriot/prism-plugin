@@ -2,6 +2,7 @@
 name: prism-plan
 description: Planning phase for complex coding tasks. Use when creating implementation plans after research. Triggers on "create a plan", "plan the implementation", "design how to build", or after research completes. Interactive planning - present understanding, get feedback, iterate before finalizing.
 model: opus
+effort: xhigh
 ---
 
 # Prism Plan
@@ -128,3 +129,5 @@ Always separate into two categories:
 - [ ] Feature works in UI
 - [ ] Performance acceptable
 ```
+
+> See also: [cl-plugin-structure/references/component-patterns.md](../cl-plugin-structure/references/component-patterns.md) for multi-skill harness planning and component composition patterns.

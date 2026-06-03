@@ -86,7 +86,7 @@ Located at `<workspace>/iteration-N/benchmark.json`. The eval viewer depends on 
 {
   "metadata": {
     "skill_name": "prism-research",
-    "executor_model": "claude-opus-4-6",
+    "executor_model": "claude-opus-4-8",
     "timestamp": "2026-03-07T00:00:00Z",
     "evals_run": [1, 2, 3, 4],
     "runs_per_configuration": 1,
