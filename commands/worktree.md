@@ -5,6 +5,21 @@ model: haiku
 
 # Git Worktree Setup
 
+## Native Claude Code Support
+
+**Claude Code ≥ v2.1.154** ships native worktree tools that handle setup, `.prism/shared` symlinking, and cleanup automatically. Use the native tools when available; fall back to the git commands below on older versions.
+
+**Preferred (Claude Code ≥ v2.1.154):**
+
+```
+EnterWorktree — creates and enters a new worktree (branch + directory + .prism symlink)
+ExitWorktree  — cleans up and removes the worktree when done
+```
+
+These tools are available via the deferred tool system. Invoke `EnterWorktree` with the branch name; it handles the rest. When finished, `ExitWorktree` cleans up atomically and prevents stale lockfiles.
+
+**Fallback (older versions or manual control):** use the git commands documented below.
+
 Create a git worktree to work on a branch in a separate directory. Useful for:
 - Working on multiple features simultaneously
 - Keeping main branch clean while experimenting

@@ -76,8 +76,14 @@ git worktree remove <path> --force
 
 ## Worktree Cleanup
 
-For Options 1, 2, and 4: if currently in a worktree, clean it up after the action:
+For Options 1, 2, and 4: if currently in a worktree, clean it up after the action.
 
+**Preferred (Claude Code ≥ v2.1.154):** use the native `ExitWorktree` tool. It handles cleanup atomically — no stale lockfiles, no manual path resolution:
+```
+ExitWorktree
+```
+
+**Fallback (older versions or manual control):**
 ```bash
 # Navigate out of worktree first
 cd $(git worktree list --porcelain | head -1 | sed 's/worktree //')

@@ -40,7 +40,12 @@ REVIEWERS SEE DIFFS, NOT FULL FILES.
 NEVER RETRY THE SAME (TASK, MODEL, ISSUE) MORE THAN ONCE.
 NEVER SKIP A REVIEW STAGE THE MATRIX SAYS IS REQUIRED.
 STATE.JSON IS THE SOURCE OF TRUTH. CONVERSATIONAL MEMORY IS NOT.
+NEVER FORWARD PARENT SESSION HISTORY. CONSTRUCT CONTEXT FROM FILES.
+IMPLEMENTERS GET: task text + files + domain primer + criteria — nothing else.
+REVIEWERS GET: diff + spec excerpt + raised_issues — nothing else.
 ```
+
+> **Why context isolation matters** (Superpowers v5.0.2): subagents that inherit the full parent session history start "behaving as the lead developer, not a reviewer." A reviewer who has absorbed the controller's reasoning will unconsciously rationalize the same choices. Construct every prompt from `state.json` + files — not from the conversation accumulated above.
 
 ## Innovations Over Generic SDD
 
@@ -54,6 +59,20 @@ STATE.JSON IS THE SOURCE OF TRUTH. CONVERSATIONAL MEMORY IS NOT.
 - **Cross-task halt** — 3 consecutive tasks needing escalation → the plan itself is wrong, stop.
 - **Graph blast-radius pre-check** — if codebase-memory-mcp is available, run `trace_call_path` on each task's target functions before dispatch.
 
+## Subagent Role Audit
+
+Audit of v3.4.0 (2026-06-03) — classification of every subagent dispatched by prism-subagent and its sibling skills:
+
+| Agent | Dispatched by | Role type | Demotable to inline checklist? |
+|-------|--------------|-----------|-------------------------------|
+| `spec-reviewer` | prism-subagent, prism-spectrum | Cross-entity reviewer (reviews implementer's diff, never the controller's own work) | **No** — reviews code produced by a different agent |
+| `quality-reviewer` | prism-subagent, prism-spectrum | Cross-entity reviewer (same) | **No** — same rationale; diff-only access enforces independence |
+| `visual-regression-grader` | prism-validate, prism-verify | Artifact judge (judges playwright diff images) | **No** — requires image interpretation of playwright output the lead AI doesn't produce |
+| `browser-verifier` | prism-verify | Tool executor (runs playwright-cli via Bash) | **No** — Bash tool required; lead AI cannot run playwright-cli inline |
+| eval runners | prism-eval | Isolated execution (runs skills in fresh session context) | **No** — isolation IS the point; inline execution would contaminate the eval |
+
+**Finding**: All subagents have cross-entity or tool-execution roles. The Superpowers v5.0.6 demotion pattern applies to *self-review* (an agent reviewing its own output); none of these agents review the controller's own work. Spec-reviewer and quality-reviewer review the *implementer*'s diff — that IS the "implementer vs reviewer of someone else's code" pattern Superpowers says to keep.
+
 ## Rationalization Prevention
 
 | Rationalization | Reality |
@@ -65,6 +84,7 @@ STATE.JSON IS THE SOURCE OF TRUTH. CONVERSATIONAL MEMORY IS NOT.
 | "I'll let the implementer read the plan file, faster than pasting" | No. Full task text inline. Always. |
 | "The reviewer raised the same issue twice, I'll fix it harder" | Halt. The fix isn't sticking. Escalate. |
 | "I'll merge tasks T2 and T3 since they're related" | One task per dispatch. Always. |
+| "I'll include the conversation so far for context" | That IS the session history. Build prompts from state.json + files. |
 
 ## Compaction Survival
 

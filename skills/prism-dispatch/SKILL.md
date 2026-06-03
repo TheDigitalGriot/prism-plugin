@@ -176,4 +176,24 @@ PARALLEL DISPATCH = SINGLE MESSAGE, MULTIPLE TASK CALLS.
 FILE OVERLAP BETWEEN AGENTS = MERGE THE AGENTS.
 CAP FAN-OUTS AT 5. WAVES IF YOU HAVE MORE.
 ALWAYS RUN FULL VERIFICATION AFTER INTEGRATION.
+SUBAGENT PROMPTS ARE SELF-CONTAINED. NEVER FORWARD SESSION HISTORY.
+EACH AGENT GETS EXACTLY: scope + context it needs + constraints + expected output.
+PARENT CONVERSATION HISTORY IS NOT CONTEXT. BUILD FROM FILES, NOT MEMORY.
 ```
+
+## Context Isolation
+
+Every subagent prompt must be self-contained. It should include exactly what that agent needs — and nothing from the parent session's accumulated exchange.
+
+**What "self-contained" means in practice:**
+
+| Include | Exclude |
+|---------|---------|
+| Task scope (one specific file, subsystem, or problem) | Parent session summary or history |
+| Background sourced from files (error messages, file contents, prior findings) | "As we discussed earlier…" |
+| Concrete goal with expected output format | Reasoning the controller accumulated above |
+| Explicit don't-touch constraints | Assumptions inherited from the conversation |
+
+**Why this matters** (Superpowers v5.0.2): subagents that inherit the full session history start "behaving as the lead developer, not a reviewer." An agent that has absorbed the controller's reasoning will unconsciously validate the same choices. Independence is only real if context is constructed fresh from files — not forwarded from memory.
+
+**Test:** before dispatching, ask: "could this prompt be sent cold — with no prior conversation — and still be fully actionable?" If no, it has session history baked in. Strip it.

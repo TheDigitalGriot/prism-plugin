@@ -116,6 +116,26 @@ Key sections:
 6. **Explicit scope** - Always include "What We're NOT Doing" section
 7. **Two-category criteria** - Separate automated vs manual verification
 
+## No Placeholders Gate
+
+Before a plan exits the planning phase, verify zero instances of any of these patterns exist in any task description, step, or success criterion:
+
+| Pattern | Example | Why it fails |
+|---------|---------|--------------|
+| `TBD` / `TODO` anywhere in task text | "Handle edge case TBD" | Deferred intent is a non-plan |
+| "Similar to Task N" / "see above" | "Same as Task 3 but for auth" | Cross-reference without a self-contained spec |
+| Empty success criteria | Task with no acceptance criteria | Untestable by definition |
+| Undefined cross-references | "Use the pattern from research" without citing `file:line` | Implementer can't follow what they can't find |
+| "fill in" / "tbd later" / "to be determined" | Any variant | Acknowledged incompleteness |
+| Vague quantifiers without baseline | "Make it faster" / "Improve quality" | Not falsifiable |
+
+```
+IRON LAW:
+NO PLAN EXITS THIS PHASE WITH A TBD ANYWHERE IN TASK DESCRIPTIONS OR SUCCESS CRITERIA.
+```
+
+If any of the above are found: pause, resolve, re-check before presenting to the user for approval.
+
 ## Success Criteria Format
 
 Always separate into two categories:
