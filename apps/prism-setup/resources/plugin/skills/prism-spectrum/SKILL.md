@@ -1,14 +1,16 @@
 ---
 name: prism-spectrum
 description: Spectrum-style single-story execution for iterative development. Executes one story per session with quality gates. Used by spectrum.sh orchestrator for autonomous feature implementation. Triggers on "spectrum", "execute story", "run spectrum", or when invoked by spectrum.sh loop.
-model: opus[1m]
+model: sonnet[1m]
 ---
 
 # Prism Spectrum
 
 Execute a single story from the backlog with quality verification and atomic commits.
 
-> **Context requirement:** Uses `opus[1m]` for the 1M context window needed to hold full session state during autonomous multi-story runs without compaction risk. Requires Max/Team/Enterprise plan for included 1M Opus context, or usage credits on Pro. Disable globally with `CLAUDE_CODE_DISABLE_1M_CONTEXT=1` if needed.
+> **On model choice:** prism-spectrum is the *outer loop* — its job is dispatching stories and shepherding state, not deep reasoning. The actual heavy thinking happens inside the agents it spawns (codebase-analyzer, prism-analyzer, etc. — those already use opus where it matters). This is Karpathy's two-tier delegation pattern: cheap orchestrator, expensive workers. Putting opus on the spectrum outer loop pays for reasoning twice. Sonnet 4.6 at ~60% the cost benchmarks near Opus on coding tasks; the 1M context window — which IS the genuinely useful upgrade for long autonomous runs — works identically as `sonnet[1m]`. Don't reflexively bump this when a new Opus drops; the question is whether spectrum's outputs are under-reasoning, not whether a better model exists.
+
+> **Context requirement:** Uses `sonnet[1m]` for the 1M context window needed to hold full session state during autonomous multi-story runs without compaction risk. Requires Max/Team/Enterprise plan for included 1M Sonnet context, or usage credits on Pro. Disable globally with `CLAUDE_CODE_DISABLE_1M_CONTEXT=1` if needed.
 
 ## Philosophy
 
@@ -17,6 +19,8 @@ Execute a single story from the backlog with quality verification and atomic com
 3. **Quality Gates**: Must pass typecheck/lint/test before commit
 4. **Atomic Commits**: One story = one commit
 5. **Learn Forward**: Capture learnings for future iterations
+
+> **For large specs**: If your specification exceeds a single spectrum cycle's capacity (>200K tokens of behavioral requirements), use [`prism-decompose`](../prism-decompose/SKILL.md) first to chunk it into epic-scoped story queues. Each epic becomes its own `stories.json` that spectrum runs independently.
 
 ## State Files
 
@@ -341,6 +345,51 @@ ONE STORY. ONE COMMIT. NOTHING ELSE.
 5. **Record learnings** - Help future iterations succeed
 6. **Clean output** - Use signal tags for orchestrator parsing
 7. **Follow existing patterns** - Check progress.md before implementing
+
+## Controller-Worker Supervision
+
+Spectrum workers run with `--dangerously-skip-permissions`. The CSD-style supervision layer provides oversight without micromanaging individual tool calls.
+
+### Deterministic Shim Paths (B2a)
+
+Each spawned Claude session has a deterministic shim at `/tmp/claude-spectrum-workers/<story-id>`. The shim is reconstructable from the story ID alone — no env vars needed for post-hoc debugging.
+
+### PreToolUse Approval Window (B2b)
+
+Every tool call made by a spectrum worker fires through `scripts/spectrum-approval.sh` (PreToolUse hook). The approval gate:
+1. Writes a request file: `.prism/local/spectrum-approvals/<story-id>/<request-id>.request`
+2. Polls for 30 seconds for controller approval or denial
+3. **Auto-approves** on timeout (control without micromanagement)
+
+**To manually approve a pending tool call:**
+```bash
+touch .prism/local/spectrum-approvals/<story-id>/<request-id>.approve
+```
+
+**To deny a pending tool call:**
+```bash
+touch .prism/local/spectrum-approvals/<story-id>/<request-id>.deny
+```
+
+Approval requests are JSON: `{"tool": "...", "story": "...", "ts": "..."}`. You can watch for them with:
+```bash
+watch -n1 'ls .prism/local/spectrum-approvals/ 2>/dev/null'
+```
+
+### Signal Vocabulary (B2c+B2d)
+
+The canonical signal set. Any XML-tag-like pattern not in this list triggers a warn + retry rather than silent misrouting:
+
+| Signal | Meaning | spectrum.sh response |
+|--------|---------|---------------------|
+| `<promise>COMPLETE</promise>` | All stories done | Exit 0 |
+| `<spectrum-continue>` | Story complete, continue | Next story |
+| `<spectrum-retry reason="...">` | Retry requested | Reset story to pending, retry |
+| `<spectrum-blocked reason="...">` | Story cannot proceed | Try next unblocked story |
+| `<spectrum-error reason="...">` | Fatal error | Stop execution |
+| `<spectrum-needs-context>` | Missing information required | Treat as blocked |
+
+Unknown signal tags (e.g. `<spectrum-timeout>`) are detected, warned with the valid list, and treated as retry — never silently continued.
 
 ## Debug Integration
 

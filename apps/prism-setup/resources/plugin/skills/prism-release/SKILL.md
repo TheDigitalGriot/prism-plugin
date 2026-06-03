@@ -26,15 +26,20 @@ Read the current version from `VERSION` file and show it so the user knows what 
 cat VERSION
 ```
 
-### Step 1b: Validate plugin manifest
+### Step 1b: Validate plugin manifest + invariant tests
 
-**MANDATORY** — run before proceeding. Catches schema errors that silently prevent plugin loading.
+**MANDATORY** — run before proceeding. Catches schema errors and CSS drift that would silently break the released plugin.
 
 ```bash
+# Plugin manifest validation — catches schema errors that prevent plugin loading
 claude plugin validate .
+
+# Porter drift check — ensures frame-template.html is in sync with griotwave tokens.
+# Exits 0 (pass or skip) / 1 (drift detected). Skips gracefully if griotwave-library unavailable.
+bash scripts/tests/test_porter_check.sh
 ```
 
-Expected: `✔ Validation passed`. If it fails, fix the errors before continuing.
+Both must exit 0. If `claude plugin validate .` fails, fix the errors before continuing. If `test_porter_check.sh` fails, run `node skills/prism-brainstorm/scripts/port-griotwave.cjs` to regenerate `frame-template.html`, then re-check.
 
 ### Step 2: Bump version across all files
 

@@ -35,6 +35,24 @@ NC='\033[0m' # No Color
 PROJECT_DIR="$(pwd)"
 STORIES_FILE="${1:-$PROJECT_DIR/.prism/stories/stories.json}"
 
+# B2a: Deterministic worker shim paths.
+# Each spawned Claude session gets a shim at /tmp/claude-spectrum-workers/<story-id>.
+# Reconstructable from story ID alone — no env vars needed for recovery.
+SHIM_DIR="/tmp/claude-spectrum-workers"
+
+# B2c+B2d: Canonical spectrum signal vocabulary.
+# Any signal tag not in this list is an unknown signal (warn + treat as retry).
+# Update this array when adding new signals — never let check_signals() silently swallow
+# a guessed tag (the 60-minute silent-timeout bug class).
+readonly VALID_SIGNALS=(
+    "promise>COMPLETE</promise"
+    "spectrum-continue"
+    "spectrum-retry"
+    "spectrum-blocked"
+    "spectrum-error"
+    "spectrum-needs-context"
+)
+
 # Derive progress path from stories path:
 #   .prism/stories/stories.json           -> .prism/shared/spectrum/progress.md
 #   .prism/stories/<epic>/stories.json    -> .prism/shared/spectrum/<epic>/progress.md
@@ -93,9 +111,18 @@ acquire_lock() {
     echo $$ > "$LOCKFILE"
 }
 
-# Release lockfile
+# Release lockfile and clean up worker shims
 release_lock() {
     rm -f "$LOCKFILE"
+    # B2a: Remove any shims written for this run
+    if [[ -d "$SHIM_DIR" ]]; then
+        rm -f "$SHIM_DIR"/*
+    fi
+}
+
+# B2a: Ensure the shim directory exists
+ensure_shim_dir() {
+    mkdir -p "$SHIM_DIR"
 }
 
 # Check prerequisites
@@ -308,12 +335,25 @@ run_iteration() {
 
     log "Executing story: $story_id"
 
-    # Run Claude with prism-spectrum skill from the project directory
-    # Using --print to capture output, --dangerously-skip-permissions for autonomous operation
+    # B2a: Write a deterministic worker shim at $SHIM_DIR/<story-id>.
+    # Reconstructable from story ID alone — no env vars needed to find it post-hoc.
+    ensure_shim_dir
+    local shim_path="$SHIM_DIR/$story_id"
+    cat > "$shim_path" << SHIM
+#!/usr/bin/env bash
+# Spectrum worker shim for $story_id
+# Written by spectrum.sh — reconstructable from story ID: $SHIM_DIR/$story_id
+# Created: $(date -Iseconds)
+exec claude --dangerously-skip-permissions --print "\$@"
+SHIM
+    chmod +x "$shim_path"
+
+    # Run Claude via the shim, passing SPECTRUM_WORKER_STORY_ID for the PreToolUse approval hook.
+    # Using --print to capture output for signal checking.
     if [[ "$VERBOSE" == "true" ]]; then
-        output=$(cd "$PROJECT_DIR" && claude --dangerously-skip-permissions --print "$prompt" 2>&1 | tee /dev/stderr) || exit_code=$?
+        output=$(cd "$PROJECT_DIR" && SPECTRUM_WORKER_STORY_ID="$story_id" "$shim_path" "$prompt" 2>&1 | tee /dev/stderr) || exit_code=$?
     else
-        output=$(cd "$PROJECT_DIR" && claude --dangerously-skip-permissions --print "$prompt" 2>&1) || exit_code=$?
+        output=$(cd "$PROJECT_DIR" && SPECTRUM_WORKER_STORY_ID="$story_id" "$shim_path" "$prompt" 2>&1) || exit_code=$?
     fi
 
     # Return the output for signal checking
@@ -371,6 +411,18 @@ check_signals() {
         return 1  # Same as blocked — try next story
     fi
 
+    # B2d: Check for XML-tag-like patterns that look like a signal attempt but aren't
+    # in VALID_SIGNALS — catches guessed event names (e.g. <spectrum-timeout>).
+    # The 60-minute silent-timeout bug class: a guessed tag passed silently as "no signal".
+    local unknown_signal
+    unknown_signal=$(echo "$output" | grep -oE '<spectrum-[a-z-]+>' | head -1 || true)
+    if [[ -n "$unknown_signal" ]]; then
+        warn "Unknown signal tag detected: $unknown_signal"
+        warn "Valid signals: ${VALID_SIGNALS[*]}"
+        warn "Treating as retry."
+        return 2
+    fi
+
     # No explicit signal - warn and treat as retry (not silent continue)
     local output_bytes
     output_bytes=$(echo "$output" | wc -c)
@@ -384,6 +436,7 @@ main() {
     validate_schema
     acquire_lock
     trap release_lock EXIT
+    ensure_shim_dir
     init_progress
 
     local epic_name

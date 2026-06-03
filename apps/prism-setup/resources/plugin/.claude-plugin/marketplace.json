@@ -4,7 +4,7 @@
     "name": "Prism Team"
   },
   "metadata": {
-    "description": "Structured development workflow plugins for Claude Code — includes cl-plugin-structure skill (v0.7.2) for plugin/skill authoring, bundled with Opus 4.8 enrichments and current model-line guidance."
+    "description": "Structured development workflow plugins for Claude Code — includes cl-plugin-structure skill (v0.7.2) for plugin/skill authoring, code intelligence layer (codebase-memory-mcp + graph-navigator agent + blast-radius analysis), Opus 4.8 enrichments, and current model-line guidance."
   },
   "plugins": [
     {
@@ -14,7 +14,7 @@
         "repo": "TheDigitalGriot/prism-plugin"
       },
       "description": "Structured 4-phase development workflow (Research -> Plan -> Implement -> Validate)",
-      "version": "3.3.0"
+      "version": "3.4.0"
     }
   ]
 }

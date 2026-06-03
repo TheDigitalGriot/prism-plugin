@@ -51,6 +51,7 @@ def main():
 
     phase = snapshot.get("phase", "unknown")
     story = snapshot.get("active_story", "none")
+    subagent_run = snapshot.get("active_subagent_run")
     files = snapshot.get("recent_files", [])
     observations = snapshot.get("recent_observations", [])
 
@@ -58,6 +59,18 @@ def main():
     if story:
         parts[0] += f", working on {story}"
     parts[0] += "."
+
+    if subagent_run:
+        parts.append(
+            f"ACTIVE prism-subagent RUN: plan={subagent_run.get('plan_slug')}, "
+            f"current_task={subagent_run.get('current_task')}, "
+            f"domain={subagent_run.get('domain')}, "
+            f"pending={subagent_run.get('pending_count')}, "
+            f"in_progress={subagent_run.get('in_progress_count')}. "
+            f"Resume by reading {subagent_run.get('state_path')} — "
+            f"follow skills/prism-subagent/references/state-schema.md recovery protocol. "
+            f"Do NOT re-extract the plan."
+        )
 
     if files:
         parts.append(f"Files recently modified: {', '.join(files[:10])}.")

@@ -95,6 +95,26 @@ These survived the brainstorm as first-class items. They are known, deferred, an
 5. Write `.prism/shared/designs/<date>-<topic>-design.md` + `.pen`
 ```
 
+## Visual Companion — Version Requirements
+
+The brainstorm-channel MCP server provides active wake (click → Claude wakes):
+
+| Feature | Requirement |
+|---------|-------------|
+| Active wake (click → Claude wakes) | Claude Code ≥ v2.1.80 + `brainstorm-channel` MCP running |
+| Events file logging (fallback) | Any version — events written to `$STATE_DIR/events`, read on next user message |
+| Passive mode indicator | Automatic — `/status` endpoint returns `{passive: true}` when active wake unavailable |
+
+**Session registration** (multi-session safety): after starting the companion server, the skill should POST to claim its wake slot:
+
+```bash
+curl -s -X POST http://127.0.0.1:52342/register \
+  -H "Content-Type: application/json" \
+  -d "{\"session_id\": \"$SESSION_ID\"}"
+```
+
+This prevents concurrent brainstorm sessions from racing to wake each other. The registration persists until the session ends or `POST /unregister` is called. Single-session usage (no other brainstorm sessions running) works without registration — the channel fires unconditionally when the registry is empty.
+
 ## Rules
 
 1. **Design before code** — Never write implementation code during brainstorming

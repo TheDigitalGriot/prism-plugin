@@ -124,7 +124,12 @@ Run graph-based verification to catch issues tests might miss:
 |-------|-----|-----------------|
 | No new dead code | `search_graph(max_degree=0, exclude_entry_points=true)` | Orphaned functions from refactoring |
 | Dependency integrity | `trace_call_path` for all modified functions | Broken call chains |
-| Boundary violations | `search_graph(file_pattern, relationship="CALLS")` | Cross-boundary calls |
+| Cross-service contracts | `search_graph(relationship="HTTP_CALLS")` | Contract breaks at service boundaries |
+| Boundary violations | `search_graph(file_pattern="ui/*", relationship="CALLS")` | Cross-boundary calls (e.g., UI calling DB directly) |
+
+**Cross-service contracts check in detail**: For each HTTP or IPC boundary annotated in the graph (`search_graph(relationship="HTTP_CALLS")`), verify that callers of changed functions that cross service boundaries are explicitly listed in the plan's "Structural Impact" section. If a changed function has cross-service callers not previously documented, flag as a validation warning.
+
+If no HTTP_CALLS edges exist in the graph (single-service codebase), skip the cross-service check with note: "Cross-service contracts check skipped: no HTTP_CALLS edges in graph."
 
 Include results in the validation report under "## Structural Validation Results".
 

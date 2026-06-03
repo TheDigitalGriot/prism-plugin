@@ -33,6 +33,7 @@ Do NOT invoke any implementation skill, write any production code, scaffold any 
 | `codebase-analyzer` | Deep-dive on specific files |
 | `codebase-pattern-finder` | Find patterns to model after |
 | `prism-analyzer` | Extract insights from research |
+| `graph-navigator` | Blast radius + structural impact analysis (Step 1.5) |
 
 ## Workflow
 
@@ -43,6 +44,21 @@ If research document exists:
 Task(subagent_type="prism-analyzer")
 "Analyze [research doc]. Extract decisions, constraints, patterns."
 ```
+
+### 1.5 Structural Analysis (if codebase-memory-mcp available)
+
+Before presenting understanding, run a quick blast-radius scan. If `list_projects()` returns this project as indexed (or run `index_repository` if not):
+
+1. `get_graph_schema()` — quick orientation, understand what's indexed
+2. `search_graph(label="Function", name_pattern="<target functions this plan touches>")` — identify the specific symbols being changed
+3. For each change target: `trace_call_path(function_name="<target>", direction="inbound", depth=3)` — blast radius
+4. `search_graph(max_degree=0, exclude_entry_points=true)` — any dead code that can be safely removed alongside this change
+
+Use results to:
+- **Risk-order plan phases**: high blast radius = implement and verify early
+- **Populate the "Structural Impact" section** of the plan output (template below)
+
+If codebase-memory-mcp is not available, skip silently and note "Structural analysis skipped: graph not indexed" in the plan.
 
 ### 2. Present Understanding
 
@@ -115,6 +131,47 @@ Key sections:
 5. **Phase checkpoints** - Gates between phases
 6. **Explicit scope** - Always include "What We're NOT Doing" section
 7. **Two-category criteria** - Separate automated vs manual verification
+
+## Structural Impact Template
+
+Include this section in the plan when Step 1.5 graph analysis was run. Omit if graph was unavailable.
+
+```markdown
+## Structural Impact (graph-informed)
+
+### Change Targets
+- `qualified::path#Function` — N direct callers, M transitive (risk: LOW/MEDIUM/HIGH/CRITICAL)
+
+### Blast Radius: [LOW | MEDIUM | HIGH | CRITICAL]
+- N direct files affected
+- M transitive files potentially affected
+
+### Dead Code Candidates (safe to remove)
+- `qualified::path#Function` — 0 callers, not an entry point
+- *(none if clean)*
+```
+
+Phases are risk-ordered: higher blast radius = earlier in the plan with earlier verification checkpoint.
+
+## No Placeholders Gate
+
+Before a plan exits the planning phase, verify zero instances of any of these patterns exist in any task description, step, or success criterion:
+
+| Pattern | Example | Why it fails |
+|---------|---------|--------------|
+| `TBD` / `TODO` anywhere in task text | "Handle edge case TBD" | Deferred intent is a non-plan |
+| "Similar to Task N" / "see above" | "Same as Task 3 but for auth" | Cross-reference without a self-contained spec |
+| Empty success criteria | Task with no acceptance criteria | Untestable by definition |
+| Undefined cross-references | "Use the pattern from research" without citing `file:line` | Implementer can't follow what they can't find |
+| "fill in" / "tbd later" / "to be determined" | Any variant | Acknowledged incompleteness |
+| Vague quantifiers without baseline | "Make it faster" / "Improve quality" | Not falsifiable |
+
+```
+IRON LAW:
+NO PLAN EXITS THIS PHASE WITH A TBD ANYWHERE IN TASK DESCRIPTIONS OR SUCCESS CRITERIA.
+```
+
+If any of the above are found: pause, resolve, re-check before presenting to the user for approval.
 
 ## Success Criteria Format
 

@@ -37,6 +37,44 @@ def get_active_story(root):
     return None
 
 
+def get_active_subagent_run(root):
+    """Find the most recent in-flight prism-subagent state.json.
+
+    Returns dict with state_path, plan_slug, current_task, in_progress_count
+    or None if no active run is found.
+    """
+    subagent_dir = root / ".prism" / "local" / "subagent"
+    if not subagent_dir.is_dir():
+        return None
+
+    state_files = list(subagent_dir.glob("*/state.json"))
+    if not state_files:
+        return None
+
+    # Pick the most recently updated state file
+    state_files.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+
+    for sp in state_files:
+        try:
+            data = json.loads(sp.read_text(encoding="utf-8"))
+            tasks = data.get("tasks", [])
+            in_progress = [t for t in tasks if t.get("status") not in ("complete", "pending", None)]
+            pending = [t for t in tasks if t.get("status") == "pending"]
+            # Active = at least one task not yet complete
+            if in_progress or pending:
+                return {
+                    "state_path": str(sp.relative_to(root)),
+                    "plan_slug": data.get("plan_slug"),
+                    "current_task": data.get("current_task"),
+                    "in_progress_count": len(in_progress),
+                    "pending_count": len(pending),
+                    "domain": data.get("domain"),
+                }
+        except (json.JSONDecodeError, OSError):
+            continue
+    return None
+
+
 def detect_phase(root):
     """Infer current workflow phase from recent .prism/shared/ file timestamps."""
     phase_dirs = {
@@ -92,6 +130,7 @@ def main():
     snapshot = {
         "phase": detect_phase(root),
         "active_story": get_active_story(root),
+        "active_subagent_run": get_active_subagent_run(root),
         "recent_files": get_recent_files(),
         "recent_observations": get_observation_tail(root),
         "timestamp": datetime.now(timezone.utc).isoformat(),
