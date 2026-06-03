@@ -4,6 +4,25 @@ All notable changes to Prism Plugin will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.3.0] - 2026-06-03
+
+### Added
+- `skills/cl-plugin-structure/` — cl-plugin-structure v0.7.2 bundled as a skill. Includes `references/model-config.md` (current Claude model line, effort levels, ultrathink, 1M context), `references/folder-architecture-routing.md` (Cliefnotes routing-table pattern), `references/token-optimization-research.md` (~51 KB: autoresearch, Attention Residuals, observational memory), `examples/` (3 plugin scaffolds), and `scripts/` (6 validator scripts).
+- Routing table added to `CLAUDE.md` — maps 5 core task types to per-task file loads (addresses the "guess-what-to-read" context leak).
+- `## Requirements` section added to `README.md` — documents Claude Code v2.1.154+ and Max/Team/Enterprise plan requirements.
+- `ultrathink` keyword woven into `prism-brainstorm` (Step 4), `prism-iterate` (Step 2), and `prism-validate` (Iron Law) prompt bodies.
+- 9 existing skills cross-linked to cl-plugin-structure references (folder-architecture-routing, component-patterns, hook-events, validators, token-optimization-research, examples, cowork-compatibility, model-config).
+
+### Changed
+- Opus pin updated: `claude-opus-4-6` → `claude-opus-4-8` in `apps/prism-vscode/src/core/api/claude-sdk.ts` and `skills/prism-eval/references/eval-schemas.md`.
+- `effort: xhigh` added to 6 heavy-reasoning skills: `prism-brainstorm`, `prism-iterate`, `prism-plan`, `prism-prd`, `prism-design`, `prism-subagent`.
+- `prism-spectrum` model changed `sonnet` → `opus[1m]` for autonomous multi-story execution with full 1M context window.
+- Plugin version bumped 3.2.1 → 3.3.0 in `plugin.json` and `marketplace.json`.
+
+### Notes
+- After merging: run `/prism-release` to build VSIX, CLI binaries, and create the GitHub release tag v3.3.0.
+- Do NOT run `/prism-bookend` — it re-analyzes and re-suggests a version bump, conflicting with the bump applied here.
+
 ## [2.4.1] - 2026-03-05
 
 ### Added

@@ -1,12 +1,14 @@
 ---
 name: prism-spectrum
 description: Spectrum-style single-story execution for iterative development. Executes one story per session with quality gates. Used by spectrum.sh orchestrator for autonomous feature implementation. Triggers on "spectrum", "execute story", "run spectrum", or when invoked by spectrum.sh loop.
-model: sonnet
+model: opus[1m]
 ---
 
 # Prism Spectrum
 
 Execute a single story from the backlog with quality verification and atomic commits.
+
+> **Context requirement:** Uses `opus[1m]` for the 1M context window needed to hold full session state during autonomous multi-story runs without compaction risk. Requires Max/Team/Enterprise plan for included 1M Opus context, or usage credits on Pro. Disable globally with `CLAUDE_CODE_DISABLE_1M_CONTEXT=1` if needed.
 
 ## Philosophy
 
@@ -359,3 +361,5 @@ If quality gates fail after retry:
 9. Update: stories.json (status: complete), progress.md (learnings)
 10. Signal: <spectrum-continue>STORY_COMPLETE: STORY-003</spectrum-continue>
 ```
+
+> See also: [cl-plugin-structure/references/model-config.md](../cl-plugin-structure/references/model-config.md) §6 for 1M context aliases (`opus[1m]`, `sonnet[1m]`) and availability by plan tier.

@@ -2,6 +2,7 @@
 name: prism-design
 description: Design phase that turns a brainstorm decision ledger into an architectural design — adds mermaid diagrams, interface contracts, data models, and materializes a `.pen` visual layout. Triggers on "design this", "create a design", "design the architecture", or after a brainstorm ledger is approved. REQUIRES a brainstorm ledger by default — flip `require_brainstorm: false` for exploratory mode.
 model: opus
+effort: xhigh
 require_brainstorm: true
 inputs:
   required:

@@ -2,6 +2,7 @@
 name: prism-subagent
 description: Same-session subagent-driven plan execution. Use when executing a 3-10 task plan from .prism/shared/plans/ where Spectrum is overkill and prism-implement is too thin. Triggers on "subagent execute", "drive this plan with subagents", "dispatch implementers", "subagent driven development". Fresh implementer per task, two-stage review, bounded retries, compaction-survivable state.
 model: opus
+effort: xhigh
 ---
 
 # Prism Subagent

@@ -52,3 +52,5 @@ python "${CLAUDE_PLUGIN_ROOT}/skills/prism/scripts/init_prism.py" .
 1. **Never overwrite existing files** — The script uses `exist_ok=True` and checks before writing
 2. **Always run from the project root** — Pass `.` or the project path
 3. **Report what happened** — Tell the user exactly which directories and files were created or skipped
+
+> See also: [cl-plugin-structure/examples/minimal-plugin.md](../cl-plugin-structure/examples/minimal-plugin.md) and [standard-plugin.md](../cl-plugin-structure/examples/standard-plugin.md) for reference plugin scaffolds when initializing a new plugin project alongside Prism.

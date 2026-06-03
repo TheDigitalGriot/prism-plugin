@@ -30,6 +30,12 @@ Prism transforms complex coding tasks into focused, quality work through special
 claude --plugin-dir /path/to/prism-plugin
 ```
 
+## Requirements
+
+- **Claude Code v2.1.154 or later** — required for Opus 4.8 features used by `prism-brainstorm`, `prism-iterate`, `prism-plan`, `prism-prd`, `prism-design`, and `prism-subagent` (effort: xhigh).
+  Run `claude update` if on an older version.
+- **Max / Team / Enterprise plan recommended** for `prism-spectrum` (uses `opus[1m]` for 1M context autonomous execution). Pro users require usage credits for 1M context.
+
 ## Usage
 
 ### Automatic Workflow

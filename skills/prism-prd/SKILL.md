@@ -2,6 +2,7 @@
 name: prism-prd
 description: Generate and refine Product Requirements Documents as part of the prism workflow. Use when starting a new product, defining project scope, or needing formal requirements documentation before research/planning phases. Triggers on "create a PRD", "write product requirements", "document this product", "define the product spec", or when users describe a product idea that needs formal documentation.
 model: opus
+effort: xhigh
 ---
 
 # Prism PRD

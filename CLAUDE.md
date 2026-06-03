@@ -48,6 +48,18 @@ Additional skills:
 - **Subagent** (`/prism-subagent`): Same-session subagent-driven plan execution with two-stage review, bounded retries, and domain-aware context priming. Sits between `/prism-implement` (single phase) and `/prism-spectrum` (autonomous overnight).
 - **Finish** (`/prism-finish`): Wraps up a development branch (cleanup, PR description, handoff).
 
+## Routing Table
+
+Per-task file loads — read only what's needed, skip the rest.
+
+| Task | Read first | Skip | Use skill |
+|---|---|---|---|
+| Research / plan a feature | Latest `.prism/shared/plans/` or `.prism/shared/research/` | `apps/`, unrelated skill bodies | `/prism-research`, `/prism-plan` |
+| Implement an approved plan | Relevant plan in `.prism/shared/plans/` | Unrelated skill SKILL.md files | `/prism-implement`, `/prism-subagent` |
+| Hook or plugin config change | `hooks/hooks.json`, `skills/cl-plugin-structure/references/hook-events.md` | `.prism/shared/ref/` | (direct edit) |
+| Model config / skill enrichment | `apps/prism-vscode/src/core/api/claude-sdk.ts`, `skills/cl-plugin-structure/references/model-config.md` | `.prism/shared/evals/` | (direct edit) |
+| Spectrum / story execution | `stories.json`, `.prism/shared/spectrum/progress.md`, `CLAUDE.md` | `apps/` | `/prism-spectrum` |
+
 ## Execution Models
 
 Three execution models for different scales of work:
