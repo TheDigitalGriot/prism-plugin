@@ -1,6 +1,6 @@
 ---
 title: Skills Reference
-description: All 20 Prism skills — auto-discovered workflow orchestrators with YAML frontmatter trigger patterns.
+description: All 23 Prism skills — auto-discovered workflow orchestrators with YAML frontmatter trigger patterns.
 outline: [2, 3]
 ---
 
@@ -28,6 +28,9 @@ Skills live at `skills/*/SKILL.md` and are auto-discovered workflow orchestrator
 | 9 | `prism-verify` | 125 | **sonnet** | "verify the UI", "check the browser", "visual verification" |
 | 10 | `prism-prd` | 122 | **opus** | "create a PRD", "write product requirements", "document this product" |
 | 11 | `prism-visual-docs` | 146 | **opus** | "create user flows", "design the screens", "create wireframes" |
+| 12 | `prism-bookend` | ~80 | **sonnet** | "bookend", "wrap up this release", "finalize release", "close out the version" |
+
+**`prism-bookend`** (v3.1.0) orchestrates the end-of-release ritual: re-analyzes the diff since the last release tag, suggests the correct semver bump, generates a CHANGELOG entry from conventional commits, and offers to run `/prism-release`. Distinct from `/prism-finish` (branch → main) — bookend operates on the full release scope.
 
 ### Design & Completion Skills (v3.0.1)
 
@@ -66,18 +69,27 @@ Skills live at `skills/*/SKILL.md` and are auto-discovered workflow orchestrator
 | 19 | `prism-subagent` | ~85 | **opus** | "subagent execute", "drive this plan with subagents", "dispatch implementers", "subagent driven development" |
 | 20 | `prism-dispatch` | ~140 | **sonnet** | "fan out", "parallel agents", "investigate in parallel", "multiple unrelated failures", "split this work across agents" |
 
-**`prism-subagent`** fills the medium-tier execution gap between `prism-implement` (single phase) and `prism-spectrum` (10+ stories, autonomous overnight). For 3–10 task plans where Spectrum is overkill, it dispatches a fresh implementer subagent per task with two-stage review (`spec-reviewer` then `quality-reviewer`), bounded retries, and compaction-survivable `state.json`. Innovations include domain-aware context priming (R3F / Electron / fullstack / experimental primers), diff-only reviews, a 5-status protocol with `NEEDS_CLARIFICATION` distinct from `NEEDS_CONTEXT`, a 9-class review decision matrix with explicit skip rules, repeated-issue and no-op spin loop detectors, automatic model escalation ladders, and 3-cycle hard caps on retries. Reuses `agents/spec-reviewer.md` and `agents/quality-reviewer.md` verbatim.
+**`prism-subagent`** fills the medium-tier execution gap between `prism-implement` (single phase) and `prism-spectrum` (10+ stories, autonomous overnight). For 3–10 task plans where Spectrum is overkill, it dispatches a fresh implementer subagent per task with two-stage review (`spec-reviewer` then `quality-reviewer`), bounded retries, and compaction-survivable `state.json`. Innovations include domain-aware context priming (R3F / Electron / fullstack / experimental primers), diff-only reviews, a 5-status protocol with `NEEDS_CLARIFICATION` distinct from `NEEDS_CONTEXT`, a 9-class review decision matrix with explicit skip rules, repeated-issue and no-op spin loop detectors, automatic model escalation ladders, and 3-cycle hard caps on retries. Reuses `agents/spec-reviewer.md` and `agents/quality-reviewer.md` verbatim. **v3.4.0:** Iron law added — "NEVER FORWARD PARENT SESSION HISTORY" with subagent role audit table classifying all dispatched agents as cross-entity role executors.
 
-**`prism-dispatch`** generalizes the parallel agent fan-out pattern for ad-hoc use, sibling to `prism-research` (fixed agent roster) and `prism-debug` (fixed 3-agent flow). Use when facing 2+ independent problem domains that can be investigated or fixed concurrently without shared state. Includes when-to-use decision flow, sibling-skills disambiguation table, per-agent model selection guidance, and explicit anti-patterns (fan-out stampede capped at 5 agents per dispatch; hidden sequential dependencies via file-overlap audit).
+**`prism-dispatch`** generalizes the parallel agent fan-out pattern for ad-hoc use, sibling to `prism-research` (fixed agent roster) and `prism-debug` (fixed 3-agent flow). Use when facing 2+ independent problem domains that can be investigated or fixed concurrently without shared state. Includes when-to-use decision flow, sibling-skills disambiguation table, per-agent model selection guidance, and explicit anti-patterns (fan-out stampede capped at 5 agents per dispatch; hidden sequential dependencies via file-overlap audit). **v3.4.0:** Context Isolation section added with "cold prompt test" — every subagent prompt must be fully actionable cold, with no parent session history baked in.
 
-**Execution-models table now reads:**
+**Execution-models table:**
 
 | Scope | Skill |
 |---|---|
 | Single phase / quick fix | `/prism-implement` |
-| **3–10 tasks, mostly independent, stay in session** | **`/prism-subagent`** ← new |
+| 3–10 tasks, mostly independent, stay in session | `/prism-subagent` |
 | 10+ stories, autonomous overnight | `/prism-spectrum` |
+| Large spec → epics → spectrum | `/prism-decompose` → `/prism-spectrum` |
 | Parallel investigation of unrelated failures | `/prism-debug` |
+
+### Greenfield Decomposition Skills (v3.4.0)
+
+| # | Skill | Lines | Model | Trigger Patterns |
+|---|-------|-------|-------|-----------------|
+| 23 | `prism-decompose` | ~120 | **opus** | "decompose this spec", "turn this into stories", "epic this", "break down this spec" |
+
+**`prism-decompose`** (v3.4.0) turns a large specification (500k+ tokens) into a structured spectrum work queue. Process: read full spec → parse every behavioral requirement → bundle into epics (each ≤200K context for a single spectrum run) → emit `stories.json` + `coverage.md` per epic. The coverage report is mandatory — it maps every spec requirement to a story ID, guaranteeing zero requirement drop during chunking. Graph-informed risk ordering: when `codebase-memory-mcp` is available, blast radius from `trace_call_path` determines story ordering within each epic. Distinct from the `decompose_plan` command (which turns an approved Prism plan into stories.json) — `prism-decompose` handles large, unstructured external specs.
 
 ## Skill Subdirectory Contents
 
@@ -139,8 +151,12 @@ skills/
 │       ├── retry-ladder.md              # bounded retries + loop detectors
 │       ├── state-schema.md              # state.json schema + recovery protocol
 │       └── domain-hints.md              # R3F / Electron / fullstack / experimental
-└── prism-dispatch/                      # v3.2.0 — generalized parallel fan-out
-    └── SKILL.md                         # ~140 lines — sonnet, ad-hoc parallel dispatch
+├── prism-dispatch/                      # v3.2.0 — generalized parallel fan-out
+│   └── SKILL.md                         # ~140 lines — sonnet, ad-hoc parallel dispatch
+├── prism-bookend/                       # v3.1.0 — end-of-release ritual
+│   └── SKILL.md                         # ~80 lines — sonnet, release wrap-up + semver suggestion
+└── prism-decompose/                     # v3.4.0 — Greenfield spec decomposition
+    └── SKILL.md                         # ~120 lines — opus, 500k+ spec → epic story queues
 ```
 
 ## Skill Frontmatter Format

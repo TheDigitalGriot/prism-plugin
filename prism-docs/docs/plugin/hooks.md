@@ -1,17 +1,18 @@
 ---
 title: Hooks Reference
-description: 7 lifecycle hooks for context management, worktree automation, and agent tracking
+description: 8 lifecycle hooks for context management, worktree automation, agent tracking, and spectrum worker supervision
 outline: [2, 3]
 ---
 
 # Hooks Reference
 
-Prism uses 7 lifecycle hooks configured in `hooks/hooks.json`. All hooks are `command` type — **zero LLM cost**. They execute shell commands that receive event JSON on stdin.
+Prism uses 8 lifecycle hooks configured in `hooks/hooks.json`. All hooks are `command` type — **zero LLM cost**. They execute shell commands that receive event JSON on stdin.
 
 ## Hook Events
 
 | Hook Event | Matcher | Script | Purpose |
 |------------|---------|--------|---------|
+| **PreToolUse** | (all) | `spectrum-approval.sh` | Approval gate for spectrum worker tool calls — 30s auto-approve window |
 | **PreCompact** | (all) | `pre-compact.py` | Save workflow state before context compression |
 | **PostCompact** | (all) | `post-compact.py` | Restore state after context compression |
 | **PostToolUse** | Write\|Edit\|Bash | `log-observation.py` | Track file modifications for session continuity |
@@ -27,6 +28,7 @@ All hooks use `${CLAUDE_PLUGIN_ROOT}` for portable paths. The configuration live
 ```json
 {
   "hooks": {
+    "PreToolUse": [{ "matcher": "", "hooks": [{ "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/spectrum-approval.sh", "timeout": 35 }] }],
     "PreCompact": [{ "matcher": "", "hooks": [{ "type": "command", "command": "python ${CLAUDE_PLUGIN_ROOT}/scripts/pre-compact.py" }] }],
     "PostCompact": [{ "matcher": "", "hooks": [{ "type": "command", "command": "python ${CLAUDE_PLUGIN_ROOT}/scripts/post-compact.py" }] }],
     "PostToolUse": [{ "matcher": "Write|Edit|Bash", "hooks": [{ "type": "command", "command": "python ${CLAUDE_PLUGIN_ROOT}/scripts/log-observation.py" }] }],
@@ -86,6 +88,37 @@ Both events use the same `log-agent.py` script. It distinguishes start from stop
 ```
 
 This enables cost analysis and debugging of agent dispatch patterns across Spectrum runs.
+
+## Spectrum Worker Approval Gate (v3.4.0)
+
+### PreToolUse
+
+The `spectrum-approval.sh` script provides CSD-style supervision for autonomous Spectrum workers. It fires before **every** tool call — but immediately exits 0 for any session that doesn't have `SPECTRUM_WORKER_STORY_ID` set, so there is zero overhead outside of Spectrum execution.
+
+**How it works:**
+
+1. Spectrum's `run_iteration()` sets `SPECTRUM_WORKER_STORY_ID="<story-id>"` in the worker's environment
+2. Before each tool call, the hook writes an approval request:
+   ```
+   .prism/local/spectrum-approvals/<story-id>/<request-id>.request
+   ```
+3. The hook polls for up to 30 seconds for a controller response:
+   - `.approve` file → tool call proceeds immediately
+   - `.deny` file → tool call is blocked (hook exits 2)
+   - Silence → **auto-approves** after 30 seconds
+4. Cleanup: request file is removed after resolution
+
+**To approve/deny during a live Spectrum run:**
+
+```bash
+# Approve a pending tool call
+touch .prism/local/spectrum-approvals/<story-id>/<request-id>.approve
+
+# Deny a pending tool call
+touch .prism/local/spectrum-approvals/<story-id>/<request-id>.deny
+```
+
+**Design principle**: The 30-second auto-approve means you're never *required* to watch. You can opt in to supervision for specific stories or tools without blocking the entire run. This is the CSD pattern — control without micromanagement.
 
 ## Cross-Platform Compatibility
 
