@@ -1,14 +1,16 @@
 ---
 name: prism-spectrum
 description: Spectrum-style single-story execution for iterative development. Executes one story per session with quality gates. Used by spectrum.sh orchestrator for autonomous feature implementation. Triggers on "spectrum", "execute story", "run spectrum", or when invoked by spectrum.sh loop.
-model: opus[1m]
+model: sonnet[1m]
 ---
 
 # Prism Spectrum
 
 Execute a single story from the backlog with quality verification and atomic commits.
 
-> **Context requirement:** Uses `opus[1m]` for the 1M context window needed to hold full session state during autonomous multi-story runs without compaction risk. Requires Max/Team/Enterprise plan for included 1M Opus context, or usage credits on Pro. Disable globally with `CLAUDE_CODE_DISABLE_1M_CONTEXT=1` if needed.
+> **On model choice:** prism-spectrum is the *outer loop* — its job is dispatching stories and shepherding state, not deep reasoning. The actual heavy thinking happens inside the agents it spawns (codebase-analyzer, prism-analyzer, etc. — those already use opus where it matters). This is Karpathy's two-tier delegation pattern: cheap orchestrator, expensive workers. Putting opus on the spectrum outer loop pays for reasoning twice. Sonnet 4.6 at ~60% the cost benchmarks near Opus on coding tasks; the 1M context window — which IS the genuinely useful upgrade for long autonomous runs — works identically as `sonnet[1m]`. Don't reflexively bump this when a new Opus drops; the question is whether spectrum's outputs are under-reasoning, not whether a better model exists.
+
+> **Context requirement:** Uses `sonnet[1m]` for the 1M context window needed to hold full session state during autonomous multi-story runs without compaction risk. Requires Max/Team/Enterprise plan for included 1M Sonnet context, or usage credits on Pro. Disable globally with `CLAUDE_CODE_DISABLE_1M_CONTEXT=1` if needed.
 
 ## Philosophy
 

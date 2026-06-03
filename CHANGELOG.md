@@ -4,6 +4,11 @@ All notable changes to Prism Plugin will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.3.1] - 2026-06-03
+### Fixed
+- prism-spectrum: reverted from `opus[1m]` back to `sonnet[1m]` with rationale comment — spectrum is the outer-loop orchestrator, the agents it dispatches carry the deep reasoning load (Karpathy two-tier delegation pattern). Avoids paying opus premium on shepherding work.
+- hook-validator schema: updated `validate-hook-schema.sh` to accept both flat (`{ "EventName": [...] }`) and nested (`{ "hooks": { "EventName": [...] } }`) root formats, matching Claude Code's actual behaviour. Also fixes empty-matcher false-positive (empty string `""` is valid — means "match all"), adds missing valid event types (`PostCompact`, `WorktreeCreate`, `WorktreeRemove`, `SubagentStart`), and guards `((counter++))` with `|| true` to prevent premature `set -e` exit on first-error.
+
 ## [3.3.0] - 2026-06-03
 
 ### Added
