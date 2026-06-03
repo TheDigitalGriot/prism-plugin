@@ -46,6 +46,16 @@ const server = new Server(
 // Meta keys must be /^[A-Za-z0-9_]+$/ — hyphens are silently dropped by Claude Code.
 const META_KEY_RE = /^[A-Za-z0-9_]+$/
 
+// B1b: Session registry for multi-session routing.
+// Maps session_id → true for active brainstorm sessions.
+// If empty (single-session), all wake notifications fire unconditionally (backward compat).
+const sessionRegistry = new Map<string, boolean>()
+
+// B1d: Passive mode — set true if the claude/channel capability probe fails.
+// In passive mode the events file still gets written by server.cjs (full local logging),
+// but the MCP wake notification is suppressed. Requires Claude Code >= v2.1.80.
+let passiveMode = false
+
 function sanitizeMeta(input: unknown): Record<string, string> {
   const out: Record<string, string> = {}
   if (!input || typeof input !== "object") return out
@@ -82,6 +92,46 @@ try {
       })
     }
 
+    // B1d: Status endpoint — exposes passiveMode so frame-template.html helper.js
+    // can render a drawer indicator when active wake is unavailable.
+    if (url.pathname === "/status" && req.method === "GET") {
+      return new Response(
+        JSON.stringify({ ok: true, passive: passiveMode, port: CHANNEL_PORT }),
+        { headers: { "Content-Type": "application/json", ...CORS_HEADERS } },
+      )
+    }
+
+    // B1b: Session registration endpoints.
+    // POST /register  {session_id: string} — claim this session's routing slot.
+    // POST /unregister {session_id: string} — release when brainstorm session ends.
+    if (url.pathname === "/register" && req.method === "POST") {
+      let body: Record<string, unknown>
+      try { body = (await req.json()) as Record<string, unknown> } catch {
+        return new Response(JSON.stringify({ error: "Invalid JSON" }), {
+          status: 400, headers: { "Content-Type": "application/json", ...CORS_HEADERS },
+        })
+      }
+      const sid = typeof body.session_id === "string" ? body.session_id : null
+      if (sid) sessionRegistry.set(sid, true)
+      return new Response(JSON.stringify({ ok: true, session_id: sid }), {
+        headers: { "Content-Type": "application/json", ...CORS_HEADERS },
+      })
+    }
+
+    if (url.pathname === "/unregister" && req.method === "POST") {
+      let body: Record<string, unknown>
+      try { body = (await req.json()) as Record<string, unknown> } catch {
+        return new Response(JSON.stringify({ error: "Invalid JSON" }), {
+          status: 400, headers: { "Content-Type": "application/json", ...CORS_HEADERS },
+        })
+      }
+      const sid = typeof body.session_id === "string" ? body.session_id : null
+      if (sid) sessionRegistry.delete(sid)
+      return new Response(JSON.stringify({ ok: true }), {
+        headers: { "Content-Type": "application/json", ...CORS_HEADERS },
+      })
+    }
+
     if (url.pathname !== "/channel" || req.method !== "POST") {
       return new Response("Not Found", { status: 404, headers: CORS_HEADERS })
     }
@@ -96,16 +146,36 @@ try {
       })
     }
 
-    const content =
-      typeof body.content === "string" && body.content.length > 0
-        ? body.content
-        : "Brainstorm viewer interaction"
     const meta = sanitizeMeta(body)
 
+    // B1b: Session routing — if registry has entries, only fire for the registered session.
+    // If registry is empty, fire unconditionally (single-session backward compat).
+    const targetSession = typeof body.session_id === "string" ? body.session_id : null
+    if (sessionRegistry.size > 0 && targetSession && !sessionRegistry.has(targetSession)) {
+      // Wake signal targeted at a different session — silently drop.
+      return new Response(JSON.stringify({ ok: true, routed: false }), {
+        headers: { "Content-Type": "application/json", ...CORS_HEADERS },
+      })
+    }
+
+    // B1d: Passive mode — events file is still written by server.cjs WS handler
+    // (canonical event log). Wake notification is suppressed until capability is confirmed.
+    if (passiveMode) {
+      return new Response(JSON.stringify({ ok: true, passive: true }), {
+        headers: { "Content-Type": "application/json", ...CORS_HEADERS },
+      })
+    }
+
+    // B1a: Wake signal only — the events file at $STATE_DIR/events is the canonical
+    // event log. Claude reads events on wake; the notification content is a minimal
+    // wake signal, not the event payload.
     try {
       await server.notification({
         method: "notifications/message/create",
-        params: { content, meta },
+        params: {
+          content: "Brainstorm viewer interaction — read events file for details",
+          meta,
+        },
       })
     } catch (err) {
       // Log but don't crash — the notification failing shouldn't break the HTTP response.
@@ -127,3 +197,24 @@ try {
 
 const transport = new StdioServerTransport()
 await server.connect(transport)
+
+// B1d: Capability probe — verify claude/channel notification is supported.
+// Falls back to passive mode on runtimes < v2.1.80.
+// In passive mode: events file still gets written by server.cjs (full local logging),
+// but the MCP wake notification is suppressed.
+try {
+  await server.notification({
+    method: "notifications/message/create",
+    params: {
+      content: "brainstorm-channel: capability probe",
+      meta: { type: "probe" },
+    },
+  })
+  // If we reach here, the channel is functional.
+} catch {
+  passiveMode = true
+  console.error(
+    "[brainstorm-channel] claude/channel not available — passive mode active (Claude Code < v2.1.80). " +
+    "Events file will still be written; send a message to Claude to read your selections.",
+  )
+}
