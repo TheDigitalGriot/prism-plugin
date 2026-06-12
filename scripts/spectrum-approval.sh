@@ -46,6 +46,10 @@ fi
 
 STORY_ID="${SPECTRUM_WORKER_STORY_ID}"
 TOOL="${HOOK_TOOL_NAME:-unknown}"
+# PRISM_PROJECT_DIR is passed explicitly by spectrum.sh's run_iteration() so approval
+# files always land under the project root even if the worker's cwd drifts. The fallback
+# to "." exists as a safety net for direct/debug invocations only — never rely on it
+# in production (cwd drift silently misroutes .request files and breaks the controller).
 PRISM_PROJECT_DIR="${PRISM_PROJECT_DIR:-.}"
 APPROVAL_DIR="${PRISM_PROJECT_DIR}/.prism/local/spectrum-approvals"
 REQUEST_ID="$(date +%s%N 2>/dev/null || date +%s)$$"

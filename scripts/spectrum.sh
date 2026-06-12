@@ -377,12 +377,14 @@ SHIM
             SPECTRUM_WORKER_STORY_ID="$story_id" \
             SPECTRUM_SUPERVISED="${SPECTRUM_SUPERVISED:-}" \
             SPECTRUM_APPROVAL_TIMEOUT="${SPECTRUM_APPROVAL_TIMEOUT:-3}" \
+            PRISM_PROJECT_DIR="$PROJECT_DIR" \
             "$shim_path" "$prompt" 2>&1 | tee /dev/stderr) || exit_code=$?
     else
         output=$(cd "$PROJECT_DIR" && \
             SPECTRUM_WORKER_STORY_ID="$story_id" \
             SPECTRUM_SUPERVISED="${SPECTRUM_SUPERVISED:-}" \
             SPECTRUM_APPROVAL_TIMEOUT="${SPECTRUM_APPROVAL_TIMEOUT:-3}" \
+            PRISM_PROJECT_DIR="$PROJECT_DIR" \
             "$shim_path" "$prompt" 2>&1) || exit_code=$?
     fi
 
