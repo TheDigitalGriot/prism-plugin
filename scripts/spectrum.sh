@@ -30,6 +30,9 @@
 #   SPECTRUM_VERBOSE=true spectrum                       # Verbose output
 #   SPECTRUM_SUPERVISED=1 spectrum                       # Enable approval-gate controller
 #
+# Requires: bash (macOS/Linux), WSL, or Git Bash on Windows. Not compatible with
+#           native PowerShell/CMD (no /tmp equivalent and no bash built-ins).
+#
 # Setup (add to ~/.bashrc or ~/.zshrc):
 #   alias spectrum='/path/to/prism-plugin/scripts/spectrum.sh'
 
@@ -48,9 +51,13 @@ PROJECT_DIR="$(pwd)"
 STORIES_FILE="${1:-$PROJECT_DIR/.prism/stories/stories.json}"
 
 # B2a: Deterministic worker shim paths.
-# Each spawned Claude session gets a shim at /tmp/claude-spectrum-workers/<story-id>.
+# Each spawned Claude session gets a shim under the system temp dir.
+# Precedence: $TMPDIR (POSIX/macOS) → $TEMP (Git Bash/Windows) → $TMP → /tmp (Linux/WSL).
 # Reconstructable from story ID alone — no env vars needed for recovery.
-SHIM_DIR="/tmp/claude-spectrum-workers"
+#
+# Supported shells: bash-compatible runtimes only (macOS/Linux bash, WSL, Git Bash).
+# Native Windows PowerShell/CMD are NOT supported — use WSL or Git Bash on Windows.
+SHIM_DIR="${TMPDIR:-${TEMP:-${TMP:-/tmp}}}/claude-spectrum-workers"
 
 # B2c+B2d: Canonical spectrum signal vocabulary.
 # Any signal tag not in this list is an unknown signal (warn + treat as retry).
