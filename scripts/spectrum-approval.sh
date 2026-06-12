@@ -5,9 +5,14 @@
 # Only applies to spectrum worker sessions (identified by SPECTRUM_WORKER_STORY_ID env var).
 # Non-spectrum sessions exit 0 immediately — zero overhead on normal usage.
 #
-# Protocol:
+# Supervision modes:
+#   Unsupervised (default): SPECTRUM_SUPERVISED is unset → auto-approve immediately,
+#     zero polling overhead. This is the happy path for unattended runs.
+#   Supervised: set SPECTRUM_SUPERVISED=1 to enable the controller protocol below.
+#
+# Protocol (supervised mode only):
 #   1. Write a .request file to .prism/local/spectrum-approvals/<story-id>/<request-id>.request
-#   2. Poll for .approve or .deny file for up to 30 seconds
+#   2. Poll for .approve or .deny file for up to SPECTRUM_APPROVAL_TIMEOUT seconds (default: 3)
 #   3. Auto-approve on timeout (control without micromanagement)
 #
 # To manually approve a pending tool call (during a live spectrum run):
@@ -17,16 +22,25 @@
 #   touch .prism/local/spectrum-approvals/<story-id>/<request-id>.deny
 #
 # The controller (spectrum.sh) can also watch for .request files and auto-respond
-# based on tool name patterns. Silence auto-approves after 30s.
+# based on tool name patterns. Silence auto-approves after SPECTRUM_APPROVAL_TIMEOUT seconds.
 #
-# Environment variables provided by Claude Code hook runner:
-#   SPECTRUM_WORKER_STORY_ID  — set by spectrum.sh's run_iteration() for worker sessions
-#   HOOK_TOOL_NAME            — name of the tool being called (set by hook runner)
+# Environment variables:
+#   SPECTRUM_WORKER_STORY_ID    — set by spectrum.sh's run_iteration() for worker sessions
+#   HOOK_TOOL_NAME              — name of the tool being called (set by hook runner)
+#   SPECTRUM_SUPERVISED         — set to any non-empty value to enable controller protocol
+#   SPECTRUM_APPROVAL_TIMEOUT   — seconds to poll before auto-approving (default: 3)
 #
 set -euo pipefail
 
 # Fast path: not a spectrum worker session — exit immediately with no overhead.
 if [[ -z "${SPECTRUM_WORKER_STORY_ID:-}" ]]; then
+    exit 0
+fi
+
+# Fast path: unsupervised mode (default). No controller is watching, so auto-approve
+# immediately with zero polling overhead. Set SPECTRUM_SUPERVISED=1 to opt into
+# the full controller protocol below.
+if [[ -z "${SPECTRUM_SUPERVISED:-}" ]]; then
     exit 0
 fi
 
@@ -47,8 +61,8 @@ printf '{"tool":"%s","story":"%s","ts":"%s","request_id":"%s"}\n' \
     "$TOOL" "$STORY_ID" "$(date -Iseconds 2>/dev/null || date)" "$REQUEST_ID" \
     > "$REQUEST_FILE"
 
-# Poll for controller response (30s auto-approve window)
-TIMEOUT=30
+# Poll for controller response (configurable auto-approve window, default 3s)
+TIMEOUT="${SPECTRUM_APPROVAL_TIMEOUT:-3}"
 elapsed=0
 
 while [[ $elapsed -lt $TIMEOUT ]]; do
