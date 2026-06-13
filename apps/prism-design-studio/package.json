@@ -1,0 +1,26 @@
+{
+  "name": "@prism/design-studio",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Prism Design Studio — forked open-design engine integrated as a first-class prism skill app",
+  "scripts": {
+    "dev": "node src/server.js --no-open",
+    "start": "node src/server.js",
+    "build": "echo 'build step: pnpm build in ../../../prism-design-engine'"
+  },
+  "dependencies": {
+    "@prism/core": "*"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "prism": {
+    "type": "design-engine",
+    "skill": "prism-design",
+    "engine": {
+      "source": "https://github.com/TheDigitalGriot/prism-design-engine",
+      "daemon_port": 7456,
+      "design_system": "griotwave"
+    }
+  }
+}

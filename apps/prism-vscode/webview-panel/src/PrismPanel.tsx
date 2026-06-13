@@ -2,13 +2,14 @@ import React, { useState, useRef, useCallback, useEffect } from 'react'
 import { MonitorView } from './views/MonitorView'
 import { WorkspacesView } from './views/WorkspacesView'
 import { OfficeApp } from './views/OfficeApp'
+import { DesignView } from './views/DesignView'
 import { ViewToggle } from './components/ViewToggle'
 import { DraggableDivider } from './components/DraggableDivider'
 import { StatusBar } from './components/StatusBar'
 import { vscode } from './vscodeApi'
 
 export function PrismPanel(): React.ReactElement {
-  const [leftView, setLeftView] = useState<'monitor' | 'office'>('monitor')
+  const [leftView, setLeftView] = useState<'monitor' | 'office' | 'design'>('monitor')
   const [isDragging, setIsDragging] = useState(false)
   const [storyCount, setStoryCount] = useState(0)
   const [storyTotal, setStoryTotal] = useState(0)
@@ -72,7 +73,7 @@ export function PrismPanel(): React.ReactElement {
       const msg = e.data as { type: string; [key: string]: unknown }
       if (msg.type === 'initialState') {
         if (typeof msg.dividerPos === 'number') updateDividerPos(msg.dividerPos)
-        if (msg.activeView === 'monitor' || msg.activeView === 'office') setLeftView(msg.activeView)
+        if (msg.activeView === 'monitor' || msg.activeView === 'office' || msg.activeView === 'design') setLeftView(msg.activeView)
         if (typeof msg.storyCount === 'number') setStoryCount(msg.storyCount)
         if (typeof msg.storyTotal === 'number') setStoryTotal(msg.storyTotal)
         if (typeof msg.projectName === 'string') setProjectName(msg.projectName)
@@ -88,7 +89,7 @@ export function PrismPanel(): React.ReactElement {
 
   // ── Toggle ─────────────────────────────────────────────────────────────────
 
-  const handleToggle = useCallback((view: 'monitor' | 'office') => {
+  const handleToggle = useCallback((view: 'monitor' | 'office' | 'design') => {
     setLeftView(view)
     vscode.postMessage({ type: 'viewToggleChanged', value: view })
   }, [])
@@ -109,7 +110,7 @@ export function PrismPanel(): React.ReactElement {
         <div className="prism-left-panel" style={{ width: `${dividerPos}%` }}>
           <ViewToggle activeView={leftView} onToggle={handleToggle} activeAgentCount={activeAgentCount} />
           <div className="prism-view-content">
-            {leftView === 'monitor' ? <MonitorView /> : <OfficeApp />}
+            {leftView === 'monitor' ? <MonitorView /> : leftView === 'office' ? <OfficeApp /> : <DesignView />}
           </div>
         </div>
 

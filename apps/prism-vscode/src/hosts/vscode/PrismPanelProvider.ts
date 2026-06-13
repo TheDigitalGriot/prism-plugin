@@ -1,5 +1,6 @@
 import * as child_process from 'child_process';
 import * as fs from 'fs';
+import * as http from 'http';
 import * as os from 'os';
 import * as path from 'path';
 import * as util from 'util';
@@ -145,7 +146,13 @@ export class PrismPanelProvider implements vscode.WebviewViewProvider {
 
   // ── Unified panel state ──
   private _dividerPos: number = 55;
-  private _activeView: 'monitor' | 'office' = 'monitor';
+  private _activeView: 'monitor' | 'office' | 'design' = 'monitor';
+
+  // ── Design Engine state ──
+  private _designEngineProcess: child_process.ChildProcess | null = null;
+  private _designEngineStatus: 'stopped' | 'starting' | 'running' | 'error' = 'stopped';
+  private readonly _designEnginePort = 7456;
+  private readonly _designRelayPort  = 7457;
 
   constructor(
     private readonly _context: vscode.ExtensionContext,
@@ -382,7 +389,7 @@ export class PrismPanelProvider implements vscode.WebviewViewProvider {
         break;
 
       case 'viewToggleChanged':
-        this._activeView = message.value as 'monitor' | 'office';
+        this._activeView = message.value as 'monitor' | 'office' | 'design';
         await this._context.workspaceState.update('prismPanelActiveView', this._activeView);
         break;
 
@@ -563,7 +570,243 @@ export class PrismPanelProvider implements vscode.WebviewViewProvider {
         }
         break;
       }
+
+      // ── Design Engine messages ──────────────────────────────────────────
+
+      case 'requestDesignEngineState':
+        await this._pushDesignEngineState();
+        break;
+
+      case 'launchDesignEngine':
+        await this._launchDesignEngine();
+        break;
+
+      case 'stopDesignEngine':
+        this._stopDesignEngine();
+        break;
+
+      case 'sendDesignPrompt': {
+        const yaml = message.yaml as string | undefined;
+        if (yaml) await this._sendDesignPrompt(yaml);
+        break;
+      }
+
+      case 'openDesignArtifact': {
+        const artifactPath = message.path as string | undefined;
+        if (artifactPath) {
+          if (artifactPath.endsWith('.html') || artifactPath.endsWith('.mp4') || artifactPath.endsWith('.pdf')) {
+            void vscode.env.openExternal(vscode.Uri.file(artifactPath));
+          } else {
+            void vscode.window.showTextDocument(vscode.Uri.file(artifactPath));
+          }
+        }
+        break;
+      }
+
+      case 'openFile': {
+        const filePath = message.path as string | undefined;
+        if (filePath) void vscode.window.showTextDocument(vscode.Uri.file(filePath));
+        break;
+      }
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Design Engine — private helpers
+  // ---------------------------------------------------------------------------
+
+  private _designEngineRepoPath(): string {
+    return path.join(os.homedir(), 'Developer', 'prism-design-engine');
+  }
+
+  private async _pushDesignEngineState(): Promise<void> {
+    if (!this._webview) return;
+    const artifacts = this._scanDesignArtifacts();
+    const latestPrompt = this._readLatestDesignPrompt();
+    const latestLedger = this._findLatestLedger();
+
+    // Probe the engine to verify it's actually responding
+    if (this._designEngineStatus === 'running') {
+      const alive = await this._probeEngine();
+      if (!alive) this._designEngineStatus = 'stopped';
+    }
+
+    this._webview.postMessage({
+      type: 'designEngineState',
+      state: {
+        status: this._designEngineStatus,
+        port: this._designEnginePort,
+        version: '',
+        artifacts,
+        latestDesignPrompt: latestPrompt,
+        latestLedger,
+        activeSession: null,
+      },
+    });
+  }
+
+  private async _launchDesignEngine(): Promise<void> {
+    if (this._designEngineProcess) return;
+
+    const engineDaemon = path.join(this._designEngineRepoPath(), 'apps', 'daemon');
+    if (!fs.existsSync(engineDaemon)) {
+      void vscode.window.showErrorMessage(
+        `Prism Design Engine not found at ${this._designEngineRepoPath()}. ` +
+        'Clone TheDigitalGriot/prism-design-engine to ~/Developer/prism-design-engine first.',
+      );
+      this._designEngineStatus = 'error';
+      await this._pushDesignEngineState();
+      return;
+    }
+
+    this._designEngineStatus = 'starting';
+    await this._pushDesignEngineState();
+
+    const proc = child_process.spawn('pnpm', ['run', 'daemon'], {
+      cwd: engineDaemon,
+      shell: true,
+      env: {
+        ...process.env,
+        OD_PORT: String(this._designEnginePort),
+        OD_DEFAULT_DESIGN_SYSTEM: 'griotwave',
+      },
+    });
+
+    this._designEngineProcess = proc;
+
+    proc.on('spawn', () => {
+      // Give the daemon a moment to bind the port
+      setTimeout(async () => {
+        const alive = await this._probeEngine();
+        this._designEngineStatus = alive ? 'running' : 'starting';
+        await this._pushDesignEngineState();
+      }, 2500);
+    });
+
+    proc.on('exit', async () => {
+      this._designEngineProcess = null;
+      this._designEngineStatus = 'stopped';
+      await this._pushDesignEngineState();
+    });
+
+    proc.on('error', async () => {
+      this._designEngineProcess = null;
+      this._designEngineStatus = 'error';
+      await this._pushDesignEngineState();
+    });
+  }
+
+  private _stopDesignEngine(): void {
+    if (this._designEngineProcess) {
+      this._designEngineProcess.kill('SIGTERM');
+      this._designEngineProcess = null;
+    }
+    this._designEngineStatus = 'stopped';
+    void this._pushDesignEngineState();
+  }
+
+  private async _sendDesignPrompt(yaml: string): Promise<void> {
+    return new Promise<void>((resolve) => {
+      const body = JSON.stringify({
+        brief: yaml,
+        design_system: 'griotwave',
+        type: 'prototype',
+        source: 'prism-design',
+      });
+      const req = http.request({
+        hostname: 'localhost',
+        port: this._designEnginePort,
+        path: '/api/chat',
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) },
+      }, () => resolve());
+      req.on('error', () => {
+        void vscode.window.showWarningMessage('Prism Design: engine not reachable at localhost:' + String(this._designEnginePort));
+        resolve();
+      });
+      req.write(body);
+      req.end();
+    });
+  }
+
+  private _probeEngine(): Promise<boolean> {
+    return new Promise<boolean>((resolve) => {
+      const req = http.request(
+        { hostname: 'localhost', port: this._designEnginePort, path: '/api/skills', method: 'GET' },
+        (res) => { resolve(res.statusCode !== undefined && res.statusCode < 500); },
+      );
+      req.on('error', () => resolve(false));
+      req.setTimeout(1500, () => { req.destroy(); resolve(false); });
+      req.end();
+    });
+  }
+
+  private _scanDesignArtifacts(): unknown[] {
+    const root = this._workspaceRoot;
+    const designsDir = path.join(root, '.prism', 'shared', 'designs');
+    if (!fs.existsSync(designsDir)) return [];
+
+    const EXTS: Record<string, string> = {
+      '.md': 'md', '.pen': 'pen', '.html': 'html',
+      '.pdf': 'pdf', '.pptx': 'pptx', '.mp4': 'mp4',
+      '.zip': 'zip', '.yaml': 'yaml',
+    };
+
+    const results: unknown[] = [];
+    const walk = (dir: string): void => {
+      let entries: fs.Dirent[];
+      try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
+      for (const e of entries) {
+        const full = path.join(dir, e.name);
+        if (e.isDirectory()) { walk(full); continue; }
+        const ext = path.extname(e.name).toLowerCase();
+        if (!EXTS[ext]) continue;
+        const stat = fs.statSync(full);
+        const dateMatch = e.name.match(/^(\d{4}-\d{2}-\d{2})/);
+        const topic = e.name.replace(/^\d{4}-\d{2}-\d{2}-/, '').replace(/[-_]/g, ' ').replace(/\.(md|pen|html|pdf|pptx|mp4|zip|yaml)$/, '');
+        results.push({
+          name: e.name,
+          type: EXTS[ext],
+          path: full,
+          date: dateMatch ? dateMatch[1] : new Date(stat.mtimeMs).toISOString(),
+          sizeKb: Math.round(stat.size / 1024),
+          topic,
+        });
+      }
+    };
+    walk(designsDir);
+    return results.sort((a: unknown, b: unknown) => {
+      const ad = (a as { date: string }).date;
+      const bd = (b as { date: string }).date;
+      return bd.localeCompare(ad);
+    });
+  }
+
+  private _readLatestDesignPrompt(): string | null {
+    // Check idea_init's emitted design_prompt.yaml first
+    const candidates = [
+      path.join(this._workspaceRoot, '.prism', 'shared', 'designs', 'design_prompt.yaml'),
+      path.join(os.homedir(), 'Developer', 'idea_init', 'idea_init app', 'app', 'design_prompt.yaml'),
+    ];
+    for (const c of candidates) {
+      if (fs.existsSync(c)) {
+        try { return fs.readFileSync(c, 'utf-8'); } catch { /* skip */ }
+      }
+    }
+    return null;
+  }
+
+  private _findLatestLedger(): string | null {
+    const ledgersDir = path.join(this._workspaceRoot, '.prism', 'shared', 'brainstorms');
+    if (!fs.existsSync(ledgersDir)) return null;
+    try {
+      const files = fs.readdirSync(ledgersDir)
+        .filter((f) => f.endsWith('.md'))
+        .map((f) => path.join(ledgersDir, f))
+        .sort()
+        .reverse();
+      return files[0] ?? null;
+    } catch { return null; }
   }
 
   // ---------------------------------------------------------------------------
@@ -587,7 +830,10 @@ export class PrismPanelProvider implements vscode.WebviewViewProvider {
     // 3. Push workspaces state (refresh then push)
     await this._refreshWorkspacesAll();
 
-    // 4. Office initialization (from OfficeViewProvider webviewReady handler)
+    // 4. Push design engine state
+    await this._pushDesignEngineState();
+
+    // 5. Office initialization (from OfficeViewProvider webviewReady handler)
     restoreAgents(
       this._context,
       this.nextAgentId, this.nextTerminalIndex,

@@ -9,6 +9,7 @@
     "apps/prism-vscode/webview-panel",
     "apps/prism-electron",
     "apps/prism-electron/webview-ui",
-    "apps/prism-installer"
+    "apps/prism-installer",
+    "apps/prism-design-studio"
   ]
 }

@@ -1,6 +1,6 @@
 ---
 name: prism-design
-description: Design phase that turns a brainstorm decision ledger into an architectural design — adds mermaid diagrams, interface contracts, data models, and materializes a visual layout via Pencil.dev or Claude Design (user's choice). Triggers on "design this", "create a design", "design the architecture", or after a brainstorm ledger is approved. REQUIRES a brainstorm ledger by default — flip `require_brainstorm: false` for exploratory mode.
+description: Design phase that turns a brainstorm decision ledger into an architectural design — adds mermaid diagrams, interface contracts, data models, and materializes a visual prototype via the Prism Design Engine (forked open-design). Triggers on "design this", "create a design", "design the architecture", or after a brainstorm ledger is approved. REQUIRES a brainstorm ledger by default — flip `require_brainstorm: false` for exploratory mode.
 model: opus
 effort: xhigh
 require_brainstorm: true
@@ -10,11 +10,12 @@ inputs:
   optional:
     - .prism/shared/research/
     - .prism/shared/plans/
+    - .prism/shared/designs/design_prompt.yaml
 ---
 
 # Prism Design Phase
 
-Turn an approved brainstorm decision ledger into an architectural design the planning phase can execute against. The brainstorm locked the *decisions*. This phase adds the *structure* — mermaid diagrams, interface contracts, data models — and materializes a visual layout artifact alongside a markdown sidecar.
+Turn an approved brainstorm decision ledger into an architectural design the planning phase can execute against. The brainstorm locked the *decisions*. This phase adds the *structure* — mermaid diagrams, interface contracts, data models — and renders a visual prototype via the Prism Design Engine.
 
 Brainstorm decided. Design architects. Plan executes.
 
@@ -30,49 +31,63 @@ prism-brainstorm        (DECIDES — Q1..Qn locked picks + parked concerns)
 prism-design            (YOU ARE HERE — architects on top of decisions)
        ↓ writes always
 .prism/shared/designs/<date>-<topic>-design.md    ← markdown sidecar (read by prism-plan)
-       ↓ writes one of (user's choice at Step 2.5)
-.prism/shared/designs/<date>-<topic>.pen          ← Pencil.dev layout
-.prism/shared/designs/<date>-<topic>-prompt.yaml  ← Claude Design emit
+       ↓ sends to
+Prism Design Engine     (localhost:7456 — forked TheDigitalGriot/prism-design-engine)
+       ↓ renders
+.prism/shared/designs/<date>-<topic>/             ← artifact bundle (HTML/PDF/PPTX/MP4)
        ↓ reads markdown sidecar
 prism-plan              (turns design into actionable phases)
 ```
 
 **Brainstorm is upstream of Design.** Do NOT call `/prism-brainstorm` as a sub-step.
 
+## Design Engine (Primary Path)
+
+The **Prism Design Engine** is a fork of [nexu-io/open-design](https://github.com/nexu-io/open-design) integrated as a first-class prism plugin app (`apps/prism-design-studio/`). It runs locally at `http://localhost:7456` and is launched/managed by the prism-design-studio relay at `http://localhost:7457`.
+
+- **Repo:** `TheDigitalGriot/prism-design-engine`
+- **Daemon port:** 7456 (open-design REST API + MCP server)
+- **Relay port:** 7457 (prism's sidecar bridge)
+- **Panel view:** "Design" tab in the prism VSCode panel (✦ Design)
+- **Input:** `design_prompt.yaml` (from idea_init) or structured brief built from the ledger
+- **Output:** HTML prototype, PDF, PPTX, MP4 (HyperFrames), ZIP
+- **Design system:** `griotwave` (default)
+- **Local models:** ComfyUI, Ollama, any OpenAI-compatible proxy via BYOK
+
 ## When to Use
 
 - After `/prism-brainstorm` has produced a ledger and the user is ready to architect
-- When a feature has architectural decisions that need structural elaboration
+- When a feature needs visual prototype work alongside the architectural markdown
 
-Skip when the approach is trivial and obvious from the ledger, or the user wants to go straight to `/prism-plan`.
+Skip when the approach is trivial and the ledger is sufficient for `/prism-plan` directly.
 
 ## `require_brainstorm`
 
-Default `true` — ledger is required. If no ledger exists in `.prism/shared/brainstorms/`, error and direct the user to `/prism-brainstorm` first. Set `false` for exploratory spike-style sketches before committing to a brainstorm.
+Default `true` — ledger is required. If no ledger exists in `.prism/shared/brainstorms/`, error and direct to `/prism-brainstorm` first. Set `false` for exploratory mode.
 
 ## Workflow
 
 ### 1. Load Ledger
 
-Read the most recent (or user-named) ledger from `.prism/shared/brainstorms/`. If `require_brainstorm: true` and none found — error and redirect.
+Read the most recent (or user-named) ledger from `.prism/shared/brainstorms/`. Error and redirect if `require_brainstorm: true` and none found.
 
 ### 2. Load Supporting Context
 
-Read `.prism/shared/research/` and `.prism/shared/plans/` if present. Summarize what's loaded and confirm with the user before proceeding.
+Read `.prism/shared/research/` and `.prism/shared/plans/` if present. If a `design_prompt.yaml` exists in `.prism/shared/designs/` (emitted by idea_init), read it — it carries locked decisions, design tokens, and handoff notes that enrich the brief. Summarize and confirm before proceeding.
 
-### 2.5 · Choose Visual Layout Tool
+### 3. Choose Visual Rendering Path
 
 Ask once — before architecture work begins:
 
-> "The markdown sidecar is the same either way. For the visual layout, which tool are you using?
+> "I'll use the Prism Design Engine by default (localhost:7456). Need to change this?
 >
-> **A — Pencil.dev** — `.pen` file via the Pencil MCP (automated)
-> **B — Claude Design** — `design_prompt.yaml` you paste into Claude Design (desktop app or browser)
-> **C — Neither** — Markdown sidecar only"
+> **A — Prism Design Engine** — `localhost:7456` · images, video, HTML/PPTX/MP4 · local models (ComfyUI/Ollama) · griotwave design system *(default)*
+> **B — Claude Design** — `design_prompt.yaml` pasted into `claude.ai/design` · cloud-based · manual seam
+> **C — Markdown sidecar only** — no visual artifact"
 
-Record the answer. Do not ask again. The workflow branches at Step 6.
+Default to **A**. If the user confirms, skip the question. Only ask if the user has expressed a preference.
 
-### 3. Architect
+### 4. Architect
 
 Add the structural layer the brainstorm did NOT cover:
 - Mermaid diagrams — runtime topology, state flow, sequence interactions
@@ -82,11 +97,11 @@ Add the structural layer the brainstorm did NOT cover:
 
 Do NOT re-litigate locked decisions. The picks are final. Architecture sits on top of them.
 
-### 4. Carry Deferred Concerns
+### 5. Carry Deferred Concerns
 
-Preserve ledger §2 verbatim into a "Deferred Concerns" appendix in both output files. They are first-class — not unanswered, deferred on purpose.
+Preserve ledger §2 verbatim into a "Deferred Concerns" appendix in both outputs.
 
-### 5. Materialize Markdown Sidecar
+### 6. Materialize Markdown Sidecar
 
 Save to `.prism/shared/designs/YYYY-MM-DD-<topic>-design.md`:
 
@@ -96,7 +111,8 @@ Save to `.prism/shared/designs/YYYY-MM-DD-<topic>-design.md`:
 **Date:** {date}
 **Status:** Draft
 **Ledger:** .prism/shared/brainstorms/YYYY-MM-DD-<topic>.md
-**Visual:** {.pen path | -prompt.yaml path | none}
+**Visual:** {engine artifact dir | claude-design-prompt.yaml | none}
+**Engine:** Prism Design Engine (localhost:7456) | Claude Design | none
 
 ## Locked Decisions (from ledger §1)
 ## Architecture
@@ -106,32 +122,76 @@ Save to `.prism/shared/designs/YYYY-MM-DD-<topic>-design.md`:
 ## Reference Artifacts
 ```
 
-### 6. Materialize Visual Layout
+### 7. Materialize Visual Output
 
-**If A (Pencil):** Load [references/pencil-layout.md](references/pencil-layout.md) — full MCP call sequence, §3 artifact reading protocol, and design_tokens usage.
+**If A (Prism Design Engine):**
 
-**If B (Claude Design):** Load [references/claude-design-emit.md](references/claude-design-emit.md) — full `design_prompt.yaml` schema, field mappings from the ledger, and emit instructions.
+1. Check if engine relay is running: `GET http://localhost:7457/status`
+2. If not running, instruct user: "Launch the Design Engine from the ✦ Design tab in the Prism panel, or run `npm start` in `apps/prism-design-studio/`"
+3. Build the brief from the ledger + any `design_prompt.yaml`:
+   ```json
+   {
+     "brief": "<ledger decisions + architecture as structured brief>",
+     "design_system": "griotwave",
+     "type": "prototype",
+     "source": "prism-design",
+     "ledger": "<path to .md ledger>"
+   }
+   ```
+4. `POST http://localhost:7456/api/chat` with the brief
+5. Artifacts output to `.prism/shared/designs/<date>-<topic>/`
+6. Update sidecar `**Visual:**` field with the artifact directory
 
-**If C (Neither):** Skip. Note `**Visual:** none` in the sidecar.
+**If B (Claude Design):**
+Load `references/claude-design-emit.md` — emit a `design_prompt.yaml` and instruct the user to paste it into `claude.ai/design`.
 
-### 7. Transition to Planning
+**If C (Markdown only):**
+Skip. Note `**Visual:** none` in the sidecar.
 
-After sidecar and visual file are written, offer:
+### 8. Transition to Planning
+
+After sidecar is written, offer:
 - `/prism-plan` — reads the markdown sidecar and produces an implementation plan
 
 ## Integration
 
 - **Required Input:** `.prism/shared/brainstorms/<date>-<topic>.md`
-- **Optional Input:** `.prism/shared/research/`, `.prism/shared/plans/`
+- **Optional Input:** `.prism/shared/research/`, `.prism/shared/plans/`, `.prism/shared/designs/design_prompt.yaml`
 - **Output (always):** `<date>-<topic>-design.md` — architectural prose, read by `prism-plan`
-- **Output (choice):** `<date>-<topic>.pen` (Pencil) · `<date>-<topic>-prompt.yaml` (Claude Design) · none
+- **Output (primary):** `<date>-<topic>/` artifact bundle from Prism Design Engine
+- **Output (fallback):** `<date>-<topic>-claude-design-prompt.yaml` for Claude Design path
 - **Next:** `/prism-plan`
+
+## Design Engine Installation
+
+If the engine isn't installed:
+
+```bash
+# Clone the fork
+git clone git@github.com:TheDigitalGriot/prism-design-engine.git ~/Developer/prism-design-engine
+
+# Install dependencies
+cd ~/Developer/prism-design-engine
+pnpm install
+
+# Start the daemon
+cd apps/daemon
+pnpm daemon
+# → Listening at http://localhost:7456
+```
+
+Or use the prism-design-studio relay:
+```bash
+cd apps/prism-design-studio
+npm start
+```
 
 ## Rules
 
 1. **Decisions, not implementation** — this phase produces design, not code
 2. **Ledger is locked** — do not re-litigate brainstorm picks during design
 3. **Carry parked items** — Deferred Concerns survive into both outputs verbatim
-4. **Markdown sidecar is always written** — visual file is the user's choice; never assume a tool
+4. **Markdown sidecar is always written** — visual artifact is path-dependent
 5. **Brainstorm is upstream** — do NOT call `/prism-brainstorm` as a sub-step
-6. **Exploratory mode is dormant-but-tested** — default stays REQUIRED
+6. **Default to Prism Design Engine** — ask only if the user has expressed a path preference
+7. **design_prompt.yaml enriches the brief** — if idea_init emitted one, use it

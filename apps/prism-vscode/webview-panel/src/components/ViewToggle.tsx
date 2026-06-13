@@ -1,9 +1,15 @@
 import React from 'react'
 
 interface ViewToggleProps {
-  activeView: 'monitor' | 'office'
-  onToggle: (view: 'monitor' | 'office') => void
+  activeView: 'monitor' | 'office' | 'design'
+  onToggle: (view: 'monitor' | 'office' | 'design') => void
   activeAgentCount?: number
+}
+
+const VIEW_META: Record<'monitor' | 'office' | 'design', { icon: string; label: string }> = {
+  monitor: { icon: '◈', label: 'Monitor' },
+  office:  { icon: '⌂', label: 'Office' },
+  design:  { icon: '✦', label: 'Design' },
 }
 
 export function ViewToggle({ activeView, onToggle, activeAgentCount = 0 }: ViewToggleProps): React.ReactElement {
@@ -32,8 +38,9 @@ export function ViewToggle({ activeView, onToggle, activeAgentCount = 0 }: ViewT
       >
         View
       </span>
-      {(['monitor', 'office'] as const).map((view) => {
+      {(['monitor', 'office', 'design'] as const).map((view) => {
         const isActive = activeView === view
+        const meta = VIEW_META[view]
         return (
           <button
             key={view}
@@ -54,12 +61,12 @@ export function ViewToggle({ activeView, onToggle, activeAgentCount = 0 }: ViewT
               gap: 5,
             }}
           >
-            <span style={{ fontSize: 12 }}>{view === 'monitor' ? '◈' : '⌂'}</span>
-            {view === 'monitor' ? 'Monitor' : 'Office'}
+            <span style={{ fontSize: 12 }}>{meta.icon}</span>
+            {meta.label}
           </button>
         )
       })}
-      {activeView === 'office' && activeAgentCount > 0 && (
+      {(activeView === 'office' || activeView === 'design') && activeAgentCount > 0 && (
         <div
           style={{
             marginLeft: 'auto',
