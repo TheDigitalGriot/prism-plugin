@@ -18,6 +18,7 @@ import { getApiKey, setApiKey, deleteApiKey, isValidApiKey } from '@prism-core/c
 import { ElectronPrismController } from './ElectronPrismController'
 import { ElectronOfficeProvider } from '../../office/ElectronOfficeProvider'
 import { ElectronSecretStorage } from '../../auth/ElectronSecretStorage'
+import type { DaemonManager, DaemonStatus } from '../../daemon/daemon-manager'
 
 // ---------------------------------------------------------------------------
 // File tree helper
@@ -72,8 +73,13 @@ export class ElectronIPCBridge {
   private _currentProjectDir: string | undefined
   /** AbortControllers for in-flight quality gate executions, keyed by command string. */
   private _gateAbortControllers: Map<string, AbortController> = new Map()
+  /** Bound listener forwarding daemon status to the renderer (removed on dispose). */
+  private _onDaemonStatus: (s: DaemonStatus) => void
 
-  constructor(private mainWindow: BrowserWindow) {
+  constructor(
+    private mainWindow: BrowserWindow,
+    private _daemonManager: DaemonManager,
+  ) {
     this.controller = new ElectronPrismController()
     this._secretStorage = new ElectronSecretStorage()
     this.controller.setPostMessageFn(async (msg) => {
@@ -109,6 +115,14 @@ export class ElectronIPCBridge {
         mainWindow.webContents.send('prism:fileChange', data)
       }
     })
+
+    // Forward broker daemon status to the renderer (status dot in the shell).
+    this._onDaemonStatus = (s: DaemonStatus) => {
+      if (!mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('daemon:statusChange', s)
+      }
+    }
+    this._daemonManager.on('statusChange', this._onDaemonStatus)
 
     this._registerHandlers()
   }
@@ -146,6 +160,12 @@ export class ElectronIPCBridge {
     ipcMain.handle('grpc_request_cancel', (_event, payload: { request_id: string }) => {
       this.controller.removeSubscriber(payload.request_id)
     })
+
+    // ── Daemon broker supervisor ─────────────────────────────────────────────
+    ipcMain.handle('daemon:status', () => this._daemonManager.getStatus())
+    ipcMain.handle('daemon:start', () => this._daemonManager.start())
+    ipcMain.handle('daemon:stop', () => this._daemonManager.stop())
+    ipcMain.handle('daemon:restart', () => this._daemonManager.restart())
 
     // Open an external URL in the default browser
     ipcMain.handle('shell:openExternal', async (_event, url: string) => {
@@ -478,6 +498,11 @@ export class ElectronIPCBridge {
   dispose(): void {
     ipcMain.removeHandler('grpc_request')
     ipcMain.removeHandler('grpc_request_cancel')
+    ipcMain.removeHandler('daemon:status')
+    ipcMain.removeHandler('daemon:start')
+    ipcMain.removeHandler('daemon:stop')
+    ipcMain.removeHandler('daemon:restart')
+    this._daemonManager.off('statusChange', this._onDaemonStatus)
     ipcMain.removeHandler('prism:openProject')
     ipcMain.removeHandler('shell:openExternal')
     ipcMain.removeHandler('prism:readFile')

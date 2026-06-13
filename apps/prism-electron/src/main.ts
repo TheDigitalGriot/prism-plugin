@@ -1,14 +1,48 @@
-import { app, BrowserWindow, Menu } from 'electron';
+import { app, BrowserWindow, Menu, utilityProcess } from 'electron';
 import path from 'node:path';
 import * as fs from 'node:fs';
 import started from 'electron-squirrel-startup';
 import { ElectronIPCBridge } from './hosts/electron/ElectronIPCBridge';
 import { loadWindowState, saveWindowState } from './window-state';
+import { DaemonManager, type ForkedChild } from './daemon/daemon-manager';
+import {
+  resolveDaemonDist,
+  resolveBrokerEntry,
+  resolveConfigPath,
+  readExpectedVersion,
+} from './daemon/runtime-paths';
 
 // Handle Squirrel install/uninstall on Windows
 if (started) app.quit();
 
 let bridge: ElectronIPCBridge | null = null;
+let daemonManager: DaemonManager | null = null;
+let isQuitting = false;
+
+/** App-global broker supervisor (one daemon for all windows). Lazily constructed. */
+function getDaemonManager(): DaemonManager {
+  if (daemonManager) return daemonManager;
+  const daemonDist = resolveDaemonDist({
+    isPackaged: app.isPackaged,
+    resourcesPath: process.resourcesPath,
+    appRoot: app.getAppPath(),
+  });
+  daemonManager = new DaemonManager({
+    // Electron's built-in Node child — no external node needed.
+    fork: (entry, _args, opts) => {
+      const env: Record<string, string> = {};
+      for (const [k, v] of Object.entries(opts.env)) if (v !== undefined) env[k] = v;
+      return utilityProcess.fork(entry, [], { env, serviceName: 'prism-daemon' }) as unknown as ForkedChild;
+    },
+    fetchFn: (input, init) => fetch(input, init),
+    brokerEntry: resolveBrokerEntry(daemonDist),
+    configPath: resolveConfigPath(daemonDist),
+    port: Number(process.env.PRISM_DAEMON_PORT ?? 6780),
+    expectedVersion: readExpectedVersion(daemonDist),
+    log: (msg, ...rest) => console.log('[prism-daemon]', msg, ...rest),
+  });
+  return daemonManager;
+}
 
 function createWindow() {
   // Restore last window bounds (falls back to 1200×800 if no saved state)
@@ -26,8 +60,8 @@ function createWindow() {
     },
   });
 
-  // Wire Prism controller to this window
-  bridge = new ElectronIPCBridge(mainWindow);
+  // Wire Prism controller + daemon supervisor to this window
+  bridge = new ElectronIPCBridge(mainWindow, getDaemonManager());
 
   // Restore last project or open from CLI argument
   // Packaged: argv[0] = exe path, user args start at 1
@@ -96,7 +130,24 @@ function createWindow() {
   );
 }
 
-app.on('ready', createWindow);
+app.on('ready', () => {
+  // Eager start: the broker is the shared spine. Crash-restart + health loop
+  // (inside DaemonManager) handle resilience.
+  void getDaemonManager().start();
+  createWindow();
+});
+
+// Kill the broker on quit — but only the one WE started (adopted brokers are
+// left alive). stop() is synchronous, so no async quit dance is needed.
+app.on('before-quit', (event) => {
+  if (isQuitting || !daemonManager) return;
+  const status = daemonManager.getStatus();
+  if (status.adopted || status.status === 'stopped') return;
+  event.preventDefault();
+  isQuitting = true;
+  daemonManager.stop();
+  app.quit();
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {

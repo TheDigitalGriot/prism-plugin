@@ -45,6 +45,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
   officeAction: (msg: unknown) => {
     ipcRenderer.send('office:action', msg);
   },
+
+  // ── Daemon broker supervisor ───────────────────────────────────────────────
+
+  /** Current broker daemon status (one-shot). */
+  daemonStatus: () => ipcRenderer.invoke('daemon:status'),
+
+  /** Subscribe to broker daemon status changes. Returns an unsubscribe function. */
+  onDaemonStatus: (cb: (status: unknown) => void) => {
+    const wrapped = (_: Electron.IpcRendererEvent, status: unknown) => cb(status);
+    ipcRenderer.on('daemon:statusChange', wrapped);
+    return () => ipcRenderer.removeListener('daemon:statusChange', wrapped);
+  },
 });
 
 // Extend Window type for TypeScript
@@ -56,6 +68,8 @@ declare global {
       invoke: (channel: string, data?: unknown) => Promise<unknown>;
       officeMessage: (callback: (msg: unknown) => void) => () => void;
       officeAction: (msg: unknown) => void;
+      daemonStatus: () => Promise<unknown>;
+      onDaemonStatus: (cb: (status: unknown) => void) => () => void;
       // Auth channels (Phase 19) — via invoke('prism:getApiKey') etc.
     };
   }
