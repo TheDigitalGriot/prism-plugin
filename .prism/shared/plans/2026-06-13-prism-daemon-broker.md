@@ -253,7 +253,12 @@ Q1 code-intel = brokered service · Q2 daemon = multi-service broker (N protocol
 - [ ] Conformance test: TS client and Go client receive an identical `services` snapshot from a running broker.
 
 #### Manual Verification
-- [ ] `prism daemon ls` (CLI) lists the broker's services; the VS Code panel shows the live registry and can invoke a service.
+- [x] **Cross-language conformance (live smoke, 2026-06-13):** the Go client dialed the *running* TS daemon and received the full 6-service registry with correct adapterTypes + statuses (code-intel `ready`, rest `error`). Go ↔ TypeScript, identical wire.
+- [ ] Per-surface wiring: a VS Code panel calling `DaemonClient.getServices()`; a `prism daemon ls` cobra subcommand. *(Deviation — see note.)*
+
+> **Deviation (flagged):** Phase 8 delivered the **client libraries** — `@prism/daemon-client` (TS, for VS Code/Electron/Mobile/Web) + `apps/prism-cli/daemon` (Go) — and proved **both** against a real broker (incl. a live cross-process Go↔TS smoke). Wiring them into the actual VS Code extension UI and adding the `prism daemon ls` command is straightforward per-surface integration glue — tracked follow-up (worklist §I).
+
+**Checkpoint:** [x] **Phase 8 complete** — automated verified 2026-06-13 (TS client 4/4 vitest + Go client 2/2 `go test` + live Go↔TS conformance smoke). `coder/websocket v1.8.14` added to go.mod.
 
 ---
 

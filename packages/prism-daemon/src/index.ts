@@ -9,6 +9,11 @@ import { Broker } from "./broker";
 import { Registry } from "./registry";
 import type { ServiceDescriptor } from "./protocol";
 
+// Public surface of the daemon package (used by tooling, tests, and conformance checks).
+export { Broker, BROKER_VERSION } from "./broker";
+export { Registry } from "./registry";
+export * from "./protocol";
+
 const HOST = process.env.PRISM_DAEMON_HOST ?? "127.0.0.1";
 const PORT = Number(process.env.PRISM_DAEMON_PORT ?? 6780);
 const CONFIG_PATH = join(__dirname, "..", "services.config.json");

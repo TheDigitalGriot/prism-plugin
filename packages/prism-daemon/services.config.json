@@ -1,7 +1,7 @@
 [
   {
     "id": "agent-run",
-    "name": "Agent Orchestration (paseo)",
+    "name": "Agent Orchestration (Prism agent daemon, paseo-derived)",
     "adapterType": "websocket",
     "endpoint": { "local": "ws://127.0.0.1:6767" },
     "healthProbe": "hello"
