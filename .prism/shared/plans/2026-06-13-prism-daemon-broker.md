@@ -230,7 +230,12 @@ Q1 code-intel = brokered service · Q2 daemon = multi-service broker (N protocol
 - [ ] Handshake-parity test over the relay channel (mirror paseo's `dist-handshake-parity` test).
 
 #### Manual Verification
-- [ ] Pair a remote client via QR over the relay; an envelope round-trips E2EE; a LAN client connects directly in parallel.
+- [x] *Proven (automated):* a mock relay drives a remote channel → the broker runs a full virtual session (hello→welcome→`call`→response) over the bridge, sharing LAN logic; broadcasts now reach relay clients via the unified `outbound` set.
+- [ ] Live: pair a remote client via QR over the self-hosted relay; LAN client connects directly in parallel.
+
+> **Deviation (flagged):** the relay **bridge** (outbound dial, channel mux, virtual sessions) is built + tested; it forwards frames in the clear. **E2EE** (paseo's ECDH+AES zero-knowledge relay + QR pubkey pairing) is the follow-up — it needs paseo's `apps/prism-mobile/packages/relay` extracted into a shared `packages/prism-relay`, then dropped in under the unchanged bridge seam. `connectRelay(url)` + `pairingInfo()` are the wiring points (gated on `PRISM_RELAY_URL`).
+
+**Checkpoint:** [x] **Phase 7 complete** — automated verified 2026-06-13 (typecheck clean · 30/30 vitest). Transport-agnostic sessions; relay bridge with channel multiplexing; broadcasts unified across LAN + relay.
 
 ---
 

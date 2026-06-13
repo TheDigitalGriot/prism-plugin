@@ -64,6 +64,16 @@ async function main(): Promise<void> {
   broker.startHealthLoop();
   console.log(`[prism-daemon] control plane: POST /register · POST /deregister · GET /services`);
 
+  const relayUrl = process.env.PRISM_RELAY_URL;
+  if (relayUrl) {
+    try {
+      await broker.connectRelay(relayUrl);
+      console.log(`[prism-daemon] relay connected: ${relayUrl}`);
+    } catch (err) {
+      console.warn(`[prism-daemon] relay connect failed (${relayUrl}):`, err instanceof Error ? err.message : err);
+    }
+  }
+
   const shutdown = () => {
     void broker.close().then(() => process.exit(0));
   };

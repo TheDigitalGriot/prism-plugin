@@ -15,6 +15,7 @@ import { Router } from "./router";
 import { Session } from "./session";
 import { createAdapter, type Adapter } from "./adapters";
 import { resolveEndpoint, type ResolveOptions } from "./resolve";
+import { RelayClient } from "./relay";
 import {
   errorResponse,
   isEnvelope,
@@ -70,7 +71,10 @@ export class Broker {
   private readonly http: Server;
   private readonly wss: WebSocketServer;
   private readonly sessions = new Map<string, Session>();
+  /** Every connected client's send sink (LAN ws + relay channels) — broadcast target. */
+  private readonly outbound = new Set<(obj: unknown) => void>();
   private healthTimer?: NodeJS.Timeout;
+  private relay?: RelayClient;
 
   constructor(opts: BrokerOptions = {}) {
     this.registry = opts.registry ?? new Registry();
@@ -235,10 +239,7 @@ export class Broker {
   }
 
   private broadcast(msg: unknown): void {
-    const data = JSON.stringify(msg);
-    for (const client of this.wss.clients) {
-      if (client.readyState === client.OPEN) client.send(data);
-    }
+    for (const send of this.outbound) send(msg);
   }
 
   // ── Health loop (Phase 9) ────────────────────────────────────────────────────
@@ -273,45 +274,67 @@ export class Broker {
     this.healthTimer.unref();
   }
 
-  private onConnection(ws: WebSocket): void {
+  /**
+   * Transport-agnostic per-client session logic, driven by a `send` sink. Used by
+   * both the direct WS path (onConnection) and relay-bridged channels.
+   */
+  private createSessionHandler(send: (obj: unknown) => void): { feed: (text: string) => void; dispose: () => void } {
+    this.outbound.add(send);
     let session: Session | undefined;
-    const send = (obj: unknown): void => {
-      if (ws.readyState === ws.OPEN) ws.send(JSON.stringify(obj));
-    };
 
-    ws.on("message", (data: RawData) => {
+    const feed = (text: string): void => {
       let msg: unknown;
       try {
-        msg = JSON.parse(data.toString());
+        msg = JSON.parse(text);
       } catch {
         return;
       }
-
       if (!session) {
         if (isHello(msg)) {
           session = new Session(randomUUID(), msg.clientId, msg.version, msg.caps ?? []);
           this.sessions.set(session.sessionId, session);
-          const welcome: WSWelcome = {
+          send({
             type: "welcome",
             brokerVersion: BROKER_VERSION,
             sessionId: session.sessionId,
             services: this.registry.snapshot(),
             capabilities: [],
-          };
-          send(welcome);
+          } satisfies WSWelcome);
         }
         return;
       }
-
       if (isEnvelope(msg)) {
         if (msg.stream) void this.handleStream(send, msg);
         else void this.router.route(msg).then(send);
       }
-    });
+    };
 
-    ws.on("close", () => {
+    const dispose = (): void => {
+      this.outbound.delete(send);
       if (session) this.sessions.delete(session.sessionId);
-    });
+    };
+
+    return { feed, dispose };
+  }
+
+  private onConnection(ws: WebSocket): void {
+    const send = (obj: unknown): void => {
+      if (ws.readyState === ws.OPEN) ws.send(JSON.stringify(obj));
+    };
+    const handler = this.createSessionHandler(send);
+    ws.on("message", (data: RawData) => handler.feed(data.toString()));
+    ws.on("close", () => handler.dispose());
+  }
+
+  /** Dial the self-hosted relay so remote clients can reach this broker (no inbound port). */
+  async connectRelay(url: string): Promise<void> {
+    this.relay = new RelayClient({ url, onChannel: (send) => this.createSessionHandler(send) });
+    await this.relay.connect();
+  }
+
+  /** QR-encodable pairing payload. NOTE: E2EE pubkey pairing (paseo's relay) is a follow-up. */
+  pairingInfo(relayUrl: string): { relayUrl: string; token: string } {
+    return { relayUrl, token: randomUUID() };
   }
 
   private async handleStream(send: (obj: unknown) => void, env: BrokerEnvelope): Promise<void> {
@@ -353,6 +376,9 @@ export class Broker {
       clearInterval(this.healthTimer);
       this.healthTimer = undefined;
     }
+    this.relay?.close();
+    this.relay = undefined;
+    this.outbound.clear();
     await this.router.disconnectAll();
     for (const client of this.wss.clients) client.terminate();
     await new Promise<void>((resolve) => this.wss.close(() => resolve()));
