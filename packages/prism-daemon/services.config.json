@@ -30,9 +30,10 @@
   {
     "id": "knowledge",
     "name": "Knowledge / STORE (Graphify → Synaptiq)",
-    "adapterType": "flask-http",
-    "endpoint": { "local": "http://127.0.0.1:7510" },
-    "healthProbe": "GET /skills"
+    "adapterType": "stdio-mcp",
+    "endpoint": {},
+    "spawnCmd": "graphify-mcp",
+    "healthProbe": "tools/list"
   },
   {
     "id": "3d-gen",
