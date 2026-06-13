@@ -21,6 +21,27 @@ type StreamHandlerFn = (
 const _unaryRegistry = new Map<string, UnaryHandlerFn>()
 const _streamRegistry = new Map<string, StreamHandlerFn>()
 
+/**
+ * Seam bridge — a forwarder for `service.method` keys with no local handler.
+ * The host (Electron main / VS Code extension) injects one that reaches the
+ * daemon broker, so the renderer's existing gRPC client transparently calls
+ * brokered services (code-intel, design-gen, …) over the same envelope.
+ *
+ * Returns true when it handled the request (sent its own response via `respond`),
+ * false to decline (fall through to the local "unknown handler" path).
+ */
+export type BrokerForwarder = (
+  request: { service: string; method: string; message: unknown; request_id: string; is_streaming: boolean },
+  respond: StreamResponseFn,
+) => Promise<boolean>
+
+let _brokerForwarder: BrokerForwarder | null = null
+
+/** Install (or clear, with null) the broker forwarder used for unhandled keys. */
+export function registerBrokerForwarder(fn: BrokerForwarder | null): void {
+  _brokerForwarder = fn
+}
+
 /** Register a unary (request-response) handler. */
 export function registerUnary(service: string, method: string, fn: UnaryHandlerFn): void {
   _unaryRegistry.set(`${service}.${method}`, fn)
@@ -31,7 +52,7 @@ export function registerStream(service: string, method: string, fn: StreamHandle
   _streamRegistry.set(`${service}.${method}`, fn)
 }
 
-/** Remove all handlers (useful for test cleanup). */
+/** Remove all handlers (useful for test cleanup). Does not touch the broker forwarder. */
 export function clearHandlers(): void {
   _unaryRegistry.clear()
   _streamRegistry.clear()
@@ -65,6 +86,22 @@ export async function handleGrpcRequest(
         is_streaming: !isLast,
       },
     })
+  }
+
+  // Seam bridge: keys with no local handler may belong to a brokered service.
+  const hasLocal = is_streaming ? _streamRegistry.has(key) : _unaryRegistry.has(key)
+  if (!hasLocal && _brokerForwarder) {
+    try {
+      const handled = await _brokerForwarder({ service, method, message, request_id, is_streaming }, respond)
+      if (handled) return
+    } catch (err) {
+      console.error(`[Prism] broker forwarder error for ${key}:`, err)
+      await postMessage({
+        type: "grpc_response",
+        grpc_response: { error: `broker forward failed: ${String(err)}`, request_id, is_streaming: false },
+      })
+      return
+    }
   }
 
   if (is_streaming) {

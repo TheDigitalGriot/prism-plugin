@@ -8,7 +8,7 @@
 import * as path from 'path'
 import * as fs from 'fs'
 import { BrowserWindow, app, ipcMain, dialog, shell } from 'electron'
-import { handleGrpcRequest } from '@prism-core/core/controller/grpc-handler'
+import { handleGrpcRequest, registerBrokerForwarder } from '@prism-core/core/controller/grpc-handler'
 import { discoverProjects, addToGlobalWorkspaces, listWorktrees } from '@prism-core/workspace/discovery'
 import { createWorktree, deleteWorktree } from '@prism-core/workspace/worktrees'
 import { executeGate } from '@prism-core/workspace/qualityGates'
@@ -124,7 +124,44 @@ export class ElectronIPCBridge {
     }
     this._daemonManager.on('statusChange', this._onDaemonStatus)
 
+    // Seam bridge: route gRPC calls for brokered services to the daemon broker,
+    // so the renderer's existing grpc client reaches code-intel/design-gen/etc.
+    this._registerBrokerForwarder()
+
     this._registerHandlers()
+  }
+
+  /** Services the daemon broker owns — gRPC calls for these forward to it. */
+  private static readonly BROKER_SERVICES = new Set([
+    'agent-run', 'code-intel', 'design-gen', 'knowledge', '3d-gen', 'cinopsis', 'notebooks',
+  ])
+
+  private _registerBrokerForwarder(): void {
+    registerBrokerForwarder(async (req, respond) => {
+      if (!ElectronIPCBridge.BROKER_SERVICES.has(req.service)) return false // not ours
+      // Unary only for now; decline streaming so the local path reports it.
+      if (req.is_streaming) return false
+
+      const status = this._daemonManager.getStatus()
+      if (status.status !== 'running') {
+        await respond({ error: `daemon not running (${status.status})` }, true)
+        return true
+      }
+
+      try {
+        const res = await fetch(`http://127.0.0.1:${status.port}/call`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ service: req.service, method: req.method, payload: req.message }),
+        })
+        const json = (await res.json()) as { ok: boolean; result?: unknown; error?: string }
+        if (json.ok) await respond(json.result, true)
+        else await respond({ error: json.error ?? 'broker call failed' }, true)
+      } catch (err) {
+        await respond({ error: `broker unreachable: ${String(err)}` }, true)
+      }
+      return true
+    })
   }
 
   /** The currently open project directory (undefined if no project opened). */
@@ -503,6 +540,7 @@ export class ElectronIPCBridge {
     ipcMain.removeHandler('daemon:stop')
     ipcMain.removeHandler('daemon:restart')
     this._daemonManager.off('statusChange', this._onDaemonStatus)
+    registerBrokerForwarder(null)
     ipcMain.removeHandler('prism:openProject')
     ipcMain.removeHandler('shell:openExternal')
     ipcMain.removeHandler('prism:readFile')
