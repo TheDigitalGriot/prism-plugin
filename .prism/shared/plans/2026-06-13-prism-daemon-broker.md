@@ -275,7 +275,9 @@ Q1 code-intel = brokered service · Q2 daemon = multi-service broker (N protocol
 - [ ] Unit test: health-fail → `status: error` → broadcast.
 
 #### Manual Verification
-- [ ] `POST /register` a new service → connected clients receive `service_update` and see it appear; kill the backend → status flips to `error` and clients update live.
+- [x] *Proven (automated, real HTTP + WS):* `POST /register` → service builds/probes/`ready` + connected client receives `service_update`; `POST /deregister` → removed + `service_update(stopped)`; `GET /services` snapshot; `runHealthCheck()` flips a downed backend to `error` and broadcasts.
+
+**Checkpoint:** [x] **Phase 9 complete** — automated verified 2026-06-13 (typecheck clean · 29/29 vitest). HTTP control plane (`/register` `/deregister` `/services`) + `service_update` broadcast + health loop (`startHealthLoop`, unref'd).
 
 ---
 

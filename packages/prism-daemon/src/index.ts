@@ -56,6 +56,9 @@ async function main(): Promise<void> {
   const ready = registry.snapshot().filter((s) => s.status === "ready").map((s) => s.id);
   console.log(`[prism-daemon] ready services: ${ready.length > 0 ? ready.join(", ") : "(none reachable yet)"}`);
 
+  broker.startHealthLoop();
+  console.log(`[prism-daemon] control plane: POST /register · POST /deregister · GET /services`);
+
   const shutdown = () => {
     void broker.close().then(() => process.exit(0));
   };

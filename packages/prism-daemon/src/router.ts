@@ -21,6 +21,10 @@ export class Router {
     return this.adapters.get(id);
   }
 
+  removeAdapter(id: ServiceId): void {
+    this.adapters.delete(id);
+  }
+
   async route(env: BrokerEnvelope): Promise<BrokerResponse> {
     const desc = this.registry.get(env.service);
     if (!desc) {

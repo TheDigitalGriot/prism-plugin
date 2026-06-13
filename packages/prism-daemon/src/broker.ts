@@ -6,14 +6,14 @@
  *
  * Spec: .prism/shared/designs/2026-06-12-daemon-broker-design.md (§2, §3, §5)
  */
-import { createServer, type Server } from "node:http";
+import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { randomUUID } from "node:crypto";
 import type { AddressInfo } from "node:net";
 import { WebSocketServer, type WebSocket, type RawData } from "ws";
 import { Registry } from "./registry";
 import { Router } from "./router";
 import { Session } from "./session";
-import { createAdapter } from "./adapters";
+import { createAdapter, type Adapter } from "./adapters";
 import { resolveEndpoint, type ResolveOptions } from "./resolve";
 import {
   errorResponse,
@@ -22,7 +22,9 @@ import {
   okResponse,
   type BrokerEnvelope,
   type ServiceDescriptor,
+  type ServiceId,
   type ServiceStreamMessage,
+  type ServiceUpdate,
   type WSWelcome,
 } from "./protocol";
 
@@ -32,18 +34,49 @@ export interface BrokerOptions {
   registry?: Registry;
 }
 
+export interface RegisterInput {
+  id: string;
+  name?: string;
+  adapterType: ServiceDescriptor["adapterType"];
+  endpoint?: ServiceDescriptor["endpoint"];
+  capabilities?: ServiceDescriptor["capabilities"];
+  healthProbe?: string;
+  gate?: ServiceDescriptor["gate"];
+  spawnCmd?: string;
+}
+
+function readJsonBody(req: IncomingMessage): Promise<unknown> {
+  return new Promise((resolve, reject) => {
+    let body = "";
+    req.on("data", (c: Buffer) => (body += c.toString()));
+    req.on("end", () => {
+      if (!body) {
+        resolve({});
+        return;
+      }
+      try {
+        resolve(JSON.parse(body));
+      } catch (err) {
+        reject(err as Error);
+      }
+    });
+    req.on("error", reject);
+  });
+}
+
 export class Broker {
   readonly registry: Registry;
   private readonly router: Router;
   private readonly http: Server;
   private readonly wss: WebSocketServer;
   private readonly sessions = new Map<string, Session>();
+  private healthTimer?: NodeJS.Timeout;
 
   constructor(opts: BrokerOptions = {}) {
     this.registry = opts.registry ?? new Registry();
     this.router = new Router(this.registry);
     this.wireAdapters();
-    this.http = createServer();
+    this.http = createServer((req, res) => void this.handleHttp(req, res));
     this.wss = new WebSocketServer({ server: this.http });
     this.wss.on("connection", (ws) => this.onConnection(ws));
   }
@@ -103,6 +136,141 @@ export class Broker {
     stored.status = probe.ok ? "ready" : "error";
     if (probe.manifest && probe.manifest.length > 0) stored.capabilities = probe.manifest;
     stored.lastProbe = { at: Date.now(), ok: probe.ok, latencyMs: probe.latencyMs, via };
+  }
+
+  // ── Dynamic registration (Phase 9) ──────────────────────────────────────────
+
+  /** HTTP control plane: POST /register, POST /deregister, GET /services. */
+  private async handleHttp(req: IncomingMessage, res: ServerResponse): Promise<void> {
+    const send = (status: number, body: unknown): void => {
+      res.writeHead(status, { "content-type": "application/json" });
+      res.end(JSON.stringify(body));
+    };
+    try {
+      const url = req.url ?? "/";
+      if (req.method === "GET" && url === "/services") {
+        send(200, this.registry.snapshot());
+        return;
+      }
+      if (req.method === "POST" && url === "/register") {
+        const body = (await readJsonBody(req)) as RegisterInput;
+        if (!body.id || !body.adapterType) {
+          send(400, { ok: false, error: "register requires { id, adapterType }" });
+          return;
+        }
+        const desc = await this.register(body);
+        send(200, { ok: true, id: desc.id, status: desc.status });
+        return;
+      }
+      if (req.method === "POST" && url === "/deregister") {
+        const body = (await readJsonBody(req)) as { id?: string };
+        if (!body.id) {
+          send(400, { ok: false, error: "deregister requires { id }" });
+          return;
+        }
+        const removed = await this.deregister(body.id);
+        send(200, { ok: removed });
+        return;
+      }
+      send(404, { ok: false, error: "not found" });
+    } catch (err) {
+      send(400, { ok: false, error: err instanceof Error ? err.message : String(err) });
+    }
+  }
+
+  /** Register (or replace) a service at runtime: build adapter → probe → broadcast. */
+  async register(input: RegisterInput): Promise<ServiceDescriptor> {
+    const desc: ServiceDescriptor = {
+      id: input.id,
+      name: input.name ?? input.id,
+      status: "starting",
+      adapterType: input.adapterType,
+      endpoint: input.endpoint ?? {},
+      capabilities: input.capabilities ?? [],
+      healthProbe: input.healthProbe ?? "",
+      gate: input.gate,
+      spawnCmd: input.spawnCmd,
+    };
+    this.registry.upsert(desc);
+    let adapter: Adapter;
+    try {
+      adapter = createAdapter(desc);
+    } catch (err) {
+      this.registry.setStatus(desc.id, "error");
+      this.broadcastServiceUpdate(desc.id);
+      throw err;
+    }
+    this.router.setAdapter(desc.id, adapter);
+    const probe = await adapter.probe();
+    const stored = this.registry.get(desc.id);
+    if (stored) {
+      stored.status = probe.ok ? "ready" : "error";
+      if (probe.manifest && probe.manifest.length > 0) stored.capabilities = probe.manifest;
+      stored.lastProbe = { at: Date.now(), ok: probe.ok, latencyMs: probe.latencyMs, via: "local" };
+    }
+    this.broadcastServiceUpdate(desc.id);
+    return this.registry.get(desc.id) ?? desc;
+  }
+
+  async deregister(id: ServiceId): Promise<boolean> {
+    const adapter = this.router.adapterFor(id);
+    if (adapter) await adapter.disconnect().catch(() => undefined);
+    this.router.removeAdapter(id);
+    const existed = this.registry.remove(id);
+    if (existed) {
+      this.broadcast({ type: "service_update", service: id, status: "stopped" } satisfies ServiceUpdate);
+    }
+    return existed;
+  }
+
+  private broadcastServiceUpdate(id: ServiceId): void {
+    const desc = this.registry.get(id);
+    if (!desc) return;
+    this.broadcast({
+      type: "service_update",
+      service: id,
+      status: desc.status,
+      capabilities: desc.capabilities,
+    } satisfies ServiceUpdate);
+  }
+
+  private broadcast(msg: unknown): void {
+    const data = JSON.stringify(msg);
+    for (const client of this.wss.clients) {
+      if (client.readyState === client.OPEN) client.send(data);
+    }
+  }
+
+  // ── Health loop (Phase 9) ────────────────────────────────────────────────────
+
+  /** Probe every service once; on a status change, broadcast a service_update. */
+  async runHealthCheck(): Promise<void> {
+    await Promise.all(
+      this.registry.snapshot().map(async (desc) => {
+        const adapter = this.router.adapterFor(desc.id);
+        if (!adapter) return;
+        const probe = await adapter.probe();
+        const stored = this.registry.get(desc.id);
+        if (!stored) return;
+        const next = probe.ok ? "ready" : "error";
+        if (stored.status !== next) {
+          stored.status = next;
+          stored.lastProbe = {
+            at: Date.now(),
+            ok: probe.ok,
+            latencyMs: probe.latencyMs,
+            via: stored.lastProbe?.via ?? "local",
+          };
+          this.broadcastServiceUpdate(desc.id);
+        }
+      }),
+    );
+  }
+
+  startHealthLoop(intervalMs = 15_000): void {
+    if (this.healthTimer) return;
+    this.healthTimer = setInterval(() => void this.runHealthCheck(), intervalMs);
+    this.healthTimer.unref();
   }
 
   private onConnection(ws: WebSocket): void {
@@ -181,6 +349,10 @@ export class Broker {
   }
 
   async close(): Promise<void> {
+    if (this.healthTimer) {
+      clearInterval(this.healthTimer);
+      this.healthTimer = undefined;
+    }
     await this.router.disconnectAll();
     for (const client of this.wss.clients) client.terminate();
     await new Promise<void>((resolve) => this.wss.close(() => resolve()));
