@@ -152,6 +152,9 @@ Keyboard controls:
 	rootCmd.Flags().StringVar(&prismStyle, "prism-style", "gradient", "Prism animation style: gradient|simple|braille|ascii")
 	rootCmd.Flags().BoolVar(&uninstallMode, "uninstall", false, "Remove prism-cli binary, PATH entries, and global ~/.prism/ directory")
 
+	// Subcommands (the bare `prism-cli` still launches the TUI via RunE above).
+	rootCmd.AddCommand(newDaemonCommand())
+
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}
