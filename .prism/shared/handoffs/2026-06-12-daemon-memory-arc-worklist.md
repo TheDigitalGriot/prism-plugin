@@ -10,6 +10,7 @@
 | Donor (upstream) | License | Our fork / home | Role in spine | Sync status |
 |---|---|---|---|---|
 | paseo (`getpaseo/paseo`) | AGPL-3.0 | `apps/prism-mobile` (vendored v0.1.69) | agent-run service + mobile surface | +584 commits behind; v0.1.95 refresh plan ready |
+| paseo relay (from `getpaseo/paseo`) | AGPL-3.0 | **`packages/prism-relay`** (`@prism/relay`, extracted 2026-06-13) | E2EE relay (ECDH + NaCl box) under `connectRelay()` | sovereign workspace pkg; 4/4 crypto tests |
 | open-design (`nexu-io/open-design`) | Apache-2.0 | `TheDigitalGriot/prism-design-engine` + `apps/prism-design-studio` relay (:7457→:7456) | design-gen service | forked ~2026-06-08; upstream active |
 | Graphify (`safishamsi/graphify`) | **MIT** ✅ | `TheDigitalGriot/graphify` (**TO FORK**) | knowledge/STORE engine (→ Synaptiq) | not yet forked; upstream ~1 release/day — **watch closely** |
 | codebase-memory-mcp | binary on PATH | not forked (yet) | code-intel service | working on Windows |
@@ -56,11 +57,15 @@
 - Commit the brainstorm ledger + this worklist (on `feat/prism-mobile-surface` or a fresh branch) when ready.
 - Reconnect with idea_init to close the loop.
 
-## I · Implementation follow-ups (from the build, 2026-06-13)
-- **paseo-dialect for agent-run** — `WebSocketAdapter` speaks the broker's clean generic dialect; the live paseo daemon (`:6767`) needs a thin translation (per-service relay, like design-studio `:7457`). Phases 1-2 done + tested against a mock; this is what makes agent-run talk to the *real* paseo.
-- **ALL 9 PHASES DONE** of `.prism/shared/plans/2026-06-13-prism-daemon-broker.md` — green (**34/34 vitest @prism/daemon** + 4/4 @prism/daemon-client + 2/2 Go `go test`; `prism` extension `check-types` clean; code-intel proven vs LIVE codebase-memory-mcp; Go client proven vs the LIVE TS daemon). **All 4 adapter families** (WebSocket/stdio-MCP/Flask-HTTP/REST) · 7 services · try-local→cloud · dynamic-registration · health loop · TS & Go clients · relay bridge. **Phase 3B closed** (2026-06-13): idea_init committed the inline DesignEngineHost handlers (`e4c3947`), then the 4 engine-ops handlers in `PrismPanelProvider.ts` were migrated to **broker-preferred / direct-fallback** via a `_brokerCall()` helper → broker `POST :6780/call` (`design-gen.state|launch|stop|send`); `openDesignArtifact`/`openFile` stay client-local. Added broker `POST /call` unary HTTP endpoint (+ test) so the extension never bundles `ws`. Broker self-port **6780**, runs via `tsx`. Committed: Phases 1-2, 3A, 4-9 (`2fd1967` … `e4c3947`); Phase 3B committing now.
-- **Surface wiring (follow-up)** — the client *libraries* (`@prism/daemon-client` TS, `apps/prism-cli/daemon` Go) are built + proven, but not yet wired into the actual VS Code panel UI or a `prism daemon ls` cobra subcommand. Straightforward per-surface integration glue.
-- **Relay E2EE (follow-up)** — the relay **bridge** (outbound dial, channel mux, virtual sessions) is built + tested but forwards in the clear. Drop in paseo's ECDH+AES zero-knowledge relay + QR pubkey pairing by first extracting `apps/prism-mobile/packages/relay` → `packages/prism-relay`, then swapping it under the unchanged `connectRelay()` seam.
+## I · Implementation follow-ups — **ALL CLOSED 2026-06-13** ✅
+- **Daemon-broker (9 phases)** + **Phase 3B** done. Now green at **40/40 vitest @prism/daemon** + 4/4 @prism/daemon-client + 4/4 @prism/relay + 4/4 @prism/core seam + 13/13 prism-electron + 2/2 Go `go test`. All 4 adapter families · 7 services · try-local→cloud · dynamic-registration · health loop · TS & Go clients · relay bridge. Broker self-port **6780**; `POST /call` + `GET /health`.
+- **Desktop daemon-manager (hybrid + bridge, Phase 1)** ✅ — `prism-electron` supervises the broker via `utilityProcess.fork` on an esbuilt bundle: adopt/spawn/health-poll/crash-restart/version-sync/kill-on-quit, `daemon:*` IPC, status dot in `BottomStatusBar`. Plan: `.prism/shared/plans/2026-06-13-desktop-daemon-manager.md`.
+- **Seam bridge (Phase 6)** ✅ — `grpc-handler` gains an injectable `BrokerForwarder`; unhandled `service.method` keys forward to the broker so the renderer's existing gRPC client transparently reaches code-intel/design-gen/etc. Electron installs the forwarder (`POST :port/call`). Makes full-managed a later transport flip.
+- **Surface wiring** ✅ — `prism-cli daemon ls` cobra subcommand dials the broker over WS and prints the live registry (status/id/name/method-count). Proven vs a live broker (7 services, code-intel ready).
+- **paseo-dialect shim** ✅ — `PaseoWebSocketAdapter` (`adapterType: websocket-paseo`) speaks paseo's hello/welcome + `<cmd>_request`/`_response` RPCs + push frames; `agent-run` now uses it. Tested vs a mock paseo daemon.
+- **Relay E2EE** ✅ — extracted paseo's relay → **`packages/prism-relay`** (sovereign `@prism/relay`: Curve25519 ECDH + NaCl box). `RelayClient` + `broker.connectRelay({daemonKeyPair})` E2EE per channel (clear-mode back-compat); `pairingInfo` ships the daemon pubKey. Full encrypted relay round-trip tested.
+- **Commits (2026-06-13):** `75a8799` docs · `894abc1` /health · `a9b3b3d` bundle · `8fe99fe` DaemonManager · `73fc453` app-wiring · `7bbc034` status-dot · `9e4ca6c` seam-bridge · `f14dcb2` daemon-ls · `9f5c7ae` paseo-dialect · `3d4e97d` relay-E2EE.
+- **Deferred (not blocking):** full-managed move (agent-run behind the broker) — now a transport flip via the seam bridge; QR-pairing *UI* + live relay-server (Cloudflare) verification; VS Code-side broker forwarder (Electron-side done).
 
 ---
 **Sovereignty invariant:** everything self-hosted, Prism-owned end-to-end (DO / Coolify). Donors are absorbed, never depended upon.
