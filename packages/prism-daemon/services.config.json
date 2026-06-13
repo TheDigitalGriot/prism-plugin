@@ -1,0 +1,9 @@
+[
+  {
+    "id": "agent-run",
+    "name": "Agent Orchestration (paseo)",
+    "adapterType": "websocket",
+    "endpoint": { "local": "ws://127.0.0.1:6767" },
+    "healthProbe": "hello"
+  }
+]
