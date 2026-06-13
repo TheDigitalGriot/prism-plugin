@@ -1,0 +1,56 @@
+name: Deploy Docs to GitHub Pages
+
+# Builds the prism-docs VitePress site (incl. the interactive /architecture.html
+# explorer) and publishes it to GitHub Pages.
+#
+# One-time setup: repo Settings → Pages → Source: "GitHub Actions".
+# Result: https://<owner>.github.io/prism-plugin/  (architecture at /prism-plugin/architecture.html)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'prism-docs/**'
+      - '.github/workflows/docs-deploy.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: prism-docs
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install deps
+        run: npm ci || npm install
+      - name: Build VitePress (project-Pages base)
+        env:
+          DOCS_BASE: /prism-plugin/
+        run: npm run docs:build
+      - uses: actions/configure-pages@v4
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: prism-docs/docs/.vitepress/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

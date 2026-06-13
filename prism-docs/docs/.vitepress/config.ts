@@ -3,7 +3,7 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: 'Prism',
   description: 'AI-Driven Development Workflow Suite — Research → Plan → Implement → Validate',
-  base: '/',
+  base: process.env.DOCS_BASE || '/',
   cleanUrls: true,
   lastUpdated: true,
 
@@ -25,6 +25,7 @@ export default defineConfig({
 
     nav: [
       { text: 'Guide', link: '/overview' },
+      { text: '🗺 Architecture', link: '/architecture.html' },
       { text: 'Daemon', link: '/daemon/' },
       { text: 'CLI', link: '/cli/' },
       { text: 'VS Code', link: '/vscode/' },
