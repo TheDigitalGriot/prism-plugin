@@ -3,6 +3,19 @@ const path = require("node:path");
 const pkg = require("./package.json");
 const appVariant = process.env.APP_VARIANT ?? "production";
 
+// Single-source the app version from the repo-root VERSION file, so the mobile
+// surface versions in lockstep with every other Prism surface. Falls back to the
+// package version for detached/EAS builds where the repo root isn't in scope.
+function resolveVersion() {
+  try {
+    const v = fs.readFileSync(path.resolve(__dirname, "../../../../VERSION"), "utf8").trim();
+    if (v) return v;
+  } catch {
+    /* repo root not available (e.g. EAS archive) — fall back to pkg.version */
+  }
+  return pkg.version;
+}
+
 function resolveSecretFile(params) {
   const fromEnv = process.env[params.envKey];
   if (typeof fromEnv === "string" && fromEnv.trim().length > 0) {
@@ -50,7 +63,7 @@ export default {
   expo: {
     name: variant.name,
     slug: "prism-mobile",
-    version: pkg.version,
+    version: resolveVersion(),
     orientation: "portrait",
     icon: "./assets/images/icon.png",
     scheme: "prism",
