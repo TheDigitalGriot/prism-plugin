@@ -112,6 +112,8 @@ def discover_stale_versions(root: Path, new_version: str,
         "target/",           # Rust/Tauri build artifacts
         "dist/", "build/", "out/",   # JS build artifacts
         "apps/prism-setup/", # Deprecated NSIS installer — no longer version-tracked
+        "apps/prism-mobile/", # Vendored paseo (0.1.x lineage); the Expo app version
+                              # is handled explicitly above and reads root VERSION at runtime.
     ]
 
     stale = []
@@ -172,6 +174,11 @@ def main():
         root / ".claude-plugin" / "marketplace.json",
         root / "apps" / "prism-vscode" / "package.json",
         root / "apps" / "prism-electron" / "package.json",
+        # prism-mobile (vendored paseo): the Expo app version. app.config.js reads
+        # the root VERSION file at runtime; this package.json is the fallback for
+        # detached/EAS builds and is kept in sync here. The monorepo-root
+        # apps/prism-mobile/package.json stays at the paseo upstream-lineage version.
+        root / "apps" / "prism-mobile" / "packages" / "app" / "package.json",
         # Tauri installer (new — supersedes prism-setup)
         root / "apps" / "prism-installer" / "package.json",
         root / "apps" / "prism-installer" / "src-tauri" / "tauri.conf.json",
