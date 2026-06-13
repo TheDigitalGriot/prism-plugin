@@ -120,7 +120,7 @@ Q1 code-intel = brokered service · Q2 daemon = multi-service broker (N protocol
 | `requestDesignEngineState` | `registry.query("design-gen")` + `design-gen.state` |
 | `launchDesignEngine` | `design-gen.launch` |
 | `stopDesignEngine` | `design-gen.stop` |
-| `sendDesignPrompt` | `design-gen.chat { brief, design_system, type }` |
+| `sendDesignPrompt` | `design-gen.send { brief, design_system, type, source }` |
 | `openDesignArtifact` | client-side (`openExternal`/`showDocument`) — unchanged |
 | `openFile` | client-side (`showDocument`) — unchanged |
 
@@ -136,10 +136,10 @@ Q1 code-intel = brokered service · Q2 daemon = multi-service broker (N protocol
 
 #### Manual Verification
 - [x] **Part 3A (daemon side) — done.** `RestAdapter` (config-driven `routes`) brokers `design-gen` across the design-studio relay (`:7457` /status,/launch,/stop) + the engine (`:7456` /api/chat), readiness at `/api/skills`. Proven against two mock servers (probe + lifecycle routing + chat round-trip). `design-gen` registered in `services.config.json`.
-- [ ] **Part 3B (surface side) — BLOCKED on idea_init commit.** Migrate the 6 `DesignEngineHost` messages in `PrismPanelProvider.ts` (idea_init's uncommitted file) to `design-gen.*` broker calls. Mapping table above.
-- [ ] Live: launch the engine from the VS Code panel *through the broker*; `/api/skills` flips status to `ready`; a prompt drops an artifact bundle in `.prism/shared/designs/`.
+- [x] **Part 3B (surface side) — done.** idea_init committed the inline `DesignEngineHost` handlers (`e4c3947`); the 4 engine-ops handlers in `PrismPanelProvider.ts` now route through the broker **broker-preferred, direct-fallback**: a `_brokerCall(method, payload?)` helper POSTs `design-gen.*` to the broker HTTP control plane (`POST :6780/call`) using the built-in `http` module (zero new deps), and each handler falls back to its original direct connection when the broker is unreachable. `requestDesignEngineState→design-gen.state`, `launchDesignEngine→design-gen.launch`, `stopDesignEngine→design-gen.stop`, `sendDesignPrompt→design-gen.send {brief, design_system, type, source}`. `openDesignArtifact`/`openFile` stay client-local (file IO, not a brokered service). Added broker `POST /call` unary endpoint (+ test) so the extension never bundles `ws`/daemon-client.
+- [ ] Live: launch the engine from the VS Code panel *through the broker*; `/api/skills` flips status to `ready`; a prompt drops an artifact bundle in `.prism/shared/designs/`. *(manual — user verifies with the daemon running)*
 
-**Checkpoint:** [x] **Phase 3A complete** — automated verified 2026-06-13 (typecheck clean · 33/33 vitest). **All 4 adapter families built.** 3B awaits the idea_init commit (then the non-breaking `PrismPanelProvider` migration finishes Phase 3).
+**Checkpoint:** [x] **Phase 3 complete** — automated verified 2026-06-13 (`@prism/daemon` typecheck clean · 34/34 vitest incl. new `POST /call` test · `prism` extension `check-types` clean). **All 9 phases done.** Broker-preferred/direct-fallback keeps the panel working with or without the daemon; the 4 engine-ops handlers speak one broker protocol, the 2 file-ops stay local.
 
 ---
 

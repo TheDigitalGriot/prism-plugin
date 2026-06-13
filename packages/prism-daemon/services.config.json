@@ -24,7 +24,7 @@
       "state": { "verb": "GET", "url": "http://127.0.0.1:7457/status" },
       "launch": { "verb": "POST", "url": "http://127.0.0.1:7457/launch" },
       "stop": { "verb": "POST", "url": "http://127.0.0.1:7457/stop" },
-      "chat": { "verb": "POST", "url": "http://127.0.0.1:7456/api/chat" }
+      "send": { "verb": "POST", "url": "http://127.0.0.1:7456/api/chat" }
     }
   },
   {

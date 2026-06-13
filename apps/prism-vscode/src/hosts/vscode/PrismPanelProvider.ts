@@ -153,6 +153,10 @@ export class PrismPanelProvider implements vscode.WebviewViewProvider {
   private _designEngineStatus: 'stopped' | 'starting' | 'running' | 'error' = 'stopped';
   private readonly _designEnginePort = 7456;
   private readonly _designRelayPort  = 7457;
+  // Prism daemon-broker control plane (POST /call). When the broker is up, design
+  // engine ops route through design-gen.*; otherwise each helper falls back to a
+  // direct connection so the panel still works with no daemon running.
+  private readonly _brokerPort = 6780;
 
   constructor(
     private readonly _context: vscode.ExtensionContext,
@@ -582,7 +586,7 @@ export class PrismPanelProvider implements vscode.WebviewViewProvider {
         break;
 
       case 'stopDesignEngine':
-        this._stopDesignEngine();
+        await this._stopDesignEngine();
         break;
 
       case 'sendDesignPrompt': {
@@ -619,14 +623,61 @@ export class PrismPanelProvider implements vscode.WebviewViewProvider {
     return path.join(os.homedir(), 'Developer', 'prism-design-engine');
   }
 
+  /**
+   * Unary call to the Prism daemon broker's HTTP control plane (POST /call).
+   * Resolves the parsed { ok, result?, error? } envelope, or null when the
+   * broker is unreachable — callers treat null as "broker down, fall back to
+   * the direct connection". Uses the built-in `http` module (no ws/daemon-client
+   * bundling, so this stays a zero-dependency migration).
+   */
+  private _brokerCall(
+    method: string,
+    payload?: unknown,
+  ): Promise<{ ok: boolean; result?: unknown; error?: string } | null> {
+    return new Promise((resolve) => {
+      const body = JSON.stringify({ service: 'design-gen', method, payload });
+      const req = http.request(
+        {
+          hostname: '127.0.0.1',
+          port: this._brokerPort,
+          path: '/call',
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) },
+        },
+        (res) => {
+          let data = '';
+          res.on('data', (c) => (data += c));
+          res.on('end', () => {
+            try {
+              resolve(JSON.parse(data) as { ok: boolean; result?: unknown; error?: string });
+            } catch {
+              resolve(null);
+            }
+          });
+        },
+      );
+      req.on('error', () => resolve(null)); // ECONNREFUSED → broker not running
+      req.setTimeout(2500, () => { req.destroy(); resolve(null); });
+      req.write(body);
+      req.end();
+    });
+  }
+
   private async _pushDesignEngineState(): Promise<void> {
     if (!this._webview) return;
     const artifacts = this._scanDesignArtifacts();
     const latestPrompt = this._readLatestDesignPrompt();
     const latestLedger = this._findLatestLedger();
 
-    // Probe the engine to verify it's actually responding
-    if (this._designEngineStatus === 'running') {
+    // Status of record: prefer the daemon broker (design-gen.state → relay /status).
+    // The broker is the single source of truth for engine liveness when it's up;
+    // fall back to a direct probe only when the broker is unreachable.
+    const brokerState = await this._brokerCall('state');
+    if (brokerState?.ok && brokerState.result && typeof brokerState.result === 'object') {
+      const running = (brokerState.result as { running?: boolean }).running === true;
+      if (running) this._designEngineStatus = 'running';
+      else if (this._designEngineStatus !== 'starting') this._designEngineStatus = 'stopped';
+    } else if (this._designEngineStatus === 'running') {
       const alive = await this._probeEngine();
       if (!alive) this._designEngineStatus = 'stopped';
     }
@@ -647,6 +698,16 @@ export class PrismPanelProvider implements vscode.WebviewViewProvider {
 
   private async _launchDesignEngine(): Promise<void> {
     if (this._designEngineProcess) return;
+
+    // Prefer the daemon broker (design-gen.launch → design-studio relay spawns the
+    // engine). When the broker handles it, the relay owns the process lifecycle —
+    // we just reflect 'starting' and let the next state poll confirm 'running'.
+    const viaBroker = await this._brokerCall('launch');
+    if (viaBroker?.ok) {
+      this._designEngineStatus = 'starting';
+      await this._pushDesignEngineState();
+      return;
+    }
 
     const engineDaemon = path.join(this._designEngineRepoPath(), 'apps', 'daemon');
     if (!fs.existsSync(engineDaemon)) {
@@ -696,23 +757,33 @@ export class PrismPanelProvider implements vscode.WebviewViewProvider {
     });
   }
 
-  private _stopDesignEngine(): void {
-    if (this._designEngineProcess) {
+  private async _stopDesignEngine(): Promise<void> {
+    // Prefer the daemon broker (design-gen.stop → relay /stop). Only fall back to
+    // killing a locally-spawned process when the broker didn't handle it.
+    const viaBroker = await this._brokerCall('stop');
+    if (!viaBroker?.ok && this._designEngineProcess) {
       this._designEngineProcess.kill('SIGTERM');
-      this._designEngineProcess = null;
     }
+    this._designEngineProcess = null;
     this._designEngineStatus = 'stopped';
-    void this._pushDesignEngineState();
+    await this._pushDesignEngineState();
   }
 
   private async _sendDesignPrompt(yaml: string): Promise<void> {
+    const payload = {
+      brief: yaml,
+      design_system: 'griotwave',
+      type: 'prototype',
+      source: 'prism-design',
+    };
+
+    // Prefer the daemon broker (design-gen.send → engine /api/chat). Same payload
+    // shape on the wire either way, so the engine can't tell the difference.
+    const viaBroker = await this._brokerCall('send', payload);
+    if (viaBroker?.ok) return;
+
     return new Promise<void>((resolve) => {
-      const body = JSON.stringify({
-        brief: yaml,
-        design_system: 'griotwave',
-        type: 'prototype',
-        source: 'prism-design',
-      });
+      const body = JSON.stringify(payload);
       const req = http.request({
         hostname: 'localhost',
         port: this._designEnginePort,

@@ -19,6 +19,15 @@ function startMockFlask(): Promise<MockFlask> {
         res.end(JSON.stringify({ skills: [{ name: "query", description: "", methods: ["query"] }] }));
         return;
       }
+      if (req.method === "POST") {
+        let body = "";
+        req.on("data", (c: Buffer) => (body += c.toString()));
+        req.on("end", () => {
+          res.writeHead(200, { "content-type": "application/json" });
+          res.end(JSON.stringify({ echo: body ? JSON.parse(body) : null, path: req.url }));
+        });
+        return;
+      }
       res.writeHead(404);
       res.end();
     });
@@ -151,6 +160,21 @@ describe("Dynamic registration + health loop (Phase 9)", () => {
     const res = await fetch(`${baseHttp}/services`);
     const list = (await res.json()) as Array<{ id: string }>;
     expect(list.map((s) => s.id)).toContain("knowledge");
+  });
+
+  it("POST /call dispatches a unary service call over HTTP (for surfaces that prefer HTTP)", async () => {
+    backend = await startMockFlask();
+    await boot();
+    await broker!.register({ id: "knowledge", adapterType: "flask-http", endpoint: { local: backend.baseUrl }, healthProbe: "GET /skills" });
+    const res = await fetch(`${baseHttp}/call`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ service: "knowledge", method: "query", payload: { q: 2 } }),
+    });
+    const json = (await res.json()) as { ok: boolean; result: { echo: unknown; path: string } };
+    expect(json.ok).toBe(true);
+    expect(json.result.echo).toEqual({ q: 2 });
+    expect(json.result.path).toBe("/query");
   });
 
   it("runHealthCheck() flips status to error when a backend goes down", async () => {

@@ -176,6 +176,17 @@ export class Broker {
         send(200, { ok: removed });
         return;
       }
+      if (req.method === "POST" && url === "/call") {
+        const body = (await readJsonBody(req)) as { service?: string; method?: string; payload?: unknown };
+        if (!body.service || !body.method) {
+          send(400, { ok: false, error: "call requires { service, method }" });
+          return;
+        }
+        const res = await this.router.route({ id: randomUUID(), service: body.service, method: body.method, payload: body.payload, ts: Date.now() });
+        if (res.ok) send(200, { ok: true, result: res.result });
+        else send(502, { ok: false, error: res.error });
+        return;
+      }
       send(404, { ok: false, error: "not found" });
     } catch (err) {
       send(400, { ok: false, error: err instanceof Error ? err.message : String(err) });
