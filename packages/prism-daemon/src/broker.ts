@@ -16,6 +16,7 @@ import { Session } from "./session";
 import { createAdapter, type Adapter } from "./adapters";
 import { resolveEndpoint, type ResolveOptions } from "./resolve";
 import { RelayClient } from "./relay";
+import { exportPublicKey, type KeyPair } from "@prism/relay";
 import {
   errorResponse,
   isEnvelope,
@@ -75,6 +76,7 @@ export class Broker {
   private readonly outbound = new Set<(obj: unknown) => void>();
   private healthTimer?: NodeJS.Timeout;
   private relay?: RelayClient;
+  private relayKeyPair?: KeyPair;
 
   constructor(opts: BrokerOptions = {}) {
     this.registry = opts.registry ?? new Registry();
@@ -348,14 +350,28 @@ export class Broker {
   }
 
   /** Dial the self-hosted relay so remote clients can reach this broker (no inbound port). */
-  async connectRelay(url: string): Promise<void> {
-    this.relay = new RelayClient({ url, onChannel: (send) => this.createSessionHandler(send) });
+  /**
+   * Dial out to the relay. When `daemonKeyPair` is supplied, every remote channel is
+   * end-to-end encrypted (@prism/relay, Curve25519 + NaCl box); the remote client pairs
+   * via the daemon's public key (see pairingInfo). Without it, frames forward in the clear.
+   */
+  async connectRelay(url: string, opts?: { daemonKeyPair?: KeyPair }): Promise<void> {
+    this.relayKeyPair = opts?.daemonKeyPair;
+    this.relay = new RelayClient({
+      url,
+      onChannel: (send) => this.createSessionHandler(send),
+      crypto: opts?.daemonKeyPair ? { daemonKeyPair: opts.daemonKeyPair } : undefined,
+    });
     await this.relay.connect();
   }
 
-  /** QR-encodable pairing payload. NOTE: E2EE pubkey pairing (paseo's relay) is a follow-up. */
-  pairingInfo(relayUrl: string): { relayUrl: string; token: string } {
-    return { relayUrl, token: randomUUID() };
+  /**
+   * QR-encodable pairing payload. When the relay is E2EE, includes the daemon's public
+   * key (base64) so the client can derive the shared key; `pubKey` is null in clear mode.
+   */
+  pairingInfo(relayUrl: string): { relayUrl: string; token: string; pubKey: string | null } {
+    const pubKey = this.relayKeyPair ? exportPublicKey(this.relayKeyPair.publicKey) : null;
+    return { relayUrl, token: randomUUID(), pubKey };
   }
 
   private async handleStream(send: (obj: unknown) => void, env: BrokerEnvelope): Promise<void> {

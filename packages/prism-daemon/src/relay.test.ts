@@ -2,6 +2,7 @@ import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import { afterEach, describe, expect, it } from "vitest";
 import { WebSocketServer, type WebSocket } from "ws";
+import { createClientChannel, generateKeyPair, exportPublicKey, type Transport } from "@prism/relay";
 import { Broker } from "./broker";
 import { Registry } from "./registry";
 import type { ServiceDescriptor } from "./protocol";
@@ -124,4 +125,71 @@ describe("Relay bridge (Phase 7)", () => {
     expect(resp.ok).toBe(true);
     expect(resp.result.echo).toEqual({ q: 1 });
   });
+
+  it("E2EE: a remote client pairs via the daemon pubkey and exchanges encrypted envelopes", async () => {
+    backend = await startMockFlask();
+    const registry = new Registry();
+    registry.upsert(knowledgeDesc(backend.baseUrl));
+    broker = new Broker({ registry });
+
+    relayServer = new WebSocketServer({ port: 0, host: "127.0.0.1" });
+    await new Promise<void>((r) => relayServer!.on("listening", () => r()));
+    const relayPort = (relayServer.address() as AddressInfo).port;
+
+    const brokerSocketP = new Promise<WebSocket>((resolve) => relayServer!.on("connection", (ws) => resolve(ws)));
+
+    // Broker dials out with an E2EE keypair; the client will pair via its public key.
+    const daemonKeyPair = generateKeyPair();
+    await broker.connectRelay(`ws://127.0.0.1:${relayPort}`, { daemonKeyPair });
+    const daemonPubB64 = exportPublicKey(daemonKeyPair.publicKey);
+    const relayConn = await brokerSocketP;
+
+    // Simulate the remote client on the relay-server side: a Transport over channel "e1".
+    const clientTransport: Transport = {
+      onmessage: null,
+      onclose: null,
+      onerror: null,
+      send: (data) => relayConn.send(JSON.stringify({ t: "msg", ch: "e1", data: typeof data === "string" ? data : "" })),
+      close: () => relayConn.send(JSON.stringify({ t: "close", ch: "e1" })),
+    };
+    // Route broker->client frames on channel e1 into the client transport.
+    relayConn.on("message", (d) => {
+      let f: Record<string, unknown>;
+      try {
+        f = JSON.parse(d.toString()) as Record<string, unknown>;
+      } catch {
+        return;
+      }
+      if (f.t === "msg" && f.ch === "e1" && typeof f.data === "string") clientTransport.onmessage?.(f.data);
+    });
+
+    // Open the channel, then run the client-side ECDH handshake.
+    relayConn.send(JSON.stringify({ t: "open", ch: "e1" }));
+    const clientMsgs: string[] = [];
+    const clientChannel = await createClientChannel(clientTransport, daemonPubB64, {
+      onmessage: (d) => clientMsgs.push(typeof d === "string" ? d : ""),
+    });
+    await waitFor(() => clientChannel.isOpen());
+
+    // Encrypted broker hello -> expect an encrypted welcome carrying the registry.
+    await clientChannel.send(JSON.stringify({ type: "hello", clientId: "remote", version: "0" }));
+    await waitFor(() => clientMsgs.some((m) => safeType(m) === "welcome"));
+    const welcome = JSON.parse(clientMsgs.find((m) => safeType(m) === "welcome")!) as { services: Array<{ id: string }> };
+    expect(welcome.services.map((s) => s.id)).toContain("knowledge");
+
+    // Encrypted service call -> encrypted response.
+    await clientChannel.send(JSON.stringify({ id: "r1", service: "knowledge", method: "query", payload: { q: 7 }, ts: 1 }));
+    await waitFor(() => clientMsgs.some((m) => safeType(m) === "response"));
+    const resp = JSON.parse(clientMsgs.find((m) => safeType(m) === "response")!) as { ok: boolean; result: { echo: unknown } };
+    expect(resp.ok).toBe(true);
+    expect(resp.result.echo).toEqual({ q: 7 });
+  });
 });
+
+async function waitFor(cond: () => boolean, ms = 3000): Promise<void> {
+  const start = Date.now();
+  while (!cond()) {
+    if (Date.now() - start > ms) throw new Error("timeout waiting for condition");
+    await new Promise((r) => setTimeout(r, 10));
+  }
+}
