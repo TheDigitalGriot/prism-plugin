@@ -22,3 +22,7 @@ cmd/prism-cli/prism-cli.exe
 
 # Visual regression diffs (ephemeral, regenerated on each run)
 .prism/shared/validation/diffs/
+
+# Graphify generated graphs (regenerate with: graphify update <path>)
+graphify-out/
+**/graphify-out/
