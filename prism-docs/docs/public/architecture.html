@@ -219,37 +219,49 @@ VIEWS.workflows = {
 };
 
 /* ===== PLUGIN INTERNALS (category nodes → expand to members) ===== */
-function mem(label,sub){ return {label,sub}; }
+function g(cols,y0){ return {cols,x0:220,y0,dx:152,dy:56}; }
 VIEWS.plugin = {
-  legend:['Component group','—','contains'],
+  legend:['Component group','—','contains (expand ＋)'],
   bands:[
-    {x:0,y:60,w:1240,h:300,lab:'Authoring',name:'Skills · Commands'},
-    {x:0,y:392,w:1240,h:300,lab:'Specialists',name:'Agents'},
-    {x:0,y:724,w:1240,h:260,lab:'Runtime glue',name:'Hooks · Scripts · MCP · Build'},
+    {x:0,y:60,w:1180,h:312,lab:'Orchestrators',name:'Skills (25) — /slash workflows + tooling'},
+    {x:0,y:404,w:1180,h:312,lab:'Operations',name:'Commands (25)'},
+    {x:0,y:748,w:1180,h:212,lab:'Specialists',name:'Agents (14)'},
+    {x:0,y:992,w:1180,h:152,lab:'Lifecycle',name:'Hooks (9)'},
+    {x:0,y:1176,w:1180,h:152,lab:'Automation',name:'Scripts (12)'},
+    {x:0,y:1360,w:1180,h:96,lab:'Servers',name:'MCP'},
+    {x:0,y:1488,w:1180,h:96,lab:'Distribution',name:'Build & installers'},
   ],
   nodes:[
-    {id:'skills',x:80,y:150,kind:'main',label:'Skills (25)',sub:'workflow orchestrators',detail:{desc:'Auto-discovered orchestrators with YAML frontmatter — the entry points. The workflow skills are mapped in the Workflows tab; the rest are tooling.',files:['skills/*/SKILL.md']},
-      children:[ {id:'sk1',dx:230,dy:-40,...mem('Workflow skills','research·brainstorm·design·plan·implement·validate·subagent·spectrum')},
-        {id:'sk2',dx:230,dy:18,...mem('Creative','capture · brand · visual-docs · prd · iterate')},
-        {id:'sk3',dx:230,dy:76,...mem('Release & ops','bookend · finish · release · decompose · dispatch')},
-        {id:'sk4',dx:230,dy:134,...mem('Meta','init · debug · verify · eval · docs-update · cl-plugin-structure')} ]},
-    {id:'cmds',x:80,y:250,kind:'main',label:'Commands (25)',sub:'/slash operations',detail:{desc:'User-invocable single-purpose prompts. create_plan, decompose_plan, commit, describe_pr, research_codebase, implement_plan, validate_plan, generate_prd/pricing/tech_spec/user_flows, create_handoff, resume_handoff, worktree, cli-install/uninstall, prism-screenshot/browse/debug/verify, prism_cli, prism_dir_update, retroactive, review-setup.',files:['commands/*.md']}},
-    {id:'agents',x:540,y:470,kind:'main',label:'Agents (14)',sub:'spawned specialists',detail:{desc:'Task(subagent_type=…) specialists run in parallel. Click ＋ to see all 14 by role.',files:['agents/*.md']},
-      children:[ {id:'ag1',dx:-360,dy:96,...mem('Locators','codebase-locator · prism-locator')},
-        {id:'ag2',dx:-180,dy:96,...mem('Analyzers','codebase-analyzer · codebase-pattern-finder · prism-analyzer')},
-        {id:'ag3',dx:0,dy:96,...mem('Graph & web','graph-navigator · web-search-researcher')},
-        {id:'ag4',dx:180,dy:96,...mem('Reviewers','spec-reviewer · quality-reviewer')},
-        {id:'ag5',dx:360,dy:96,...mem('Investigators','git · log · state · browser-verifier · visual-regression-grader')} ]},
-    {id:'hooks',x:80,y:800,kind:'meta',label:'Hooks (9)',sub:'lifecycle events',detail:{desc:'settings-driven lifecycle handlers.',files:['hooks/hooks.json']},
-      children:[ {id:'hk1',dx:0,dy:-44,...mem('Compaction','PreCompact · PostCompact → snapshot/restore state')},
-        {id:'hk2',dx:0,dy:14,...mem('Spectrum','SessionStart · PreToolUse (approval) · PostToolUse (log)')},
-        {id:'hk3',dx:0,dy:72,...mem('Worktree + agents','WorktreeCreate/Remove · SubagentStart/Stop')} ]},
-    {id:'scripts',x:430,y:800,kind:'meta',label:'Scripts (12)',sub:'automation',detail:{desc:'spectrum.sh (autonomous loop), spectrum-approval.sh, decompose, extract-tasks.py, bump-version.py, pre/post-compact.py, log-observation/agent.py, worktree-setup/cleanup.sh, prism-cli-install.sh, visual-regression.sh.',files:['scripts/']}},
-    {id:'mcp',x:780,y:800,kind:'meta',label:'MCP servers',sub:'channels & graph',detail:{desc:'brainstorm-channel (wake-on-click), codebase-memory-mcp (code graph), graphify-mcp (knowledge), chrome-devtools.',files:['.mcp.json']}},
-    {id:'build',x:1060,y:800,kind:'meta',label:'Build & installers',sub:'Tauri · NSIS · CLI',detail:{desc:'prism-installer (Tauri/Rust), prism-setup (legacy NSIS), cli-install (PATH + workspace), esbuild daemon bundle, VitePress docs + Pages.',files:['apps/prism-installer/','scripts/prism-cli-install.sh']}},
+    {id:'skills',x:40,y:186,kind:'main',label:'Skills',sub:'25 · click ＋',grid:g(5,-118),detail:{desc:'Auto-discovered orchestrators (YAML frontmatter) — the workflow entry points. Expand to see every one, including the meta skills (docs-update, eval, init, debug, verify) and /prism-decompose.',files:['skills/*/SKILL.md']},members:[
+      ['/prism','entry · 4-phase'],['/prism-research','map codebase'],['/prism-brainstorm','decisions ledger'],['/prism-design','architecture'],['/prism-plan','the contract'],
+      ['/prism-implement','execute phases'],['/prism-validate','verify criteria'],['/prism-subagent','subagent exec'],['/prism-spectrum','autonomous'],['/prism-decompose','plan→stories'],
+      ['/prism-dispatch','parallel fan-out'],['/prism-capture','design refs'],['/prism-brand','brand identity'],['/prism-bookend','release flow'],['/prism-finish','wrap branch'],
+      ['/prism-release','build+publish'],['/prism-init','set up .prism/'],['/prism-debug','root-cause'],['/prism-verify','run & observe'],['/prism-iterate','iterate plan'],
+      ['/prism-prd','requirements'],['/prism-eval','eval dashboard'],['/prism-visual-docs','visual docs'],['/prism-docs-update','sync VitePress'],['/cl-plugin-structure','author plugins']]},
+    {id:'cmds',x:40,y:530,kind:'main',label:'Commands',sub:'25 · click ＋',grid:g(5,-118),detail:{desc:'User-invocable single-purpose /slash prompts.',files:['commands/*.md']},members:[
+      ['/create_plan','plan w/ research'],['/decompose_plan','plan→stories.json'],['/implement_plan','execute plan'],['/validate_plan','verify plan'],['/iterate_plan','refine plan'],
+      ['/research_codebase','parallel research'],['/commit','atomic commits'],['/describe_pr','PR description'],['/create_handoff','session handoff'],['/resume_handoff','resume handoff'],
+      ['/generate_prd','PRD'],['/generate_pricing','pricing'],['/generate_tech_spec','tech spec'],['/generate_user_flows','user flows'],['/worktree','isolate worktree'],
+      ['/cli-install','install CLI'],['/cli-uninstall','remove CLI'],['/prism_cli','launch TUI'],['/prism-screenshot','capture UI'],['/prism-browse','in-app browse'],
+      ['/prism-debug','debug'],['/prism-verify','verify'],['/prism_dir_update','migrate .prism/'],['/retroactive','backfill'],['/review-setup','review config']]},
+    {id:'agents',x:40,y:842,kind:'main',label:'Agents',sub:'14 · click ＋',grid:g(5,-78),detail:{desc:'Task(subagent_type=…) specialists, run in parallel by the workflow skills.',files:['agents/*.md']},members:[
+      ['codebase-locator','find WHERE'],['codebase-analyzer','understand HOW'],['codebase-pattern-finder','find patterns'],['prism-locator','find research'],['prism-analyzer','extract insights'],
+      ['web-search-researcher','external docs'],['graph-navigator','blast radius'],['git-investigator','git history'],['log-investigator','logs'],['state-investigator','app state'],
+      ['browser-verifier','browser checks'],['visual-regression-grader','visual diff'],['spec-reviewer','spec review'],['quality-reviewer','quality review']]},
+    {id:'hooks',x:40,y:1058,kind:'meta',label:'Hooks',sub:'9 · click ＋',grid:g(5,-36),detail:{desc:'settings-driven lifecycle handlers (hooks.json).',files:['hooks/hooks.json']},members:[
+      ['SessionStart','brainstorm deps'],['PreToolUse','spectrum-approval'],['PreCompact','snapshot state'],['PostCompact','restore state'],['PostToolUse','log-observation'],
+      ['WorktreeCreate','worktree-setup'],['WorktreeRemove','worktree-cleanup'],['SubagentStart','log-agent'],['SubagentStop','log-agent']]},
+    {id:'scripts',x:40,y:1242,kind:'meta',label:'Scripts',sub:'12 · click ＋',grid:g(6,-36),detail:{desc:'Automation behind the skills + hooks.',files:['scripts/']},members:[
+      ['spectrum.sh','autonomous loop'],['spectrum-approval.sh','PreToolUse gate'],['extract-tasks.py','plan→state.json'],['bump-version.py','version sync'],['pre-compact.py','snapshot'],['post-compact.py','restore'],
+      ['log-observation.py','PostToolUse log'],['log-agent.py','subagent log'],['worktree-setup.sh','wt create'],['worktree-cleanup.sh','wt remove'],['prism-cli-install.sh','CLI install'],['visual-regression.sh','visual diff']]},
+    {id:'mcp',x:40,y:1386,kind:'meta',label:'MCP servers',sub:'4 · click ＋',grid:g(4,-10),detail:{desc:'Model Context Protocol servers wired to Prism.',files:['.mcp.json']},members:[
+      ['brainstorm-channel','wake-on-click'],['codebase-memory-mcp','code graph'],['graphify-mcp','knowledge graph'],['chrome-devtools','browser']]},
+    {id:'build',x:40,y:1514,kind:'meta',label:'Build & installers',sub:'5 · click ＋',grid:g(5,-10),detail:{desc:'How Prism ships across platforms.',files:['apps/prism-installer/']},members:[
+      ['prism-installer','Tauri/Rust'],['prism-setup','legacy NSIS'],['cli-install','PATH+workspace'],['daemon bundle','esbuild .cjs'],['prism-docs','VitePress+Pages']]},
   ],
-  edges:[['skills','cmds','meta'],['skills','agents','meta'],['agents','scripts','meta'],['hooks','scripts','meta']],
+  edges:[],
 };
+for(const n of VIEWS.plugin.nodes) if(n.members) n.children=n.members.map((m,i)=>({id:n.id+'-'+i,dx:n.grid.x0+(i%n.grid.cols)*n.grid.dx,dy:n.grid.y0+((i/n.grid.cols|0))*n.grid.dy,label:m[0],sub:m[1]}));
 
 /* ───────────────────────── ENGINE ───────────────────────── */
 const canvas=document.getElementById('canvas'), svg=document.getElementById('edges'), vp=document.getElementById('viewport');
