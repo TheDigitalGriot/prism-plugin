@@ -162,6 +162,18 @@ describe("Dynamic registration + health loop (Phase 9)", () => {
     expect(list.map((s) => s.id)).toContain("knowledge");
   });
 
+  it("GET /health reports version + service counts (for the desktop daemon-manager probe)", async () => {
+    await boot();
+    const res = await fetch(`${baseHttp}/health`);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { ok: boolean; version: string; serviceCount: number; ready: number };
+    expect(body.ok).toBe(true);
+    expect(typeof body.version).toBe("string");
+    expect(body.version.length).toBeGreaterThan(0);
+    expect(body.serviceCount).toBe(0);
+    expect(body.ready).toBe(0);
+  });
+
   it("POST /call dispatches a unary service call over HTTP (for surfaces that prefer HTTP)", async () => {
     backend = await startMockFlask();
     await boot();

@@ -16,7 +16,7 @@ export * from "./protocol";
 
 const HOST = process.env.PRISM_DAEMON_HOST ?? "127.0.0.1";
 const PORT = Number(process.env.PRISM_DAEMON_PORT ?? 6780);
-const CONFIG_PATH = join(__dirname, "..", "services.config.json");
+const CONFIG_PATH = process.env.PRISM_DAEMON_CONFIG ?? join(__dirname, "..", "services.config.json");
 
 /** Normalize a partial config entry into a full descriptor (status defaults to "stopped"). */
 function normalize(entry: Partial<ServiceDescriptor> & { id: string; adapterType: ServiceDescriptor["adapterType"] }): ServiceDescriptor {

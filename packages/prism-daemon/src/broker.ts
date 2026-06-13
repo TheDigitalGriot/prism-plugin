@@ -152,6 +152,16 @@ export class Broker {
     };
     try {
       const url = req.url ?? "/";
+      if (req.method === "GET" && url === "/health") {
+        const snap = this.registry.snapshot();
+        send(200, {
+          ok: true,
+          version: BROKER_VERSION,
+          serviceCount: snap.length,
+          ready: snap.filter((s) => s.status === "ready").length,
+        });
+        return;
+      }
       if (req.method === "GET" && url === "/services") {
         send(200, this.registry.snapshot());
         return;
