@@ -25,6 +25,7 @@ export default defineConfig({
 
     nav: [
       { text: 'Guide', link: '/overview' },
+      { text: 'Daemon', link: '/daemon/' },
       { text: 'CLI', link: '/cli/' },
       { text: 'VS Code', link: '/vscode/' },
       { text: 'Electron', link: '/electron/' },
@@ -32,7 +33,7 @@ export default defineConfig({
       { text: 'Eval', link: '/eval/' },
       {
         text: 'GitHub',
-        link: 'https://github.com/placeholder/prism',
+        link: 'https://github.com/TheDigitalGriot/prism-plugin',
         target: '_blank',
       },
     ],
@@ -168,6 +169,19 @@ export default defineConfig({
         ],
       },
       {
+        text: 'Part VI — Daemon Broker',
+        collapsed: true,
+        items: [
+          { text: 'Overview', link: '/daemon/' },
+          { text: 'Broker Core', link: '/daemon/broker' },
+          { text: 'Adapters', link: '/daemon/adapters' },
+          { text: 'Surface Clients', link: '/daemon/clients' },
+          { text: 'Desktop Daemon-Manager', link: '/daemon/desktop-manager' },
+          { text: 'Seam Bridge', link: '/daemon/seam-bridge' },
+          { text: 'E2EE Relay', link: '/daemon/relay' },
+        ],
+      },
+      {
         text: 'Part VII — Eval Dashboard',
         collapsed: true,
         items: [
@@ -178,16 +192,16 @@ export default defineConfig({
     ],
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/placeholder/prism' },
+      { icon: 'github', link: 'https://github.com/TheDigitalGriot/prism-plugin' },
     ],
 
     footer: {
       message: 'Prism — AI-Driven Development Workflow Suite',
-      copyright: 'v2.5.0',
+      copyright: 'v3.6.0',
     },
 
     editLink: {
-      pattern: 'https://github.com/placeholder/prism/edit/main/prism-docs/docs/:path',
+      pattern: 'https://github.com/TheDigitalGriot/prism-plugin/edit/main/prism-docs/docs/:path',
       text: 'Edit this page on GitHub',
     },
   },

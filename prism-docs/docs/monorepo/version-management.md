@@ -13,8 +13,12 @@ Prior to v2.4.3, version strings were hardcoded in 14+ files across the monorepo
 A single `VERSION` file at the repository root is the source of truth:
 
 ```
-2.5.0
+3.6.0
 ```
+
+As of **v3.6.0**, every surface versions in lockstep with this file — including
+**prism-mobile**, whose `app.config.js` reads the root `VERSION` directly (with a package-version
+fallback for detached EAS builds).
 
 ## Bump Script (`scripts/bump-version.py`)
 
@@ -47,6 +51,12 @@ The script reads the current version from `VERSION`, computes the new version, t
 | 9 | `apps/prism-cli/app/footer.go` | `"vX.Y.Z"` hardcoded TUI footer |
 | 10 | `packages/prism-core/src/shared/PrismState.ts` | `DEFAULT_PRISM_STATE.version` |
 | 11 | `packages/prism-ui/src/context/PrismStateContext.tsx` | `DEFAULT_STATE.version` |
+| 12 | `apps/prism-mobile/packages/app/package.json` | `"version"` fallback (the Expo app reads root `VERSION` first, via `app.config.js`) |
+
+> **Mobile (v3.6.0+):** `apps/prism-mobile/packages/app/app.config.js` reads the repo-root
+> `VERSION` file at config-eval time, so the Expo app surface always matches. The monorepo-root
+> `apps/prism-mobile/package.json` keeps its paseo upstream-lineage version (`0.1.69`) as the
+> refresh-tracking marker — that one is intentionally **not** bumped.
 
 > **Deprecated**: `apps/prism-setup/` (Electron-based NSIS installer) entries are commented out in the script but kept for rollback.
 
@@ -59,6 +69,7 @@ The script reads the current version from `VERSION`, computes the new version, t
 | **Electron** | Bottom status bar (24px, bottom-left) | `PrismState.ts` → `usePrismState().version` |
 | **VS Code** | Panel status bar (22px, right side) | Controller state via `initialState` message |
 | **VS Code** | Extensions panel | `package.json` `"version"` field |
+| **Mobile** | App/store version (Expo) | `app.config.js` reads root `VERSION` (fallback `packages/app/package.json`) |
 | **Installer** | Title bar and version display | `tauri.conf.json` `"version"` field, read via `@tauri-apps/api/app` |
 
 ## Release Workflow Integration
