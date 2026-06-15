@@ -67,5 +67,22 @@
 - **Commits (2026-06-13):** `75a8799` docs · `894abc1` /health · `a9b3b3d` bundle · `8fe99fe` DaemonManager · `73fc453` app-wiring · `7bbc034` status-dot · `9e4ca6c` seam-bridge · `f14dcb2` daemon-ls · `9f5c7ae` paseo-dialect · `3d4e97d` relay-E2EE.
 - **Deferred (not blocking):** full-managed move (agent-run behind the broker) — now a transport flip via the seam bridge; QR-pairing *UI* + live relay-server (Cloudflare) verification; VS Code-side broker forwarder (Electron-side done).
 
+## J · paseo-reference audit + "set up first, then go sovereign" (2026-06-14)
+
+**Trigger:** sovereignty concern — "we still have paseo referenced (e.g. `PaseoWebSocketAdapter`)… what else is lurking?" Full-repo audit done.
+
+**Headline: NO hidden runtime dependency.** A targeted search for sovereign code *importing* a paseo package / `~/Developer/paseo` / `prism-mobile` returned matches **only in `.prism/shared/` docs** — **zero lines in `packages/` or the sovereign apps' source.** Every paseo reference in our own code is one of:
+- **Naming** (cosmetic): `PaseoWebSocketAdapter` class · `websocket-paseo` adapterType · `adapters/paseo-websocket.ts`.
+- **Comments / lineage**: "paseo-derived", "sovereign fork of paseo's relay", "The Paseo server…".
+- **The vendored donor**: `apps/prism-mobile/**` — that IS the absorbed paseo (expected; it's the refresh target, not a violation).
+- Plus `prism-docs/dist/**` (regenerated) + `.prism/` research (intentional lineage).
+
+**The ONE real relationship (runtime/setup, not code):** `agent-run` → `ws://127.0.0.1:6767` = the live agent daemon = `apps/prism-mobile/packages/server` (vendored, rebranded). The adapter speaks that daemon's wire protocol. Nothing is *imported*; agent-run only goes `ready` if that daemon is running (else `error`; broker + other services unaffected).
+
+**DECISION (user, 2026-06-14): "if it's a dependency that may break, set everything up first, THEN go sovereign."**
+1. **For the upcoming test — change NOTHING.** The "Paseo" names are inert at runtime; renaming pre-test = risk for zero benefit.
+2. **Baseline first:** run the agent daemon (`apps/prism-mobile/packages/server`) on :6767; confirm `agent-run` is `ready` via `prism-cli daemon ls`.
+3. **Then the cosmetic sovereign rename (deferred, ready-to-run):** `PaseoWebSocketAdapter → AgentDaemonAdapter`, `websocket-paseo → websocket-agent`, across exactly **5 files** — `packages/prism-daemon/src/protocol.ts`, `…/adapters/paseo-websocket.ts` (rename file), `…/adapters/index.ts`, `packages/prism-daemon/services.config.json`, `…/adapters/paseo-websocket.test.ts` — keeping lineage in a comment. Verify with `npm test -w @prism/daemon` (41 tests). Fully reversible. **Do NOT execute until user gives go.**
+
 ---
 **Sovereignty invariant:** everything self-hosted, Prism-owned end-to-end (DO / Coolify). Donors are absorbed, never depended upon.
