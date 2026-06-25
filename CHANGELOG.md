@@ -4,6 +4,24 @@ All notable changes to Prism Plugin will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.6.5] - 2026-06-25
+
+### Fixed
+
+- **VSCode extension would not load in Cursor / older VS Code** — `apps/prism-vscode` declared `engines.vscode` `^1.109.0` (set at v3.0.0), newer than the editor's VS Code base (e.g. Cursor 2.4.31), so the editor silently excluded the extension — Prism was absent from **both** the activity-bar sidebar and the bottom panel. Restored to `^1.84.0`, the last known-good "working ecosystem" value (`3de58aa`). `scripts/bump-version.py` does not manage this field, so it will not regress on a version bump.
+- **Blank sidebar / bottom-panel webviews** — the webview providers chose Vite HMR mode from the mere existence of a `.vite-port` / `.vite-panel-port` / `.vite-office-port` file, so a stale file left by a dead dev server routed the webview at a dead `localhost` and rendered blank. Removed the stale port files and built the sidebar production bundle. (Tree views are native and were unaffected.)
+
+### Changed
+
+- **Webview dev-server detection hardened** — new shared helper `apps/prism-vscode/src/hosts/vscode/viteDevServer.ts` (`resolveLiveViteServer`) performs a fast TCP liveness probe of the advertised port before choosing HMR; a stale/dead port falls back to the production build. Wired into `VscodeWebviewProvider`, `PrismPanelProvider`, and `OfficeViewProvider`; base `WebviewProvider.getHtmlContent` widened to `string | Promise<string>`. Preserves HMR, adds zero latency when no port file exists.
+- **`apps/prism-vscode/.gitignore`** — added `webview-panel/.vite-panel-port` and `webview-office/.vite-office-port` (the sidebar's `.vite-port` was already ignored) so stale dev-server pointers can't be committed and re-break the panels.
+
+### Notes
+
+- Committed only — **not** released. Run `/prism-release` separately to build artifacts and tag.
+- The `Canceled: Canceled` extension-host error observed during F5 is Cursor's normal shutdown teardown (gitlens `dispose()` + `ProxyResolver`), not a Prism fault.
+- Investigation record: `.prism/shared/research/2026-06-25-vscode-f5-extension-host-fixes.md`.
+
 ## [3.4.0] - 2026-06-03
 
 ### Added
