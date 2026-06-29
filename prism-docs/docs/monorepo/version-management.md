@@ -13,7 +13,7 @@ Prior to v2.4.3, version strings were hardcoded in 14+ files across the monorepo
 A single `VERSION` file at the repository root is the source of truth:
 
 ```
-3.6.0
+3.7.0
 ```
 
 As of **v3.6.0**, every surface versions in lockstep with this file — including
@@ -52,6 +52,7 @@ The script reads the current version from `VERSION`, computes the new version, t
 | 10 | `packages/prism-core/src/shared/PrismState.ts` | `DEFAULT_PRISM_STATE.version` |
 | 11 | `packages/prism-ui/src/context/PrismStateContext.tsx` | `DEFAULT_STATE.version` |
 | 12 | `apps/prism-mobile/packages/app/package.json` | `"version"` fallback (the Expo app reads root `VERSION` first, via `app.config.js`) |
+| 13 | `apps/prism-installer/src-tauri/Cargo.toml` | `version = "X.Y.Z"` (Rust crate, non-standard spacing handled) |
 
 > **Mobile (v3.6.0+):** `apps/prism-mobile/packages/app/app.config.js` reads the repo-root
 > `VERSION` file at config-eval time, so the Expo app surface always matches. The monorepo-root

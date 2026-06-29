@@ -26,6 +26,26 @@ for await (const ev of client.stream("agent-run", "timeline", { agentId })) { /*
 client.onServiceUpdate((s) => updateIndicator(s))
 ```
 
+### `AgentRunClient` — brokered agent substrate (v3.7.0) {#agentrunclient}
+
+`packages/prism-daemon-client/src/agent-run.ts` — a thin typed surface for driving one agent turn
+through the broker's `agent-run` service: **create → send → stream timeline → cancel**. This is
+"full-managed, **step 1**": Prism's orchestration (Spectrum, the 4-phase workflow, signal protocol,
+Office) stays exactly where it is and merely swaps its execution call from in-process to brokered.
+
+```ts
+const agent = new AgentRunClient(daemonClient)        // transport-injected (DaemonClient shape)
+const { agentId } = await agent.createAgent({ cwd, systemPrompt })   // Prism phase prompt stays Prism-owned
+await agent.sendMessage(agentId, "implement STORY-001")
+for await (const ev of agent.streamTimeline(agentId)) { /* assistant turns, tool calls, trailing signal */ }
+await agent.cancel(agentId)
+```
+
+It is **gated OFF by default** (`agentsBrokered()` → flip with `PRISM_AGENTS_BROKERED=1`): the
+proven in-process `PrismTask` loop remains the default until brokered parity is verified against the
+real paseo daemon (step 2). Timeline frames carry the trailing `<spectrum-*>` / `<promise>` text that
+Prism's signal parser reads.
+
 ## Go client (`apps/prism-cli/daemon`)
 
 `apps/prism-cli/daemon/client.go` — a hand-written `coder/websocket` client (dependency-free,

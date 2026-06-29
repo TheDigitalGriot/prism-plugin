@@ -49,7 +49,9 @@ This is what makes "hybrid" not a dead end. Once brokered services are reachable
 same envelope the webviews already speak, moving the agent loop behind the broker later becomes
 a **transport flip** on calls the UI already makes — not a UI rewrite.
 
-::: tip Deferred
-The VS Code-side forwarder is a follow-up (the Electron side ships in v3.6.0). The grpc-handler
-change itself is shared in `@prism/core`, so wiring VS Code is the same one-liner registration.
+::: tip Shipped in v3.7.0
+The VS Code-side forwarder now ships: `VscodeWebviewProvider` registers a `BrokerForwarder` for the
+brokered service set, so the VS Code webview's existing gRPC client reaches brokered services via
+`POST :6780/call` when the daemon broker is running (adopt-only; the Electron side shipped in v3.6.0).
+The grpc-handler change is shared in `@prism/core`, so wiring VS Code was the same one-liner registration.
 :::

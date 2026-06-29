@@ -57,7 +57,8 @@ through the relay.
 `@prism/relay` is registered in the Sovereign Fork Registry as an extracted fork of paseo's
 relay (Curve25519 + NaCl box). The crypto is Prism-owned source, never a runtime dependency.
 
-::: tip Deferred
-The QR-pairing **UI** and verification against the live Cloudflare relay server (self-hosted on
-DO / Coolify) are follow-ups; the crypto + channel wiring ship in v3.6.0.
+::: tip Updated in v3.7.0
+The **desktop QR-pairing UI** and the relay pairing endpoint ship in v3.7.0 (`pairingInfo` exposes
+the daemon public key for QR handoff). Verification against the live Cloudflare relay server
+(self-hosted on DO / Coolify) remains a follow-up; the crypto + channel wiring shipped in v3.6.0.
 :::

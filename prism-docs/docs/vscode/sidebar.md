@@ -33,3 +33,13 @@ Built with React 18 + Vite + Tailwind CSS. Provides the primary interaction surf
 - Log output (last 200 entries)
 - Start/Pause/Resume/Stop controls
 - Iteration counter and elapsed time
+
+## Webview Loading (v3.7.0)
+
+The webview HTML resolves dev-vs-production at view-resolve time: in development it can load from the Vite HMR dev server; in production it loads the built bundle from `webview-ui/build/`.
+
+As of **v3.7.0** the provider **probes the advertised dev-server port for liveness** before choosing HMR — a stale `.vite-port` left by a dead `vite dev` no longer routes the webview at a dead `localhost` (which previously rendered the sidebar blank). A dead or absent port falls back to the production build. Shared helper `src/hosts/vscode/viteDevServer.ts` (`resolveLiveViteServer`) backs the sidebar, bottom-panel, and Office providers; base `WebviewProvider.getHtmlContent` is `string | Promise<string>`.
+
+::: tip Engine floor
+The extension declares `engines.vscode: ^1.84.0` so it loads on Cursor and other editors whose VS Code base predates the latest stable. (`^1.109.0` previously excluded it — the editor silently skipped loading, leaving the sidebar and panel absent.)
+:::

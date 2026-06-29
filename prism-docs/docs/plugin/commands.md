@@ -47,6 +47,12 @@ Commands live at `commands/` and are user-invocable via `/command-name`. Each is
 | 18 | `/prism-screenshot` | `prism-screenshot.md` | 54 | **haiku** | Captures browser screenshot of a URL |
 | 19 | `/prism-browse` | `prism-browse.md` | 82 | **sonnet** | Opens interactive headed browser session for exploration |
 
+## Code Intelligence Commands
+
+| # | Command | File | Lines | Model | Description |
+|---|---------|------|-------|-------|-------------|
+| 26 | `/prism-wiki` | `prism-wiki.md` | 88 | **sonnet** | Generates an architecture wiki + repository overview from the code-intelligence graph (v3.7.0) |
+
 ## Infrastructure Commands
 
 | # | Command | File | Lines | Model | Description |

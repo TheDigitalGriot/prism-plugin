@@ -26,7 +26,7 @@ list — run `npm install` from the repo root:
 }
 ```
 
-The `packages/*` glob auto-includes every package. As of **v3.6.0** that is:
+The `packages/*` glob auto-includes every package. As of **v3.7.0** that is:
 
 | Package | Role |
 |---|---|

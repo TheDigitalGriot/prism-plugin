@@ -36,3 +36,7 @@ A pixel-art office visualization showing AI agent characters at work:
 | Branch detection | Show current git branch per project |
 | Worktree management | Create/delete git worktrees |
 | Epic tracking | Stories grouped by epic folder |
+
+## Webview Loading (v3.7.0)
+
+The panel loads its production bundle from `dist/webview-panel/`, or the Vite HMR dev server when one is live. As of **v3.7.0** the provider verifies the advertised dev-server port is actually listening before choosing HMR (shared `resolveLiveViteServer` helper), so a stale `.vite-panel-port` from a dead `vite dev` no longer renders the panel blank — it falls back to the production build. See [Sidebar → Webview Loading](/vscode/sidebar#webview-loading-v3-7-0) for the shared mechanism.
