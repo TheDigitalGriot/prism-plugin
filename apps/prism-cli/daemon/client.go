@@ -99,6 +99,10 @@ func Dial(ctx context.Context, url string) (*Client, error) {
 		cancel()
 		return nil, fmt.Errorf("dial: %w", err)
 	}
+	// The broker's welcome ships the full registry snapshot; capability manifests
+	// (e.g. code-intel's tools/list) push it past coder/websocket's 32 KiB default
+	// read limit. Raise to 1 MiB so `daemon ls` can read the welcome.
+	conn.SetReadLimit(1 << 20)
 	c := &Client{conn: conn, ctx: cctx, cancel: cancel}
 
 	hello := map[string]any{"type": "hello", "clientId": "prism-cli", "version": "0.1.0"}

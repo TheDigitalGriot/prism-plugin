@@ -42,6 +42,51 @@ function stripEnvelope(msg: Record<string, unknown>): Record<string, unknown> {
   return rest;
 }
 
+/**
+ * The paseo daemon mounts its WebSocket on `/ws` (see packages/server
+ * websocket-server.ts: `new WebSocketServer({ path: "/ws" })`). A bare-host URL
+ * (`ws://host:6767`) is rejected at the upgrade with HTTP 400. Normalize any
+ * path-less endpoint to `/ws`; respect an explicit path if one is already set.
+ */
+function ensurePaseoWsPath(raw: string): string {
+  try {
+    const u = new URL(raw);
+    if (u.pathname === "" || u.pathname === "/") u.pathname = "/ws";
+    return u.toString();
+  } catch {
+    const trimmed = raw.replace(/\/+$/, "");
+    return trimmed.endsWith("/ws") ? trimmed : `${trimmed}/ws`;
+  }
+}
+
+/**
+ * Detect handshake completion. The live paseo daemon does NOT send `{type:"welcome"}`;
+ * it completes the hello with a server_info status frame:
+ *   {type:"session", message:{type:"status", payload:{status:"server_info", version, serverId}}}
+ * Accept that as connected, and keep the `welcome` branch for any clean-dialect daemon.
+ */
+function detectHandshake(
+  msg: Record<string, unknown>,
+): { sessionId?: string; daemonVersion?: string } | null {
+  if (msg.type === "welcome") {
+    return {
+      sessionId: typeof msg.sessionId === "string" ? msg.sessionId : undefined,
+      daemonVersion: typeof msg.daemonVersion === "string" ? msg.daemonVersion : undefined,
+    };
+  }
+  if (msg.type === "session") {
+    const message = msg.message as { type?: unknown; payload?: Record<string, unknown> } | undefined;
+    const payload = message?.payload;
+    if (message?.type === "status" && payload?.status === "server_info") {
+      return {
+        sessionId: typeof payload.serverId === "string" ? payload.serverId : undefined,
+        daemonVersion: typeof payload.version === "string" ? payload.version : undefined,
+      };
+    }
+  }
+  return null;
+}
+
 export class PaseoWebSocketAdapter implements Adapter {
   readonly type = "websocket-paseo" as const;
   private readonly url: string;
@@ -57,7 +102,7 @@ export class PaseoWebSocketAdapter implements Adapter {
   constructor(private readonly desc: ServiceDescriptor) {
     const url = desc.endpoint.local ?? desc.endpoint.cloud;
     if (!url) throw new Error(`PaseoWebSocketAdapter: service '${desc.id}' has no endpoint`);
-    this.url = url;
+    this.url = ensurePaseoWsPath(url);
   }
 
   connect(): Promise<void> {
@@ -96,12 +141,13 @@ export class PaseoWebSocketAdapter implements Adapter {
         } catch {
           return;
         }
-        if (msg.type === "welcome" && !this.connected) {
+        const handshake = !this.connected ? detectHandshake(msg) : null;
+        if (handshake) {
           clearTimeout(timer);
           ws.off("error", settleReject);
           this.connected = true;
-          this.sessionId = typeof msg.sessionId === "string" ? msg.sessionId : undefined;
-          this.daemonVersion = typeof msg.daemonVersion === "string" ? msg.daemonVersion : undefined;
+          this.sessionId = handshake.sessionId;
+          this.daemonVersion = handshake.daemonVersion;
           this.connecting = undefined;
           resolve();
           return;

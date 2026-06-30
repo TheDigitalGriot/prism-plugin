@@ -50,6 +50,47 @@ function startMockPaseo(): Promise<MockPaseo> {
   });
 }
 
+/**
+ * Closer stand-in for the LIVE paseo daemon (packages/server websocket-server.ts):
+ * the WS only accepts the upgrade on `/ws`, and the hello is answered with a
+ * server_info status frame — NOT a `{type:"welcome"}`. Regression guard for the
+ * adapter's path normalization + handshake detection.
+ */
+function startRealisticPaseo(): Promise<MockPaseo> {
+  return new Promise((resolve) => {
+    const http = createServer();
+    const wss = new WebSocketServer({ server: http, path: "/ws" });
+    let sock: WS | undefined;
+
+    wss.on("connection", (ws) => {
+      sock = ws;
+      ws.on("message", (raw) => {
+        const msg = JSON.parse(raw.toString()) as Record<string, unknown>;
+        if (msg.type === "hello") {
+          ws.send(
+            JSON.stringify({
+              type: "session",
+              message: {
+                type: "status",
+                payload: { status: "server_info", serverId: "srv_real", version: "0.1.69" },
+              },
+            }),
+          );
+        }
+      });
+    });
+
+    http.listen(0, "127.0.0.1", () => {
+      const port = (http.address() as AddressInfo).port;
+      resolve({
+        url: `ws://127.0.0.1:${port}`,
+        close: () => new Promise<void>((done) => wss.close(() => http.close(() => done()))),
+        pushTimeline: (data) => sock?.send(JSON.stringify({ type: "timeline", ...data })),
+      });
+    });
+  });
+}
+
 function desc(url: string): ServiceDescriptor {
   return {
     id: "agent-run",
@@ -76,6 +117,17 @@ describe("PaseoWebSocketAdapter (paseo-dialect shim)", () => {
 
   it("probes via the paseo hello/welcome handshake", async () => {
     mock = await startMockPaseo();
+    adapter = new PaseoWebSocketAdapter(desc(mock.url));
+    const res = await adapter.probe();
+    expect(res.ok).toBe(true);
+    expect(res.via).toBe("local");
+  });
+
+  it("connects on /ws and accepts the live server_info handshake (no welcome frame)", async () => {
+    // The mock only upgrades on /ws and never sends a `welcome`. desc() passes the
+    // BARE url, so the adapter must (1) append /ws itself and (2) treat server_info
+    // as connection-complete — otherwise probe() fails.
+    mock = await startRealisticPaseo();
     adapter = new PaseoWebSocketAdapter(desc(mock.url));
     const res = await adapter.probe();
     expect(res.ok).toBe(true);
