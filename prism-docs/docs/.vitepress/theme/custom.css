@@ -188,3 +188,22 @@ body::before {
   --vp-c-brand-3: #3730a3;
   --vp-c-brand-soft: rgba(99, 102, 241, 0.1);
 }
+
+/* ─── Architecture Explorer — full-bleed page (layout: page) ───────────────── */
+/* Strip the doc container's padding/max-width/footer so the canvas owns the
+   whole area beneath the nav. Scoped to pageClass: architecture-page. */
+/* Keep the top offset so the explorer sits BELOW the fixed nav (+3px spectral bar),
+   but drop the horizontal/bottom padding so the canvas is full-bleed. */
+.architecture-page .VPContent { padding: calc(var(--vp-nav-height) + 3px) 0 0 0 !important; }
+.architecture-page .VPPage { margin: 0 !important; padding: 0 !important; }
+.architecture-page .VPPage .vp-doc,
+.architecture-page .VPDoc { padding: 0 !important; }
+.architecture-page .VPDoc .container,
+.architecture-page .VPDoc .content,
+.architecture-page .VPDoc .content-container { max-width: none !important; margin: 0 !important; padding: 0 !important; }
+.architecture-page .VPDoc .aside,
+.architecture-page .VPDocFooter,
+.architecture-page .VPDoc .vp-doc-footer { display: none !important; }
+.architecture-page .VPFooter { display: none !important; }
+/* The page itself shouldn't scroll — the explorer manages its own pan/zoom. */
+.architecture-page { overflow: hidden; }

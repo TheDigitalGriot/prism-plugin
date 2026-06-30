@@ -18,7 +18,7 @@ All three share the same `.prism/` directory structure, `stories.json` schema, s
 
 ## Architecture Explorer
 
-A self-contained, dependency-free visual map of the whole system — **[open the Architecture Explorer](/architecture.html)**. Pan / zoom / click-to-expand across three views:
+A self-contained, dependency-free visual map of the whole system — **[open the Architecture Explorer](/architecture)**. Pan / zoom / click-to-expand across three views:
 
 - **Runtime** — surfaces → in-process seam → broker (registry / router / session / resolve / relay / control-plane / health-loop) → adapters → services → relay & clients.
 - **Workflows** — the skill pathways and order of operations (init → capture/brand → brainstorm → design / research → plan → implement | subagent | spectrum → validate → verify → finish → bookend → release; debug on failure).

@@ -25,7 +25,7 @@ export default defineConfig({
 
     nav: [
       { text: 'Guide', link: '/overview' },
-      { text: '🗺 Architecture', link: '/architecture.html' },
+      { text: '🗺 Architecture', link: '/architecture' },
       { text: 'Daemon', link: '/daemon/' },
       { text: 'CLI', link: '/cli/' },
       { text: 'VS Code', link: '/vscode/' },
