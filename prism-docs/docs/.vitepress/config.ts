@@ -198,7 +198,7 @@ export default defineConfig({
 
     footer: {
       message: 'Prism — AI-Driven Development Workflow Suite',
-      copyright: 'v3.7.6',
+      copyright: 'v3.7.7',
     },
 
     editLink: {

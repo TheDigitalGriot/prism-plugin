@@ -1,7 +1,7 @@
 {
   "name": "prism-installer",
   "productName": "Prism Setup",
-  "version": "3.7.6",
+  "version": "3.7.7",
   "description": "Prism installer — unified setup wizard for Windows and macOS",
   "private": true,
   "scripts": {
