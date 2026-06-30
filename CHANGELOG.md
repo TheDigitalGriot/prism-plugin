@@ -4,6 +4,26 @@ All notable changes to Prism Plugin will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.7.5] - 2026-06-29
+
+Design Studio surface online + full Prism rebrand/theme. First-ever run of `apps/prism-design-studio` (the relay that fronts the forked `prism-design-engine`), then a complete "Open Design → Prism Design Studio" rebrand and Griotwave-aligned recolor. Broker `design-gen` now reaches **ready**.
+
+### Added
+
+- **prism-design-studio brought online (first run)** — relay (:7457) → `prism-design-engine` daemon (:7456). Required node 24 (`nvm use 24.11.1`; `better-sqlite3` ABI) + `pnpm install` (3m20s; pnpm self-provisions 10.33.2). Engine serves `/api/skills` (155 skills) → broker `design-gen` flips `error` → **ready**.
+- **Griotwave design system** committed to `prism-design-engine` (`design-systems/griotwave/DESIGN.md`) — canonical Griot ecosystem design language (Neural `#3B82F6` primary, dark-first, glassmorphic, ember-bloom motion).
+- **Research + plan docs** — `.prism/shared/research/2026-06-29-prism-design-studio-rebrand.md` (branding inventory, the 4-layer accent override system, Griotwave palette map) and `.prism/shared/plans/2026-06-29-design-studio-surface-qa-sweep.md` (surface-consistency sweep).
+
+### Changed
+
+- **Rebrand Open Design → Prism Design Studio** (`prism-design-engine`, branch `feat/prism-rebrand-theme`) — tab title, `app.brand` + `app.brandSubtitle` across 19 locales, the *hardcoded* home-hero wordmark, secondary demo copy (`content.*.ts`, 36→0), and new prism-spectrum logo art (brand-icon / logo / app-icon SVG + regenerated PNG). Functional identifiers (`@open-design/*`, `OD_*`, `od`, `.open-design`) and hosted-service refs ("Share to Open Design" / AMR) left intact.
+- **Prism color theme** — primary accent coral `#c96442` → Griotwave **Neural `#3B82F6`** across all four override layers (`tokens.css` ×3 blocks, `appearance.ts` `DEFAULT_ACCENT_COLOR`, the `layout.tsx` pre-hydration script, and the persisted `localStorage` value that was masking the rest). Warm-brown neutrals → cool slate (interim step toward Griotwave Void `#000` / Graphite `#0E0F11`).
+
+### Notes
+
+- `node-pty` loads via prebuilt `win32-x64` binary despite pnpm skipping its build script — not a blocker.
+- The rebrand/theme lives in the **`prism-design-engine`** repo on branch `feat/prism-rebrand-theme` (commits `d98a4c23`, `50449153`) — not yet merged to its `main`. The full surface-consistency sweep onto Griotwave tokens is **planned, not done**.
+
 ## [3.7.0] - 2026-06-29
 
 Bookend of all work since `v3.6.0` (17 commits). Headline: the interactive Architecture Explorer, broker/daemon substrate expansion, and a full repair + hardening of the VSCode extension surface (which would not load in Cursor / newer-engine editors).
