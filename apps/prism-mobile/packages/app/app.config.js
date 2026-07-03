@@ -33,6 +33,7 @@ function resolveSecretFile(params) {
 const variants = {
   production: {
     name: "Prism",
+    icon: "./assets/images/icon.png",
     packageId: "com.thedigitalgriot.prism",
     googleServicesFile: resolveSecretFile({
       envKey: "GOOGLE_SERVICES_FILE_PROD",
@@ -45,6 +46,7 @@ const variants = {
   },
   development: {
     name: "Prism Debug",
+    icon: "./assets/images/icon-debug.png",
     packageId: "com.thedigitalgriot.prism.debug",
     googleServicesFile: resolveSecretFile({
       envKey: "GOOGLE_SERVICES_FILE_DEBUG",
@@ -65,7 +67,7 @@ export default {
     slug: "prism-mobile",
     version: resolveVersion(),
     orientation: "portrait",
-    icon: "./assets/images/icon.png",
+    icon: variant.icon,
     scheme: "prism",
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
