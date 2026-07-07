@@ -180,6 +180,7 @@ export default defineConfig({
           { text: 'Desktop Daemon-Manager', link: '/daemon/desktop-manager' },
           { text: 'Seam Bridge', link: '/daemon/seam-bridge' },
           { text: 'E2EE Relay', link: '/daemon/relay' },
+          { text: 'Surface Connectivity & Pairing', link: '/daemon/surface-connectivity' },
         ],
       },
       {

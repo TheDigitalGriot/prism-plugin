@@ -52,6 +52,28 @@ A full encrypted relay round-trip is covered by tests: a remote client pairs via
 pubkey → ECDH handshake → exchanges encrypted `hello`/`welcome` and `call`/`response` frames
 through the relay.
 
+## Pairing landing page (v3.9.0)
+
+The pairing **offer** is an HTTPS URL whose payload lives in the URL *fragment* —
+`https://prism.digitalgriot.studio/#offer=<base64url>`. A fragment never reaches a server, so a
+client-side page must read it and bridge into the app. Before v3.9.0 the offer host (the apex) had
+no origin — only `/relay/*` was routed to the Worker — so opening the link returned Cloudflare
+**522**. v3.9.0 ships the missing page from the **same relay Worker**:
+
+```text
+GET /                → pairing landing page (reads #offer=, bridges to prism://)
+GET /pair            → pairing landing page (alternate app.baseUrl target)
+GET /.well-known/apple-app-site-association → AASA for iOS universal links
+GET /relay/* · /ws   → the E2EE relay (unchanged; strip-/relay patch maps /relay/ws → /ws)
+```
+
+- The Worker route was widened `prism.digitalgriot.studio/relay/*` → `/*`; the pairing/well-known
+  routes are handled **before** the `/relay` strip, so relay traffic is untouched.
+- **iOS universal links** (Apple Team `M6K8N36JN8`, bundles `com.thedigitalgriot.prism[.debug]`)
+  let the `https://…/#offer=` link open the app directly, with no browser hop.
+- Source: `apps/prism-mobile/packages/relay/src/pairing-page.ts`. See
+  [Surface Connectivity & Pairing](/daemon/surface-connectivity) for the full flow.
+
 ## Sovereignty
 
 `@prism/relay` is registered in the Sovereign Fork Registry as an extracted fork of paseo's

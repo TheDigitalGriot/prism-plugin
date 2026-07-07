@@ -4,6 +4,45 @@ All notable changes to Prism Plugin will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.9.0] - 2026-07-07
+
+Relay pairing landing page + iOS universal links — the offer link now works **end-to-end from anywhere** (was Cloudflare 522). This is the keystone for the always-on droplet: a phone can pair to the daemon by opening a `https://prism.digitalgriot.studio/#offer=…` link.
+
+### Added
+
+- **Pairing landing page** — served from the relay Cloudflare Worker at the apex (`prism.digitalgriot.studio/` and `/pair`). Self-contained HTML reads the `#offer=` fragment client-side and bridges into the app via the `prism://` custom scheme (shows the offer's server + relay endpoint). New `apps/prism-mobile/packages/relay/src/pairing-page.ts`.
+- **iOS universal links** — Apple App Site Association served at `/.well-known/apple-app-site-association` (Team `M6K8N36JN8`, bundles `com.thedigitalgriot.prism` + `.debug`); `ios.associatedDomains: ["applinks:prism.digitalgriot.studio"]` added to `app.config.js`. The `https://…/#offer=` link opens the app directly (no browser hop).
+- **Droplet offer host** — `PASEO_APP_BASE_URL=https://prism.digitalgriot.studio` in `apps/prism-mobile/deploy/` so the always-on droplet's offers point at the landing page instead of the `app.paseo.sh` default.
+- **Standalone `preview` EAS profile** — internal-distribution iOS build (no dev client) for on-device deep-link testing; built and paired on iPhone + iPad.
+- **Docs** — `SURFACE-CONNECTIVITY-AND-TESTING.md`, `ANDROID-APP-LINKS-DEFERRED.md`, `EAS-ARCHIVE-AND-EASIGNORE.md` under `.prism/shared/docs/`.
+
+### Fixed
+
+- **Offer link 522 from anywhere** — the relay Worker route was widened `prism.digitalgriot.studio/relay/*` → `/*`, so the offer host (the apex) hits the Worker instead of a missing origin. `handlePairingStaticRoutes` runs before the `/relay` strip, so relay traffic is untouched (tests 13/13). Verified apex `522 → 200`; `/relay/ws` still `400` to a bare GET.
+
+### Notes
+
+- App-side deep-link handling (`OfferLinkListener` in `packages/app/src/app/_layout.tsx`) already shipped — no app change was needed for pairing itself.
+- **Android App Links deferred** (Apple-only for now); re-add steps in `.prism/shared/docs/ANDROID-APP-LINKS-DEFERRED.md`.
+- `prism-eval` (embedded Electron eval app, 57 files that were uncommitted) backed up to branch `prism-eval-app`; the plugin gitlink now points at the real commit (`200d344`).
+
+## [3.8.0] - 2026-07-03
+
+Daemon `agent-run` handshake fix (the mobile/broker path to `:6767`), first EAS iOS dev builds with per-variant icons, always-on droplet deploy assets, and the Architecture Explorer ported to native VitePress. Bookended `3.7.5 → 3.7.6 → 3.7.7 → 3.8.0`.
+
+### Added
+
+- **Always-on droplet deploy assets** — `apps/prism-mobile/deploy/` (Dockerfile, docker-compose, `.env.example`, RUNBOOK) for running the agent daemon on the DO droplet via Coolify, dialing the same Griot relay (`PASEO_RELAY_ENDPOINT=wss://prism.digitalgriot.studio/relay`).
+- **EAS iOS dev builds + per-variant icons** — blue = Prism Debug (`icon-debug.png`), green = Prism (`icon.png`) via `variant.icon` in `app.config.js`; installed on the registered iPhone.
+- **Architecture Explorer** — ported to a native themed VitePress component; live at `thedigitalgriot.github.io/prism-plugin/architecture` (GitHub Pages).
+- **Docs** — 3.8.0 documentation snapshot + VitePress sync; `daemon/adapters.md` corrected (documented the fictional `welcome` handshake); daemon bring-up validation + verified-state snapshot.
+
+### Fixed
+
+- **Daemon `agent-run` error → ready** (`32dc3a6`) — `PaseoWebSocketAdapter` now dials `/ws` and accepts the daemon's `server_info` status frame (the daemon never sends `welcome`); regression test added. `prism-cli daemon ls` read limit raised to 1 MiB.
+- **Tauri installer build** (`5ad2fe4`) — resolved an `E0382` borrow-after-move in the macOS editor-detect path.
+- **Release hygiene** — stopped tracking VitePress build output (`dist`/`cache`) so release commits aren't polluted with a stale site build.
+
 ## [3.7.5] - 2026-06-29
 
 Design Studio surface online + full Prism rebrand/theme. First-ever run of `apps/prism-design-studio` (the relay that fronts the forked `prism-design-engine`), then a complete "Open Design → Prism Design Studio" rebrand and Griotwave-aligned recolor. Broker `design-gen` now reaches **ready**.
