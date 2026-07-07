@@ -79,6 +79,10 @@ export default {
     },
     ios: {
       supportsTablet: true,
+      // Universal links: taps on https://prism.digitalgriot.studio/#offer=… open the app directly
+      // (no browser hop). Requires the AASA at that host's /.well-known/apple-app-site-association
+      // (served by the relay Worker) and a new native build to take effect.
+      associatedDomains: ["applinks:prism.digitalgriot.studio"],
       infoPlist: {
         NSMicrophoneUsageDescription: "This app needs access to the microphone for voice commands.",
         ITSAppUsesNonExemptEncryption: false,

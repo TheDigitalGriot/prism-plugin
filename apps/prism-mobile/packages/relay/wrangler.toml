@@ -3,11 +3,18 @@ account_id = "c431da740e42c0b57f901b8ba2115bbc"
 main = "src/cloudflare-adapter.ts"
 compatibility_date = "2024-12-01"
 
-# Single route binding: prism.digitalgriot.studio/relay/*
-# The cloudflare-adapter.ts strip-/relay patch maps /relay/ws -> /ws internally.
-# Multi-app strategy: synaptiq.digitalgriot.studio/relay/*, etc. add additional patterns here.
+# Whole-host route: prism.digitalgriot.studio/*
+# The Worker now serves BOTH the relay and the pairing surface off this one hostname:
+#   /                -> pairing landing page (reads #offer=, bridges to prism://)
+#   /pair, /pair/    -> pairing landing page (alt app.baseUrl target)
+#   /.well-known/*   -> apple-app-site-association + assetlinks.json (universal links)
+#   /relay/*, /ws    -> relay (the strip-/relay patch maps /relay/ws -> /ws internally)
+#   /health          -> health check
+# Routing /* (not just /relay/*) is what removes the apex 522: the offer link's host
+# ("https://prism.digitalgriot.studio/#offer=…") now hits the Worker instead of a missing origin.
+# Multi-app strategy: synaptiq.digitalgriot.studio/*, etc. add additional patterns here.
 routes = [
-  { pattern = "prism.digitalgriot.studio/relay/*", zone_name = "digitalgriot.studio" }
+  { pattern = "prism.digitalgriot.studio/*", zone_name = "digitalgriot.studio" }
 ]
 
 [observability]

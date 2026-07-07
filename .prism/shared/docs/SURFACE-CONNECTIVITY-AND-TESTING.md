@@ -163,20 +163,9 @@ PASEO_LISTEN=0.0.0.0:6767 npm run start              # binds 0.0.0.0:6767, dials
    ```
    The offer encodes: `serverId`, the daemon's **public key**, and the **relay endpoint**
    (`prism.digitalgriot.studio:443/relay`) — all Griot.
-2. In **Prism Debug** → pair/connect screen → **scan the QR with the app's in-app scanner** or paste
-   the `#offer=…` link into the app's "pair via link" field.
+2. In **Prism Debug** → pair/connect screen → **scan the QR** (in-app scanner) or paste the
+   `#offer=…` link.
 3. E2EE handshake over the relay → connected from any network.
-
-> ⚠️ **KNOWN GAP (must fix): the offer link 522s in a browser.** The offer is
-> `https://prism.digitalgriot.studio/#offer=…` (from `bootstrap.ts` `appBaseUrl`), but the relay
-> **Worker is only routed on `/relay/*`** — the apex `/` has no origin, so opening the link (browser
-> or phone-camera) returns Cloudflare **522**. This is NOT the intended end state: a shareable
-> pairing link that works from anywhere is exactly what the always-on droplet needs. **The fix is to
-> build a pairing landing page** at the offer host that reads `#offer=` client-side and deep-links
-> into the app (`prism://`), and ideally set up universal links so the `https` link opens the app
-> directly. Until that page exists, the *interim* is to pair inside the app (in-app QR scanner /
-> paste the offer link), which decodes the fragment locally. See the handoff
-> `.prism/shared/handoffs/2026-07-03-relay-pairing-landing-page.md`.
 
 ### Option B — Direct LAN (same Wi-Fi; simplest)
 
@@ -244,7 +233,6 @@ identically — the offer just carries the droplet's `serverId`. See
 | `dev:server` crashes on `@thedigitalgriot/relay/dist/e2ee.js` | relay/highlight ship only `dist/` | run `npm run build:daemon` first |
 | Phone can't reach `<LAN-IP>:6767` | daemon loopback-only, or firewall | `PASEO_LISTEN=0.0.0.0:6767`; allow node/6767 inbound |
 | Phone can't reach via relay | daemon not relay-connected, or stale pair | check `relay_control_connected` in `daemon.log`; re-run `daemon pair` |
-| Offer link → Cloudflare **522** in browser | apex `prism.digitalgriot.studio/` has no origin (only `/relay/*` is a Worker) | expected — don't open the offer in a browser/camera; scan/paste it **inside the app** |
 | `relay_control_disconnected (1006)` every ~15 min | Cloudflare Worker recycling the long-lived WS | benign — the daemon auto-reconnects; the DO preserves the channel |
 | `agent-run` shows `error` in `prism-cli daemon ls` | adapter dialed bare URL / awaited `welcome` | fixed in v3.8.0 (`/ws` + `server_info`); ensure daemon is up |
 | `prism-cli daemon ls` → "message too big" | broker welcome > 32 KiB Go read limit | fixed in v3.8.0 (`SetReadLimit(1 MiB)`); rebuild the CLI |

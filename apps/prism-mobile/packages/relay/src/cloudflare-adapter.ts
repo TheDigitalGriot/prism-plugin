@@ -17,6 +17,7 @@
  * ```
  */
 
+import { handlePairingStaticRoutes } from "./pairing-page.js";
 import type { ConnectionRole, RelaySessionAttachment } from "./types.js";
 
 type RelayProtocolVersion = "1" | "2";
@@ -566,6 +567,13 @@ export class RelayDurableObject {
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+
+    // Pairing landing page + universal-link association files (apex `/`, `/pair`,
+    // `/.well-known/*`). Checked before the /relay strip so relay traffic is untouched.
+    const pairingResponse = handlePairingStaticRoutes(url);
+    if (pairingResponse) {
+      return pairingResponse;
+    }
 
     // Support mounting under /relay/* route (e.g. prism.digitalgriot.studio/relay/*)
     if (url.pathname === "/relay" || url.pathname.startsWith("/relay/")) {

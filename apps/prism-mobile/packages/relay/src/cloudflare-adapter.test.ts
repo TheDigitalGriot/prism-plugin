@@ -281,3 +281,66 @@ describe("relay worker endpoint routing", () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 });
+
+describe("pairing landing page + universal-link association", () => {
+  // Static routes never touch the RELAY binding.
+  const noEnv = {} as unknown as RelayEnvArg;
+
+  it("serves the pairing landing page at the apex", async () => {
+    const response = await relayWorker.fetch(
+      new Request("https://prism.digitalgriot.studio/"),
+      noEnv,
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toContain("text/html");
+    const body = await response.text();
+    // The page reads the #offer= fragment and bridges to the prism:// custom scheme.
+    expect(body).toContain("#offer=");
+    expect(body).toContain("prism://");
+  });
+
+  it("serves the pairing landing page at /pair", async () => {
+    const response = await relayWorker.fetch(
+      new Request("https://prism.digitalgriot.studio/pair"),
+      noEnv,
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toContain("text/html");
+  });
+
+  it("serves the apple-app-site-association with both bundle ids", async () => {
+    const response = await relayWorker.fetch(
+      new Request("https://prism.digitalgriot.studio/.well-known/apple-app-site-association"),
+      noEnv,
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toContain("application/json");
+    const aasa = (await response.json()) as {
+      applinks: { details: Array<{ appIDs: string[] }> };
+    };
+    const appIDs = aasa.applinks.details[0]?.appIDs ?? [];
+    expect(appIDs.some((id) => id.endsWith(".com.thedigitalgriot.prism"))).toBe(true);
+    expect(appIDs.some((id) => id.endsWith(".com.thedigitalgriot.prism.debug"))).toBe(true);
+    // Every appID must be prefixed with a real 10-char Apple Team ID (never the placeholder).
+    expect(appIDs.every((id) => /^[A-Z0-9]{10}\./.test(id))).toBe(true);
+    expect(appIDs.every((id) => !id.startsWith("REPLACE_WITH"))).toBe(true);
+  });
+
+  it("still routes /relay/ws to the durable object (relay traffic untouched)", async () => {
+    const fetch = vi.fn(async () => new Response("relay-ok"));
+    const get = vi.fn(() => ({ fetch }));
+    const idFromName = vi.fn(() => ({ toString: () => "id" }));
+
+    const response = await relayWorker.fetch(
+      new Request("https://prism.digitalgriot.studio/relay/ws?serverId=srv_test&role=server&v=2"),
+      { RELAY: { idFromName, get } } as unknown as RelayEnvArg,
+    );
+
+    expect(idFromName).toHaveBeenCalledWith("relay-v2:srv_test");
+    expect(fetch).toHaveBeenCalledTimes(1);
+    await expect(response.text()).resolves.toBe("relay-ok");
+  });
+});
