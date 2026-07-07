@@ -15,6 +15,12 @@
         "gradleCommand": ":app:assembleDebug"
       }
     },
+    "preview": {
+      "distribution": "internal",
+      "env": {
+        "APP_VARIANT": "development"
+      }
+    },
     "production": {
       "channel": "production",
       "env": {
