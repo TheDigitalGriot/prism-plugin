@@ -149,7 +149,7 @@ const DEFAULT_SPECTRUM_STATE: PrismSpectrumState = {
 }
 
 const DEFAULT_STATE: PrismExtensionState = {
-  version: "3.8.0",
+  version: "3.9.0",
   didHydrateState: false,
   hasPrismDir: false,
   hasStoriesJson: false,
