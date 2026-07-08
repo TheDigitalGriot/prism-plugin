@@ -4,6 +4,20 @@ All notable changes to Prism Plugin will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.9.5] - 2026-07-08
+
+Marketplace cache-bust for the `prism-v2-update.zip` untrack fix. The 3.9.0 change removed the nested zip from git tracking, but the marketplace kept serving the cached 3.9.0 plugin tree (which still contained the tracked zip) because the version number never changed. Bumping to 3.9.5 forces the marketplace to re-fetch the now-clean tree, so nested zips no longer block Claude Cowork installs.
+
+### Fixed
+
+- **Nested zip blocked Claude Cowork installs** — `.prism/shared/docs/update/prism-v2-update.zip` was tracked by git and shipped inside the plugin tree; Cowork cannot install plugins that contain nested zips. Untracked via `git rm --cached` (file kept on disk, now covered by the existing `*.zip` rule in `.gitignore`) so it no longer enters the packaged tree.
+- **Stale marketplace cache** — the untrack landed in 3.9.0 but the marketplace continued serving the cached 3.9.0 tree (still containing the zip) because the version was unchanged. Version bumped `3.9.0 → 3.9.5` to force a clean re-fetch.
+
+### Notes
+
+- Patch-level jump `3.9.0 → 3.9.5` (skipped `3.9.1`–`3.9.4`) to make the new version unmistakably distinct from any cached 3.9.0 copy.
+- VitePress footer version straggler (`prism-docs/docs/.vitepress/config.ts`) caught and synced to 3.9.5 by the post-bump discovery sweep.
+
 ## [3.9.0] - 2026-07-07
 
 Relay pairing landing page + iOS universal links — the offer link now works **end-to-end from anywhere** (was Cloudflare 522). This is the keystone for the always-on droplet: a phone can pair to the daemon by opening a `https://prism.digitalgriot.studio/#offer=…` link.
