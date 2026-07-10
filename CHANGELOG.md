@@ -4,6 +4,21 @@ All notable changes to Prism Plugin will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [4.0.0] - 2026-07-10
+
+Milestone release: the **6-phase workflow** identity (Ideate → Research → Plan → Design → Implement → Validate) plus a first-class **Cowork sideload** path. The major version marks the workflow rebrand and the new plugin-distribution capability — there are no breaking changes to existing skills, agents, or commands.
+
+### Added
+
+- **`/prism-sideload` skill** — packages the plugin's tracked components (`.claude-plugin`, `skills`, `agents`, `commands`, `hooks`, `scripts`) via `git archive HEAD` into a lean, verified zip for Cowork's **Upload plugin** flow, bypassing Cowork's GitHub-sync stale-cache bug. Output lands in gitignored `.prism/local/sideload/`; the build asserts `plugin.json` matches `VERSION` and that there are **zero nested zips** (a nested zip blocks Cowork installs).
+- **Cowork Sideload docs page** (`prism-docs/docs/plugin/cowork-sideload.md`, linked in the Part I sidebar) — explains why Cowork serves stale plugin content and how to sideload around it, with links to the tracking issues (#69020, #38185, #45810).
+
+### Notes
+
+- The **Ideate** and **Design** phases in the 6-phase description are **not yet implemented** — the naming establishes the workflow identity; behavior is unchanged from the 4-phase (Research → Plan → Implement → Validate) core.
+- Dev-environment record (not a plugin change): the Claude CLI was migrated from a broken npm-global install to the native, nvm-independent standalone install — see `.prism/shared/docs/2026-07-09-claude-cli-nvm-migration.md`.
+- VitePress footer synced to v4.0.0 by the post-bump discovery sweep.
+
 ## [3.9.6] - 2026-07-08
 
 Second marketplace cache-bust for the `prism-v2-update.zip` untrack, paired with a workflow-description refresh. Anthropic's plugin backend re-indexed the 3.9.5 metadata but kept serving a **stale package** still containing the removed nested zip, which continued to block Cowork/Desktop installs. A fresh commit hash + version forces the backend to re-package the clean tree.
