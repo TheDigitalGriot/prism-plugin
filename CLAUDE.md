@@ -181,6 +181,15 @@ This project uses codebase-memory-mcp for structural code analysis. When availab
 
 Graph queries cost ~500 tokens. File-by-file exploration costs ~80,000 tokens. Always use the graph first.
 
+## Browser Tooling (Playwright vs. chrome-devtools MCP)
+
+Two browser surfaces, split by task type:
+
+- **Verification / CI / regression → Playwright.** The existing `browser-verifier` agent and `/prism-verify` command (plus `/prism-screenshot`, `/prism-browse`) drive Playwright for screenshots, console-error checks, and structured assertions. This path is **unchanged**.
+- **Interactive / exploratory debugging → chrome-devtools MCP.** The `chrome-devtools` MCP server (declared in the project `.mcp.json`) is the debugging surface — live DOM inspection, network/console traces, performance, and step-through.
+
+**Override:** when the user explicitly names **"playwright"** or **"devtools"**, use that tool's flow regardless of task type — the explicit name wins over the default routing above.
+
 ## File Naming Conventions
 
 - Research/plans/validation: `YYYY-MM-DD-topic.md` (or `YYYY-MM-DD-ENG-XXXX-description.md` with ticket)
