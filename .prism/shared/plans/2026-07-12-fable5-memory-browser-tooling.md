@@ -2,8 +2,36 @@
 
 **Date:** 2026-07-12
 **Source ledger:** `.prism/shared/brainstorms/2026-07-12-fable5-memory-browser-tooling.md`
-**Status:** Ready for implementation
+**Status:** ✅ COMPLETE — all 10 tasks implemented, spec+quality reviewed, final-pass **SHIP**, merged to `main`, released in **v4.1.0**.
 **Quality gates:** `claude plugin validate .` · `cd apps/prism-vscode && npx tsc --noEmit` · `hooks/` linted with `scripts/hook-linter.sh`
+
+## ✅ Completion checklist (v4.1.0 · 2026-07-12)
+
+Executed via `/prism-subagent` — 10 tasks, two-stage (spec + quality) review, state at `.prism/local/subagent/2026-07-12-fable5-memory-browser-tooling/state.json`. Final-pass integration review: **SHIP**.
+
+**A · Fable 5**
+- [x] **T1** SDK: `fable` id + `refusal` handler — `dc48928` (review verified the cast is required; documented)
+- [x] **T2** flag file + `isFableEnabled` reader — `fa3adf2` (+5 unit tests)
+- [x] **T3** app modal gate (Confirm/Deny→Opus) — `ae678f4` · ⚠ *dormant:* `createTask` is unwired scaffold, so the app path isn't reachable yet (hook path IS)
+- [x] **T4** PreToolUse hook gate — `6a9049a` (review caught + fixed a fail-**OPEN**; now fail-closed)
+
+**B · Memory**
+- [x] **T5** GitNexus dual-index doc (local-only + license boundary) — `a2fb223`
+- [x] **T6** `scripts/prism-sync-skills.py` community skill-gen — `a672d63` (review caught + fixed invalid YAML across all 169 files)
+- [x] **T7** `scripts/prism-inject-stats.py` live-stats CLAUDE.md injector — `3f7da6a` (spec + quality PASS)
+- [x] **T8** `scripts/detect-changes-gate.sh` PostToolUse advisory hook — `fec7d96` (review caught + fixed advisory-output shape)
+- [x] **T9** `commands/prism-wiki.md` — `9f2340c` (review caught + fixed CLAUDE.md-clobber + scoped-overwrite risks)
+
+**C · Browser tooling**
+- [x] **T10** browser routing note in CLAUDE.md (Playwright verify / devtools debug + explicit-name override) — `c86b1de`
+
+**Release**
+- [x] Merged `feat/…` → `main` (`7f8bf0d`); version bump `v4.1.0` (`efe10c0`); tag + push
+- [x] GitHub release live — **8 assets** (5 CLI + Windows `.exe` + macOS `.dmg` + `prism.vsix`); docs redeployed via CI
+- [x] VSIX packaging fixed (`engines ^1.109.0`, `d204a56`), built + uploaded
+- [x] GitNexus installed + indexed + registered as a `local` MCP (dual-index live; boundary holds)
+
+**Deferred → tracked in handoff** `.prism/shared/handoffs/2026-07-12-native-semantic-layer.md`: native fused-hybrid semantic layer (Option C); VSIX `engines` fix is one commit past the tag; Fable app-modal needs `createTask` wired; `rm .prism/local/fable.flag` at midnight.
 
 ## Overview
 
