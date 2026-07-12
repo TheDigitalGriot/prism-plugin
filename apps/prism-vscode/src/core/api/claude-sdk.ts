@@ -20,6 +20,7 @@ export const MODEL_IDS = {
   opus: "claude-opus-4-8",
   sonnet: "claude-sonnet-4-6",
   haiku: "claude-haiku-4-5-20251001",
+  fable: "claude-fable-5",
 } as const
 
 export type ModelName = keyof typeof MODEL_IDS
@@ -122,6 +123,12 @@ export class PrismApiHandler {
           break
 
         case "message_delta":
+          if ((event.delta.stop_reason as string) === "refusal") {
+            throw new Error(
+              "Request declined by safety classifier (stop_reason: refusal). " +
+                "This can occur with Claude Fable 5 on certain content. Retry or rephrase.",
+            )
+          }
           if (event.usage) {
             const chunk: ApiStreamChunk = {
               type: "usage",
