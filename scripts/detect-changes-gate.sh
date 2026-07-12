@@ -3,10 +3,12 @@
 #
 # Fires after Write|Edit. Runs `codebase-memory-mcp cli detect_changes` for the
 # current project and, when the accumulated change's blast radius is HIGH or
-# CRITICAL, surfaces a NON-blocking advisory (a top-level `systemMessage`).
-# LOW / MEDIUM / none / any error -> no output. This hook NEVER blocks the tool:
-# the edit already happened (PostToolUse), and we only ever emit a systemMessage
-# and exit 0 on every path.
+# CRITICAL, surfaces a NON-blocking advisory. The advisory is emitted via BOTH a
+# top-level `systemMessage` AND `hookSpecificOutput.additionalContext` (single
+# JSON object) so it surfaces regardless of which field the runtime honors for
+# PostToolUse. LOW / MEDIUM / none / any error -> no output. This hook NEVER
+# blocks the tool: the edit already happened (PostToolUse), and we only ever
+# emit that one advisory object (or nothing) and exit 0 on every path.
 #
 # ---------------------------------------------------------------------------
 # detect_changes OUTPUT SHAPE (verified against the live CLI, not assumed):
@@ -39,9 +41,10 @@
 #   2. Rising-edge de-dup: emit only when the severity bucket RISES vs the last
 #      run (state in .prism/local/detect-changes-gate.state, gitignored). Prevents
 #      the same advisory on every subsequent edit once the diff is already big.
-#   3. Runtime: detect_changes measured ~0.16s warm; the hooks.json `timeout`
-#      (15s) is the outer guard. We avoid the shell `timeout` cmd (Windows
-#      timeout.exe has different semantics under Git Bash).
+#   3. Runtime: ~0.79s end-to-end warm (detect_changes alone ~0.16s; the rest is
+#      list_projects + node JSON parsing); the hooks.json `timeout` (15s) is the
+#      outer guard. We avoid the shell `timeout` cmd (Windows timeout.exe has
+#      different semantics under Git Bash).
 #
 # JSON is parsed with node (no jq dependency; robust on Windows Git Bash),
 # matching scripts/fable-gate.sh convention.
@@ -126,7 +129,10 @@ let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{
     const msg="codemem advisory: "+label+" change impact — "+code+" code symbol(s) across "+src+
       " changed source file(s) may be affected (blast radius, depth "+depth+", vs "+base+
       "). Non-blocking; review the blast radius before you commit.";
-    process.stdout.write(JSON.stringify({systemMessage:msg}));
+    // Emit the advisory via BOTH mechanisms so it surfaces regardless of which
+    // field the runtime honors for PostToolUse: top-level `systemMessage` AND
+    // `hookSpecificOutput.additionalContext` (with hookEventName). Single JSON object.
+    process.stdout.write(JSON.stringify({systemMessage:msg,hookSpecificOutput:{hookEventName:"PostToolUse",additionalContext:msg}}));
   }catch{process.stdout.write("");}
 });' "$STATE_FILE" 2>/dev/null || true)
 
