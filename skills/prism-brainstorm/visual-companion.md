@@ -2,6 +2,23 @@
 
 The visual companion is a browser-based tool for showing interactive mockups and design choices during brainstorming. Use it when visual questions are ahead — layout comparisons, UI patterns, information architecture.
 
+## Render visual-first — the whole point of the companion
+
+The companion exists to make ideas **visual**. A screen that is mostly headings, bullet lists, and paragraphs is a **failure** — it is a text document in a browser, and it defeats the purpose for a visual thinker.
+
+**Before your first render, read the full vocabulary — the class table below is only a subset:**
+- `scripts/frame-template.html` — the authoritative component library: `.diagram`/`.arc`/`.seq-box` (monospace dataflow boxes), `.tool-card` (ember-tinted grid cards), `.meta`/`.cell` (key/value cells), `.mea`/`.caveats` (callouts), `.tag.blue|green|amber|volt` (status pills), plus every `--token`.
+- `references/griotwave.md` — the token values (palette, text ladder, ember-bloom, rim catchlight).
+
+**Lead every screen with a visual form:**
+- Decisions & dataflows → a `.diagram`/`.arc` box or color-coded boxes with `▼`/`→` arrows — NOT a bulleted list.
+- Comparisons → `.split` or `.cards` side-by-side — NOT stacked paragraphs.
+- Options → `.options` cards with `.pick` on the recommendation; one line of copy each.
+- Status & labels → `.tag.*` pills and `.meta` cells — NOT sentences.
+- Keep prose to a single `.lede` line; push detail into diagram labels, tags, and cells.
+
+**Heuristic:** if more than ~a third of a screen is sentences, redesign it as a diagram / boxes / cards before pushing it.
+
 ## When to Offer
 
 Offer the visual companion when the brainstorming session involves visual decisions:
@@ -59,19 +76,24 @@ Returns JSON:
 
 ## Available CSS Classes
 
+> **This is a working subset — `scripts/frame-template.html` is authoritative.** The visual-first classes (`.diagram`, `.tool-card`, `.meta`, callouts, tags) are what turn a screen from a text list into a picture — reach for them first.
+
 | Class | Purpose |
 |-------|---------|
-| `.options` | Container for A/B/C choice cards |
-| `.option[data-choice]` | Individual selectable choice |
-| `.cards` | Grid layout for design cards |
-| `.mockup` | Container with header for wireframe |
-| `.split` | Side-by-side comparison layout |
-| `.pros-cons` | Pro/con list layout |
-| `.mock-nav` | Wireframe navigation bar |
-| `.mock-sidebar` | Wireframe sidebar element |
-| `.mock-button` | Wireframe button element |
-| `.mock-input` | Wireframe input field |
-| `.placeholder` | Gray placeholder block |
+| `.diagram` / `.arc` / `.seq-box` | Monospace box for dataflows & sequences — `<b>` for nodes, `.c` for dim comments |
+| `.options` / `.option[data-choice]` | A/B/C choice cards; add `.pick` to the recommended one for an ember glow |
+| `.split` | Side-by-side comparison layout (2-col grid) |
+| `.cards` / `.card` | Grid of design cards (`.card-image` / `.card-body`) |
+| `.tool-card` (in `.tool-grid`) | Ember-tinted feature card; set `--ember-c` for a per-card accent |
+| `.meta` / `.cell` (`.k` / `.v`) | Key/value cells for specs & parameters |
+| `.mea` | Green success / insight callout |
+| `.caveats` | Amber warning callout (`.label` + `<ul>`) |
+| `.pros-cons` / `.pros` / `.cons` | Pro/con columns |
+| `.tag.blue` / `.green` / `.amber` / `.volt` | Inline status pills |
+| `.eyebrow` / `h2.title` / `.lede` / `.sub-label` | Heading system — eyebrow label, 40px title, one-line lede, section labels |
+| `.mockup` (`.mockup-header` / `.mockup-body`) | Container with header for a wireframe |
+| `.mock-nav` / `.mock-sidebar` / `.mock-button` / `.mock-input` | Wireframe building blocks |
+| `.placeholder` | Dashed placeholder block |
 
 ## Fidelity Attribute
 

@@ -321,11 +321,18 @@ export interface CreateTaskOptions {
   onUpdate: TaskUpdateFn
 }
 
-export function createTask(options: CreateTaskOptions): PrismTask {
+export async function createTask(options: CreateTaskOptions): Promise<PrismTask> {
   const { PrismApiHandler } = require("../api/claude-sdk") as typeof import("../api/claude-sdk")
+  const { resolveGatedModel } = require("../api/fable-gate") as typeof import("../api/fable-gate")
+
+  // Gate Fable 5 behind the workspace flag + a confirm/deny modal before any
+  // request runs. Deny/timeout/disabled all fall back to Opus; never blocks.
+  const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
+  const model = await resolveGatedModel(options.model, workspaceRoot)
+
   const apiHandler = new PrismApiHandler({
     apiKey: options.apiKey,
-    model: options.model,
+    model,
   })
 
   return new PrismTask({

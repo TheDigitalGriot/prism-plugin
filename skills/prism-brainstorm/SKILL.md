@@ -42,6 +42,8 @@ This offer MUST be its own message. Do not combine it with clarifying questions.
 
 If accepted, load `visual-companion.md` for the full integration guide.
 
+**Render visual-first.** Lead every screen with a visual form — a `.diagram`/`.arc` box, a `.split`/`.cards` comparison, or `.options` cards — not headings and bullet lists. A screen that is mostly prose is a failure, not a fallback. Before the first render, read `scripts/frame-template.html` (the full component vocabulary) and `references/griotwave.md` (tokens). See `visual-companion.md` → **Render visual-first**.
+
 ### Source Awareness
 
 If the visual companion is accepted AND the work is visual or brand-driven, ask about design sources before rendering the first screen. **Load [references/design-sources.md](references/design-sources.md)** for the source vocabulary, the question wording, and how selections enrich downstream artifacts (design_prompt.yaml, Claude Design context).

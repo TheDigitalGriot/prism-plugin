@@ -2,6 +2,13 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Working in this ecosystem (operating principles)
+
+- **My tools first.** Before generating, scaffolding, or "helping" in any domain, assume I've already built a purpose-made skill/command/template/agent for it — search for it and use it. Never reach for a generic default (superpowers, ad-hoc HTML, Glob/Grep over graph tools) when a Prism/Griot equivalent exists.
+- **Detail is a signal, not noise.** Heavy detail attributed to something = slow down and use it fully, at its own fidelity. Half-assing over crafted work is worse than not acting.
+- **Propose before changing my things.** Never edit my CLAUDE.md, config, or files without showing the change and getting a yes.
+- **Infer only once trust is earned.** Until we have fluidity, ask or show rather than assume. Inference grows with the collaboration; it isn't the default.
+
 ## What This Is
 
 Prism is a Claude Code plugin that implements a structured 4-phase development workflow: **Research → Plan → Implement → Validate**. It provides skills, commands, and agents that guide AI through deliberate phases rather than jumping straight into code. For large features, Spectrum autonomous execution runs one story per fresh Claude session in a loop.
@@ -173,6 +180,15 @@ This project uses codebase-memory-mcp for structural code analysis. When availab
 - Fall back to Grep/Glob only for text content (strings, comments, config values)
 
 Graph queries cost ~500 tokens. File-by-file exploration costs ~80,000 tokens. Always use the graph first.
+
+## Browser Tooling (Playwright vs. chrome-devtools MCP)
+
+Two browser surfaces, split by task type:
+
+- **Verification / CI / regression → Playwright.** The existing `browser-verifier` agent and `/prism-verify` command (plus `/prism-screenshot`, `/prism-browse`) drive Playwright for screenshots, console-error checks, and structured assertions. This path is **unchanged**.
+- **Interactive / exploratory debugging → chrome-devtools MCP.** The `chrome-devtools` MCP server (declared in the project `.mcp.json`) is the debugging surface — live DOM inspection, network/console traces, performance, and step-through.
+
+**Override:** when the user explicitly names **"playwright"** or **"devtools"**, use that tool's flow regardless of task type — the explicit name wins over the default routing above.
 
 ## File Naming Conventions
 
