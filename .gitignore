@@ -27,6 +27,9 @@ cmd/prism-cli/prism-cli.exe
 graphify-out/
 **/graphify-out/
 
+# Generated community skills (regenerate with: python scripts/prism-sync-skills.py)
+skills/generated/
+
 # Local scratch: logs, archives, dry-run output (never committed)
 *.log
 *.zip
