@@ -22,16 +22,35 @@ if [ ! -t 0 ]; then
 fi
 
 # Extract the requested Task model override (tool_input.model). Empty if absent.
+# Primary path: precise JSON parse via node (accurate). Only run node when it is
+# actually on PATH so a missing/broken node is distinguishable from a genuinely
+# empty/non-Fable model below.
 MODEL=""
-if [ -n "$PAYLOAD" ]; then
+if [ -n "$PAYLOAD" ] && command -v node >/dev/null 2>&1; then
   MODEL=$(printf '%s' "$PAYLOAD" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const j=JSON.parse(s);const ti=j.tool_input||{};process.stdout.write(String(ti.model||""))}catch{process.stdout.write("")}})' 2>/dev/null || echo "")
 fi
 
-# Only Fable dispatches are gated. Everything else passes through untouched.
+# Determine whether this is a Fable dispatch.
+IS_FABLE=0
 case "$MODEL" in
-  fable|claude-fable-5) ;;
-  *) exit 0 ;;
+  fable|claude-fable-5) IS_FABLE=1 ;;
 esac
+
+# Fail-closed safety net: if node was unavailable OR its precise parse missed on a
+# genuinely-Fable payload, grep the raw payload for an explicit Fable model token.
+# This keeps non-Fable Task calls working without node, while ensuring a Fable
+# dispatch always enters the gate (the flag check below fails closed -> deny when
+# node is also unavailable to read the flag). grep's no-match exit (1) must not
+# abort under `set -e`, so it is confined to this `if` condition.
+if [ "$IS_FABLE" -eq 0 ] && [ -n "$PAYLOAD" ] \
+   && printf '%s' "$PAYLOAD" | grep -Eq '"model"[[:space:]]*:[[:space:]]*"(fable|claude-fable-5)"'; then
+  IS_FABLE=1
+fi
+
+# Only Fable dispatches are gated. Everything else passes through untouched.
+if [ "$IS_FABLE" -eq 0 ]; then
+  exit 0
+fi
 
 # Resolve the project dir: CLAUDE_PROJECT_DIR when set, else the hook's CWD.
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
