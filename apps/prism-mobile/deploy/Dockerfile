@@ -31,8 +31,7 @@ ENV PASEO_NODE_ENV=production \
     PASEO_HOME=/data \
     PASEO_SOURCE_CHECKOUT_PATH=/workspace \
     PASEO_RELAY_ENABLED=true \
-    PASEO_RELAY_ENDPOINT=wss://prism.digitalgriot.studio/relay \
-    PASEO_RELAY_PUBLIC_ENDPOINT=https://prism.digitalgriot.studio/relay \
+    PASEO_RELAY_ENDPOINT=prism.digitalgriot.studio:443/relay \
     PASEO_LOG_FORMAT=json \
     PASEO_LOG_LEVEL=info
 

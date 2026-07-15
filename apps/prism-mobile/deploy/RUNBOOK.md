@@ -28,6 +28,14 @@ Coolify so agents keep running with the P16 off. The relay is already live; this
    # …and any other Griot repos you want agents to work on
    ```
    (Or let the workspace volume start empty and clone from inside later.)
+3. **Git credentials for private repos (so agents in the container can clone/push).** On the host:
+   ```bash
+   git config --global credential.helper store
+   # store a PAT once (or run any authenticated clone and let git prompt):
+   printf "https://<github-user>:<PAT>@github.com\n" > ~/.git-credentials && chmod 600 ~/.git-credentials
+   ```
+   Then uncomment the two `.gitconfig`/`.git-credentials` mounts in `docker-compose.yml`.
+   Skip this for public repos — agents can still clone those with no credentials.
 
 ## Deploy in Coolify (your clicks)
 
@@ -52,8 +60,10 @@ Coolify so agents keep running with the P16 off. The relay is already live; this
   `agent-run` once it's pointed at this daemon, and confirm `ready`.
 
 ## Known iteration points (flag if the log complains)
-- **Relay endpoint format.** `PASEO_RELAY_ENDPOINT` may want `prism.digitalgriot.studio/relay`
-  (no scheme) vs `wss://…`. Adjust to match what the relay client logs expect.
+- **Relay endpoint format — RESOLVED (2026-07-15).** Must be `host:port[/path]` =
+  `prism.digitalgriot.studio:443/relay`. The daemon's `parseHostPort()` rejects scheme URLs
+  (`wss://…` throws `Invalid host:port`); TLS is auto-derived from `:443`. This is the same
+  form the proven-working local daemon config uses.
 - **Native modules.** If `npm install` fails on `node-pty` / `better-sqlite3` / `sherpa-onnx`,
   add the missing system lib to the Dockerfile `apt-get` line (or disable speech/dictation env).
 - **Home dir for `~/.claude`.** Container runs as root → `/root/.claude`. If you run as a

@@ -11,16 +11,18 @@ services:
       PASEO_HOME: /data
       PASEO_SOURCE_CHECKOUT_PATH: /workspace
       PASEO_RELAY_ENABLED: "true"
-      # Verify the exact form the relay client expects (the strip-/relay patch maps /relay/ws -> /ws).
-      PASEO_RELAY_ENDPOINT: wss://prism.digitalgriot.studio/relay
-      PASEO_RELAY_PUBLIC_ENDPOINT: https://prism.digitalgriot.studio/relay
+      # host:port[/path] form — the daemon's parseHostPort() rejects scheme URLs; TLS is
+      # auto-derived from :443. Verified against the working local daemon config.
+      # (PUBLIC_ENDPOINT intentionally unset — it defaults to PASEO_RELAY_ENDPOINT.)
+      PASEO_RELAY_ENDPOINT: prism.digitalgriot.studio:443/relay
       # Host of the pairing landing page baked into offer links this daemon generates.
       # Without this the daemon falls back to the paseo placeholder (https://app.paseo.sh).
       PASEO_APP_BASE_URL: https://prism.digitalgriot.studio
       PASEO_LOG_FORMAT: json
       PASEO_LOG_LEVEL: info
-      # Optional: require a password for clients pairing to this daemon.
-      # PASEO_PASSWORD: ${PASEO_PASSWORD}
+      # Locks DIRECT (:6767) connections behind a bearer secret. Relay pairing is governed
+      # by offer-link possession either way. Set the value in Coolify env; empty = disabled.
+      PASEO_PASSWORD: ${PASEO_PASSWORD}
     volumes:
       # Claude Max auth — run `claude login` ON THE DROPLET HOST first, then mount read-only.
       - /root/.claude:/root/.claude:ro
@@ -28,6 +30,11 @@ services:
       - griot_daemon_data:/data
       # Server-side checkouts of your Griot repos. git clone into here.
       - griot_workspace:/workspace
+      # Optional: host-stored git credentials so agents inside the container can clone/push
+      # PRIVATE repos. Create BOTH files on the host first (RUNBOOK prereq 3), then uncomment —
+      # mounting a nonexistent file makes Docker create a directory and breaks git.
+      # - /root/.gitconfig:/root/.gitconfig:ro
+      # - /root/.git-credentials:/root/.git-credentials:ro
     # The daemon dials OUT to the relay; no public port needed.
     # Uncomment to also reach it directly on the LAN / via a routed subdomain:
     # ports:
