@@ -19,6 +19,9 @@ ENV NPM_CONFIG_LEGACY_PEER_DEPS=true
 
 # Copy the whole prism-mobile monorepo, then install + build the daemon chain.
 COPY . .
+# "prepare": "lefthook install --force" needs a .git dir — nonexistent in the image; drop it
+# (container-only edit; keeps the real postinstall patches + native-module builds intact).
+RUN npm pkg delete scripts.prepare
 RUN npm install --legacy-peer-deps
 # build:daemon = highlight -> relay -> server -> cli (tsc); relay/highlight ship only dist/.
 RUN npm run build:daemon
