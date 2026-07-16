@@ -14,6 +14,15 @@ Coolify so agents keep running with the P16 off. The relay is already live; this
 
 ## Prerequisites — do these ONCE on the droplet (your hands)
 
+0. **Swap memory FIRST (hard requirement on droplets ≤ 4 GB RAM).** The image build
+   (`npm install` + `build:daemon` + native-module compiles) can exhaust RAM: the box thrashes
+   (Coolify UI 504s, SSH banner timeouts) or the OOM killer ends the build (`Killed` / exit 137).
+   Observed live 2026-07-16 on the first Model-B build. Add swap before the first deploy:
+   ```bash
+   fallocate -l 4G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile
+   echo '/swapfile none swap sw 0 0' >> /etc/fstab   # persist across reboots
+   free -h                                            # confirm Swap: 4.0Gi
+   ```
 1. **Claude Max auth on the box.** SSH to the droplet and run the Claude CLI login so credentials
    land in `~/.claude` (this is what the container mounts read-only):
    ```bash
@@ -24,7 +33,7 @@ Coolify so agents keep running with the P16 off. The relay is already live; this
 2. **Clone your Griot repos** into a location the workspace volume will hold (agents operate here):
    ```bash
    mkdir -p /opt/griot-workspace && cd /opt/griot-workspace
-   git clone https://github.com/TheDigitalGriot/prism-plugin.git
+   git clone https://github.com/TheDigitalGriot/prism.git
    # …and any other Griot repos you want agents to work on
    ```
    (Or let the workspace volume start empty and clone from inside later.)
