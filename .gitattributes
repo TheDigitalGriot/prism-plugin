@@ -1,0 +1,10 @@
+# Shell scripts must be LF everywhere.
+#
+# core.autocrlf=true rewrites the working tree to CRLF on checkout. Cloud
+# sandboxes sync those disk bytes verbatim, and Linux sh/bash choke on \r —
+# `set -euo pipefail\r` reads as an invalid option, the shell exits 2, and
+# exit 2 is the hook protocol's DENY code, fail-closing every tool call
+# (2026-07-17 hook outage). Pinning eol=lf makes checkout produce LF on
+# Windows too, so synced bytes are always Linux-safe.
+*.sh              text eol=lf
+hooks/hooks.json  text eol=lf

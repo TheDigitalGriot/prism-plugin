@@ -97,7 +97,10 @@ def discover_stale_versions(root: Path, new_version: str,
     if not old_versions:
         return []
 
-    EXTENSIONS = {".md", ".json", ".go", ".ts", ".tsx", ".toml"}
+    # .md excluded: documentation files legitimately reference past version labels
+    # (e.g. "added in v3.4.0"). The explicit file list already covers all .md
+    # manifests (plugin.json, marketplace.json) that have actual version fields.
+    EXTENSIONS = {".json", ".go", ".ts", ".tsx", ".toml"}
 
     EXCLUDE_BASENAMES = {
         "package-lock.json", "yarn.lock", "pnpm-lock.yaml",
@@ -109,6 +112,8 @@ def discover_stale_versions(root: Path, new_version: str,
         "target/",           # Rust/Tauri build artifacts
         "dist/", "build/", "out/",   # JS build artifacts
         "apps/prism-setup/", # Deprecated NSIS installer — no longer version-tracked
+        "apps/prism-mobile/", # Vendored paseo (0.1.x lineage); the Expo app version
+                              # is handled explicitly above and reads root VERSION at runtime.
     ]
 
     stale = []
@@ -169,6 +174,11 @@ def main():
         root / ".claude-plugin" / "marketplace.json",
         root / "apps" / "prism-vscode" / "package.json",
         root / "apps" / "prism-electron" / "package.json",
+        # prism-mobile (vendored paseo): the Expo app version. app.config.js reads
+        # the root VERSION file at runtime; this package.json is the fallback for
+        # detached/EAS builds and is kept in sync here. The monorepo-root
+        # apps/prism-mobile/package.json stays at the paseo upstream-lineage version.
+        root / "apps" / "prism-mobile" / "packages" / "app" / "package.json",
         # Tauri installer (new — supersedes prism-setup)
         root / "apps" / "prism-installer" / "package.json",
         root / "apps" / "prism-installer" / "src-tauri" / "tauri.conf.json",
@@ -187,10 +197,9 @@ def main():
     #   - All four were at 3.3.0 when v3.3.1 shipped (partial bump run).
     #   - v3.4.0 introduces the discovery sweep to prevent recurrence.
     #
-    # also_replace: used one-time to fix files stuck at a version OLDER than
-    # old_version (the VERSION file). Remove this list once all files are
-    # confirmed at the current version post-bump.
-    straggler_also_replace = ["3.3.0"]
+    # also_replace: one-time list for files stuck at a version OLDER than
+    # old_version. Empty after v3.4.1 — all files confirmed at current version.
+    straggler_also_replace = []
 
     straggler_files = [
         root / "apps" / "prism-cli" / "main.go",

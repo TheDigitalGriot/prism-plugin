@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/spectrum-approval.sh",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/scripts/spectrum-approval.sh\"",
             "timeout": 10
           }
         ]
@@ -27,7 +27,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/fable-gate.sh",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/scripts/fable-gate.sh\"",
             "timeout": 10
           }
         ]
@@ -70,7 +70,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/detect-changes-gate.sh",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/scripts/detect-changes-gate.sh\"",
             "timeout": 15
           }
         ]
@@ -82,7 +82,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/worktree-setup.sh"
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/scripts/worktree-setup.sh\""
           }
         ]
       }
@@ -93,7 +93,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/worktree-cleanup.sh"
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/scripts/worktree-cleanup.sh\""
           }
         ]
       }

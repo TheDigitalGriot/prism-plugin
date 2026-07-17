@@ -8,15 +8,30 @@
 # The script uses the current working directory by default.
 #
 # Environment Variables:
-#   SPECTRUM_MAX_ITERATIONS: Maximum iterations (default: 50)
-#   SPECTRUM_VERBOSE: Enable verbose output (default: false)
-#   SPECTRUM_PAUSE: Seconds between iterations (default: 2)
+#   SPECTRUM_MAX_ITERATIONS:    Maximum iterations (default: 50)
+#   SPECTRUM_VERBOSE:           Enable verbose output (default: false)
+#   SPECTRUM_PAUSE:             Seconds between iterations (default: 2)
+#
+# Approval hook (spectrum-approval.sh) env vars — passed explicitly to each worker:
+#   SPECTRUM_SUPERVISED:        Set to any non-empty value (e.g. "1") to enable the
+#                               controller approval protocol. Unset = unsupervised
+#                               (auto-approve instantly, zero polling overhead). Default: unset.
+#   SPECTRUM_APPROVAL_TIMEOUT:  Seconds to poll for approve/deny before auto-approving
+#                               in supervised mode (default: 3). Must be less than the
+#                               hook timeout ceiling in hooks.json (currently 10s) minus ~2s
+#                               of overhead, i.e. keep it at or below 8. If it exceeds the
+#                               ceiling the hook runner kills the script and the tool
+#                               proceeds as a non-blocking error (fail-open, but noisy).
 #
 # Examples:
 #   spectrum                                              # Run from project dir
 #   spectrum .prism/stories/stories.json                 # Specify stories file
 #   SPECTRUM_MAX_ITERATIONS=20 spectrum                  # Custom iteration limit
 #   SPECTRUM_VERBOSE=true spectrum                       # Verbose output
+#   SPECTRUM_SUPERVISED=1 spectrum                       # Enable approval-gate controller
+#
+# Requires: bash (macOS/Linux), WSL, or Git Bash on Windows. Not compatible with
+#           native PowerShell/CMD (no /tmp equivalent and no bash built-ins).
 #
 # Setup (add to ~/.bashrc or ~/.zshrc):
 #   alias spectrum='/path/to/prism-plugin/scripts/spectrum.sh'
@@ -36,9 +51,13 @@ PROJECT_DIR="$(pwd)"
 STORIES_FILE="${1:-$PROJECT_DIR/.prism/stories/stories.json}"
 
 # B2a: Deterministic worker shim paths.
-# Each spawned Claude session gets a shim at /tmp/claude-spectrum-workers/<story-id>.
+# Each spawned Claude session gets a shim under the system temp dir.
+# Precedence: $TMPDIR (POSIX/macOS) → $TEMP (Git Bash/Windows) → $TMP → /tmp (Linux/WSL).
 # Reconstructable from story ID alone — no env vars needed for recovery.
-SHIM_DIR="/tmp/claude-spectrum-workers"
+#
+# Supported shells: bash-compatible runtimes only (macOS/Linux bash, WSL, Git Bash).
+# Native Windows PowerShell/CMD are NOT supported — use WSL or Git Bash on Windows.
+SHIM_DIR="${TMPDIR:-${TEMP:-${TMP:-/tmp}}}/claude-spectrum-workers"
 
 # B2c+B2d: Canonical spectrum signal vocabulary.
 # Any signal tag not in this list is an unknown signal (warn + treat as retry).
@@ -79,6 +98,9 @@ derive_progress_path() {
 }
 
 PROGRESS_FILE="$(derive_progress_path "$STORIES_FILE")"
+# Two-tier progress tracking: consolidated patterns (read every session) + append-only log (never loaded).
+# progress-log.md lives beside progress.md and accumulates per-iteration entries.
+PROGRESS_LOG_FILE="$(dirname "$PROGRESS_FILE")/progress-log.md"
 MAX_ITERATIONS="${SPECTRUM_MAX_ITERATIONS:-50}"
 VERBOSE="${SPECTRUM_VERBOSE:-false}"
 PAUSE="${SPECTRUM_PAUSE:-2}"
@@ -282,12 +304,15 @@ get_epic_name() {
 
 # Initialize progress file if needed
 init_progress() {
+    local epic_name
+    epic_name=$(get_epic_name)
+    local progress_dir
+    progress_dir=$(dirname "$PROGRESS_FILE")
+    mkdir -p "$progress_dir"
+
+    # progress.md — consolidated patterns only. Read by every worker session.
+    # Keep this file small: only curated patterns that future stories need.
     if [[ ! -f "$PROGRESS_FILE" ]]; then
-        local epic_name
-        epic_name=$(get_epic_name)
-        local progress_dir
-        progress_dir=$(dirname "$PROGRESS_FILE")
-        mkdir -p "$progress_dir"
         cat > "$PROGRESS_FILE" << EOF
 ---
 epic: $epic_name
@@ -295,16 +320,35 @@ startedAt: $(date -Iseconds)
 lastUpdated: $(date -Iseconds)
 ---
 
-# Spectrum Progress Log
+# Spectrum Progress — Consolidated Patterns
+
+This file is loaded by every worker session. Keep it lean.
+Append per-iteration entries to progress-log.md instead.
 
 ## Codebase Patterns (Consolidated)
 
-*Patterns will be added as iterations discover them*
-
----
+*Patterns will be added here as iterations discover them*
 
 EOF
         log "Created progress file: $PROGRESS_FILE"
+    fi
+
+    # progress-log.md — append-only iteration history. Never read on session load.
+    # Raw record of what each story did; useful for auditing but not needed mid-run.
+    if [[ ! -f "$PROGRESS_LOG_FILE" ]]; then
+        cat > "$PROGRESS_LOG_FILE" << EOF
+---
+epic: $epic_name
+startedAt: $(date -Iseconds)
+---
+
+# Spectrum Progress Log (Iteration History)
+
+This file is append-only. It is NOT loaded by worker sessions.
+For curated learnings future sessions should see, edit progress.md instead.
+
+EOF
+        log "Created progress log: $PROGRESS_LOG_FILE"
     fi
 }
 
@@ -331,7 +375,7 @@ run_iteration() {
     local exit_code=0
 
     # Build the prompt — story is pre-selected by spectrum.sh, not by Claude
-    local prompt="Execute story $story_id from $STORIES_FILE using the /prism-spectrum workflow. Progress file: $PROGRESS_FILE. The story has been pre-selected — do not pick a different story."
+    local prompt="Execute story $story_id from $STORIES_FILE using the /prism-spectrum workflow. Progress file (consolidated patterns — read this): $PROGRESS_FILE. Progress log (iteration history — append entries here, do NOT read): $PROGRESS_LOG_FILE. The story has been pre-selected — do not pick a different story."
 
     log "Executing story: $story_id"
 
@@ -348,12 +392,25 @@ exec claude --dangerously-skip-permissions --print "\$@"
 SHIM
     chmod +x "$shim_path"
 
-    # Run Claude via the shim, passing SPECTRUM_WORKER_STORY_ID for the PreToolUse approval hook.
-    # Using --print to capture output for signal checking.
+    # Run Claude via the shim. Pass approval-hook env vars explicitly so they reach the
+    # PreToolUse hook regardless of how spectrum.sh itself was invoked. SPECTRUM_SUPERVISED
+    # and SPECTRUM_APPROVAL_TIMEOUT must be explicit here — relying on ambient env
+    # inheritance is fragile (the hook runs inside the spawned Claude session, not in
+    # the user's shell). Using --print to capture output for signal checking.
     if [[ "$VERBOSE" == "true" ]]; then
-        output=$(cd "$PROJECT_DIR" && SPECTRUM_WORKER_STORY_ID="$story_id" "$shim_path" "$prompt" 2>&1 | tee /dev/stderr) || exit_code=$?
+        output=$(cd "$PROJECT_DIR" && \
+            SPECTRUM_WORKER_STORY_ID="$story_id" \
+            SPECTRUM_SUPERVISED="${SPECTRUM_SUPERVISED:-}" \
+            SPECTRUM_APPROVAL_TIMEOUT="${SPECTRUM_APPROVAL_TIMEOUT:-3}" \
+            PRISM_PROJECT_DIR="$PROJECT_DIR" \
+            "$shim_path" "$prompt" 2>&1 | tee /dev/stderr) || exit_code=$?
     else
-        output=$(cd "$PROJECT_DIR" && SPECTRUM_WORKER_STORY_ID="$story_id" "$shim_path" "$prompt" 2>&1) || exit_code=$?
+        output=$(cd "$PROJECT_DIR" && \
+            SPECTRUM_WORKER_STORY_ID="$story_id" \
+            SPECTRUM_SUPERVISED="${SPECTRUM_SUPERVISED:-}" \
+            SPECTRUM_APPROVAL_TIMEOUT="${SPECTRUM_APPROVAL_TIMEOUT:-3}" \
+            PRISM_PROJECT_DIR="$PROJECT_DIR" \
+            "$shim_path" "$prompt" 2>&1) || exit_code=$?
     fi
 
     # Return the output for signal checking

@@ -71,7 +71,7 @@ echo ""
 echo "=== [3/3] Copying Claude plugin files ==="
 mkdir -p "$RESOURCES_DIR/plugin"
 
-for dir in .claude-plugin commands agents skills; do
+for dir in .claude-plugin commands agents skills hooks scripts; do
   src="$REPO_ROOT/$dir"
   if [ -d "$src" ]; then
     cp -r "$src" "$RESOURCES_DIR/plugin/"

@@ -1,7 +1,9 @@
-#!/usr/bin/env bash
+#!/bin/sh
 # Worktree cleanup hook - runs before WorktreeRemove
 # Receives hook event JSON on stdin
-set -euo pipefail
+# POSIX sh ONLY — cloud sandboxes may run hooks under dash/busybox.
+set -eu
+if (set -o pipefail) 2>/dev/null; then set -o pipefail; fi
 
 # Parse event from stdin (if available)
 EVENT=""

@@ -1,13 +1,34 @@
 {
   "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "test -d \"${CLAUDE_PLUGIN_ROOT}/skills/prism-brainstorm/scripts/node_modules\" || bun install --cwd \"${CLAUDE_PLUGIN_ROOT}/skills/prism-brainstorm/scripts\" --silent 2>/dev/null || true"
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "",
         "hooks": [
           {
             "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/spectrum-approval.sh",
-            "timeout": 35
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/scripts/spectrum-approval.sh\"",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/scripts/fable-gate.sh\"",
+            "timeout": 10
           }
         ]
       }
@@ -43,6 +64,16 @@
             "command": "python ${CLAUDE_PLUGIN_ROOT}/scripts/log-observation.py"
           }
         ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/scripts/detect-changes-gate.sh\"",
+            "timeout": 15
+          }
+        ]
       }
     ],
     "WorktreeCreate": [
@@ -51,7 +82,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/worktree-setup.sh"
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/scripts/worktree-setup.sh\""
           }
         ]
       }
@@ -62,7 +93,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/worktree-cleanup.sh"
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/scripts/worktree-cleanup.sh\""
           }
         ]
       }
