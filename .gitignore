@@ -41,3 +41,6 @@ lefthook.yml
 # VitePress build output + cache (rebuilt by docs:build and the docs-deploy CI)
 prism-docs/docs/.vitepress/dist/
 prism-docs/docs/.vitepress/cache/
+
+# Superpowers brainstorm session state (local)
+.superpowers/
