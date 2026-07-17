@@ -246,6 +246,28 @@ def main():
         for f in skipped:
             print(f"  - {f}")
 
+    # ── Idempotency verification (2026-07-17 incident guard) ────────────────
+    # When old == new (root VERSION already equals the target — e.g. hand-edited
+    # before running this script), every replace above is a no-op BY CONSTRUCTION,
+    # so "Skipped ... already at X" can mask files still stuck at older versions
+    # (observed live: VERSION pre-set to 4.2.0 masked 13 files at 4.1.0 while the
+    # script reported "all version strings consistent"). In that mode, VERIFY that
+    # every managed file actually contains the target version and fail loudly.
+    if old_version == new_version:
+        stale = []
+        for path in json_files + straggler_files:
+            if path.exists() and new_version not in path.read_text(encoding="utf-8"):
+                stale.append(str(path.relative_to(root)))
+        if stale:
+            print(f"\nERROR: VERSION reads {new_version} but {len(stale)} managed file(s) do not:")
+            for f in stale:
+                print(f"  ! {f}")
+            print("  Root VERSION was likely hand-edited before this script ran.")
+            print("  Fix: restore VERSION to the true current version (git checkout -- VERSION),")
+            print("  then re-run the bump so the replaces actually fire.")
+            sys.exit(1)
+        print(f"\nIdempotency verified: all managed files already at {new_version}.")
+
     # ── Post-bump discovery sweep ────────────────────────────────────────────
     # Search for stuck/old versions (not new_version — that would flag every correctly-bumped file).
     # Idempotency: when re-running --set X.Y.Z on a repo already at X.Y.Z, old_version == new_version,

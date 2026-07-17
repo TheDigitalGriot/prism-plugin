@@ -1,0 +1,44 @@
+# .easignore — EAS build archive exclusions (repo root; EAS archives the git root in monorepos).
+# NOTE: when .easignore exists, EAS uses it INSTEAD of .gitignore — heavy .gitignore
+# patterns must be repeated here. Goal: shrink the ~535 MB build upload to the app's needs.
+
+# VCS + local state
+.git/
+.prism/
+.superpowers/
+.claude/
+
+# Heavy non-mobile surfaces (not needed for the Expo build)
+prism-eval/
+prism-docs/
+apps/prism-cli/
+apps/prism-electron/
+apps/prism-installer/
+apps/prism-setup/
+apps/prism-vscode/
+apps/prism-design-studio/
+installer/
+packages/prism-core/
+packages/prism-ui/
+packages/prism-daemon/
+packages/prism-daemon-client/
+packages/prism-relay/
+
+# Dependency + build output (normally .gitignore's job — repeated here on purpose)
+node_modules/
+**/node_modules/
+**/dist/
+**/out/
+**/build/
+**/target/
+**/bin/
+*.exe
+*.vsix
+*.zip
+
+# Plugin authoring (not app code)
+skills/
+agents/
+commands/
+hooks/
+scripts/
