@@ -98,15 +98,25 @@ paste the offer link) — the app decodes the `#offer=` fragment locally. A stan
 browser "Open in Prism" button and universal links.
 :::
 
-## Always-on: the droplet (Model B)
+## Always-on: the droplet (Model B) — LIVE
 
-The same daemon runs laptop-independently on a DO droplet via Coolify
-(`apps/prism-mobile/deploy/`): `node:22-bookworm`, `PASEO_LISTEN=0.0.0.0:6767`, `PASEO_HOME=/data`,
-dialing the **same** Griot relay (`PASEO_RELAY_ENDPOINT=wss://prism.digitalgriot.studio/relay`), and
+The same daemon runs laptop-independently on the DO droplet via Coolify
+(`apps/prism-mobile/deploy/`, resource `prism:main-daemon`): `node:22-bookworm`,
+`PASEO_LISTEN=0.0.0.0:6767`, `PASEO_HOME=/data`, dialing the **same** Griot relay with
+`PASEO_RELAY_ENDPOINT=prism.digitalgriot.studio:443/relay`, and
 `PASEO_APP_BASE_URL=https://prism.digitalgriot.studio` so its offers point at the landing page. The
 phone pairs to the droplet daemon identically — the offer just carries the droplet's `serverId`.
 
-::: tip Updated in v3.9.0
-The pairing landing page + iOS universal links (`M6K8N36JN8` Apple Team) make a **shareable pairing
-link that works from anywhere** — exactly what the always-on droplet needs.
+::: warning Endpoint format (fixed in v4.2.0)
+`PASEO_RELAY_ENDPOINT` is **`host:port[/path]`** — never a scheme URL. The daemon's
+`parseHostPort()` throws on `wss://…`; TLS is auto-derived from `:443`.
+:::
+
+::: tip Deployed in v4.2.0
+Verified in production: `relay_control_connected` from the droplet, `authRequired: true`
+(`PASEO_PASSWORD` via Coolify env — gates the direct door only; the relay door's credential is the
+offer link itself). Hard-won prerequisites: **4 GB swap** before the first image build
+(≤4 GB droplets thrash without it), host repos bind-mounted `/opt/griot-workspace → /workspace`,
+and lefthook's `prepare` script dropped inside the image (no `.git` in the build context).
+Full playbook: `apps/prism-mobile/deploy/RUNBOOK.md`.
 :::
