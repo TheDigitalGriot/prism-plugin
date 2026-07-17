@@ -69,6 +69,22 @@ integrate, resume on his go. Never queue him behind the task.
   semantic-layer plan; `.superpowers/` session state gitignored.
 - The "excellent option" operating principle (previously uncommitted in CLAUDE.md) landed.
 
+## 6a. 4.3.1 addendum — the marketplace `failed_content` root cause
+
+Claude Desktop's `main.log` showed every marketplace sync settling
+`pollSyncUntilDone … status=failed_content` (~18–20s): the backend reached the repo and
+rejected its **content**. Suspect confirmed by elimination (0 tracked zips, manifest
+anonymously reachable, repo public): the **orphan `prism-eval` gitlink** — a mode-160000
+submodule entry with no `.gitmodules`, unresolvable by any fetcher — in the tree since Jul 7.
+The stale-package saga began Jul 8 (3.9.5). `git archive` skips gitlinks, which is why
+sideload zips always worked while marketplace sync silently failed and the backend kept
+serving its last good (pre-gitlink, CRLF-era) package — the very tree that caused the cloud
+outage. Fixed in 4.3.1: gitlink untracked, `prism-eval/` gitignored (directory intact on disk;
+remote backup `prism-eval-app` @ `7db4497`).
+
+**Lesson:** never leave a bare gitlink in a plugin-distributed tree — either declare it in
+`.gitmodules` or keep embedded repos untracked.
+
 ## 6. References
 
 - `CHANGELOG.md` §4.3.0, §4.2.1, §4.2.0

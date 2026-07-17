@@ -4,6 +4,16 @@ All notable changes to Prism Plugin will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [4.3.1] - 2026-07-17
+
+### Fixed
+
+- **Marketplace `failed_content` root cause: orphan `prism-eval` gitlink untracked** — a mode-160000 submodule entry with no `.gitmodules` (unresolvable by any fetcher) sat in the tree since Jul 7. Claude Desktop logs show every marketplace sync settling `status=failed_content`; the timeline matches the entire stale-package saga (3.9.5's "backend re-indexed metadata but served a stale package" began Jul 8). `git archive` skips gitlinks — which is why `/prism-sideload` zips always worked while marketplace sync failed. The `prism-eval/` directory stays on disk (own repo; remote backup `electron-react-vite-ts-starter#prism-eval-app` @ `7db4497`) and is now gitignored.
+
+### Notes
+
+- Tree-only change; release binaries are unchanged from [v4.3.0](https://github.com/TheDigitalGriot/prism/releases/tag/v4.3.0).
+
 ## [4.3.0] - 2026-07-17
 
 **Resilience release** — hardens the three layers behind the 2026-07-17 cloud fail-close incident: hook fail-modes, the release process, and the collaboration protocol. Full account: `.prism/shared/docs/PRISM-DOCUMENTATION-4.3.0.md`.
