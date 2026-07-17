@@ -44,3 +44,7 @@ prism-docs/docs/.vitepress/cache/
 
 # Superpowers brainstorm session state (local)
 .superpowers/
+
+# prism-eval is its own repo (backed up to electron-react-vite-ts-starter#prism-eval-app)
+# — kept out of the plugin tree: an orphan gitlink (no .gitmodules) breaks marketplace content sync
+prism-eval/
