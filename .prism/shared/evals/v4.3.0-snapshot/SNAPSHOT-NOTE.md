@@ -1,0 +1,1 @@
+v4.3.0 snapshot — changed vs v4.2.0-snapshot: skills/prism-release/SKILL.md (Step 1c clean-tree guard + Step 2 bump-trap warning) and scripts/*.sh (POSIX+LF hardening). Eval: skills/prism-release/evals.json under ../v4.3.0/.

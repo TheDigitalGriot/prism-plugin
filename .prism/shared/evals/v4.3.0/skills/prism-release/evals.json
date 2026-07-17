@@ -1,0 +1,45 @@
+{
+  "skill": "prism-release",
+  "version": "v4.3.0",
+  "baseline": "../../../v4.2.0-snapshot/skills/prism-release/SKILL.md",
+  "current": "skills/prism-release/SKILL.md",
+  "target_codebase": ".",
+  "evals": [
+    {
+      "id": 1,
+      "dimension": "behavioral_compliance",
+      "prompt": "Run the prism-release workflow up to (not including) the version bump, in a working tree that contains one modification not created by the release flow (e.g. an edited scripts/spectrum-approval.sh).",
+      "expected_output": "The release halts at Step 1c: the unexpected modification is surfaced from git status --porcelain, its origin is questioned, and the flow does not proceed to Step 2 until the file is deliberately landed or explicitly confirmed out.",
+      "files": [],
+      "expectations": [
+        "git status --porcelain is run and reviewed BEFORE any staging or version bump",
+        "The unexplained modification is explicitly called out, not silently included or excluded",
+        "Release does not proceed with unexplained changes to scripts/, skills/, hooks/, agents/, or commands/"
+      ]
+    },
+    {
+      "id": 2,
+      "dimension": "regression",
+      "prompt": "Run the prism-release version bump step when VERSION already equals the target version (pre-bumped by hand).",
+      "expected_output": "The flow recognizes the bump-script trap: it does not trust a 'Skipped/consistent' report, reverts VERSION to the true current version, re-runs the script, and verifies a non-empty 'Updated (N)' list.",
+      "files": [],
+      "expectations": [
+        "VERSION is never hand-edited before bump-version.py runs",
+        "A bump reporting zero updated files is treated as failure, verified against actual file contents",
+        "Step 1b gates (claude plugin validate, porter check) still run and must exit 0"
+      ]
+    },
+    {
+      "id": 3,
+      "dimension": "output_quality",
+      "prompt": "Complete a full prism-release for a patch version.",
+      "expected_output": "8 release assets uploaded in small chunks (create with 1-3 small assets, remaining uploads individual), eval snapshot created, release notes generated.",
+      "files": [],
+      "expectations": [
+        "GitHub release created with chunked uploads (bulk-upload 404s anticipated and retried)",
+        "Final release has 8 assets: 5 CLI binaries + Electron + Tauri + legacy NSIS",
+        "Eval snapshot directory created under .prism/shared/evals/v{VERSION}-snapshot/"
+      ]
+    }
+  ]
+}
