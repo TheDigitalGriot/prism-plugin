@@ -19,7 +19,11 @@ status: complete
 - ⚠️ **PARKED — phone pairing over relay stalls at "connecting"** (see Parked Findings §below —
   context captured for a FUTURE `/prism-debug` run per its "Investigate, Don't Fix" philosophy).
   Do NOT triage unless Gavin asks; it is deliberately deferred.
-- ⬜ **NEW MISSION (this handoff's purpose): Claude connector + artifact popout for Prism.**
+- ⬜ **PRIORITY 1 — PASEO reference audit (go-sovereign prep; runs in Cowork).** Produce a
+  DEFINITIVE inventory doc of every "paseo" reference in the monorepo — the rename itself stays
+  deferred ("set up first, then go sovereign"); this is the inventory that makes the greenlight
+  possible. See §PASEO Audit Spec below.
+- ⬜ **NEW MISSION: Claude connector + artifact popout for Prism.**
   Research-first in/about **Claude Desktop**, then brainstorm → plan → implement. Gavin's intent:
   1. A **Claude connector** so Prism is reachable/usable from Claude Desktop (connector = the
      claude.ai/Desktop connectors system; expect MCP underneath).
@@ -47,6 +51,35 @@ status: complete
      design-gen…), the daemon dialect, existing webview surfaces (VS Code/Electron panels).
 2. `/prism-brainstorm` (visual companion auto-starts per Gavin's standing preference) → lock scope.
 3. `/prism-plan` → approval → implement. Do NOT write code before an approved plan.
+
+## PASEO Audit Spec (Priority 1)
+
+**Deliverable:** `.prism/shared/research/YYYY-MM-DD-paseo-reference-audit.md` — a definitive,
+categorized list of everything to CHANGE and everything to GENERATE. Audit only — zero renames.
+Scope = the whole monorepo, primarily `apps/prism-mobile/` (the vendored fork). Categories:
+
+1. **Wire/protocol-sensitive (highest care)** — `paseo.bearer.<secret>` WS subprotocol
+   (auth.ts:83 requires the literal `paseo` prefix); daemon dialect strings. Back-compat rule
+   (apps/prism-mobile/CLAUDE.md): old apps must keep working against new daemons — renames here
+   need dual-accept. The 2026-07-15 brainstorm ledger already parked this seam.
+2. **Env vars** — `PASEO_*` (LISTEN, HOME, RELAY_*, PASSWORD, APP_BASE_URL, SOURCE_CHECKOUT_PATH,
+   NODE_ENV, LOG_*, HOSTNAMES, CORS…) across code, Dockerfile, compose, .env.example, RUNBOOK,
+   Coolify env (deployed!), docs.
+3. **Code identifiers** — `PaseoWebSocketAdapter`, `websocket-paseo` adapter id
+   (packages/prism-daemon/services.config.json), `paseo` CLI binary name, package names, test
+   utils (`test-utils/paseo-daemon.ts`), types (`PaseoDaemonConfig`), defaults
+   (`DEFAULT_RELAY_ENDPOINT = "relay.paseo.sh:443"`, `app.paseo.sh` placeholders).
+4. **User-visible text** — app strings, input placeholders (`app.paseo.sh/#offer=…`), CLI help,
+   public-docs/ (upstream paseo docs tree), README/website copy (packages/website = paseo.sh site).
+5. **Visual assets to GENERATE** — icons (`icon.png`, `icon-debug.png`), splash screens, favicon,
+   website imagery, QR/landing-page branding — anything carrying paseo marks. List each with its
+   dimensions/format so generation is turnkey.
+6. **External/hosted** — Coolify env values on the droplet, EAS app config, Apple bundle IDs
+   (already `com.thedigitalgriot.prism` — verify no paseo stragglers), upstream security contact.
+
+For each item: file:line (or asset path), category, change-vs-generate, risk note, and whether the
+deployed droplet/phone needs a coordinated update. Include counts per category and a proposed
+sequencing (what can rename freely vs what needs the dual-accept seam).
 
 ## Parked Findings — pairing "connecting" stall (context for a future /prism-debug run)
 
