@@ -162,7 +162,7 @@ func (m Model) renderPowerlineFooter(width int) string {
 
 	// 1. Version
 	rightSegments = append(rightSegments, styles.Segment{
-		Content:    "v4.3.1",
+		Content:    "v4.4.0",
 		Foreground: styles.White,
 		Background: lipgloss.Color("#2c2d3a"),
 	})

@@ -1,7 +1,7 @@
 {
   "name": "prism",
   "description": "Structured 6-phase development workflow (Ideate -> Research -> Plan -> Design -> Implement -> Validate) with Spectrum-style iterative execution with TUI",
-  "version": "4.3.1",
+  "version": "4.4.0",
   "keywords": ["plugin-development", "skill-authoring", "token-optimization", "routing-table", "opus-4-8", "effort-levels", "code-intelligence", "graph-navigator", "blast-radius", "dead-code-detection"],
   "author": {
     "name": "Digital Griot Studio"

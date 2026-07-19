@@ -4,6 +4,26 @@ All notable changes to Prism Plugin will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [4.4.0] - 2026-07-19
+
+**The unification milestone.** One version across the ecosystem — Prism, Fragment, and the tools it scaffolds are all **4.4.0**, the baseline moving forward. Consolidates **P1** (go-sovereign prep) and **P2** (the Claude connector + artifact-popout line, and the Fragment ecosystem it grew into). Full account: `.prism/shared/docs/PRISM-DOCUMENTATION-4.4.0.md`.
+
+### Added
+
+- **`/fragment-sync` skill** — a callable spec→generator conformance bridge that reconciles Fragment (`create-fragment` CLI + `fragment-plugin`) to the current `cl-plugin-structure` standard. `skills/fragment-sync/` + `references/conformance-checklist.md`; the readiness audit is its spec.
+- **Fragment: mobile (Expo/EAS) surface** — every Griot tool can now `fragment init --mobile` into a React Native / Expo app that reuses `packages/core` + the DOM-free half of `packages/ui` via a `WebSocketTransport`. First network-transport, native-render surface. (`fragment-ai-scaffold`)
+- **Fragment: click-to-drive** — a surface-agnostic `DriveIntent` + `drive()` so a click in any surface (electron / vscode / tui / mobile) advances the agent session — the brainstorm companion's click-to-wake, generalized. Resolved as **direct in-process agent input, not a Claude Code channel** (Fragment apps embed their own agent). electron `app:drive` IPC + preload; vscode `<plugin>.drive` command; per-surface `drive-client` glue.
+- **Fragment: Prism-image plugin skeleton + meta-skills** — every scaffolded project emits `.claude-plugin/plugin.json` + `skills/{docs-update,bookend,release}` (generalized from Prism's release workflow), so new tools inherit the docs/version/release workflow. `discoverPlugin` prefers a colocated plugin over the project's own root.
+- **P2 · Connector + artifact-popout brainstorm ledger** — one-feature connector whose tools render `ext-apps` popouts; directory-grade (C) target; readiness-gated full-Griot-suite breadth; agent-run **auto / manual / interrupt**; Tasks + elicitation. Plus MCP-Apps-substrate + Desktop-connector research and the Griot-tracks readiness map (Fragment / Valence / Lucid⇄idea_init / ModelMaker).
+
+### Changed
+
+- **Ecosystem version unified to 4.4.0** — Prism, `create-fragment`, and `fragment-plugin` aligned. This is the version baseline moving forward.
+
+### P1 · go-sovereign prep
+
+- **PASEO reference audit** — definitive, categorized rename inventory across the monorepo (wire/protocol seams, env vars, code identifiers, user-visible text, assets, hosted/deployed config), with the dual-accept back-compat seam mapped. Audit only; the rename stays deferred.
+
 ## [4.3.1] - 2026-07-17
 
 ### Fixed
