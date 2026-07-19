@@ -48,7 +48,11 @@ Counts per category: §8. Proposed sequencing: §9.
 (`PASEO_[A-Z0-9_]+`, `\bPaseo[A-Za-z]+`, `@paseo:`, `@getpaseo/`, `paseo\.(sh|dev)`,
 `paseo\.bearer`, filenames via glob) + full reads of deploy/EAS/electron-builder/fastlane/nix
 configs + three parallel Explore agents (deployed surfaces · visual assets · user-visible text).
-Line numbers are as of commit `2769371`.
+Line numbers are as of commit `2769371`. **Verification pass (2026-07-18):** the Category-1
+wire seams and the highest-stakes Category-6 config claims — electron-builder publish feed,
+`eas.json` ascAppId, fastlane `app_identifier`, and app.config.js sovereignty — were
+eyeball-verified against source (not agent summaries); all held. Corrections from that pass are
+folded in below and flagged `[v]`.
 
 Flags used below: **CHANGE** = rename/edit text · **GENERATE** = produce a new branded asset ·
 **SEAM** = needs dual-accept/migration · **HOLD** = grandfather or leave as historical record.
@@ -239,7 +243,7 @@ Risk: LOW — typecheck + tests gate. Deployed impact: none (redeploy picks it u
 |---|---|---|
 | `apps/prism-mobile/package.json:2` | root `"name": "paseo"` | CHANGE — was *deliberately kept* by the 2026-06-12 shallow-fork plan to ease upstream merges; renaming deepens divergence (see §9 note) |
 | `packages/cli/package.json:2-6` | `@thedigitalgriot/cli` (already sovereign) but `"bin": {"paseo": "bin/paseo"}` + description "Paseo CLI" | **SEAM-lite** — `paseo` is the user-facing command in shells/scripts/docs (~90 usage strings, §4). Ship `prism` bin + keep `paseo` alias one cycle |
-| `packages/desktop/bin/paseo(.cmd)` + `electron-builder.yml:32-33,44-45,54-55` | bundled CLI name | CHANGE with bin rename |
+| `packages/desktop/bin/paseo(.cmd)` + `electron-builder.yml:32-33,44-45,55-56` | bundled CLI name | CHANGE with bin rename |
 | `apps/prism-mobile/vitest.config.ts:34,38` | `@getpaseo/relay` alias regexes | CHANGE (free) |
 | `nix/package.nix:90-92` | `@getpaseo/*` package detection loop | CHANGE (free, self-host path) |
 | `apps/prism-mobile/.gitattributes:1-5` | `merge=ours` armor for `@getpaseo/*` re-introduction | KEEP + extend for new renames |
@@ -335,6 +339,16 @@ app once UI strings flip) · `hero-bg.jpg` 5504×3072 (photographic, likely unbr
 
 **Confirmed clean:** pairing QR (`pairing-qr.ts` renders a terminal QR — no logo/landing asset).
 
+**`[v]` Brand-color carryover (found in the verification pass — bigger than the SVG assets).**
+The Paseo brand green `#20744A` is a live theme token, not just an asset fill. `rg '#20744A'`
+(excl. node_modules/dist) returns **5 files**: `packages/app/src/styles/theme.ts` (the app's
+accent color) · `packages/app/app.config.js:146` (`expo-notifications` tint) ·
+`packages/app/public/index.html` · `packages/website/src/styles.css` ·
+`packages/app/assets/images/butterfly-green.svg`. (Note: the earlier visual-asset agent
+attributed `#20744A` to `website/public/logo.svg`; the verification grep did **not** confirm it
+there — treat that one line of the §5 website table as unverified.) The GENERATE phase must pick
+the Prism green and reset this token across all 5 files alongside the raster icons.
+
 ---
 
 ## §6 · Category 6 — External / hosted / deployed values (46 line items)
@@ -373,8 +387,10 @@ UPSTREAM's releases and could "update" users onto upstream Paseo.** Also
 Clean: `app.config.js` — name Prism/Prism Debug, slug `prism-mobile`, owner `digitalgriot`,
 projectId `4e6ac688-…`, scheme `prism://`, applinks `prism.digitalgriot.studio`,
 bundle/package `com.thedigitalgriot.prism(.debug)`, OTA `u.expo.dev/4e6ac688-…`.
-Stragglers: **fastlane** `Appfile:1` + `Fastfile:3,25` still `sh.paseo` (stale upstream Apple
-id — conflicts with the live bundle id; any fastlane lane run would target the wrong app) ·
+Stragglers: **fastlane** `Appfile:1` + `Fastfile:3` (`APP_IDENTIFIER = "sh.paseo"`, actively
+consumed at `:16,25,50` — `latest_testflight_build_number` / `Spaceship…App.find` / `deliver`)
+still `sh.paseo` (stale upstream Apple id — conflicts with the live bundle id; the `submit_review`
+lane would target the WRONG app on App Store Connect) `[v]` ·
 **maestro** `sh.paseo` appId in 12 yaml files (+ `PASEO_MAESTRO_APP_ID` env in 9) — targets an
 app id we don't ship · **eas.json:45** `ascAppId: "6758887924"` — this **equals the upstream
 paseo-pocket-engineer App Store id** in `downloads.tsx:28`; verify ASC ownership before any
@@ -389,7 +405,10 @@ homepage `github.com/getpaseo/paseo`) · `nix/module.nix:9-149` (`services.paseo
 ### Upstream identity records — HOLD (provenance) or CHANGE (contact routing)
 
 `SECURITY.md:66` contact `hello@moboudra.com` — CHANGE if we want reports routed to us; HOLD if
-the file is treated as upstream provenance · `LICENSE:1,5` (Mohamed Boudra / "Paseo Software")
+the file is treated as upstream provenance. `[v]` **Second live occurrence found in the
+verification pass:** `electron-builder.yml:41` `maintainer: "Mohamed Boudra <hello@moboudra.com>"`
+— ships in `.deb`/`.rpm` package metadata (Linux maintainer field), so any distributed Linux
+build carries the upstream author's email · `LICENSE:1,5` (Mohamed Boudra / "Paseo Software")
 — **HOLD (legal)** · `package.json:17` + `desktop/package.json:9` author "Mohamed Boudra" —
 HOLD (provenance) · GitHub org refs `getpaseo/paseo` in CHANGELOG PR links (historical, HOLD)
 vs. in **runtime strings** (`cli/src/commands/open.ts:81` install-link error — CHANGE) and
