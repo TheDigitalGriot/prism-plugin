@@ -4,6 +4,12 @@ All notable changes to Prism Plugin will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [4.5.4] - 2026-07-20
+
+### Changed
+
+- **Release cut to propagate the 4.5.x line to the Desktop marketplace mirror.** The `prism-closing-ceremony` skill (bookend -> docs-update -> release), the strict subscription-only auth resolver (`resolveAnthropicAuth`, `GRIOT_ALLOW_METERED`), the Fable-5 HITL reframe, and the `prism-docs-update` CHANGELOG step all shipped across 4.5.0-4.5.3 but had not been loaded into Claude Desktop's Prism plugin. This version bump + marketplace sync makes the whole line available in Desktop.
+
 ## [4.5.3] - 2026-07-20
 
 ### Fixed

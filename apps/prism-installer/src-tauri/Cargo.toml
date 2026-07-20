@@ -1,6 +1,6 @@
 [package]
 name = "prism-installer"
-version = "4.5.3"
+version = "4.5.4"
 description = "Prism installer — unified setup wizard for Windows and macOS"
 authors = ["Digital Griot Studio <digitalgriotstudios@gmail.com>"]
 edition = "2021"
