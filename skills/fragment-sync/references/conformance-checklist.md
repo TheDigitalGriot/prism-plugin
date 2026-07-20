@@ -30,7 +30,9 @@ Each item: what current `cl-plugin-structure` requires · where Fragment must re
 
 ## Model line reference (for B3)
 
-Current tiers per `cl-plugin-structure` model-config: **Opus 4.8** (`model: opus`, ceiling), **Sonnet 4.6** (`model: sonnet`), **Haiku 4.5** (`model: haiku`); **Fable 5 is RESERVED / NOT ENABLED** — do not emit `claude-fable-5`. Effort: `low|medium|high|xhigh|max` (Opus 4.7+). `[1m]` suffix opens 1M context.
+Current tiers per `cl-plugin-structure` model-config: **Opus 4.8** (`model: opus`, routine ceiling), **Sonnet 4.6** (`model: sonnet`), **Haiku 4.5** (`model: haiku`); **Fable 5 is enabled but HITL-gated — never a resting default**, so generated scaffolds must **not** emit `claude-fable-5` in template/agent frontmatter (it's a deliberate, gated escalation, not a routing default). Effort: `low|medium|high|xhigh|max` (Opus 4.7+). `[1m]` suffix opens 1M context.
+
+> **B-layer design note (for the next full `/fragment-sync`):** now that Fable is enabled-but-gated in Prism, decide whether emitted "Prism-image" projects should also scaffold the HITL-gate infrastructure (flag + confirm/deny gate) rather than just omit the model — Gavin's call during the gated Layer-B pass, not assumed here.
 
 ## Idempotence
 

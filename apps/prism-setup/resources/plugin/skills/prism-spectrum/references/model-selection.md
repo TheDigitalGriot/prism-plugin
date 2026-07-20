@@ -22,16 +22,16 @@ When dispatching agents, select the model based on task complexity rather than a
 - Task requires understanding intent behind existing code
 - Task involves review or quality assessment
 
-### Fable 5 (Maximum Capability) — RESERVED, NOT ENABLED
-> 🔒 **DO NOT DISPATCH `claude-fable-5`.** This tier is documented for future planning only. It is **not enabled** in this plugin — no agent may select it, no override may target it, and no frontmatter sets it. If you are an agent choosing a model during a dispatch, treat Opus 4.8 as the ceiling and ignore this tier entirely. Selecting Fable 5 is a defect, not an escalation.
+### Fable 5 (Maximum Capability) — ENABLED, HITL-GATED
+> ⚠️ **`claude-fable-5` is opt-in and gated, never a routing default.** It is enabled under the Max/Team Premium subscription, but every use passes a human-in-the-loop gate: the workspace `.prism/local/fable.flag` + a confirm/deny modal in the app, and the `fable-gate.sh` PreToolUse hook on Task dispatches. No agent auto-selects it, no `role_defaults` targets it, and no agent frontmatter sets it as a resting default — it is reached only by explicit, confirmed escalation. Auto-selecting Fable during routine dispatch is still a defect; a deliberate, gated escalation is not.
 
-When Fable 5 is eventually enabled (tracked in `.prism/shared/research/2026-06-12-fable-5-integration.md`), the justification bar *will* be — but is not yet active:
+The justification bar for escalating to Fable 5 (active):
 
 - A story Opus 4.8 **genuinely failed** on a prior run — not "did slightly worse," but produced incorrect or incomplete work after a real attempt
 - Long-horizon agentic work where the model must hold a multi-step plan across many tool calls without losing the thread
-- One-shot critical decisions (security-sensitive refactor, irreversible migration) where the ~2.6× cost is dwarfed by the cost of getting it wrong
+- One-shot critical decisions (security-sensitive refactor, irreversible migration) where the cost of getting it wrong dwarfs the spend
 
-Until that work ships, the bar above is informational. Effective cost would be ~2.6× Opus 4.8 (2× price × ~1.3× tokenizer), and the API surface differs (always-on thinking, `refusal` stop reason, heavier tokenizer, 30-day retention) — see [cl-plugin-structure/references/model-config.md §5](../../cl-plugin-structure/references/model-config.md). None of that is reachable today.
+**Never the default.** Fable draws on a *capped weekly Max allowance* (and is API-metered ≈2.6× Opus 4.8 on non-subscription surfaces), so the gate exists to protect that headroom — reach for it the way you'd reserve `effort: max`. Its API surface also differs (always-on thinking, `refusal` stop reason, heavier tokenizer, 30-day retention) — see [cl-plugin-structure/references/model-config.md §5](../../cl-plugin-structure/references/model-config.md). Everything routine stays on Opus 4.8 or below.
 
 ## Override Pattern
 
@@ -64,7 +64,7 @@ Task(subagent_type="codebase-analyzer")  # Uses default (opus)
 | spec-reviewer | sonnet | Config-only changes | Complex architectural review |
 | quality-reviewer | sonnet | Small mechanical changes | Large multi-file reviews |
 
-**Opus 4.8 is the hard ceiling for every dispatch.** Fable 5 is documented above as a reserved tier but is **not enabled** — never select it. No row may override up to Fable.
+**Opus 4.8 is the routing ceiling for every dispatch.** The override table above never auto-selects Fable 5 — Fable is reached only through the explicit HITL gate (flag + modal/hook), as a deliberate escalation, not a routing decision. No row in this table auto-escalates up to Fable.
 
 ## Cost Impact
 
@@ -72,7 +72,7 @@ Rough token cost ratios (relative to haiku=1x):
 - Haiku: 1x
 - Sonnet: 3-5x
 - Opus: 15-20x
-- Fable 5: ~40-50x (≈2.6× Opus) — *reserved, not enabled; shown for future cost planning only*
+- Fable 5: ~40-50x on metered API (≈2.6× Opus); on Max it draws from a capped weekly allowance rather than per-call $ — gated escalation only, never a routing default
 
 A Spectrum run with 20 stories, each dispatching 5 agents:
 - All-opus: 100 opus calls ≈ expensive

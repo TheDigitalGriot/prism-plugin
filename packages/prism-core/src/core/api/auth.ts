@@ -48,3 +48,44 @@ export async function setApiKey(store: SecretStore, key: string): Promise<void> 
 export async function deleteApiKey(store: SecretStore): Promise<void> {
   return store.delete(API_KEY_SECRET)
 }
+
+// ---------------------------------------------------------------------------
+// Claude auth resolution — subscription (OAuth) preferred, metered key fallback
+// ---------------------------------------------------------------------------
+
+/** Env var carrying a Claude Code subscription OAuth token (`claude setup-token`). */
+export const OAUTH_TOKEN_ENV = 'CLAUDE_CODE_OAUTH_TOKEN'
+
+/** Beta header required when authenticating the Messages API with an OAuth token. */
+export const OAUTH_BETA_HEADER = 'oauth-2025-04-20'
+
+/** Which credential a request should use. */
+export type ResolvedAuth =
+  | { mode: 'subscription'; authToken: string }
+  | { mode: 'api-key'; apiKey: string }
+  | { mode: 'none' }
+
+/**
+ * Decide which Claude credential to authenticate with.
+ *
+ * Prefers the Claude Code subscription OAuth token (`CLAUDE_CODE_OAUTH_TOKEN`,
+ * produced by `claude setup-token`) so every Prism surface bills against the Max
+ * subscription like the daemon and CLI already do. Falls back to a stored,
+ * metered Anthropic API key when no subscription token is present, and reports
+ * `none` when neither is available.
+ *
+ * @param apiKey Metered API key from secret storage (fallback), if any.
+ * @param env    Environment to read the OAuth token from (defaults to process.env).
+ */
+export function resolveAnthropicAuth(
+  apiKey?: string,
+  env: Record<string, string | undefined> = typeof process !== 'undefined'
+    ? process.env
+    : {},
+): ResolvedAuth {
+  const oauth = env[OAUTH_TOKEN_ENV]?.trim()
+  if (oauth) return { mode: 'subscription', authToken: oauth }
+  const key = apiKey?.trim()
+  if (key) return { mode: 'api-key', apiKey: key }
+  return { mode: 'none' }
+}

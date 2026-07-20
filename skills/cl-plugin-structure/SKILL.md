@@ -111,7 +111,7 @@ For detailed component patterns: [references/component-patterns.md](./references
 name: my-agent
 description: When to invoke this agent — name 2-4 trigger scenarios (proactive + reactive)
 model: inherit         # REQUIRED — inherit | sonnet | opus | haiku  (inherit = same as parent, recommended)
-                       #   (claude-fable-5 exists but is 🔒 RESERVED / NOT ENABLED — see Model Configuration below)
+                       #   (claude-fable-5 is enabled but HITL-gated — never a resting default; see Model Configuration below)
 color: cyan            # REQUIRED — blue | cyan | green | yellow | magenta | red  (UI identifier)
 effort: medium         # low | medium | high
 maxTurns: 15           # haiku: 5-8, sonnet: 12-18, opus: 12-15
@@ -252,16 +252,16 @@ For the four-leaks audit framing, full routing-table syntax, room-file examples,
 
 ## Model Configuration (Claude Code current model line)
 
-As of June 2026, three tiers are enabled, with a fourth reserved:
+As of July 2026, all four tiers are enabled — three for routine routing, plus Fable 5 as a HITL-gated escalation:
 
 | Tier | Frontmatter | When to reach for it |
 |---|---|---|
-| **Opus 4.8** | `model: opus` | Deep analysis, planning, critical reasoning — the **hard ceiling** for all current work |
+| **Opus 4.8** | `model: opus` | Deep analysis, planning, critical reasoning — the **routine ceiling** for all standard work |
 | **Sonnet 4.6** | `model: sonnet` | General work, implementation, pattern-finding |
 | **Haiku 4.5** | `model: haiku` | Fast lookups, locators, mechanical commands |
-| **Fable 5** 🔒 | `model: claude-fable-5` | **RESERVED / NOT ENABLED** — documented for future adoption; do not set it yet |
+| **Fable 5** | `model: claude-fable-5` | **Gated escalation only** — enabled under Max subscription, but reached via the HITL gate, never a resting agent default (see below) |
 
-> 🔒 **Fable 5 is reserved, not enabled.** It exists in Claude Code's model line, but no agent or skill in this plugin may set `model: claude-fable-5` until activation work ships (tracked in `.prism/shared/research/2026-06-12-fable-5-integration.md`). Opus 4.8 is the ceiling. When enabled: Fable has **no alias** (always pin the full ID), a different API surface (always-on thinking, `refusal` stop reason, new tokenizer, 30-day retention) — read [references/model-config.md §5](./references/model-config.md) first — and an effective cost ~2.6× Opus 4.8 for the same prompt.
+> ⚠️ **Fable 5 is enabled but HITL-gated — never a resting default.** It is reachable under the Max/Team Premium subscription, but every use passes a human-in-the-loop gate (`.prism/local/fable.flag` + a confirm/deny modal in the app, and the `fable-gate.sh` PreToolUse hook on Task dispatches). No agent or skill sets `model: claude-fable-5` as a resting default, and nothing in routing auto-escalates to it — it is a deliberate, confirmed escalation. Opus 4.8 stays the routine ceiling. Fable has **no alias** (always pin the full ID), a different API surface (always-on thinking, `refusal` stop reason, new tokenizer, 30-day retention) — read [references/model-config.md §5](./references/model-config.md) first — and draws on a *capped weekly Max allowance* (≈2.6× Opus 4.8 if metered on the API), which is exactly what the gate protects.
 
 For the Opus/Sonnet/Haiku aliases: from Claude 4.6 onward, dateless IDs like `claude-opus-4-8` are **pinned snapshots**, not evergreen aliases — use the alias form (`model: opus`) for auto-updates, the full ID for pinning.
 

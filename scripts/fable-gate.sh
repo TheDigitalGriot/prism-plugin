@@ -2,7 +2,8 @@
 # fable-gate.sh — PreToolUse gate for Fable 5 (claude-fable-5) Task dispatches.
 #
 # Called by the PreToolUse hook (matcher "Task") before each Task tool call.
-# Fable 5 costs ~2.6x Opus per call, so it must never run silently. This gate
+# Fable 5 draws on a capped weekly Max allowance (API-metered off-subscription),
+# so it must never run silently. This gate
 # reuses the same flag semantics as the app (.prism/local/fable.flag):
 #   - The requested model comes from tool_input.model (an explicit Task override).
 #   - Only "fable" / "claude-fable-5" are gated; every other model passes through.
@@ -73,7 +74,7 @@ fi
 
 if [ "$FLAG_STATE" = "on" ]; then
   # Flag ON -> ask: defer to the permission prompt so a human confirms the cost.
-  printf '%s\n' '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"ask","permissionDecisionReason":"Fable 5 requested (~2.6x Opus cost). Confirm?"}}'
+  printf '%s\n' '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"ask","permissionDecisionReason":"Fable 5 requested — draws on your capped weekly Max allowance. Confirm?"}}'
   exit 0
 fi
 

@@ -11,6 +11,11 @@ import {
   ApiConversationMessage,
   ApiToolDefinition,
 } from "@prism-core/core/api/types"
+import {
+  resolveAnthropicAuth,
+  OAUTH_BETA_HEADER,
+  type ResolvedAuth,
+} from "@prism-core/core/api/auth"
 
 // ---------------------------------------------------------------------------
 // Model IDs
@@ -30,7 +35,12 @@ export type ModelName = keyof typeof MODEL_IDS
 // ---------------------------------------------------------------------------
 
 export interface PrismApiHandlerOptions {
-  apiKey: string
+  /**
+   * Metered Anthropic API key (fallback). Optional — when a Claude Code
+   * subscription OAuth token is present (`CLAUDE_CODE_OAUTH_TOKEN`), it is
+   * preferred and this is ignored.
+   */
+  apiKey?: string
   model?: ModelName
   maxTokens?: number
 }
@@ -39,11 +49,35 @@ export class PrismApiHandler {
   private readonly _client: Anthropic
   private readonly _model: string
   private readonly _maxTokens: number
+  private readonly _authMode: ResolvedAuth["mode"]
 
   constructor(options: PrismApiHandlerOptions) {
-    this._client = new Anthropic({ apiKey: options.apiKey })
+    // Prefer the Claude Code subscription OAuth token (CLAUDE_CODE_OAUTH_TOKEN)
+    // so requests bill against the Max subscription like the daemon/CLI already
+    // do; fall back to a metered API key when no subscription token is present.
+    const auth = resolveAnthropicAuth(options.apiKey)
+    this._authMode = auth.mode
+    if (auth.mode === "subscription") {
+      // OAuth tokens go on Authorization: Bearer (not x-api-key) and require the
+      // oauth beta header. apiKey: null disables the SDK's ANTHROPIC_API_KEY env
+      // fallback, so two credentials are never sent at once (the API rejects that).
+      this._client = new Anthropic({
+        apiKey: null,
+        authToken: auth.authToken,
+        defaultHeaders: { "anthropic-beta": OAUTH_BETA_HEADER },
+      })
+    } else {
+      this._client = new Anthropic({
+        apiKey: auth.mode === "api-key" ? auth.apiKey : "",
+      })
+    }
     this._model = MODEL_IDS[options.model ?? "sonnet"]
     this._maxTokens = options.maxTokens ?? 8192
+  }
+
+  /** Which credential is in use: 'subscription' (Max) or 'api-key' (metered). */
+  get authMode(): ResolvedAuth["mode"] {
+    return this._authMode
   }
 
   /**

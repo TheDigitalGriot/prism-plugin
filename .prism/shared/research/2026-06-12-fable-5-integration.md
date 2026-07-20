@@ -1,7 +1,7 @@
 # Fable 5 / Mythos 5 — Integration Research & Implementation Plan
 
 **Date:** 2026-06-12  
-**Status:** Deferred — pending Spectrum workflow review  
+**Status:** Superseded 2026-07-20 — built (T1–T4) + enabled under Max subscription, HITL-gated. See [2026-07-20-fable-subscription-unification.md](../plans/2026-07-20-fable-subscription-unification.md) (this doc retained as historical record)  
 **Scope:** `prism-plugin` application code only (cl-plugin-structure docs completed separately)
 
 ---

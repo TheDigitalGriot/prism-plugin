@@ -7,6 +7,8 @@ module.exports = {
   moduleNameMapper: {
     // Resolve @shared/* path alias
     "^@shared/(.*)$": "<rootDir>/src/shared/$1",
+    // Resolve @prism-core/* to the shared package source
+    "^@prism-core/(.*)$": "<rootDir>/../../packages/prism-core/src/$1",
   },
   transform: {
     "^.+\\.ts$": [

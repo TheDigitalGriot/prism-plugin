@@ -1,6 +1,6 @@
 # Model Configuration (Claude Code, Current Model Line)
 
-> Last updated June 2026. This is the Claude-Code-specific guidance that drifts fastest as new models ship. When in doubt, cross-check [docs.claude.com/en/docs/claude-code/model-config](https://docs.claude.com/en/docs/claude-code/model-config) and [docs.claude.com/en/docs/about-claude/models/overview](https://docs.claude.com/en/docs/about-claude/models/overview) — the model line moves quarterly.
+> Last updated July 2026. This is the Claude-Code-specific guidance that drifts fastest as new models ship. When in doubt, cross-check [docs.claude.com/en/docs/claude-code/model-config](https://docs.claude.com/en/docs/claude-code/model-config) and [docs.claude.com/en/docs/about-claude/models/overview](https://docs.claude.com/en/docs/about-claude/models/overview) — the model line moves quarterly.
 
 ---
 
@@ -24,12 +24,12 @@ As of **June 2026**:
 
 | Model | Full Model ID | Alias | Pricing (in / out per MTok) | Context | Effort levels |
 |---|---|---|---|---|---|
-| **Fable 5** 🔒 | `claude-fable-5` | none — use pinned ID | $10 / $50 | 1M (default = max) | low, medium, high, xhigh, max (via `output_config.effort` — see §5) |
+| **Fable 5** | `claude-fable-5` | none — use pinned ID | $10 / $50 | 1M (default = max) | low, medium, high, xhigh, max (via `output_config.effort` — see §5) |
 | **Opus 4.8** | `claude-opus-4-8` | `opus`, `best` | $5 / $25 | 1M | low, medium, high (default), xhigh, max |
 | **Sonnet 4.6** | `claude-sonnet-4-6` | `sonnet` | $3 / $15 | 1M | low, medium, high (default), max |
 | **Haiku 4.5** | `claude-haiku-4-5-20251001` | `haiku` (also `claude-haiku-4-5`) | $1 / $5 | 200K | none (no adaptive thinking) |
 
-> 🔒 **Fable 5 — RESERVED / NOT ENABLED in this plugin.** It exists in Claude Code's model line (documented here for reference and future adoption), but **no Prism agent or skill may set `model: claude-fable-5` yet.** Opus 4.8 is the hard ceiling for all current Prism work. Activation is tracked in `.prism/shared/research/2026-06-12-fable-5-integration.md` — the SDK must handle the `refusal` stop reason (§5) before it is unlocked. Treat every `claude-fable-5` reference in this file as a *spec for when it's enabled*, not a green light.
+> ⚠️ **Fable 5 — ENABLED, HITL-GATED.** It is reachable under the Max/Team Premium subscription, but never as a resting default: every use passes the human-in-the-loop gate (`.prism/local/fable.flag` + a confirm/deny modal, and the `fable-gate.sh` PreToolUse hook on Task dispatches), and nothing in routing auto-escalates to it. Opus 4.8 stays the routine ceiling for standard Prism work. The SDK handles the `refusal` stop reason (§5, shipped). Read §5 before using — Fable's API surface differs from the Opus family, and it draws on a *capped weekly Max allowance* (≈2.6× Opus 4.8 if metered on the API).
 
 **Fable 5** (`claude-fable-5`) is Anthropic's most capable widely released model, designed for the most demanding reasoning and long-horizon agentic work. It has a different API surface from the Opus family — see [§5 Fable 5 API Differences](#5-fable-5-api-differences--before-you-adopt) before adopting.
 
@@ -110,12 +110,12 @@ effort: xhigh
 ---
 ```
 
-**Usage with Fable 5** (🔒 RESERVED — see §1; do not set this in a live Prism agent yet) — when enabled, `effort` frontmatter maps to `output_config.effort` automatically with `model: claude-fable-5`:
+**Usage with Fable 5** (gated escalation — see §1; reached via the HITL gate, not set as a resting default) — `effort` frontmatter maps to `output_config.effort` automatically with `model: claude-fable-5`:
 
 ```yaml
 ---
 name: my-critical-agent
-model: claude-fable-5   # 🔒 reserved / not enabled — spec only
+model: claude-fable-5   # gated escalation only — never a resting default
 effort: xhigh
 ---
 ```
@@ -128,7 +128,7 @@ effort: xhigh
 
 ## 5. Fable 5 API Differences — Before You Adopt
 
-> 🔒 **RESERVED / NOT ENABLED in this plugin** (see §1). This section is the adoption spec — the work that must land *before* Fable can be unlocked, not a description of current behavior. Until the `refusal` handler ships in the SDK, no Prism code should target `claude-fable-5`.
+> ✅ **ENABLED, HITL-GATED** (see §1). The `refusal` handler has shipped (`apps/prism-vscode/src/core/api/claude-sdk.ts`), so this section describes the live API surface to respect when Fable runs — not a future spec. Fable is still reached only through the gate, never as a resting default.
 
 Fable 5 and Mythos 5 share a different API surface from the Opus family. These will cause errors or silent failures if you drop `claude-fable-5` into existing agent/skill infrastructure without code changes.
 
@@ -164,9 +164,9 @@ The same text encodes to **~30% more tokens** on Fable 5 than on Opus-tier. Cons
 - `max_tokens` caps set for Opus may truncate Fable 5 unexpectedly
 - Use `count_tokens` endpoint to re-measure before shipping any Fable 5 cost logic
 
-### 30-day data retention required
+### 30-day data retention (factual note)
 
-Fable 5 is not available under zero-data-retention (ZDR). If the API account or Claude.ai org has ZDR configured, every Fable 5 call returns `400 invalid_request_error`. Check account config before adopting.
+Fable 5 and Mythos 5 are "Covered Models": they require 30-day retention and are not available under a zero-data-retention (ZDR) agreement — a ZDR org gets `400 invalid_request_error`. Not a concern for Prism's own usage (no production data or PII flows to the model); noted here only as a factual API constraint.
 
 ### No assistant prefill
 

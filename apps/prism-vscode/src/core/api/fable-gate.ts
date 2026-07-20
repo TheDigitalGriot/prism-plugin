@@ -1,7 +1,8 @@
 /**
  * Fable 5 request gate.
  *
- * Fable 5 costs ~2.6× Opus per call, so it must never run silently. This module
+ * Fable 5 draws on a capped weekly Max allowance (metered off-subscription), so it
+ * must never run silently. This module
  * resolves the model that will actually be used for a request:
  *
  * - Any non-Fable model passes through unchanged.
@@ -41,7 +42,7 @@ export async function resolveGatedModel(
   // Flag on: require explicit confirmation. Any non-Confirm result
   // (Deny, or the modal being dismissed) falls back to Opus.
   const choice = await vscode.window.showWarningMessage(
-    "Fable 5 requested — ~2.6× Opus cost for this call.",
+    "Fable 5 requested — draws on your capped weekly Max allowance for this call.",
     { modal: true },
     "Confirm",
     "Deny",

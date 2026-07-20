@@ -55,8 +55,11 @@ export async function promptForApiKey(
   context: vscode.ExtensionContext,
 ): Promise<string | undefined> {
   const key = await vscode.window.showInputBox({
-    title: "Prism: Anthropic API Key",
-    prompt: "Enter your Anthropic API key (starts with sk-ant-)",
+    title: "Prism: Anthropic API Key (metered fallback)",
+    prompt:
+      "Optional — Prism uses your Claude Max subscription when available " +
+      "(set CLAUDE_CODE_OAUTH_TOKEN via `claude setup-token`). " +
+      "Enter a metered Anthropic API key only as a fallback (starts with sk-ant-).",
     placeHolder: "sk-ant-...",
     ignoreFocusOut: true,
     password: true,
