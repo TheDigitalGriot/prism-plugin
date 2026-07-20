@@ -4,6 +4,35 @@ All notable changes to Prism Plugin will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [4.5.1] - 2026-07-20
+
+### Added
+
+- **`prism-docs-update` now updates the root `CHANGELOG.md`** — the changelog was never touched during a docs/release cycle. The skill now requires a Keep-a-Changelog entry for the version (new Step 7 + rule).
+
+### Fixed
+
+- Backfilled the missing **4.5.0** changelog entry (the 4.5.0 bump shipped without one).
+
+## [4.5.0] - 2026-07-20
+
+**Subscription-native auth across the ecosystem.** (Detailed cycle notes in commits `dd1b0eb` + `36ccf23`.)
+
+### Added
+
+- **`/prism-closing-ceremony` skill** — runs bookend → docs-update → release in one pass, so a release wraps in one command.
+- **Strict subscription-first auth** (`resolveAnthropicAuth`, `packages/prism-core`) — the Claude Max subscription OAuth token (`CLAUDE_CODE_OAUTH_TOKEN`) is preferred everywhere; a metered API key is used **only** behind the `GRIOT_ALLOW_METERED` flag, else the request errors. A Griot tool never silently bills the metered API.
+- **VS Code extension on subscription auth** — migrated off the metered API-key path onto the OAuth token (Bearer + `oauth-2025-04-20`), with `authMode` observability and a strict fallback policy.
+
+### Changed
+
+- **Fable 5 enabled (HITL-gated), no longer RESERVED** — reframed across `cl-plugin-structure` / `prism-spectrum` model docs + gate copy from "~2.6× metered cost" to "capped weekly Max allowance". Fable stays an opt-in, HITL-gated escalation, never a routing default.
+- **Fragment-sync propagates the auth protocol** — `fragment-ai-scaffold` templates now emit the canonical strict resolver (`core/shared/auth.ts`); conformance-checklist **B8** tracks it.
+
+### Fixed
+
+- Mobile always-on daemon confirmed subscription-only (no metered path).
+
 ## [4.4.0] - 2026-07-19
 
 **The unification milestone.** One version across the ecosystem — Prism, Fragment, and the tools it scaffolds are all **4.4.0**, the baseline moving forward. Consolidates **P1** (go-sovereign prep) and **P2** (the Claude connector + artifact-popout line, and the Fragment ecosystem it grew into). Full account: `.prism/shared/docs/PRISM-DOCUMENTATION-4.4.0.md`.
