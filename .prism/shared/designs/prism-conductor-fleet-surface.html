@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<script type="application/json" id="cowork-artifact-meta">
+{
+  "name": "Prism Conductor Fleet Surface",
+  "schemaVersion": 1,
+  "description": "Prism Conductor — concept mockup for the multi-model fleet alignment surface. Realizes the \"one surface, both modes\" brainstorm pick: a lane board (build mode, one task/model per lane, Codex/Claude/Gemini/local) where each card flips to its Valence observe back (replay + cost + seam health). Three view modes — Lane (default), Score (one plan, many players), Ensemble (superposition → collapse). Handoffs are first-class waggle-token edges (the ~37%-of-failures seam made visible). Right drawer is the Valence Observatory with the live decision ledger. Griotwave ember-bloom command register. Concept only — design reference for prism-design.",
+  "mcpTools": [],
+  "mcpServerNames": []
+}
+</script>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prism Conductor — fleet alignment surface</title>
+<style>
+:root{
+  --bg:#0c0805; --bg2:#140f0a; --glass:rgba(255,247,238,.045); --glass2:rgba(255,247,238,.07);
+  --line:rgba(255,220,190,.12); --line2:rgba(255,220,190,.20);
+  --ink:#f6ede0; --ink2:#c3b3a1; --ink3:#8a7a68;
+  --ember:#d9531e; --ember2:#b83c0e; --glow:#ff7a3c; --gold:#c98a24;
+  --claude:#d9531e; --codex:#4f8cf0; --gemini:#9b6bd6; --custom:#2fa392; --gemini2:#8659c7;
+  --r:14px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:
+  radial-gradient(120% 90% at 85% -10%,rgba(217,83,30,.16),transparent 55%),
+  radial-gradient(90% 80% at 5% 110%,rgba(201,138,36,.10),transparent 60%),
+  linear-gradient(180deg,var(--bg),var(--bg2));
+  color:var(--ink);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;min-height:100vh}
+.app{max-width:1180px;margin:0 auto;padding:18px 20px 40px}
+.topbar{display:flex;align-items:center;gap:14px;padding:12px 16px;border:1px solid var(--line);
+  background:var(--glass);backdrop-filter:blur(30px);border-radius:16px;margin-bottom:14px}
+.brand{display:flex;align-items:center;gap:9px;font-weight:750;font-size:16px;letter-spacing:.2px}
+.brand .dot{width:11px;height:11px;border-radius:3px;background:linear-gradient(150deg,var(--glow),var(--ember2));box-shadow:0 0 14px rgba(255,122,60,.6)}
+.brand small{font-weight:600;color:var(--ink3);font-size:11px;letter-spacing:.14em;text-transform:uppercase}
+.spacer{flex:1}
+.tempo{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink2);border:1px solid var(--line);border-radius:999px;padding:5px 12px;background:var(--glass)}
+.tempo b{color:var(--ink);font-weight:700}
+.pulse{width:7px;height:7px;border-radius:50%;background:#5fd08a;box-shadow:0 0 8px #5fd08a;animation:p 1.8s infinite}
+@keyframes p{0%,100%{opacity:1}50%{opacity:.35}}
+
+.modes{display:flex;gap:6px;margin-bottom:14px}
+.mode{flex:1;border:1px solid var(--line);background:var(--glass);border-radius:12px;padding:11px 14px;cursor:pointer;transition:.18s}
+.mode .mt{font-weight:700;font-size:13.5px;display:flex;align-items:center;gap:7px}
+.mode .md{font-size:11.5px;color:var(--ink3);margin-top:3px}
+.mode.on{border-color:var(--ember);background:linear-gradient(180deg,rgba(217,83,30,.18),rgba(184,60,14,.06));box-shadow:0 6px 20px rgba(184,60,14,.22)}
+.mode .k{width:8px;height:8px;border-radius:2px;background:var(--ink3)}
+.mode.on .k{background:var(--glow);box-shadow:0 0 8px var(--glow)}
+
+.stage{display:grid;grid-template-columns:1fr 288px;gap:14px}
+.boardwrap{position:relative}
+.boardlabel{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3);margin:2px 2px 9px;font-weight:700}
+.lanes{display:flex;flex-direction:column;gap:11px;position:relative;z-index:2}
+.lane{border:1px solid var(--line);background:var(--glass);backdrop-filter:blur(24px);border-radius:var(--r);
+  padding:13px 15px;position:relative;overflow:hidden;transition:.2s}
+.lane::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--ag,#888)}
+.lane.claude{--ag:var(--claude)} .lane.codex{--ag:var(--codex)} .lane.gemini{--ag:var(--gemini)} .lane.custom{--ag:var(--custom)}
+.lane:hover{border-color:var(--line2);background:var(--glass2)}
+.lrow{display:flex;align-items:center;gap:10px}
+.agent{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:800;letter-spacing:.04em;
+  padding:4px 9px;border-radius:8px;white-space:nowrap;text-transform:uppercase}
+.agent .ad{width:7px;height:7px;border-radius:50%}
+.agent.claude{background:rgba(217,83,30,.16);color:#ffb488} .agent.claude .ad{background:var(--claude)}
+.agent.codex{background:rgba(79,140,240,.15);color:#a9c9ff} .agent.codex .ad{background:var(--codex)}
+.agent.gemini{background:rgba(155,107,214,.16);color:#d3b8f2} .agent.gemini .ad{background:var(--gemini)}
+.agent.custom{background:rgba(47,163,146,.15);color:#8fe0d2} .agent.custom .ad{background:var(--custom)}
+.ltitle{font-weight:650;font-size:14px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.status{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:6px}
+.st-run{background:rgba(95,208,138,.15);color:#88e0aa} .st-done{background:rgba(255,220,190,.12);color:var(--ink3)}
+.st-queue{background:rgba(201,138,36,.16);color:#e6b96a} .st-wait{background:rgba(217,83,30,.16);color:#ffb488}
+.flip{margin-left:6px;border:1px solid var(--line);background:transparent;color:var(--ink3);border-radius:8px;
+  padding:4px 9px;font-size:11px;cursor:pointer;font-weight:600;display:flex;align-items:center;gap:5px}
+.flip:hover{color:var(--ink);border-color:var(--line2)}
+.lmeta{display:flex;align-items:center;gap:8px;margin-top:9px;font-size:11.5px;color:var(--ink3)}
+.bar{flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--ag),var(--glow))}
+.token{display:inline-flex;align-items:center;gap:5px;font-family:ui-monospace,Menlo,Consolas,monospace;
+  font-size:10.5px;color:#e6b96a;background:rgba(201,138,36,.12);border:1px solid rgba(201,138,36,.28);
+  border-radius:20px;padding:2px 9px}
+.token .glyph{color:var(--gold)}
+
+/* observe back */
+.lane.flipped .front{display:none}
+.back{display:none}
+.lane.flipped .back{display:block}
+.back .bh{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);font-weight:700;margin-bottom:9px;display:flex;align-items:center;gap:7px}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.metric{border:1px solid var(--line);border-radius:10px;padding:9px 10px;background:rgba(255,255,255,.02)}
+.metric b{display:block;font-size:17px;font-weight:750}
+.metric span{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3)}
+.replay{margin-top:10px;height:34px;border-radius:8px;border:1px solid var(--line);
+  background:repeating-linear-gradient(90deg,rgba(79,140,240,.14) 0 3px,transparent 3px 7px);
+  display:flex;align-items:center;padding:0 10px;gap:8px;font-size:11px;color:var(--ink2)}
+
+/* handoff edge overlay */
+.edges{position:absolute;inset:0;z-index:1;pointer-events:none}
+.edges path{stroke:var(--gold);stroke-width:1.6;fill:none;stroke-dasharray:4 4;opacity:.6}
+.edges circle{fill:var(--glow)}
+
+/* right observe drawer (Valence) */
+.drawer{border:1px solid var(--line);background:var(--glass);backdrop-filter:blur(30px);border-radius:16px;padding:15px;height:fit-content;position:sticky;top:14px}
+.dh{display:flex;align-items:center;gap:8px;font-weight:750;font-size:13.5px;margin-bottom:3px}
+.dh .vl{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:#8fe0d2;background:rgba(47,163,146,.15);padding:2px 7px;border-radius:20px;margin-left:auto}
+.dsub{font-size:11px;color:var(--ink3);margin-bottom:13px}
+.seam{border:1px solid var(--line);border-radius:11px;padding:11px 12px;margin-bottom:10px;background:rgba(255,255,255,.02)}
+.seam .sl{font-size:11px;color:var(--ink3);display:flex;justify-content:space-between}
+.seam .sv{font-size:20px;font-weight:750;margin-top:2px}
+.seam.good .sv{color:#88e0aa} .seam.warn .sv{color:#e6b96a}
+.gauge{height:6px;border-radius:3px;background:rgba(255,255,255,.06);margin-top:7px;overflow:hidden}
+.gauge i{display:block;height:100%}
+.ledger{margin-top:4px}
+.ledger .li{display:flex;gap:8px;align-items:flex-start;padding:7px 0;border-top:1px solid var(--line);font-size:12px}
+.ledger .li:first-child{border-top:none}
+.ledger .n{font-family:ui-monospace,monospace;font-size:10px;color:var(--gold);font-weight:700;margin-top:1px}
+.ledger .lt{color:var(--ink2)} .ledger .lt b{color:var(--ink);font-weight:650}
+
+/* annotations */
+.note{position:absolute;z-index:5;font-size:10.5px;line-height:1.35;color:#12100e;background:linear-gradient(180deg,#ffd9b0,#ffc790);
+  border-radius:9px;padding:7px 10px;max-width:172px;box-shadow:0 8px 22px rgba(0,0,0,.4);font-weight:600}
+.note::after{content:"";position:absolute;width:9px;height:9px;background:#ffc790;transform:rotate(45deg)}
+.n1{top:56px;left:-6px;transform:translateX(-100%)}
+.n1::after{right:-4px;top:16px}
+.n2{top:250px;left:-6px;transform:translateX(-100%)}
+.n2::after{right:-4px;top:16px}
+.n3{bottom:6px;left:-6px;transform:translateX(-100%)}
+.n3::after{right:-4px;top:16px}
+@media(max-width:1080px){.note{display:none}.stage{grid-template-columns:1fr}}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:16px;font-size:11.5px;color:var(--ink3);padding-top:14px;border-top:1px solid var(--line)}
+.legend b{color:var(--ink2);font-weight:650}
+.legend .sw{display:inline-block;width:9px;height:9px;border-radius:2px;vertical-align:middle;margin-right:5px}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="brand"><span class="dot"></span>Prism · Conductor <small>fleet alignment</small></div>
+    <div class="spacer"></div>
+    <div class="tempo"><span class="pulse"></span><span>fleet</span> <b>5 lanes</b> · <b>3 models</b></div>
+    <div class="tempo"><span class="glyph" style="color:var(--gold)">◈</span> handoff seam <b style="color:#88e0aa">healthy</b></div>
+  </div>
+
+  <div class="modes" id="modes">
+    <div class="mode on" data-m="lane"><div class="mt"><span class="k"></span>Lane board</div><div class="md">default · one task per lane, one primary model</div></div>
+    <div class="mode" data-m="score"><div class="mt"><span class="k"></span>Score</div><div class="md">one plan, many players — strong model conducts</div></div>
+    <div class="mode" data-m="ensemble"><div class="mt"><span class="k"></span>Ensemble</div><div class="md">superposition — N models, then collapse to best</div></div>
+  </div>
+
+  <div class="stage">
+    <div class="boardwrap">
+      <div class="boardlabel" id="blabel">Build mode · lane board — each lane is a live stream you dispatch and steer</div>
+
+      <svg class="edges" viewBox="0 0 700 470" preserveAspectRatio="none">
+        <path d="M 610 96 C 660 130, 660 180, 610 214"/>
+        <circle cx="610" cy="214" r="3.5"/>
+        <path d="M 610 214 C 660 250, 660 300, 610 334"/>
+        <circle cx="610" cy="334" r="3.5"/>
+      </svg>
+
+      <div class="lanes" id="lanes">
+
+        <div class="lane claude">
+          <div class="front">
+            <div class="lrow">
+              <span class="agent claude"><span class="ad"></span>Claude</span>
+              <span class="ltitle">Deploy Prism always-on daemon</span>
+              <span class="status st-done">shipped</span>
+              <button class="flip" onclick="flip(this)">⟲ observe</button>
+            </div>
+            <div class="lmeta"><span class="bar"><i style="width:100%"></i></span><span>commit 2769371 · pushed</span></div>
+          </div>
+          <div class="back">
+            <div class="bh">◐ observe · Valence replay</div>
+            <div class="metrics">
+              <div class="metric"><b style="color:#88e0aa">148k</b><span>tokens</span></div>
+              <div class="metric"><b>$1.90</b><span>cost</span></div>
+              <div class="metric"><b>0</b><span>seam errs</span></div>
+            </div>
+            <div class="replay">▸ replay run — 4 releases · 3 root causes · flip back to build</div>
+          </div>
+        </div>
+
+        <div class="lane claude">
+          <div class="front">
+            <div class="lrow">
+              <span class="agent claude"><span class="ad"></span>Claude</span>
+              <span class="ltitle">PASEO reference audit v4.3.1</span>
+              <span class="status st-run">running</span>
+              <button class="flip" onclick="flip(this)">⟲ observe</button>
+            </div>
+            <div class="lmeta"><span class="bar"><i style="width:64%"></i></span><span>1239 hits · scanning</span>
+              <span class="token"><span class="glyph">◈</span>wg:audit·a1f</span></div>
+          </div>
+          <div class="back">
+            <div class="bh">◐ observe · Valence replay</div>
+            <div class="metrics">
+              <div class="metric"><b>—</b><span>live</span></div>
+              <div class="metric"><b>$0.71</b><span>cost</span></div>
+              <div class="metric"><b>0</b><span>seam errs</span></div>
+            </div>
+            <div class="replay">▸ live trace — hands audit token to R3F lane on finish</div>
+          </div>
+        </div>
+
+        <div class="lane codex">
+          <div class="front">
+            <div class="lrow">
+              <span class="agent codex"><span class="ad"></span>Codex</span>
+              <span class="ltitle">R3F motion bridge — Kimodo → glTF</span>
+              <span class="status st-run">running</span>
+              <button class="flip" onclick="flip(this)">⟲ observe</button>
+            </div>
+            <div class="lmeta"><span class="bar"><i style="width:38%;--ag:var(--codex)"></i></span><span>own worktree · isolated</span>
+              <span class="token"><span class="glyph">◈</span>wg:audit·a1f</span></div>
+          </div>
+          <div class="back">
+            <div class="bh">◐ observe · Valence replay</div>
+            <div class="metrics">
+              <div class="metric"><b>92k</b><span>tokens</span></div>
+              <div class="metric"><b>$0.30</b><span>cost</span></div>
+              <div class="metric"><b style="color:#88e0aa">1</b><span>handoff in</span></div>
+            </div>
+            <div class="replay">▸ resolved audit token to a Codex-sized view — no context re-paste</div>
+          </div>
+        </div>
+
+        <div class="lane gemini">
+          <div class="front">
+            <div class="lrow">
+              <span class="agent gemini"><span class="ad"></span>Gemini</span>
+              <span class="ltitle">Spectrum eval sweep — 8 prompts</span>
+              <span class="status st-queue">queued</span>
+              <button class="flip" onclick="flip(this)">⟲ observe</button>
+            </div>
+            <div class="lmeta"><span class="bar"><i style="width:8%;--ag:var(--gemini)"></i></span><span>waits on R3F lane merge</span></div>
+          </div>
+          <div class="back">
+            <div class="bh">◐ observe · Valence replay</div>
+            <div class="metrics">
+              <div class="metric"><b>0</b><span>tokens</span></div>
+              <div class="metric"><b>$0</b><span>cost</span></div>
+              <div class="metric"><b>—</b><span>queued</span></div>
+            </div>
+            <div class="replay">▸ dependency edge — Valence releases it when upstream merges</div>
+          </div>
+        </div>
+
+        <div class="lane custom">
+          <div class="front">
+            <div class="lrow">
+              <span class="agent custom"><span class="ad"></span>Local · Kimi</span>
+              <span class="ltitle">Batch doc-gen — OpenWiki pass</span>
+              <span class="status st-wait">review</span>
+              <button class="flip" onclick="flip(this)">⟲ observe</button>
+            </div>
+            <div class="lmeta"><span class="bar"><i style="width:100%;--ag:var(--custom)"></i></span><span>done · awaiting your merge</span></div>
+          </div>
+          <div class="back">
+            <div class="bh">◐ observe · Valence replay</div>
+            <div class="metrics">
+              <div class="metric"><b>210k</b><span>tokens</span></div>
+              <div class="metric"><b style="color:#88e0aa">$0.00</b><span>local</span></div>
+              <div class="metric"><b>0</b><span>seam errs</span></div>
+            </div>
+            <div class="replay">▸ ran on the P16 via AirLLM — free tokens, batch lane</div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="note n1">Agent badge — any model per lane. Claude, Codex, Gemini, or a local model, same board.</div>
+      <div class="note n2">The seam made visible — a waggle token is the passport an agent hands to the next, sized to that model. No copy-paste.</div>
+      <div class="note n3">Flip any card to its back — that's observe mode (Valence). Build and watch are the same card, not two screens.</div>
+    </div>
+
+    <div class="drawer">
+      <div class="dh">◐ Observatory <span class="vl">Valence</span></div>
+      <div class="dsub">the fleet, watched — cost, drift, and the handoff seam in one glass</div>
+
+      <div class="seam good">
+        <div class="sl"><span>handoff seam health</span><span>live</span></div>
+        <div class="sv">98%</div>
+        <div class="gauge"><i style="width:98%;background:#5fd08a"></i></div>
+      </div>
+      <div class="seam warn">
+        <div class="sl"><span>token burn vs solo</span><span>fleet</span></div>
+        <div class="sv">2.1×</div>
+        <div class="gauge"><i style="width:30%;background:var(--gold)"></i></div>
+      </div>
+
+      <div class="ledger">
+        <div class="li"><span class="n">Q1</span><span class="lt"><b>Lane board</b> is the default surface</span></div>
+        <div class="li"><span class="n">Q2</span><span class="lt">Observe = <b>card flip</b>, not a mode toggle</span></div>
+        <div class="li"><span class="n">Q3</span><span class="lt">Handoffs are <b>first-class edges</b> (waggle)</span></div>
+        <div class="li"><span class="n">Q4</span><span class="lt">Prism <b>builds</b> · Valence <b>observes</b> · one spine</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span><b>Models</b></span>
+    <span><span class="sw" style="background:var(--claude)"></span>Claude</span>
+    <span><span class="sw" style="background:var(--codex)"></span>Codex</span>
+    <span><span class="sw" style="background:var(--gemini)"></span>Gemini</span>
+    <span><span class="sw" style="background:var(--custom)"></span>Local / custom</span>
+    <span style="margin-left:auto"><span class="glyph" style="color:var(--gold)">◈</span> waggle handoff token · <span style="color:#8fe0d2">◐</span> Valence observe · concept mockup, not live</span>
+  </div>
+
+</div>
+
+<script>
+function flip(btn){ btn.closest('.lane').classList.toggle('flipped'); }
+const labels={
+  lane:"Build mode · lane board — each lane is a live stream you dispatch and steer",
+  score:"Score mode · one plan authored by a strong model — each agent plays an assigned movement (improve pattern)",
+  ensemble:"Ensemble mode · drop one task, N models run it in superposition — Valence scores, you collapse to the best"
+};
+document.getElementById('modes').addEventListener('click',e=>{
+  const m=e.target.closest('.mode'); if(!m)return;
+  document.querySelectorAll('.mode').forEach(x=>x.classList.remove('on'));
+  m.classList.add('on');
+  document.getElementById('blabel').textContent=labels[m.dataset.m];
+});
+</script>
+</body>
+</html>

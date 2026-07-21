@@ -1,6 +1,6 @@
 ---
 name: prism-release
-description: Create a versioned release of prism-plugin. Bumps semantic version across all version files, builds CLI binaries + VSIX + Electron + Tauri installer + NSIS installer, commits, tags, pushes, and creates a GitHub release with all assets. Use when the user says "release", "bump version", "new version", "cut a release", "prism-release", or wants to publish a new version.
+description: Create a versioned release of prism-plugin. Bumps semantic version across all version files, builds CLI binaries + VSIX + Electron + Tauri installer + NSIS installer + Cowork sideload zip, commits, tags, pushes, and creates a GitHub release with all assets. Use when the user says "release", "bump version", "new version", "cut a release", "prism-release", or wants to publish a new version.
 model: sonnet
 ---
 
@@ -117,6 +117,25 @@ git commit -m "v{NEW_VERSION}"
 git tag v{NEW_VERSION}
 ```
 
+### Step 4.5: Build the Cowork sideload zip
+
+Archive the tagged plugin components into an uploadable zip. This runs **after** the commit+tag
+(not during Step 3) because the script packages the **committed** ref and verifies the archived
+`.claude-plugin/plugin.json` version matches `VERSION` — running it pre-commit would archive the
+old `plugin.json` and fail verification.
+
+```bash
+python skills/prism-sideload/scripts/build-sideload.py --ref v{NEW_VERSION}
+```
+
+Outputs `.prism/local/sideload/prism-sideload-{NEW_VERSION}.zip` (gitignored local artifact,
+uploaded to the GitHub release in Step 6). The script archives only the plugin components
+(`.claude-plugin`, `skills`, `agents`, `commands`, `hooks`, `scripts`) — excluding `apps/`,
+`packages/`, docs, `node_modules/`, and nested zips — then self-verifies: no nested zips,
+`plugin.json` present, version match. If it exits non-zero, fix the reported problem before
+continuing; **do not upload an unverified zip**. Bypasses Cowork's GitHub-sync cache (users
+install it via Cowork → Customize → Browse plugins → Upload plugin).
+
 ### Step 5: Push
 
 ```bash
@@ -151,15 +170,20 @@ gh release upload v{NEW_VERSION} \
 gh release upload v{NEW_VERSION} \
   installer/Prism-Setup-{NEW_VERSION}.exe
 
-# Step 6d: Update release notes with full changelog
+# Step 6d: Upload the Cowork sideload zip (built in Step 4.5)
+gh release upload v{NEW_VERSION} \
+  .prism/local/sideload/prism-sideload-{NEW_VERSION}.zip
+
+# Step 6e: Update release notes with full changelog
 gh release edit v{NEW_VERSION} --notes "Full release notes here"
 ```
 
-The release should include 8 assets:
+The release should include 9 assets:
 - 5 CLI binaries (all platforms)
 - 1 Electron desktop app installer (`Prism-{VERSION} Setup.exe`)
 - 1 Tauri installer (`Prism Setup_{VERSION}_x64-setup.exe`)
 - 1 Legacy NSIS all-in-one installer (`Prism-Setup-{VERSION}.exe`)
+- 1 Cowork sideload zip (`prism-sideload-{VERSION}.zip`)
 
 ### Step 6.5: Sync the marketplace mirror
 

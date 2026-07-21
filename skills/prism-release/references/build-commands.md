@@ -61,3 +61,19 @@ makensis -V4 -DVERSION={NEW_VERSION} installer/prism-setup.nsi
 If `makensis` is not in PATH, try: `"/c/Program Files (x86)/NSIS/makensis.exe"`
 
 Verify: `ls installer/Prism-Setup-{NEW_VERSION}.exe`
+
+## Cowork sideload zip (Step 4.5 — runs post-commit)
+
+Unlike 3a–3f, this runs **after** the release commit+tag (Step 4.5), because it archives the
+committed ref and verifies the archived `plugin.json` version against `VERSION`.
+
+```bash
+python skills/prism-sideload/scripts/build-sideload.py --ref v{NEW_VERSION}
+```
+
+Output: `.prism/local/sideload/prism-sideload-{VERSION}.zip` (gitignored; uploaded to the GitHub
+release in Step 6).
+
+Verify: exits 0 and prints `OK  prism {VERSION}  ->  ...`. The script self-verifies (no nested
+zips, `plugin.json` present, version match) and returns non-zero on any failure — do not upload
+an unverified zip.
