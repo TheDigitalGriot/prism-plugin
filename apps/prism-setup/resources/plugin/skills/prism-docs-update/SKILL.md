@@ -127,6 +127,15 @@ wc -l prism-docs/docs/cli/*.md prism-docs/docs/cli/screens/*.md
 Version: [extracted from source filename]
 ```
 
+### Step 7: Update the root CHANGELOG (required — most-missed surface)
+
+The VitePress site is **not** the only changelog surface. The root `CHANGELOG.md` (Keep a Changelog format) must also carry an entry for the version — it is not synced automatically and is the surface most often forgotten, so it is a required step here.
+
+1. Read `CHANGELOG.md`. Check whether the top entry already matches the version from the source doc (`PRISM-DOCUMENTATION-[version].md` / `VERSION`).
+2. If missing, **prepend** a new `## [version] - YYYY-MM-DD` section (below the header/intro, above the previous top entry) with `### Added` / `### Changed` / `### Fixed` subsections summarizing the cycle's user-facing changes. Mine them from `git log <last-tag>..HEAD --oneline` and the source doc's highlights.
+3. Keep entries concise and user-facing; match the tone of existing entries and link the full account to `.prism/shared/docs/PRISM-DOCUMENTATION-[version].md`.
+4. **Prepend only** — never rewrite or reflow prior entries.
+
 ## Rules
 
 1. ALWAYS read the section mapping reference before starting
@@ -137,3 +146,4 @@ Version: [extracted from source filename]
 6. USE `Edit` for targeted changes, `Write` only for complete rewrites or new files
 7. ASCII art code blocks must be preserved exactly — do not reformat or rewrap
 8. Track progress with TodoWrite for updates spanning 5+ pages
+9. ALWAYS update the root `CHANGELOG.md` with a Keep-a-Changelog entry for the version (Step 7) — it is not synced automatically and is the surface most often forgotten

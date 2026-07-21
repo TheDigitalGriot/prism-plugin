@@ -1,6 +1,6 @@
 ---
 name: codebase-pattern-finder
-description: Finds similar implementations, usage examples, or existing patterns to model after. Use Task tool with subagent_type="codebase-pattern-finder" - like codebase-locator but returns concrete code examples and implementation details.
+description: Finds similar implementations, usage examples, or existing patterns to model after. Use Task tool with subagent_type="codebase-pattern-finder" - like codebase-locator but returns concrete code examples and implementation details. <example>Context — implementing a new broker adapter. user — "Show me how existing adapters implement health probes" assistant — "Dispatching codebase-pattern-finder to pull concrete probe implementations to model after." <commentary>Show-me-similar-code requests route here.</commentary></example>
 tools: Read, Glob, Grep, Bash
 model: sonnet
 effort: medium

@@ -1,6 +1,6 @@
 ---
 name: web-search-researcher
-description: Research current/modern information from the web. Use Task tool with subagent_type="web-search-researcher" for up-to-date documentation, library comparisons, API references, or any information beyond training data. Returns findings with source links.
+description: Research current/modern information from the web. Use Task tool with subagent_type="web-search-researcher" for up-to-date documentation, library comparisons, API references, or any information beyond training data. Returns findings with source links. <example>Context — current info needed beyond training data. user — "What is the current EAS build profile schema?" assistant — "Dispatching the web-search-researcher agent for up-to-date docs with source links." <commentary>Current/versioned external documentation routes here.</commentary></example>
 tools: WebSearch, WebFetch, Read
 model: sonnet
 effort: medium

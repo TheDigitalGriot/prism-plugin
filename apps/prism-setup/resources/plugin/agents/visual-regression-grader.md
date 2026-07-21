@@ -1,6 +1,6 @@
 ---
 name: visual-regression-grader
-description: Judges visual regression diff results against story context. Use Task tool with subagent_type="visual-regression-grader" when visual-regression.sh detects changes above threshold. Returns structured verdict (regression/intentional/inconclusive).
+description: Judges visual regression diff results against story context. Use Task tool with subagent_type="visual-regression-grader" when visual-regression.sh detects changes above threshold. Returns structured verdict (regression/intentional/inconclusive). <example>Context — visual-regression.sh reported a diff above threshold. user — "Is this a regression or my intended redesign?" assistant — "Passing the diff to the visual-regression-grader agent for a structured verdict against story context." <commentary>Automated visual diffs get judged here, not eyeballed inline.</commentary></example>
 tools: Read, Glob, Grep
 model: sonnet
 effort: medium

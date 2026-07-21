@@ -1,6 +1,6 @@
 ---
 name: prism-analyzer
-description: Deep-dives on research documents in .prism/ directory. Use Task tool with subagent_type="prism-analyzer" to extract high-value insights, decisions, and actionable items from existing documentation. Integrates with TodoWrite for task extraction.
+description: Deep-dives on research documents in .prism/ directory. Use Task tool with subagent_type="prism-analyzer" to extract high-value insights, decisions, and actionable items from existing documentation. Integrates with TodoWrite for task extraction. <example>Context — resuming after research completed. user — "Extract the action items from the latest research doc" assistant — "Running the prism-analyzer agent to distill decisions and actionables into the todo list." <commentary>Deep-dives on .prism/ documents route here.</commentary></example>
 tools: Read, Glob, Grep
 model: opus
 effort: high

@@ -1,6 +1,6 @@
 ---
 name: codebase-analyzer
-description: Analyzes codebase implementation details. Use Task tool with subagent_type="codebase-analyzer" when you need to understand HOW specific code works - traces data flow, explains logic, provides file:line references.
+description: Analyzes codebase implementation details. Use Task tool with subagent_type="codebase-analyzer" when you need to understand HOW specific code works - traces data flow, explains logic, provides file:line references. <example>Context — planning a refactor of relay reconnection. user — "How does the relay reconnect logic actually work?" assistant — "Spawning the codebase-analyzer agent to trace the flow with file/line references." <commentary>HOW-does-this-work questions on specific code go to the analyzer.</commentary></example>
 tools: Read, Glob, Grep, Bash
 model: opus
 effort: high

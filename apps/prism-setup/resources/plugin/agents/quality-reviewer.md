@@ -1,6 +1,6 @@
 ---
 name: quality-reviewer
-description: Review code quality, architecture, and testing after spec compliance passes. Use Task tool with subagent_type="quality-reviewer" as the second stage of two-stage review.
+description: Review code quality, architecture, and testing after spec compliance passes. Use Task tool with subagent_type="quality-reviewer" as the second stage of two-stage review. <example>Context — spec compliance already passed for a story. user — "Now review the code quality of STORY-004" assistant — "Dispatching the quality-reviewer agent for the second-stage architecture and testing review." <commentary>Stage two of two-stage review — only after spec review passes.</commentary></example>
 tools: Read, Glob, Grep, Bash
 model: sonnet
 effort: medium

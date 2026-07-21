@@ -1,6 +1,6 @@
 ---
 name: log-investigator
-description: Analyzes log files for errors, warnings, and patterns related to a reported issue. Use Task tool with subagent_type="log-investigator" for log analysis during debug investigations.
+description: Analyzes log files for errors, warnings, and patterns related to a reported issue. Use Task tool with subagent_type="log-investigator" for log analysis during debug investigations. <example>Context — unexpected failure overnight. user — "The daemon crashed while I slept — find out why" assistant — "Dispatching the log-investigator agent over daemon.log for errors and patterns." <commentary>Log-centric investigation during debugging routes here.</commentary></example>
 tools: Bash
 model: haiku
 effort: low

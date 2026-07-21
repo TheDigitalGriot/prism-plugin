@@ -4,6 +4,16 @@ All notable changes to Prism Plugin will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [4.5.5] - 2026-07-21
+
+### Added
+
+- **The release pipeline now builds and publishes the Cowork sideload zip.** `prism-release` gained **Step 4.5**, which runs `build-sideload.py` against the freshly-tagged commit to produce `.prism/local/sideload/prism-sideload-<version>.zip` and uploads it as a 9th GitHub-release asset. Previously the sideload zip was built by hand (or not at all — the entire 4.5.x line was missing its zip); every release now ships the Cowork "Upload plugin" artifact automatically, bypassing Cowork's GitHub-sync cache.
+
+### Changed
+
+- **Conductor design mockups relocated to `.prism/shared/designs/`.** `prism-conductor-fleet-surface.html` and `prism-conductor-score-ensemble.html` were loose in the repo root; moved to the canonical designs directory alongside the other Prism design references.
+
 ## [4.5.4] - 2026-07-20
 
 ### Changed

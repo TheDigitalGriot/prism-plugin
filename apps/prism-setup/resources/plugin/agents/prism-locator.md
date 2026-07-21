@@ -1,6 +1,6 @@
 ---
 name: prism-locator
-description: Discovers relevant documents in local .prism/ directory and syncs with TodoWrite for task tracking. Use Task tool with subagent_type="prism-locator" when researching to find existing research, plans, or handoffs relevant to your current task.
+description: Discovers relevant documents in local .prism/ directory and syncs with TodoWrite for task tracking. Use Task tool with subagent_type="prism-locator" when researching to find existing research, plans, or handoffs relevant to your current task. <example>Context — about to research a subsystem. user — "Do we already have research on the broker?" assistant — "Checking with the prism-locator agent for existing research, plans, and handoffs." <commentary>Discovery across .prism/ artifacts routes here before new research starts.</commentary></example>
 tools: Read, Glob, Grep
 model: haiku
 effort: low

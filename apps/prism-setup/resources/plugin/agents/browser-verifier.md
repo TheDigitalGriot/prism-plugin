@@ -1,6 +1,6 @@
 ---
 name: browser-verifier
-description: Verify web application UI using playwright-cli. Use Task tool with subagent_type="browser-verifier" for browser screenshots, console error checks, snapshot assertions, and structured verification results.
+description: Verify web application UI using playwright-cli. Use Task tool with subagent_type="browser-verifier" for browser screenshots, console error checks, snapshot assertions, and structured verification results. <example>Context — a UI change just landed in the webview. user — "Verify the dashboard renders clean" assistant — "Dispatching the browser-verifier agent for a screenshot plus console-error assertion." <commentary>Post-change UI verification routes here, not to manual browsing.</commentary></example>
 tools: Bash
 model: haiku
 effort: low

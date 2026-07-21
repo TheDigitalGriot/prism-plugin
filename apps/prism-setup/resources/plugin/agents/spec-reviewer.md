@@ -1,6 +1,6 @@
 ---
 name: spec-reviewer
-description: Verify implementation matches story requirements exactly. Use Task tool with subagent_type="spec-reviewer" after quality gates pass to check for missing requirements, over-building, and scope drift.
+description: Verify implementation matches story requirements exactly. Use Task tool with subagent_type="spec-reviewer" after quality gates pass to check for missing requirements, over-building, and scope drift. <example>Context — quality gates just passed on an implementation. user — "Does this match what STORY-004 actually asked for?" assistant — "Sending the spec-reviewer agent to diff the implementation against the story requirements." <commentary>Catches missing requirements, over-building, and scope drift.</commentary></example>
 tools: Read, Glob, Grep, Bash
 model: sonnet
 effort: medium

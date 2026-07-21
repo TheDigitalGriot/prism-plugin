@@ -1,6 +1,6 @@
 ---
 name: state-investigator
-description: Examines application state including databases, config files, and environment to find anomalies related to a reported issue. Use Task tool with subagent_type="state-investigator" for state analysis during debug investigations.
+description: Examines application state including databases, config files, and environment to find anomalies related to a reported issue. Use Task tool with subagent_type="state-investigator" for state analysis during debug investigations. <example>Context — behavior differs between environments. user — "Why does this work locally but not on the droplet?" assistant — "Dispatching the state-investigator agent over configs, env, and databases for anomalies." <commentary>State and config divergence questions route here during debugging.</commentary></example>
 tools: Bash
 model: haiku
 effort: low
