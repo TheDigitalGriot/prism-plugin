@@ -1,0 +1,72 @@
+{
+  "epic": "ceremony-review-audit-gate",
+  "stories": [
+    {
+      "id": "s-c8ea5007",
+      "title": "Write review-audit-gate reference",
+      "description": "Author skills/prism-closing-ceremony/references/review-audit-gate.md: gate procedure, reviewer prompts, audit checklist, gate criteria.",
+      "priority": 1,
+      "status": "pending",
+      "blockedBy": [],
+      "files": [
+        "skills/prism-closing-ceremony/references/review-audit-gate.md"
+      ],
+      "steps": [
+        "Author skills/prism-closing-ceremony/references/review-audit-gate.md: gate procedure, reviewer prompts, audit checklist, gate criteria."
+      ],
+      "completedAt": null,
+      "commitHash": null
+    },
+    {
+      "id": "s-156a9fb6",
+      "title": "Add Step 0 gate to ceremony SKILL",
+      "description": "Insert Step 0 Review & Audit ahead of Bookend in prism-closing-ceremony/SKILL.md; update Sequence + Rules; fail-fast, halt on High.",
+      "priority": 1,
+      "status": "pending",
+      "blockedBy": [],
+      "files": [
+        "skills/prism-closing-ceremony/SKILL.md"
+      ],
+      "steps": [
+        "Insert Step 0 Review & Audit ahead of Bookend in prism-closing-ceremony/SKILL.md; update Sequence + Rules; fail-fast, halt on High."
+      ],
+      "completedAt": null,
+      "commitHash": null
+    },
+    {
+      "id": "s-87466af0",
+      "title": "pre-release-audit script",
+      "description": "Write scripts/pre-release-audit.mjs: runs plugin validate + discovers/runs verify-*.mjs + structural checks; non-zero on failure.",
+      "priority": 1,
+      "status": "pending",
+      "blockedBy": [],
+      "files": [
+        "scripts/pre-release-audit.mjs"
+      ],
+      "steps": [
+        "Write scripts/pre-release-audit.mjs: runs plugin validate + discovers/runs verify-*.mjs + structural checks; non-zero on failure."
+      ],
+      "completedAt": null,
+      "commitHash": null
+    },
+    {
+      "id": "s-246325ec",
+      "title": "verify-ceremony-gate guard",
+      "description": "Write scripts/verify-ceremony-gate.mjs: assert the ceremony declares the gate ahead of bookend and references reviewers+validate+verify discovery.",
+      "priority": 2,
+      "status": "pending",
+      "blockedBy": [
+        "s-156a9fb6",
+        "s-87466af0"
+      ],
+      "files": [
+        "scripts/verify-ceremony-gate.mjs"
+      ],
+      "steps": [
+        "Write scripts/verify-ceremony-gate.mjs: assert the ceremony declares the gate ahead of bookend and references reviewers+validate+verify discovery."
+      ],
+      "completedAt": null,
+      "commitHash": null
+    }
+  ]
+}
