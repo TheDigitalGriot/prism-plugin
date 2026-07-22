@@ -65,6 +65,7 @@ This creates:
 │   ├── handoffs/
 │   ├── prs/
 │   ├── spectrum/
+│   ├── contracts/         # + seeds stories-contract.md (canonical stories.json schema + mapping rules)
 │   ├── ref/
 │   └── docs/
 └── local/

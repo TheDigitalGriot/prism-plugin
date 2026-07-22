@@ -49,6 +49,17 @@ def init_prism(base_path: str = ".") -> None:
         full_path.mkdir(parents=True, exist_ok=True)
         print(f"  [+] Created {dir_path}/")
 
+    # Seed the stories contract (canonical stories.json schema + plan->stories mapping rules).
+    # Bundled with the plugin so every project — new, migrated, or re-initialized — has it, and the
+    # skills' references to `.prism/shared/contracts/stories-contract.md` resolve everywhere.
+    contract_src = Path(__file__).resolve().parent / "templates" / "stories-contract.md"
+    contract_dst = base / ".prism/shared/contracts/stories-contract.md"
+    if contract_dst.exists():
+        print("  [-] stories-contract.md already present")
+    elif contract_src.exists():
+        contract_dst.write_text(contract_src.read_text(encoding="utf-8"), encoding="utf-8")
+        print("  [+] Seeded .prism/shared/contracts/stories-contract.md")
+
     # Add .prism/local to .gitignore if not already present
     gitignore_path = base / ".gitignore"
     gitignore_entry = ".prism/local/"

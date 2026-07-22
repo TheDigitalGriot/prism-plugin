@@ -39,7 +39,7 @@ python "${CLAUDE_PLUGIN_ROOT}/skills/prism/scripts/init_prism.py" .
 │   ├── handoffs/         # Session handoff documents
 │   ├── prs/              # PR descriptions
 │   ├── spectrum/         # Spectrum execution state (progress.md)
-│   ├── contracts/        # Cross-domain interface contracts
+│   ├── contracts/        # Cross-domain interface contracts (seeds stories-contract.md — the canonical stories.json schema + mapping rules)
 │   ├── designs/          # Figma / Pencil.dev design files (.md sidecar + .pen)
 │   ├── assets/           # AI-generated images, videos, 3D models
 │   ├── ref/              # Reference materials
