@@ -12,6 +12,9 @@ You are tasked with implementing an approved technical plan from `.prism/shared/
 ## Getting Started
 
 When given a plan path:
+- **Source of truth is `.prism/stories/stories.json`** — the stories emitted from the plan (schema:
+  `.prism/shared/contracts/stories-contract.md`). Load stories into your todo list; the plan `.md` is
+  narrative context, not the task list. If no stories exist yet, run `decompose_plan` on the plan first.
 - Read the plan completely and check for any existing checkmarks (- [x])
 - Read the original ticket and all files mentioned in the plan
 - **Read files fully** - never use limit/offset parameters, you need complete context

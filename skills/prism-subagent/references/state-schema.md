@@ -1,6 +1,6 @@
 # State Schema
 
-`state.json` is the source of truth for a prism-subagent run. Conversational memory is not. Treat the state file the way Spectrum treats stories.json: read it, mutate it, persist it, never trust the in-context summary.
+`state.json` is the **runtime-status** source of truth for a prism-subagent run — keyed by story id. The **work-definition** is `.prism/stories/stories.json` (schema: `.prism/shared/contracts/stories-contract.md`); state.json *references* stories, it does not redefine them. Conversational memory is neither: read state, mutate it, persist it, never trust the in-context summary.
 
 ## Location
 
@@ -14,11 +14,17 @@ If multiple subagent runs target the same plan, suffix with a timestamp: `<plan-
 
 ## Schema
 
+> Each task's `id`, `title`, `spec_text` (from the story `description`), `acceptance` (from the story
+> `steps`), and `files` are **seeded from the corresponding story** in `stories_path` — one story = one
+> task, same `id`. state.json then layers *runtime status* (`status`, `retry_count`, `raised_issues`, …)
+> on top. The story is the definition; state is the run.
+
 ```json
 {
   "version": 1,
   "plan_path": ".prism/shared/plans/2026-04-10-add-auth.md",
   "plan_slug": "2026-04-10-add-auth",
+  "stories_path": ".prism/stories/stories.json",
   "started_at": "2026-04-10T14:32:00Z",
   "last_updated": "2026-04-10T14:47:21Z",
   "domain": "fullstack",

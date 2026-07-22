@@ -16,18 +16,23 @@ Execute the approved plan phase by phase with verification at each checkpoint.
 
 ## Workflow
 
-### 1. Load Plan
+### 1. Load Stories (the work-definition) + Plan (the narrative)
 
-Read plan completely. Check for:
-- Existing checkmarks (resume if partial)
-- Current phase status
-- Session notes from previous work
+The **work-definition is `.prism/stories/stories.json`** — that is what you execute. Read it first and
+load its stories into TodoWrite. Read the plan `.md` (found via the plan's `epic` back-link, or the
+story file's `epic`) for narrative and rationale — but the *tasks* come from stories, **not** from
+re-parsing plan phases.
 
-Load phases into TodoWrite.
+- Read `.prism/stories/stories.json` (flat) or `.prism/stories/<epic>/stories.json`. Schema:
+  `.prism/shared/contracts/stories-contract.md`.
+- Resume-aware: skip stories already `status: done` (respect `completedAt` / `commitHash`).
+- Load pending stories into TodoWrite, ordered by `blockedBy` then `priority`.
+- If no `stories.json` exists yet (a legacy plan), prompt to run the emit step (`decompose_plan`)
+  rather than silently parsing the plan's phases.
 
-### 2. Read All Phase Files
+### 2. Read the Story's Files
 
-Before changes, read ALL files in current phase:
+Before changes, read ALL files listed in the current story's `files`:
 - Files to modify
 - Files to create (if updating existing)
 
@@ -49,9 +54,10 @@ npm run typecheck
 npm test -- --grep "feature"
 ```
 
-### 5. Update Checkpoint
+### 5. Update Status
 
-Mark phase complete in plan:
+Mark the story done in `.prism/stories/stories.json` (`status: done`, set `completedAt`) — this is the
+authoritative status every executor reads. The plan's phase checkbox is narrative and can mirror it:
 ```markdown
 **Checkpoint**: [x] Phase N complete
 ```

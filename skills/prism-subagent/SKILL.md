@@ -20,7 +20,7 @@ Execute a plan task-by-task in **this session** using fresh implementer subagent
 
 ## Core Loop
 
-1. **Pre-flight** — run `python ${CLAUDE_PLUGIN_ROOT}/scripts/extract-tasks.py <plan-path>` to deterministically parse the plan into [state.json](references/state-schema.md). The script auto-classifies tasks and detects domain. Review the output and adjust before dispatching. Falls back to LLM extraction (exit code 3) only if the plan format is unfamiliar.
+1. **Pre-flight** — the **work-definition is `.prism/stories/stories.json`** (emitted from the plan; schema at `.prism/shared/contracts/stories-contract.md`). Seed [state.json](references/state-schema.md) from it: **one story = one task, keyed by the story `id`**, carrying each story's `files`, `steps`, `priority`, and `blockedBy`. `state.json` holds only runtime status — it never redefines the tasks. If `stories.json` is missing (a legacy plan), run `decompose_plan` on the plan first — or fall back to `python ${CLAUDE_PLUGIN_ROOT}/scripts/extract-tasks.py <plan-path>` to emit stories — then seed. Review and adjust before dispatching.
 2. **Per task** (sequential, never parallel implementers):
    1. Consult [review-decision-matrix](references/review-decision-matrix.md) → which stages apply
    2. Dispatch **implementer** via [dispatch-protocol](references/dispatch-protocol.md) (full task text inlined, never the plan path)
@@ -39,7 +39,7 @@ PASTE TASK TEXT. NEVER MAKE A SUBAGENT READ THE PLAN FILE.
 REVIEWERS SEE DIFFS, NOT FULL FILES.
 NEVER RETRY THE SAME (TASK, MODEL, ISSUE) MORE THAN ONCE.
 NEVER SKIP A REVIEW STAGE THE MATRIX SAYS IS REQUIRED.
-STATE.JSON IS THE SOURCE OF TRUTH. CONVERSATIONAL MEMORY IS NOT.
+STORIES.JSON IS THE WORK-DEFINITION. STATE.JSON IS THE RUNTIME-STATUS SOURCE OF TRUTH (keyed by story id). CONVERSATIONAL MEMORY IS NEITHER.
 NEVER FORWARD PARENT SESSION HISTORY. CONSTRUCT CONTEXT FROM FILES.
 IMPLEMENTERS GET: task text + files + domain primer + criteria — nothing else.
 REVIEWERS GET: diff + spec excerpt + raised_issues — nothing else.
@@ -79,7 +79,7 @@ Audit of v3.4.0 (2026-06-03) — classification of every subagent dispatched by 
 |---|---|
 | "I'll just dispatch two implementers in parallel, the files don't overlap" | They will overlap. Sequential. |
 | "The reviewer is being pedantic, I'll skip this fix" | The matrix decides what's required, not your patience. |
-| "I can re-extract tasks from the plan, it's just one read" | Extract once. Operate from state.json. Save the tokens. |
+| "I can re-extract tasks from the plan, it's just one read" | Tasks come from stories.json (the work-definition). Operate from state.json for run status. Don't re-parse the plan. |
 | "This task is small, the reviewer is overkill" | The matrix decides. Config-only / docs-only have explicit skip rules. |
 | "I'll let the implementer read the plan file, faster than pasting" | No. Full task text inline. Always. |
 | "The reviewer raised the same issue twice, I'll fix it harder" | Halt. The fix isn't sticking. Escalate. |
