@@ -13,12 +13,13 @@ const ref = 'skills/prism-closing-ceremony/references/review-audit-gate.md';
 if (!existsSync(skill)) bad(`${skill} missing`);
 else {
   const t = readFileSync(skill, 'utf8');
-  // the gate must exist and precede Bookend in the sequence
-  const gate = t.search(/review\s*&?\s*audit/i);
-  const bookend = t.search(/\bbookend\b/i);
-  if (gate === -1) bad('SKILL.md does not declare a Review & Audit gate');
-  else if (bookend !== -1 && gate > bookend) bad('Review & Audit gate appears AFTER bookend (must be first)');
-  else ok('Review & Audit gate declared ahead of bookend');
+  // scope the ordering check to the numbered Sequence list, not whole-file prose
+  const gate = t.search(/^\s*0\.\s*\*\*Review\s*&?\s*Audit/im);
+  const bookend = t.search(/^\s*1\.\s*\*\*Bookend/im);
+  if (gate === -1) bad('Sequence has no "0. Review & Audit gate" item');
+  else if (bookend === -1) bad('Sequence has no "1. Bookend" item');
+  else if (gate > bookend) bad('Review & Audit gate is numbered after Bookend (must be step 0)');
+  else ok('Review & Audit gate is step 0, ahead of Bookend');
 
   for (const needle of ['spec-reviewer', 'quality-reviewer', 'pre-release-audit', 'review-audit-gate']) {
     t.includes(needle) ? ok(`ceremony references ${needle}`) : bad(`ceremony does not reference ${needle}`);

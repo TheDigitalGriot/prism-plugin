@@ -10,18 +10,18 @@ let failed = 0;
 const line = (mark, msg) => console.log(`[${mark}] ${msg}`);
 const run = (cmd, args) => spawnSync(cmd, args, { encoding: 'utf8', shell: process.platform === 'win32' });
 
-// 1. Mandatory: claude plugin validate .
+// 1. Mandatory: claude plugin validate .  (trust the exit code, not output wording)
 {
   const r = run('claude', ['plugin', 'validate', '.']);
-  const out = ((r.stdout || '') + (r.stderr || ''));
-  const ok = r.status === 0 && /pass/i.test(out) && !/fail|error/i.test(out.replace(/\berror_/gi, ''));
+  const ok = r.status === 0;
   if (!ok) failed++;
-  line(ok ? 'PASS' : 'FAIL', `claude plugin validate .${ok ? '' : ' — ' + out.trim().split('\n').pop()}`);
+  const detail = (r.error && r.error.message) || ((r.stdout || '') + (r.stderr || '')).trim().split('\n').filter(Boolean).pop() || 'nonzero exit';
+  line(ok ? 'PASS' : 'FAIL', `claude plugin validate .${ok ? '' : ' — ' + detail}`);
 }
 
-// 2. Discover + run every scripts/verify-*.mjs (except this auditor)
+// 2. Discover + run every scripts/verify-*.mjs
 if (existsSync('scripts')) {
-  for (const f of readdirSync('scripts').filter(f => /^verify-.*\.mjs$/.test(f) && f !== 'pre-release-audit.mjs')) {
+  for (const f of readdirSync('scripts').filter(f => /^verify-.*\.mjs$/.test(f))) {
     const r = run('node', [`scripts/${f}`, '--all']);
     const ok = r.status === 0;
     if (!ok) failed++;
@@ -44,6 +44,7 @@ if (base) {
   if (r.status === 0) changed = new Set(r.stdout.split('\n').map(s => s.trim()).filter(Boolean));
 }
 if (changed === null) line('WARN', 'no base tag/branch to diff against — structural checks skipped (run in a repo with history)');
+else if (changed.size === 0) line('WARN', `no files changed vs ${base} — structural checks scanned 0 files (bootstrap / first release?)`);
 const inScope = (p) => changed !== null && changed.has(p);
 
 // 3a. SKILL.md size — progressive disclosure (< 500 lines)
@@ -56,7 +57,7 @@ for (const p of [...walk('skills').filter(p => p.endsWith('SKILL.md')), ...walk(
   if (!readFileSync(p, 'utf8').startsWith('---')) { failed++; line('FAIL', `${p} missing YAML frontmatter`); }
 }
 // 3c. No hardcoded absolute plugin paths in changed skills/commands/hooks
-const HARDCODED = /[A-Z]:\\\\Users\\\\|\/Users\/[a-z]+\/|\/home\/[a-z]+\//;
+const HARDCODED = /[A-Za-z]:\\Users\\|\/(?:Users|home)\/[^\/\s"']+\//;
 for (const p of [...walk('skills'), ...walk('commands'), ...walk('hooks')].filter(p => /\.(md|json|sh|js)$/.test(p) && inScope(p))) {
   if (HARDCODED.test(readFileSync(p, 'utf8'))) { failed++; line('FAIL', `${p} contains a hardcoded absolute path (use \${CLAUDE_PLUGIN_ROOT} / project-relative)`); }
 }
