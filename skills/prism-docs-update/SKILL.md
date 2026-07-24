@@ -11,10 +11,21 @@ Update the VitePress documentation site at `prism-docs/` from a monolithic docum
 ## Context
 
 The Prism project maintains documentation in two forms:
-1. **Monolithic doc**: `.prism/shared/docs/PRISM-DOCUMENTATION-[version].md` — single file with all content
-2. **VitePress site**: `prism-docs/docs/` — 69+ markdown pages organized by section
+1. **Per-release notes**: `.prism/shared/docs/PRISM-DOCUMENTATION-[version].md` — a SHORT summary of one
+   release's changes (headline + what-changed), **not** a full monolithic doc.
+2. **VitePress site**: `prism-docs/docs/` — ~97 markdown pages organized by product surface (`plugin/`,
+   `cli/`, `vscode/`, `electron/`, `daemon/`, `monorepo/`, `eval/`).
 
-When the monolithic doc is updated, the VitePress pages must be synced. This skill automates that process.
+**The sync is driven by the DELTA, not by the release-notes file alone.** A short release-notes summary
+rarely maps 1:1 onto the pages, so syncing means: take the release-notes headline for *intent*, then
+reconcile the actual **code/changelog delta since the site's last-synced version** against the pages that
+document those surfaces — new skills → `plugin/skills.md`, new scripts → `plugin/scripts.md`, new
+commands/agents → their reference pages, count changes → `plugin/statistics.md`, and so on.
+
+> **Why the site drifts (read this).** Historically this step assumed a *monolithic* input that doesn't
+> exist, so it was skipped at release time — leaving the site frozen at 4.3.0 while `config.ts` still
+> declared 4.0.0 and the product shipped 4.5.9. Do **not** let that recur: run this at **every** release,
+> reconcile from the delta, add/create pages as needed (Step 5), and **bump the site version (Step 6.5)**.
 
 ## Prerequisites
 
@@ -127,6 +138,19 @@ wc -l prism-docs/docs/cli/*.md prism-docs/docs/cli/screens/*.md
 Version: [extracted from source filename]
 ```
 
+### Step 6.5: Bump the site version (required — the site drifts silently otherwise)
+
+The VitePress site declares its **own** version in `prism-docs/docs/.vitepress/config.ts` (plus any
+version constant, hero, or footer). This is NOT synced automatically and is exactly why the site once
+declared `4.0.0` while the product shipped `4.5.9`. Update it to match root `VERSION`:
+
+```bash
+grep -rn "[0-9]\+\.[0-9]\+\.[0-9]\+" prism-docs/docs/.vitepress/config.ts   # find the current site version
+```
+
+Set every occurrence to `$(cat VERSION)`. If the version appears in a user-facing surface (homepage hero,
+footer, a `themeConfig` field), update those too.
+
 ### Step 7: Update the root CHANGELOG (required — most-missed surface)
 
 The VitePress site is **not** the only changelog surface. The root `CHANGELOG.md` (Keep a Changelog format) must also carry an entry for the version — it is not synced automatically and is the surface most often forgotten, so it is a required step here.
@@ -135,6 +159,23 @@ The VitePress site is **not** the only changelog surface. The root `CHANGELOG.md
 2. If missing, **prepend** a new `## [version] - YYYY-MM-DD` section (below the header/intro, above the previous top entry) with `### Added` / `### Changed` / `### Fixed` subsections summarizing the cycle's user-facing changes. Mine them from `git log <last-tag>..HEAD --oneline` and the source doc's highlights.
 3. Keep entries concise and user-facing; match the tone of existing entries and link the full account to `.prism/shared/docs/PRISM-DOCUMENTATION-[version].md`.
 4. **Prepend only** — never rewrite or reflow prior entries.
+
+### Step 8: Staleness self-check (catch silent drift)
+
+Confirm the site is actually current, not just touched:
+
+```bash
+SITE_VER=$(grep -oE "[0-9]+\.[0-9]+\.[0-9]+" prism-docs/docs/.vitepress/config.ts | head -1)
+echo "site declares $SITE_VER, releasing $(cat VERSION)"
+# what plugin-surface changed since the site's last-synced version (most-drift-prone):
+git log --oneline "v${SITE_VER}..HEAD" -- skills/ commands/ agents/ scripts/ 2>/dev/null | head -20
+```
+
+If the site lagged by more than the current release (prior releases were skipped), the `plugin/` pages
+(`skills.md`, `scripts.md`, `commands.md`, `agents.md`, `statistics.md`) are the most likely stale
+surface — reconcile the new/changed skills, scripts, commands, and agents before finishing. **Never let a
+stale site pass as "synced"** — if you must defer bulk backlog, log it explicitly (e.g. in the handoff or
+`/dgs-plan-update`), don't leave it silent.
 
 ## Rules
 
@@ -147,3 +188,5 @@ The VitePress site is **not** the only changelog surface. The root `CHANGELOG.md
 7. ASCII art code blocks must be preserved exactly — do not reformat or rewrap
 8. Track progress with TodoWrite for updates spanning 5+ pages
 9. ALWAYS update the root `CHANGELOG.md` with a Keep-a-Changelog entry for the version (Step 7) — it is not synced automatically and is the surface most often forgotten
+10. ALWAYS bump the site version in `.vitepress/config.ts` to match root `VERSION` (Step 6.5) — the site drifts silently otherwise (it once declared 4.0.0 at product 4.5.9)
+11. DRIVE the sync from the code/changelog DELTA since the site's last-synced version, NOT from the release-notes file alone — a short release-notes summary does not map onto the ~97 pages, and assuming a monolithic input is why the site went stale in the first place
