@@ -1,7 +1,7 @@
 ---
 name: cl-plugin-structure
 description: Use when creating, scaffolding, structuring, or validating plugins for Claude Code or Claude Cowork. Covers the .claude-plugin/plugin.json + marketplace manifest, component organization (agents, skills, slash commands, hooks, MCP/LSP servers, channels), agent/command/hook frontmatter, the .local.md per-project settings pattern, portable paths, surface compatibility, bundled validator scripts, and development workflow. Use this whenever the user mentions building a plugin, a skill, a slash command, a hook, an MCP server, a marketplace, or asks about plugin.json/SKILL.md structure — even if they don't say "plugin" explicitly.
-version: 0.7.2
+version: 0.7.3
 ---
 
 # Plugin Structure for Claude Code and Cowork
@@ -172,6 +172,8 @@ Two distinct mechanisms:
 ## MCP Servers (`.mcp.json`)
 
 Local stdio (auto-start on enable, runs with user permissions) or remote SSE/HTTP/WebSocket connectors. Plugin MCP tools are namespaced `mcp__plugin_<plugin>_<server>__<tool>`. Use `${CLAUDE_PLUGIN_ROOT}` for server paths. **Cowork routes remote connectors through Anthropic's cloud** — they must be publicly reachable (see Components table). Server types, OAuth/token auth, and tool-naming details: [references/mcp-patterns.md](./references/mcp-patterns.md).
+
+**Shelling out from a local stdio server?** Keep stdout pure JSON-RPC, pass `stdin=subprocess.DEVNULL` to every child, sanitize proxy env, prefer the interpreter's own binaries, and bind spawned servers to a kill-on-close Job Object - or the server hangs and orphans on Windows. Full recipe: [references/mcp-patterns.md § Local stdio server hygiene](./references/mcp-patterns.md).
 
 ## Channels
 
