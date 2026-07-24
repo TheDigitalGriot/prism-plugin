@@ -4,6 +4,17 @@ All notable changes to Prism Plugin will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [4.5.9] - 2026-07-24
+
+### Added
+
+- **No-orphan stdio hygiene standard (`cl-plugin-structure` 0.7.3).** Codifies the local-stdio-MCP hardening proven out in Cinopsis v2.1.3 so every Griot local plugin inherits it — a new "Local stdio server hygiene" section in `references/mcp-patterns.md` with 5 rules (stdout kept pure JSON-RPC → route wrapped-subprocess stdout to stderr; `stdin=subprocess.DEVNULL` on every shelled-out child — the Windows 60s hang, python-sdk #671; proxy-sanitized child env; interpreter-first binary resolution; `KILL_ON_JOB_CLOSE` Job Object launchers) plus 2 anti-patterns (no second stdin reader; no pre-spawn process scan). `fragment-sync` conformance checklist gains **B10** flagging that Fragment has no MCP-server template yet, so the standard has nothing to emit against (gap logged for a future gated Layer-B pass). Full account: `.prism/shared/docs/PRISM-DOCUMENTATION-4.5.9.md`.
+- **Release-integration guard (`scripts/verify-branch-integrated.mjs`).** Auto-discovered by `pre-release-audit.mjs`, so it runs inside the closing-ceremony Step-0 audit with zero wiring. Fails a release unless HEAD is `main`, the base version is tagged, and no finalized release is left untagged — extending 4.5.8's self-hardening release path from *is the code good?* to *is `main` the truth?*. The rule (a release lands on `main`; integrate the whole branch, never cherry-pick to extract) is documented in the `prism-closing-ceremony` + `prism-release` skills and root `CLAUDE.md`. It does not detect an arbitrary cherry-pick (infeasible from `main` alone) — it removes the reason to make one by requiring whole-branch integration.
+
+### Fixed
+
+- **Version/tag drift healed.** v4.5.7 (plan/story unification) and v4.5.8 (Review & Audit gate) were bookended on a feature branch but never merged to `main` or tagged, leaving `main` two releases behind. `main` was fast-forwarded to include them (no cherry-pick), and the `v4.5.7` + `v4.5.8` tags and CHANGELOG entries were backfilled — along with the 4.5.0–4.5.6 doc snapshots missed at their release times.
+
 ## [4.5.8] - 2026-07-22
 
 ### Added
