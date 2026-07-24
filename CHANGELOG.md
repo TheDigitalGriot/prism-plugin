@@ -4,6 +4,18 @@ All notable changes to Prism Plugin will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [4.5.8] - 2026-07-22
+
+### Added
+
+- **Self-hardening release path — closing-ceremony Review & Audit gate.** `prism-closing-ceremony` now runs a **Review & Audit gate** as Step 0, before bookend/docs/release: a two-stage independent review (`spec-reviewer` → `quality-reviewer`) on the diff since the last version tag, plus a deterministic best-practices audit (`node scripts/pre-release-audit.mjs` — `claude plugin validate .`, discovery + run of every `scripts/verify-*.mjs`, and cl-plugin-structure structural checks scoped to the release's changed files). **Fail-fast**: an unresolved High finding halts the ceremony before bookend (explicit, logged human override only). Adds `scripts/pre-release-audit.mjs` (audit runner) and `scripts/verify-ceremony-gate.mjs` (guard that the gate stays wired ahead of bookend). First release to pass through its own gate — which caught two real soundness bugs in the audit script on its first run. Additive; the existing bookend → docs → release sequence and its human gates are unchanged.
+
+## [4.5.7] - 2026-07-22
+
+### Added
+
+- **Plan → Story source-of-truth unification.** `stories.json` is now the single work-definition every executor reads. `/prism-plan` + `/create_plan` emit `.prism/stories/stories.json` as their final step via the `decompose_plan` engine — a plan is not complete until it has stories. `prism-implement`/`implement_plan` load stories into TodoWrite (the plan `.md` is narrative only); `prism-subagent` seeds `state.json` from stories, one story = one task keyed by story `id` (state.json holds runtime status only); `prism-iterate`/`iterate_plan` re-emit stories on plan edit, preserving stable ids; `prism-validate`/`validate_plan` add a plan ↔ stories coverage gate (no stories = hard fail; every requirement maps to ≥1 story). New canonical contract `.prism/shared/contracts/stories-contract.md` and `scripts/verify-story-unification.mjs` (15-check static guard). Strictly additive — the `.prism/stories/` path and `stories.json` schema are unchanged.
+
 ## [4.5.6] - 2026-07-21
 
 ### Changed
