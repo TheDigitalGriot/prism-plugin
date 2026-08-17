@@ -1,0 +1,20 @@
+{
+  "name": "prism-marketplace",
+  "owner": {
+    "name": "Digital Griot Studio"
+  },
+  "metadata": {
+    "description": "Structured development workflow plugins for Claude Code — includes cl-plugin-structure skill (v0.7.2) for plugin/skill authoring, code intelligence layer (codebase-memory-mcp + graph-navigator agent + blast-radius analysis), Opus 4.8 enrichments, and current model-line guidance."
+  },
+  "plugins": [
+    {
+      "name": "prism",
+      "source": {
+        "source": "github",
+        "repo": "TheDigitalGriot/prism-plugin"
+      },
+      "description": "Structured 6-phase development workflow (Ideate -> Research -> Plan -> Design -> Implement -> Validate)",
+      "version": "4.11.0"
+    }
+  ]
+}

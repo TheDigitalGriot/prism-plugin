@@ -1,0 +1,9 @@
+{
+  "name": "digital-griot-mcp",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Runtime dependency for the shared Digital Griot wake channel + tool server (digital-griot-mcp.ts). The ONE wire prism-brainstorm and prism-gavel POST to on 127.0.0.1:52342.",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  }
+}
