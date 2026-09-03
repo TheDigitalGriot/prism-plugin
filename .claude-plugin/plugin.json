@@ -1,0 +1,34 @@
+{
+  "name": "prism",
+  "description": "Structured 6-phase development workflow (Ideate -> Research -> Plan -> Design -> Implement -> Validate) with Spectrum-style iterative execution with TUI",
+  "version": "4.13.0",
+  "keywords": [
+    "plugin-development",
+    "skill-authoring",
+    "token-optimization",
+    "routing-table",
+    "opus-5",
+    "effort-levels",
+    "code-intelligence",
+    "graph-navigator",
+    "blast-radius",
+    "dead-code-detection"
+  ],
+  "author": {
+    "name": "Digital Griot Studio"
+  },
+  "mcpServers": {
+    "digital-griot-mcp": {
+      "type": "stdio",
+      "command": "bun",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/scripts/digital-griot-mcp/digital-griot-mcp.ts"
+      ]
+    }
+  },
+  "channels": [
+    {
+      "server": "digital-griot-mcp"
+    }
+  ]
+}
