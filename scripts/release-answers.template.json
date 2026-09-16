@@ -1,0 +1,16 @@
+{
+  "//": "Headless release-cycle answers — copy to .prism/local/release-answers.json and set PRISM_NONINTERACTIVE=1. Schema + per-gate keys: skills/prism-release/references/answers-resolution.md. dryRun-first: this template REHEARSES (stops before commit/tag/push/GH-release). All destructive gates are omitted, so the resolver fails them closed.",
+  "schemaVersion": 1,
+  "dryRun": true,
+  "version": null,
+  "bump": null,
+  "confirmVersion": false,
+  "review": { "overrideHigh": false },
+  "cleanTree": "porcelain-empty-only",
+  "docs": { "proceed": true, "editConfig": false },
+  "push": false,
+  "githubRelease": false,
+  "syncMirror": false,
+  "nativeBuilds": true,
+  "tagCollision": "abort"
+}
