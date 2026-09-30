@@ -1,0 +1,16 @@
+{
+  "//": "EXAMPLE — a FULL push release (Gavin's default intent when he invokes the closing ceremony unless he narrows it). An orchestrator writes this shape; it is NOT the skill default — the mechanism itself stays fail-closed on every missing key. Set an explicit version, then push + githubRelease + docs true. Copy to .prism/local/release-answers.json, set the real version, and set PRISM_NONINTERACTIVE=1.",
+  "schemaVersion": 1,
+  "dryRun": false,
+  "version": "X.Y.Z",
+  "bump": null,
+  "confirmVersion": true,
+  "review": { "overrideHigh": false },
+  "cleanTree": "porcelain-empty-only",
+  "docs": { "proceed": true, "editConfig": true },
+  "push": true,
+  "githubRelease": true,
+  "syncMirror": true,
+  "nativeBuilds": true,
+  "tagCollision": "abort"
+}
