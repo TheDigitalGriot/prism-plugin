@@ -1,0 +1,9 @@
+{
+  "name": "prism-brainstorm-scripts",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Runtime dependencies for the prism-brainstorm visual companion (server.cjs). The shared wake channel now lives at scripts/digital-griot-mcp/digital-griot-mcp.ts at the plugin root.",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  }
+}
